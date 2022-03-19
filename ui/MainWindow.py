@@ -10,6 +10,8 @@ from logcat import log
 from ui import DevicePage
 from ui.DeviceGroup import OldUIManager
 from ui.widget.ButtomConsoleWindow import ButtomWindow
+from ui.widget.NewConnectDialog import NewConnectDialog
+from utils.UITools import IconTool
 from utils.UiWidgts import AppPushButton
 from utils.Utils import Utils
 
@@ -18,7 +20,6 @@ from ui.BaseWindow import BaseWindow
 def initBtnTips():
     # 这种静态的方法设置一个用于显示工具提示的字体。这里使用10px滑体字体。
     QToolTip.setFont(QFont('SansSerif', 10))
-
 
 class MainWindow(BaseWindow):
     """
@@ -46,12 +47,12 @@ class MainWindow(BaseWindow):
         self.init_menu_bar()
         self.init_toolbar()
         # 初始化功能区
-        # self.init_func_group()
+        # self.init_test_func_group()
 
-        # 初始化属性栏
         self.init_left_panel()
         self.init_center_panel()
-        # 初始化状态栏
+
+        # 初始化底部状态栏
         self.init_status_bar()
 
         # 初始化底部控件
@@ -62,15 +63,14 @@ class MainWindow(BaseWindow):
         self.content_splitter.setHandleWidth(0)  # thing to grab the splitter
         self.content_splitter.addWidget(self.left_panel)
         self.content_splitter.addWidget(self.center_panel)
-        # self.contentSplitter.setStretchFactor(0, 0)
-        # self.contentSplitter.setStretchFactor(1, 6)
-        # self.contentSplitter.setStretchFactor(2, 6)
+        self.content_splitter.setStretchFactor(0, 3)
+        self.content_splitter.setStretchFactor(1, 5)
         self.main_splitter = QSplitter(Qt.Vertical)
         self.main_splitter.setHandleWidth(0)
         self.main_splitter.addWidget(self.content_splitter)
         self.main_splitter.addWidget(self.bottom_console_window)
-        self.main_splitter.setStretchFactor(1, 0)
-        self.main_splitter.setStretchFactor(2, 1)
+        self.main_splitter.setStretchFactor(0, 5)
+        self.main_splitter.setStretchFactor(1, 4)
         self.setCentralWidget(self.main_splitter)
 
         initBtnTips()
@@ -87,26 +87,33 @@ class MainWindow(BaseWindow):
         else:
             event.ignore()
 
-
     def init_toolbar(self):
         toolbar = QToolBar(self)
         toolbar.setContentsMargins(5, 5, 5, 5)
         toolbar.setStyleSheet("QWidget{background-color:rgb(229,229,229);border:none}")
-        icon = QIcon("./res/img/new_connect.png")
-        btn_a1 = AppPushButton(toolbar, self.slot_a1)
-        btn_a1.setStyleSheet("QPushButton:pressed{background-color:rgb(206,220,232)}")
-        btn_a1.setIcon(icon)
-        btn_a1.setStatusTip("新建")
-        btn_a1.setIconSize(QSize(24, 20))
-        btn_a1.setFlat(True)  # 按钮扁平化,去掉按钮边框
+        icon = IconTool.buildQIcon("new_connect.png")
+        tool_item_add_new = AppPushButton(toolbar, self.add_new_connect)
+        tool_item_add_new.setStyleSheet("QPushButton:pressed{background-color:rgb(206,220,232)}")
+        tool_item_add_new.setIcon(icon)
+        tool_item_add_new.setStatusTip("新建连接")
+        tool_item_add_new.setIconSize(QSize(24, 20))
+        # tool_item_add_new.setFlat(True)  # 按钮扁平化,去掉按钮边框
 
-        # self.btn_a1.setGeometry(QtCore.QRect(0, 0, 120, 120))
-        toolbar.addWidget(btn_a1)
+        # self.tool_item_add_new.setGeometry(QtCore.QRect(0, 0, 120, 120))
+        toolbar.addWidget(tool_item_add_new)
         self.addToolBar(toolbar)
 
-    @staticmethod
-    def slot_a1():
+    @pyqtSlot()
+    def add_new_connect(self):
         print("slot_a1 ")
+        new_connect = NewConnectDialog()
+        new_connect.finishSignal.connect(self.onExecConnect)
+        new_connect.show()
+        # FIXME 执行dialog show之后，应用退出
+
+    def onExecConnect(self, url):
+        print("onExecConnect ")
+        self.statusBar().showMessage(url)
 
     def init_center_panel(self):
         self.center_panel = QWidget()
@@ -115,7 +122,8 @@ class MainWindow(BaseWindow):
         layout.setContentsMargins(5, 5, 5, 5)
         centralwidget = QWidget(self)
         centralwidget.setObjectName("centralwidget")
-        centralwidget.setGeometry(QtCore.QRect(221, 70, 500, 400))
+        centralwidget.setStyleSheet("background-color: #0000")
+        # centralwidget.setGeometry(QtCore.QRect(221, 70, 500, 400))
         OldUIManager(self, centralwidget).initViews()
         layout.addWidget(centralwidget)
         self.center_panel.setLayout(layout)
@@ -152,12 +160,10 @@ class MainWindow(BaseWindow):
         tree_view.doubleClicked.connect(self.onTreeItemDoubleClicked)
         # tree_view.clicked.connect(self.getDebugData)
 
-
-
     def init_status_bar(self):
         statusbar = QStatusBar(self)
         statusbar.setObjectName("statusbar")
-        statusbar.setStyleSheet("background:rgb(185,209,234)")
+        statusbar.setStyleSheet("background-color:rgb(229,229,229)")
         self.setStatusBar(statusbar)
 
     def init_menu_bar(self):
@@ -176,7 +182,7 @@ class MainWindow(BaseWindow):
         act_close.setObjectName("act_close")
         act_close.setText(_translate("MainWindow", "Close"))
 
-        act_exit = QAction(QIcon('./res/image/logo.png'), '&Exit', self)
+        act_exit = QAction(QIcon('./res/img/logo.png'), '&Exit', self)
         act_exit.setObjectName("exit_app")
         act_exit.setShortcut('Ctrl+Q')  # 自定义快捷键
         act_exit.setStatusTip('Exit application')  # 自定义提示
@@ -205,7 +211,7 @@ class MainWindow(BaseWindow):
         # 将menu添加到menubar上
         self.setMenuBar(menubar)
 
-    def init_func_group(self):
+    def init_test_func_group(self):
         # 创建二级菜单栏 的多分页窗口
         stackedWidget_func = QtWidgets.QStackedWidget(self) # QStackedWidget表示多分页的窗口
         stackedWidget_func.setObjectName("stackedWidget_func")

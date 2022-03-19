@@ -18,10 +18,11 @@ class OldUIManager:
     isDeviceConnected = False
     windwos = None
 
-    def __init__(self, windows, baseWidget):
+    def __init__(self, windows, parent):
         """
             @:param self: DeviceBody的实例对象本身
             @:param windows : mwindow对象
+            @:param parent : 父widget
         """
         self.windows = windows
 
@@ -30,80 +31,81 @@ class OldUIManager:
         # self.switchBtn.checkedChanged.connect(self.getState)
 
         # ip控件初始化
-        self.add_new_ip = QPushButton(baseWidget)  # 添加ip按钮
+        self.add_new_ip = QPushButton(parent)  # 添加ip按钮
         self.add_new_ip.setText('添加')
-        self.et_newIp = QLineEdit(baseWidget)  # 添加ip控件
+        self.et_newIp = QLineEdit(parent)  # 添加ip控件
         self.et_newIp.setFont(QFont('Helvetica', 14))
-        self.btn_disconnect = QPushButton(baseWidget)
+        self.btn_disconnect = QPushButton(parent)
         self.btn_disconnect.setText('断开')
-        self.btn_connect = QPushButton(baseWidget)
+        self.btn_connect = QPushButton(parent)
         self.btn_connect.setText('连接')
 
-        self.deviceImageView = QLabel(baseWidget)
+        self.deviceImageView = QLabel(parent)
         self.deviceImageView.setPixmap(QPixmap(OldUIManager.resImages['Device']))
 
         # ip选择View
-        self.ipComboBox = QComboBox(baseWidget)
+        self.ipComboBox = QComboBox(parent)
 
         # 连接状态view
-        self.linkImageStateView = QLabel(baseWidget)
+        self.linkImageStateView = QLabel(parent)
         pixMap = QPixmap(OldUIManager.resImages['Unlink'])
         self.linkImageStateView.setPixmap(pixMap)
 
         # 包名控件初始化
-        self.pkg_Tip = QLabel(baseWidget)
+        self.pkg_Tip = QLabel(parent)
         self.pkg_Tip.setText('目标App包名:')
-        self.pkgComboBox = QComboBox(baseWidget)
+        self.pkgComboBox = QComboBox(parent)
 
-        self.btnAddNewPkg = QPushButton(baseWidget)
+        self.btnAddNewPkg = QPushButton(parent)
         self.btnAddNewPkg.setText("添加新包名:")
         # self.btnAddNewPkg.setGeometry(QtCore.QRect(10, 100, 101, 31))
         self.btnAddNewPkg.setObjectName("btn_addNewPkg")
         self.btnAddNewPkg.setFont(getKTFontStyle())
         self.btnAddNewPkg.clicked.connect(lambda: self.onPkgAdd())
-        self.pkg_inputEditText = QLineEdit(baseWidget)
-        self.activityClassPath = QLineEdit(baseWidget)
+        self.pkg_inputEditText = QLineEdit(parent)
+        self.activityClassPath = QLineEdit(parent)
 
         # 控制台view初始化
-        self.consoleView = QTextEdit(baseWidget)
+        # self.consoleView = QTextEdit(parent)
 
         self.sqlHelper = SqlHelper(SQL_NAME)
 
         self.selected_ip = ''
         self.selected_pkg = ''
 
-        self.action_start = QPushButton(baseWidget)
+        self.action_start = QPushButton(parent)
         self.action_start.setText("Start")
-        self.action_clear = QPushButton(baseWidget)
+        self.action_clear = QPushButton(parent)
         self.action_clear.setText("Clear")
-        self.action_uninstall = QPushButton(baseWidget)
+        self.action_uninstall = QPushButton(parent)
         self.action_uninstall.setText("Uninstall")
-        self.action_stop = QPushButton(baseWidget)
+        self.action_stop = QPushButton(parent)
         self.action_stop.setText("Stop")
 
         # 创建layout及GroupBox
         # self.gridGroupBox = QGroupBox("Grid layout")
         self.gridlayout = QGridLayout()
         self.actionLayout = QHBoxLayout()
-        self.consoleViewBox = QGroupBox("Terminal:")
+        # self.consoleViewBox = QGroupBox("Terminal:")
         self.createGridGroupView()
         self.createActionsGroupView()
         self.createConsoleView()
 
-        mainLayout = QVBoxLayout()
-        # mainLayout.addStretch()
-        mainLayout.addLayout(self.gridlayout)
-        mainLayout.addLayout(self.actionLayout)
-        mainLayout.addWidget(self.consoleViewBox)
-        baseWidget.setLayout(mainLayout)
+        device_layout = QVBoxLayout()
+        # device_layout.addStretch()
+        device_layout.addLayout(self.gridlayout)
+        device_layout.addLayout(self.actionLayout)
+        # device_layout.addWidget(self.consoleViewBox)
+        parent.setLayout(device_layout)
 
     def getState(self, checked):
         print("checked=", checked)
 
     def createConsoleView(self):
-        layout = QHBoxLayout()
-        layout.addWidget(self.consoleView)
-        self.consoleViewBox.setLayout(layout)
+        # layout = QHBoxLayout()
+        # # layout.addWidget(self.consoleView)
+        # self.consoleViewBox.setLayout(layout)
+        pass
 
     def createGridGroupView(self):
         """
@@ -203,11 +205,12 @@ class OldUIManager:
         self.pkg_inputEditText.setObjectName("package_add")
         self.pkg_inputEditText.setFont(getWRYHFontStyle(12))
 
-        self.consoleView.setGeometry(QtCore.QRect(0, 0, 864, 210))
-        self.consoleView.setStyleSheet("background:rgb(128,128,128)")
-        self.consoleView.setTextColor(QColor('yellow'))
-        self.consoleView.setLineWrapMode(QTextEdit.NoWrap)  # 保持换行单词完整
-        self.consoleView.setFontPointSize(13)
+        # 旧版consoleView
+        # self.consoleView.setGeometry(QtCore.QRect(0, 0, 864, 210))
+        # self.consoleView.setStyleSheet("background:rgb(128,128,128)")
+        # self.consoleView.setTextColor(QColor('yellow'))
+        # self.consoleView.setLineWrapMode(QTextEdit.NoWrap)  # 保持换行单词完整
+        # self.consoleView.setFontPointSize(13)
 
         self.activityClassPath.setGeometry(QtCore.QRect(0, 0, 291, 31))
         self.activityClassPath.setObjectName("class_path")
@@ -410,4 +413,5 @@ class OldUIManager:
         pass
 
     def updateLogView(self, info=''):
-        self.consoleView.setPlainText(info)
+        # self.consoleView.setPlainText(info)
+        pass

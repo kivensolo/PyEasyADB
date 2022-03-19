@@ -40,8 +40,9 @@ class DeviceA_Area(QWidget):
         self.hLayout.addStretch()
 
     @staticmethod
-    def slot_a1():
+    def slot_a1(self):
         print("slot_a1 ")
+
 
     def slot_a2(self):
         print("slot_a2 ")

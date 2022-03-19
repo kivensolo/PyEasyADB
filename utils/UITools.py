@@ -8,7 +8,7 @@ class IconTool:
         super().__init__()
 
     def buildQIcon(iconName):
-        path = os.path.join("..", "..", "res", "img", iconName)
+        path = os.path.join(".", "res", "img", iconName)
         return QIcon(path)
 
     def buildQPixmap(pixmapName):
