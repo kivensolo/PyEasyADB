@@ -12,8 +12,8 @@ LOG_CMD_OUT = "pro_{0}.log".format(time.strftime("%Y-%m-%d"))
 LOG_CMD_ERROR = "pro_{0}.err".format(time.strftime("%Y-%m-%d"))
 LOG_APP_FILE = os.path.join(LOGS_PATH, ".".join(["log_esay_adb", "log"]))
 
-# Sql数据库
-SQL_NAME = "easyADB.db"
+# 应用数据库名
+DB_NAME = "easyADB.db"
 
 APP_VERSION = '1.0'
 

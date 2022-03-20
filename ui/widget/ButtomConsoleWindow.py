@@ -25,8 +25,10 @@ class ButtomWindow(QTabWidget):
         self.setTabBar(self.tabBar)
         # 将console添加至buttom组件中
         self.addTab(self.consoleView, IconTool.buildQIcon("logcat.png"), "Logcat")
-        self.consoleView.setVisible(False)
-        self.setFixedHeight(Utils.getItemHeight())
+        # self.consoleView.setVisible(False)
+        # self.setFixedHeight(Utils.getItemHeight())
+        self.consoleView.setVisible(True)
+        self.setMaximumHeight(Utils.getWindowHeight())
         self.setTabPosition(QTabWidget.South)
         self.setStyleSheet(
             "QTabBar::tab {"

@@ -403,3 +403,199 @@ Zlogger INFO 2022-03-19 17:44:25,247 (log.py: 20) - result = 0
 Zlogger INFO 2022-03-19 17:44:26,880 (log.py: 20) - on IpComBox Selected: 192.168.1.5:5555
 Zlogger INFO 2022-03-19 17:44:26,880 (log.py: 20) - exec cmd: adb devices
 Zlogger INFO 2022-03-19 17:44:26,942 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 21:54:02,011 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 21:54:02,011 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 21:54:02,214 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 21:54:02,214 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 21:54:02,292 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 21:54:59,716 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 21:54:59,716 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 21:54:59,872 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 21:54:59,872 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 21:54:59,919 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 21:55:18,349 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 21:55:18,349 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 21:55:18,958 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 21:55:18,958 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 21:55:19,052 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 22:04:21,760 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 22:04:21,760 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 22:04:21,916 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 22:04:21,916 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 22:04:21,963 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 22:09:31,495 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 22:09:31,496 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 22:09:31,655 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 22:09:31,656 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 22:09:31,711 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 22:21:04,619 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 22:21:04,621 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 22:21:04,892 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 22:21:04,892 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 22:21:04,945 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 22:24:46,561 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 22:24:46,561 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 22:24:46,717 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 22:24:46,717 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 22:24:46,779 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 22:25:27,519 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 22:25:27,519 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 22:25:27,691 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 22:25:27,691 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 22:25:27,753 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-19 22:28:46,710 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-19 22:28:46,710 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-19 22:28:46,710 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-19 22:28:46,710 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-19 22:28:46,772 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 11:27:21,958 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 11:27:21,958 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 11:27:22,036 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
+Zlogger INFO 2022-03-20 11:27:22,036 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 11:27:22,176 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 12:46:57,387 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 12:46:57,387 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 12:46:57,387 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 12:46:57,387 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 12:46:57,481 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 12:48:42,589 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 12:48:42,591 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 12:48:42,598 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 12:48:42,599 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 12:48:42,652 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 12:58:21,124 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 12:58:21,125 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 12:58:21,133 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 12:58:21,133 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 12:58:21,191 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 13:01:19,610 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 13:01:19,611 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 13:01:19,618 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 13:01:19,618 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 13:01:19,674 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 13:01:33,541 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 13:01:33,542 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 13:01:33,548 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 13:01:33,549 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 13:01:33,603 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 13:01:42,094 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 13:01:42,095 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 13:01:42,102 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 13:01:42,103 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 13:01:42,158 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 13:01:50,758 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 13:01:50,759 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 13:01:50,766 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 13:01:50,766 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 13:01:50,811 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 13:02:21,482 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 13:02:21,483 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 13:02:21,490 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 13:02:21,490 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 13:02:21,542 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 13:03:00,833 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 13:03:00,835 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 13:03:00,843 (log.py: 20) - on IpComBox Selected: 
+Zlogger INFO 2022-03-20 13:03:00,843 (log.py: 20) - exec cmd: adb devices
+Zlogger INFO 2022-03-20 13:03:00,901 (log.py: 20) - result = 0
+Zlogger INFO 2022-03-20 14:00:25,195 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:00:25,198 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:00:25,255 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:00:59,534 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:00:59,535 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-20 14:01:17,212 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:01:17,213 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:01:17,219 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:02:39,711 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:02:39,713 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:02:39,719 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:03:13,165 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:03:13,167 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:03:13,175 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:03:29,323 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:03:29,324 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:03:29,332 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:04:18,696 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:04:18,698 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:04:18,706 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:04:30,625 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:04:30,626 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:04:30,633 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:20:37,280 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:20:37,281 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:20:37,286 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:21:46,538 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:21:46,540 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:21:46,546 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:29:27,420 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:29:27,421 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:29:27,427 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:29:45,972 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:29:45,974 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:29:45,981 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:29:50,148 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:29:50,149 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:29:50,158 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:30:13,954 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:30:13,955 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:30:13,963 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:32:33,582 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:32:33,583 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:32:33,590 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:34:32,775 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:34:32,776 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:34:32,783 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:35:03,606 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:35:03,607 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:35:03,613 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:35:09,300 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:35:09,301 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:35:09,309 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:38:05,367 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:38:05,369 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:38:05,375 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:39:30,063 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:39:30,064 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:39:30,073 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:39:42,241 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:39:42,242 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:39:42,249 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:42:07,176 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:42:07,177 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:42:07,183 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:42:26,112 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:42:26,114 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:42:26,122 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:42:58,581 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:42:58,582 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:42:58,591 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:43:10,569 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:43:10,570 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:43:10,579 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:44:44,900 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:44:44,901 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:44:44,907 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:45:38,344 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:45:38,345 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:45:38,351 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:45:52,985 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:45:52,986 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:45:52,993 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:47:06,586 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:47:06,588 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:47:06,594 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:48:42,134 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:48:42,135 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:48:42,141 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:49:12,896 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:49:12,897 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:49:12,903 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:50:24,150 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:50:24,151 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:50:24,159 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:54:43,851 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:54:43,852 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:54:43,858 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-20 14:55:12,022 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-20 14:55:12,023 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-20 14:55:12,029 (log.py: 26) - cmd exception.

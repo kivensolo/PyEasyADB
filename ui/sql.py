@@ -1,40 +1,132 @@
 import re
 import sqlite3
+from sqlite3 import Cursor
+
+from config.settings import DB_NAME
 
 
-class SqlHelper:
-    def __init__(self, name):
-        self.name = name
-        self.sqlObj = sqlite3.connect(name)
+class DBManager:
+    """
+    应用程序数据库管理类
+    """
+    TABLE_DEVICE = "device"
+    TABLE_PACKAGE = "package"
 
-        self.table_ip = "ip"  # ip数据表名
-        self.ip_column_address = "address"
-        self.ip_column_port = "port"
-        self.ip_column_usecounts = "counts"
+    def __init__(self):
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            cursor.execute(
+                'CREATE TABLE IF NOT EXISTS {0} '
+                '(ip varchar(20) primary key,port varchar(10) default \'0\',active binary(1) default 0)'
+                    .format(DBManager.TABLE_DEVICE))
+            cursor.execute('CREATE TABLE IF NOT EXISTS {0} (name varchar(50) primary key)'.format(DBManager.TABLE_PACKAGE))
+            # cursor.execute('create table if not exists '+DBManager.TABLE_HISTORY+
+            #                '(id integer primary key autoincrement, '
+            #                'name nvarchar(50) null,'
+            #                'url nvarchar(512) null,'
+            #                'date TIMESTAMP null,'
+            #                'favorite binary(1) default 0)')
+            # cursor.execute('create table if not exists '+DBManager.TABLE_FAVORITES+
+            #                ' (id integer primary key autoincrement, '
+            #                'name nvarchar(50) null,'
+            #                'url nvarchar(512) null,'
+            #                'date TIMESTAMP null,'
+            #                'history_id integer not null,'
+            #                'UNIQUE(history_id),'
+            #                'FOREIGN KEY (history_id) REFERENCES history_query(id))')
+            # cursor.execute('create table if not exists ' + DBManager.TABLE_CONFIGURATION +
+            #                ' (id integer primary key autoincrement,'
+            #                'config_key nvarchar(100) not null unique ,'
+            #                'config_value nvarchar(512) null )')
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close()
+            conn.close()
 
-        self.table_package = "package"  # 包名数据表名
-        self.pkg_column_name = "name"
+        # self.conn = sqlite3.connect(database_name)
 
-        self.cur = self.sqlObj.cursor()
+        # self.table_ip = "ip"  # ip数据表名
+        # self.ip_column_address = "address"
+        # self.ip_column_port = "port"
+        # self.ip_column_usecounts = "counts"
+        #
+        # self.table_package = "package"  # 包名数据表名
+        # self.pkg_column_name = "name"
+        #
+        # self.cursor = self.conn.cursor()
 
-    def createIpTable(self):
-        if not self.sqlObj:
-            return
-        # self.cur.execute("CREATE TABLE IF NOT EXISTS {0}(id INTEGER PRIMARY KEY,{1} TEXT,{2} INTEGER)"
-        #                  .format(self.table_ip, self.ipRow_Address, self.ipRow_UseCounts))
-        self.cur.execute('CREATE TABLE IF NOT EXISTS {0}({1} TEXT, {2} TEXT, {3} INTEGER)'
-                         .format(self.table_ip, self.ip_column_address,
-                                 self.ip_column_port, self.ip_column_usecounts))
+    def exec_sql(self, sql):
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            cursor: Cursor = conn.cursor()
+            cursor.execute(sql)
+            result = cursor.fetchall()
+        except Exception:
+            return []
+        finally:
+            cursor.close()
+            conn.close()
+        return result
+
+
+    # def createIpTable(self):
+    #     if not self.conn:
+    #         return
+    #     # self.cursor.execute("CREATE TABLE IF NOT EXISTS {0}(id INTEGER PRIMARY KEY,{1} TEXT,{2} INTEGER)"
+    #     #                  .format(self.table_ip, self.ipRow_Address, self.ipRow_UseCounts))
+    #     self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}({1} TEXT, {2} TEXT, {3} INTEGER)'
+    #                      .format(self.table_ip, self.ip_column_address,
+    #                              self.ip_column_port, self.ip_column_usecounts))
+    #     self.__commint()
+    #
+    # def createPkgTable(self):
+    #     # self.cursor.execute("CREATE TABLE IF NOT EXISTS {0}(id INTEGER PRIMARY KEY,{1} TEXT)"
+    #     #                  .format(self.table_package, self.pkg_column_name))
+    #     self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}({1} TEXT)'
+    #                      .format(self.table_package, self.pkg_column_name))
+    #     self.__commint()
+
+    # def insertPackageRow(self, package):
+    #     self.cursor.execute('INSERT INTO package VALUES (\'%s\')' % package)
+    #     self.__commint()
+
+    def updateData(self, newIp, idx=0):
+        self.cursor.execute('UPDATE {0} SET ip={1} WHERE id={2}'
+                         .format(self.table_ip, newIp, idx))
         self.__commint()
 
-    def createPkgTable(self):
-        # self.cur.execute("CREATE TABLE IF NOT EXISTS {0}(id INTEGER PRIMARY KEY,{1} TEXT)"
-        #                  .format(self.table_package, self.pkg_column_name))
-        self.cur.execute('CREATE TABLE IF NOT EXISTS {0}({1} TEXT)'
-                         .format(self.table_package, self.pkg_column_name))
-        self.__commint()
+    def queryData(self, column='*', table_name='default'):
+        return self.cursor.execute('SELECT {0} FROM {1}'.format(column, table_name))
 
-    def insertIpRow(self, ip="", port="5555", counts=0):
+    def get_all_device(self):
+        """
+        从数据库中获取所有设备信息
+        :return: 数据List集合
+        """
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            cursor: Cursor = conn.cursor()
+            cursor.execute('select * from %s' % DBManager.TABLE_DEVICE)
+            result = cursor.fetchall()
+        except Exception:
+            return []
+        finally:
+            cursor.close()
+            conn.close()
+        return result
+
+    def add_device_to_db(self, ip="", port="5555", active=0):
+        """
+        往设备信息表中插入新数据
+        :param ip:      ip数据
+        :param port:    端口数据
+        :param active:  是否激活状态(连接中)
+        :return:
+            Boolean: 状态
+            String ：结果描述
+        """
         ip_group = re.split(":", ip)
         host = ip
         _port = port
@@ -42,38 +134,30 @@ class SqlHelper:
             host = ip_group[0]
             _port = ip_group[1]
         # 处理ip格式
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            # 同一ip有多条端口数据  优化，改为一条数据
+            sql_cmd = 'SELECT * FROM device WHERE ip =\'{0}\''.format(ip)
+            result = cursor.execute(sql_cmd)
+            for item in result:
+                if item and item[1] == _port:
+                    return False, "此设备已有记录,无需再次添加！"
 
-        c = self.cur.execute('SELECT * FROM {0} WHERE {1}=\'{2}\''
-                             .format(self.table_ip, self.ip_column_address, ip))
-        for item in c:
-            if item:
-                if item[1] == _port:
-                    return False, "此IP已存在,无需再次添加！"
+            # cursor.execute("delete from device where ip = \'" + ip + "\'")
+            cursor.execute('INSERT INTO device VALUES (\'{0}\',{1}, {2})'.format(host, _port, active))
+            conn.commit()
+            return True, '设备已入库'
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close()
+            conn.close()
 
-        self.cur.execute('INSERT INTO {0} VALUES (\'{1}\',{2},{3})'
-                         .format(self.table_ip, host, _port, counts))
-        # 插入新数据
-
-        self.__commint()
-        return True, ''
-
-    def insertPackageRow(self, package):
-        self.cur.execute('INSERT INTO {0} VALUES (\'{1}\')'
-                         .format(self.table_package, package))
-        self.__commint()
-
-    def updateData(self, newIp, idx=0):
-        self.cur.execute('UPDATE {0} SET ip={1} WHERE id={2}'
-                         .format(self.table_ip, newIp, idx))
-        self.__commint()
-
-    def queryData(self, column='*', tableName='default'):
-        return self.cur.execute('SELECT {0} FROM {1}'
-                                .format(column, tableName))
 
     def __commint(self):
-        self.sqlObj.commit()
+        self.conn.commit()
 
     def closeAll(self):
-        self.cur.close()
-        self.sqlObj.close()
+        self.cursor.close()
+        self.conn.close()

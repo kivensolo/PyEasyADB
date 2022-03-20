@@ -5,10 +5,11 @@ from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, Q
     QStatusBar, QToolTip, qApp, QTextEdit, QLineEdit, QVBoxLayout, QGroupBox, QGridLayout, QHBoxLayout, QMainWindow, \
     QToolBar, QSplitter, QTreeView, QAbstractItemView, QWidget
 
-from config.settings import PATH_LOGO_ICON, APP_VERSION
+from config.settings import PATH_LOGO_ICON, APP_VERSION, DB_NAME
 from logcat import log
 from ui import DevicePage
 from ui.DeviceGroup import OldUIManager
+from ui.sql import DBManager
 from ui.widget.ButtomConsoleWindow import ButtomWindow
 from ui.widget.NewConnectDialog import NewConnectDialog
 from utils.UITools import IconTool
@@ -29,6 +30,10 @@ class MainWindow(BaseWindow):
     def __init__(self):
         super().__init__()
         self.initWindow()
+
+        # 初始化数据库帮助类
+        self.dbManager = DBManager()
+
         # 主窗口分割器
         self.main_splitter = None
         # 内容显示的分割器
@@ -65,12 +70,14 @@ class MainWindow(BaseWindow):
         self.content_splitter.addWidget(self.center_panel)
         self.content_splitter.setStretchFactor(0, 3)
         self.content_splitter.setStretchFactor(1, 5)
+        self.content_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
         self.main_splitter = QSplitter(Qt.Vertical)
         self.main_splitter.setHandleWidth(0)
         self.main_splitter.addWidget(self.content_splitter)
         self.main_splitter.addWidget(self.bottom_console_window)
         self.main_splitter.setStretchFactor(0, 5)
         self.main_splitter.setStretchFactor(1, 4)
+        self.main_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
         self.setCentralWidget(self.main_splitter)
 
         initBtnTips()
@@ -106,14 +113,15 @@ class MainWindow(BaseWindow):
     @pyqtSlot()
     def add_new_connect(self):
         print("slot_a1 ")
-        new_connect = NewConnectDialog()
-        new_connect.finishSignal.connect(self.onExecConnect)
-        new_connect.show()
+        new_connect = NewConnectDialog(self)
+        # new_connect.finishSignal.connect(self.onExecConnect)
+        new_connect.setWindowModality(Qt.ApplicationModal)
+        new_connect.exec()
         # FIXME 执行dialog show之后，应用退出
 
-    def onExecConnect(self, url):
-        print("onExecConnect ")
-        self.statusBar().showMessage(url)
+    # def onExecConnect(self, url):
+    #     print("onExecConnect ")
+    #     self.statusBar().showMessage(url)
 
     def init_center_panel(self):
         self.center_panel = QWidget()
@@ -129,9 +137,14 @@ class MainWindow(BaseWindow):
         self.center_panel.setLayout(layout)
 
     def init_left_panel(self):
+        """
+        初始化左侧面板
+        :return: None
+        """
         self.left_panel = QWidget()
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 6, 0)  # left, top, right, bottom
+        # 创建tree_view
         tree_view = QTreeView()
         layout.addWidget(tree_view)
         self.left_panel.setLayout(layout)
@@ -140,24 +153,34 @@ class MainWindow(BaseWindow):
         # stackedWidget_param.setObjectName("stackedWidget_param")
         # stackedWidget_param.setGeometry(QtCore.QRect(1, 70, 220, 400))
         # stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
+
+        # |-TreeRoot
         tree_model = QStandardItemModel()
+
+        # |--Devices
         device_item = QStandardItem("Devices")
         device_item.type = 'deviceRoot'
         device_item.removeRows(0, device_item.rowCount())
-        # TODO 获取设备信息
-        row = QStandardItem("192.168.1.1")
-        row.name = "ZTE"
-        row.type = "TV"
-        device_item.appendRow(row)
-        tree_model.appendColumn([device_item])
+        other_item = QStandardItem("Other")
+        all_device = self.dbManager.get_all_device()
+        # TODO 自定义排序规则
+        all_device.sort()
+        for device in all_device:
+            ip = device[0]
+            item = QStandardItem(ip)
+            item.name = "test"
+            item.type = "Device"
+            device_item.appendRow(item)
+        tree_model.appendColumn([device_item, other_item])
+        # setHeaderData 要放在appendColumn之后
         tree_model.setHeaderData(0, Qt.Horizontal, '设备信息')
-
-        # 数据绑定至UI
-        tree_view.setModel(tree_model)
         tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        # 数据绑定至UI
+        tree_view.setModel(tree_model)
         # tree_view.customContextMenuRequested.connect(self.openContextMenu)
         tree_view.doubleClicked.connect(self.onTreeItemDoubleClicked)
+        # TODO 切换设备信息页面
         # tree_view.clicked.connect(self.getDebugData)
 
     def init_status_bar(self):
@@ -231,10 +254,9 @@ class MainWindow(BaseWindow):
     #     stackedWidget_func.setCurrentIndex(0) 切换至选中页
 
     def initWindow(self):
-        # 窗口初始化
-        super(MainWindow, self).initWindow()
+        self.resize(int(Utils.getWindowWidth()*0.618), int(Utils.getWindowHeight()*0.618))
         self.statusBar().showMessage('ready')
-        self.resize(int(Utils.getWindowWidth()*0.8), int(Utils.getWindowHeight()*0.8))
+        super(MainWindow, self).initWindow()
 
     def setupUi(self):
         """ 初始化View  """

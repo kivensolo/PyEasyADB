@@ -4,9 +4,9 @@ from PyQt5.QtGui import QFont, QPixmap, QColor
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QLabel, QComboBox, QTextEdit, QGridLayout, \
     QHBoxLayout, QGroupBox, QVBoxLayout
 
-from config.settings import SQL_NAME
+from config.settings import DB_NAME
 from logcat import log
-from ui.sql import SqlHelper
+from ui.sql import DBManager
 from utils import Tools
 from utils.Tools import getKTFontStyle, getWRYHFontStyle
 
@@ -30,11 +30,6 @@ class OldUIManager:
         # self.switchBtn.setGeometry(10, 10, 60, 30)
         # self.switchBtn.checkedChanged.connect(self.getState)
 
-        # ip控件初始化
-        self.add_new_ip = QPushButton(parent)  # 添加ip按钮
-        self.add_new_ip.setText('添加')
-        self.et_newIp = QLineEdit(parent)  # 添加ip控件
-        self.et_newIp.setFont(QFont('Helvetica', 14))
         self.btn_disconnect = QPushButton(parent)
         self.btn_disconnect.setText('断开')
         self.btn_connect = QPushButton(parent)
@@ -68,7 +63,7 @@ class OldUIManager:
         # 控制台view初始化
         # self.consoleView = QTextEdit(parent)
 
-        self.sqlHelper = SqlHelper(SQL_NAME)
+        # self.sqlHelper = DBManager(DB_NAME)
 
         self.selected_ip = ''
         self.selected_pkg = ''
@@ -120,8 +115,6 @@ class OldUIManager:
         self.gridlayout.addWidget(self.btn_connect, 1, 2)
         self.gridlayout.addWidget(self.btn_disconnect, 1, 3)
         self.gridlayout.addWidget(self.linkImageStateView, 1, 4)
-        self.gridlayout.addWidget(self.et_newIp, 1, 5)
-        self.gridlayout.addWidget(self.add_new_ip, 1, 6)
         # self.gridlayout.addWidget(self.switchBtn, 1, 6)
 
         # 第2行
@@ -181,14 +174,6 @@ class OldUIManager:
         # self.linkImageStateView.setStyleSheet("background:rgb(164,111,255)")
         self.linkImageStateView.setObjectName("linkedView")
 
-        # 添加新ip
-        self.et_newIp.setGeometry(QtCore.QRect(0, 0, 191, 31))
-        self.et_newIp.setObjectName("edit_newIp")
-        self.add_new_ip.setGeometry(QtCore.QRect(0, 0, 71, 31))
-        self.add_new_ip.setObjectName("btn_addNewIp")
-        self.add_new_ip.setFont(getKTFontStyle())
-        self.add_new_ip.clicked.connect(self.onIpAdd)
-
         # 包名提示&选择
         self.pkg_Tip.setGeometry(QtCore.QRect(0, 0, 111, 41))
         self.pkg_Tip.setFont(getKTFontStyle())
@@ -199,7 +184,6 @@ class OldUIManager:
         self.pkgComboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
         self.pkgComboBox.setObjectName("pkgComboBoxView")
         self.pkgComboBox.setFont(getWRYHFontStyle())
-        self.initPkgData()
         self.selected_pkg = self.pkgComboBox.currentText()
         self.pkg_inputEditText.setGeometry(QtCore.QRect(0, 0, 261, 31))
         self.pkg_inputEditText.setObjectName("package_add")
@@ -254,10 +238,10 @@ class OldUIManager:
         从数据库初始化ip数据信息
         :return:
         """
-        if not self.sqlHelper:
-            print('init ip data failed !')
-            return
-        self.sqlHelper.createIpTable()
+        # if not self.sqlHelper:
+        #     print('init ip data failed !')
+        #     return
+        # self.sqlHelper.createIpTable()
         self.updateIpComBox()
 
     def updateIpComBox(self):
@@ -265,18 +249,18 @@ class OldUIManager:
         更新ipComBox数据显示
         :return:
         """
-        if not self.sqlHelper:
-            return
-        cur = self.sqlHelper.queryData(tableName=self.sqlHelper.table_ip)
-        self.ipComboBox.clear()
-        for item in cur:
-            if item:
-                try:
-                    data = "{0}:{1}".format(item[0], item[1])
-                    self.ipComboBox.addItem(data)
-                except Exception:
-                    continue
-        self.selected_ip = self.ipComboBox.currentText()
+        # if not self.sqlHelper:
+        #     return
+        # cur = self.sqlHelper.queryData(table_name=self.sqlHelper.table_ip)
+        # self.ipComboBox.clear()
+        # for item in cur:
+        #     if item:
+        #         try:
+        #             data = "{0}:{1}".format(item[0], item[1])
+        #             self.ipComboBox.addItem(data)
+        #         except Exception:
+        #             continue
+        # self.selected_ip = self.ipComboBox.currentText()
         self.onIpComBoxSelected()
 
     def onIpComBoxSelected(self):
@@ -284,61 +268,32 @@ class OldUIManager:
         ip选择框被选中的回调
         :return:
         """
-        self.selected_ip = self.ipComboBox.currentText()
-        log.d('on IpComBox Selected: ' + self.selected_ip)
-        status, result = Tools.exec_cmd('adb devices')
-        if status:
-            isConnected = self.selected_ip in result
-            OldUIManager.isDeviceConnected = isConnected
-            self.changeConnectBtnState(not isConnected, isConnected)
-        else:
-            log.e('cmd exception.')
-
-    def onIpAdd(self):
-        new_ip = self.et_newIp.text()
-        if not new_ip:
-            self.toast(" 请先输入ip数据 !")
-            return
-
-        match = Tools.isIpMatches(new_ip)
-        if not match:
-            self.toast("无效参数！")
-            return
-
-        state, msg = self.sqlHelper.insertIpRow(new_ip)
-        if state:
-            self.updateIpComBox()
-            self.toast(" 添加成功 !")
-        else:
-            self.toast(msg)
+        # self.selected_ip = self.ipComboBox.currentText()
+        # log.d('on IpComBox Selected: ' + self.selected_ip)
+        # status, result = Tools.exec_cmd('adb devices')
+        # if status:
+        #     isConnected = self.selected_ip in result
+        #     OldUIManager.isDeviceConnected = isConnected
+        #     self.changeConnectBtnState(not isConnected, isConnected)
+        # else:
+        log.e('cmd exception.')
 
     def toast(self, msg):
         self.windows.statusBar().showMessage(" {0}".format(msg))
-
-    def initPkgData(self):
-        """
-        从数据库初始化包名数据信息
-        :return:
-        """
-        if not self.sqlHelper:
-            print('init pkg data failed !')
-            return
-        self.sqlHelper.createPkgTable()
-        self.updatePkgComBox()
 
     def updatePkgComBox(self):
         """
         更新PkgComBox数据显示
         :return:
         """
-        if not self.sqlHelper:
-            return
-        cur = self.sqlHelper.queryData(column=self.sqlHelper.pkg_column_name,
-                                       tableName=self.sqlHelper.table_package)
-        self.pkgComboBox.clear()
-        for item in cur:
-            if item:
-                self.pkgComboBox.addItem(item[0])
+        # if not self.sqlHelper:
+        #     return
+        # cur = self.sqlHelper.queryData(column=self.sqlHelper.pkg_column_name,
+        #                                table_name=self.sqlHelper.table_package)
+        # self.pkgComboBox.clear()
+        # for item in cur:
+        #     if item:
+        #         self.pkgComboBox.addItem(item[0])
         self.selected_pkg = self.pkgComboBox.currentText()
 
     def DoIpAction(self, act):
@@ -404,9 +359,7 @@ class OldUIManager:
             self.toast(" 请先添加有效包名 !!!")
             return
         print("addNewPkg() --- " + new_pkg)
-        self.sqlHelper.insertPackageRow(new_pkg)
-        self.updatePkgComBox()
-        self.toast(" 新包名已添加 !!!")
+        # self.sqlHelper.insertPackageRow(new_pkg)
 
     def updateConnectStateImg(self):
         # 更新连接状态图标

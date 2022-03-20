@@ -13,8 +13,8 @@ from lxml import etree
 
 
 class Utils(object):
-    windowWidth = 1080
-    windowHeight = 720
+    windowWidth = 1920
+    windowHeight = 1080
     itemHeight = 30
 
     # @staticmethod
