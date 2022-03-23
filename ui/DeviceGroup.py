@@ -276,7 +276,7 @@ class OldUIManager:
         #     OldUIManager.isDeviceConnected = isConnected
         #     self.changeConnectBtnState(not isConnected, isConnected)
         # else:
-        log.e('cmd exception.')
+        log.e('onIpComBoxSelected.')
 
     def toast(self, msg):
         self.windows.statusBar().showMessage(" {0}".format(msg))

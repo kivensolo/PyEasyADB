@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QSize, QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex
+from PyQt5.QtCore import QSize, QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QTimer
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor, QStandardItemModel, QStandardItem
 from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, QLabel, QMenuBar, QMenu, QAction, \
@@ -12,6 +12,7 @@ from ui.DeviceGroup import OldUIManager
 from ui.sql import DBManager
 from ui.widget.ButtomConsoleWindow import ButtomWindow
 from ui.widget.NewConnectDialog import NewConnectDialog
+from utils.CmdExecutor import CmdExecutor
 from utils.UITools import IconTool
 from utils.UiWidgts import AppPushButton
 from utils.Utils import Utils
@@ -22,7 +23,23 @@ def initBtnTips():
     # 这种静态的方法设置一个用于显示工具提示的字体。这里使用10px滑体字体。
     QToolTip.setFont(QFont('SansSerif', 10))
 
+
+def get_cmd_executor(finish_callback):
+    """
+     获取命令执行对象
+    :param finish_callback: 命令执行完毕的回调函数
+    :return: cmd执行者对象实例
+    """
+    executor = CmdExecutor()
+    executor.setFinishCallback(finish_callback)
+    return executor
+
+
 class MainWindow(BaseWindow):
+    tree_model = None
+    # 本地缓存ip数据
+    local_ip_List = []
+
     """
     QMainWindow 类提供了一个主要的应用程序窗口。
     用它可以让应用程序添加状态栏,工具栏和菜单栏。
@@ -40,10 +57,16 @@ class MainWindow(BaseWindow):
         self.content_splitter = None
         # 底部控制台窗口
         self.bottom_console_window = None
-
+        # 左侧面板相关变量
         self.left_panel = None
+        self.tree_view = None
+
         self.center_panel = None
         self.right_panel = None
+
+        self.currentCmd = 'adb devices'
+        self.active_ip_list = []
+
         self.init_all_ui()
         self.show()
 
@@ -99,7 +122,7 @@ class MainWindow(BaseWindow):
         toolbar.setContentsMargins(5, 5, 5, 5)
         toolbar.setStyleSheet("QWidget{background-color:rgb(229,229,229);border:none}")
         icon = IconTool.buildQIcon("new_connect.png")
-        tool_item_add_new = AppPushButton(toolbar, self.add_new_connect)
+        tool_item_add_new = AppPushButton(toolbar, self.add_new_device)
         tool_item_add_new.setStyleSheet("QPushButton:pressed{background-color:rgb(206,220,232)}")
         tool_item_add_new.setIcon(icon)
         tool_item_add_new.setStatusTip("新建连接")
@@ -111,13 +134,16 @@ class MainWindow(BaseWindow):
         self.addToolBar(toolbar)
 
     @pyqtSlot()
-    def add_new_connect(self):
-        print("slot_a1 ")
-        new_connect = NewConnectDialog(self)
-        # new_connect.finishSignal.connect(self.onExecConnect)
-        new_connect.setWindowModality(Qt.ApplicationModal)
-        new_connect.exec()
-        # FIXME 执行dialog show之后，应用退出
+    def add_new_device(self):
+        print("add new device\n")
+        new_connect_dialog = NewConnectDialog(self)
+        # new_connect_dialog.finishSignal.connect(self.on_new_device_added)
+        new_connect_dialog.setWindowModality(Qt.ApplicationModal)
+        new_connect_dialog.exec()
+
+    def on_new_device_added(self):
+        pass
+
 
     # def onExecConnect(self, url):
     #     print("onExecConnect ")
@@ -141,47 +167,60 @@ class MainWindow(BaseWindow):
         初始化左侧面板
         :return: None
         """
-        self.left_panel = QWidget()
         layout = QVBoxLayout()
+        self.left_panel = QWidget()
         layout.setContentsMargins(0, 0, 6, 0)  # left, top, right, bottom
         # 创建tree_view
-        tree_view = QTreeView()
-        layout.addWidget(tree_view)
+        self.tree_view = QTreeView()
+        layout.addWidget(self.tree_view)
         self.left_panel.setLayout(layout)
 
         # stackedWidget_param = QtWidgets.QStackedWidget(self)  # QStackedWidget表示多分页的窗口
         # stackedWidget_param.setObjectName("stackedWidget_param")
         # stackedWidget_param.setGeometry(QtCore.QRect(1, 70, 220, 400))
         # stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
+        # TODO 需要先查一遍设备
+        self.update_tree_view()
+        # TODO 切换设备信息页面
+        # tree_view.clicked.connect(self.getDebugData)
 
-        # |-TreeRoot
-        tree_model = QStandardItemModel()
-
-        # |--Devices
+    def update_tree_view(self):
+        """
+        更新tree_view的数据样式
+        :param tree_view:
+        :return:
+        TODO 优化，学习TreeView 只需要刷新数据，而不需要重新构建UI
+        """
+        tree_view = self.tree_view
+        self.tree_model = QStandardItemModel()
         device_item = QStandardItem("Devices")
         device_item.type = 'deviceRoot'
         device_item.removeRows(0, device_item.rowCount())
         other_item = QStandardItem("Other")
+        self.local_ip_List.clear()
         all_device = self.dbManager.get_all_device()
         # TODO 自定义排序规则
         all_device.sort()
         for device in all_device:
-            ip = device[0]
-            item = QStandardItem(ip)
-            item.name = "test"
+            addr = device[0] + ":" + device[1]  # ip:port
+            self.local_ip_List.append(addr)
+            if addr in self.active_ip_list:
+                qicon = IconTool.buildQIcon("logo.png")
+            else:
+                qicon = IconTool.buildQIcon("logo_gray.png")
+            item = QStandardItem(qicon, addr)
+            item.ip = addr
             item.type = "Device"
             device_item.appendRow(item)
-        tree_model.appendColumn([device_item, other_item])
+        self.tree_model.appendColumn([device_item, other_item])
         # setHeaderData 要放在appendColumn之后
-        tree_model.setHeaderData(0, Qt.Horizontal, '设备信息')
-        tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tree_model.setHeaderData(0, Qt.Horizontal, '设备信息')
         tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # 数据绑定至UI
-        tree_view.setModel(tree_model)
+        tree_view.setModel(self.tree_model)
         # tree_view.customContextMenuRequested.connect(self.openContextMenu)
         tree_view.doubleClicked.connect(self.onTreeItemDoubleClicked)
-        # TODO 切换设备信息页面
-        # tree_view.clicked.connect(self.getDebugData)
 
     def init_status_bar(self):
         statusbar = QStatusBar(self)
@@ -265,8 +304,50 @@ class MainWindow(BaseWindow):
     @pyqtSlot(QModelIndex)
     def onTreeItemDoubleClicked(self, index):
         # 当树状item被点击时，可以通过获取item类型来处罚设备点击逻辑
-        item = self.treeModel.itemFromIndex(index)
-        print("onTreeItemDoubleClicked %s" % item.type)
+        item = self.tree_model.itemFromIndex(index)
+        print("onTreeItemDoubleClicked %s" % item.ip)
+        self.connect_device(item.ip)
+
+# ----------------------------------ADB 操作 START-----------------------------------------------
+    def connect_device(self, addr):
+        # timer = QTimer()
+        # timer.start(500)
+        self.currentCmd = "adb connect %s" % addr
+        self._invoke_adb_cmd()
+
+    @pyqtSlot()
+    def check_device_status(self):
+        self.currentCmd = 'adb devices'
+        self._invoke_adb_cmd()
+
+    def _invoke_adb_cmd(self):
+        log.d("_invoke_adb_cmd")
+        cmdExecutor = get_cmd_executor(self.on_adb_cmd_exectued)
+        cmdExecutor.exec(self.currentCmd)
+
+    def on_adb_cmd_exectued(self, result):
+        # check current cmd
+        # for r in result:
+        #     print(r)
+        log.d("on_adb_cmd_exectued")
+
+        if "cmdExectuedTimeout" in result:
+            print("cmdExectuedTimeout")
+            return
+        if self.currentCmd.startswith('adb connect'):
+            self.check_device_status()
+        elif self.currentCmd == 'adb devices':
+            for r in result: # ['List of devices attached\r', '172.31.10.236:5555\tdevice\r', '\r', '']
+                # 找到连接成功的设备
+                print("devices=" + r)
+                log.d("devices=" + r)
+                if r in self.local_ip_List:
+                    # 修改图标的颜色
+                    self.active_ip_list.append(r)
+                    # print("\n 当前ips：" + self.active_ip_list)
+            # 更新设备状态
+# ----------------------------------ADB 操作 END-----------------------------------------------
+
 
 def dpiAuto():
     """
