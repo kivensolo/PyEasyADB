@@ -1,601 +1,232 @@
-Zlogger INFO 2022-03-18 17:01:10,993 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 17:01:19,910 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 17:01:19,910 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-18 17:01:30,788 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 17:01:30,788 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-18 17:01:30,875 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-18 17:01:30,906 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-18 17:01:30,907 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-18 18:10:23,679 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 18:10:23,679 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-18 18:10:23,779 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-18 18:10:23,801 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-18 18:10:23,804 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-18 18:12:56,396 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 18:12:56,396 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-18 18:12:56,452 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-18 18:12:56,459 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-18 18:12:56,460 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-18 18:17:02,795 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 18:17:02,796 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-18 18:17:02,869 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-18 18:17:02,877 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-18 18:17:02,878 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-18 18:21:29,174 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 18:21:29,174 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-18 18:21:29,237 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-18 18:21:29,244 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-18 18:21:29,245 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-18 18:24:38,651 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 18:24:38,651 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-18 18:24:38,745 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-18 18:24:38,753 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-18 18:24:38,754 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-18 18:29:21,357 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-18 18:29:21,359 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-18 18:29:21,690 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-18 18:29:21,691 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-18 18:29:21,834 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 10:54:50,875 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 10:54:50,875 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 10:54:51,234 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 10:54:51,234 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 10:54:51,281 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:10:47,353 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:10:47,353 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:10:47,728 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:10:47,728 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:10:47,790 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:11:04,522 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:11:04,522 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:11:04,678 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:11:04,678 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:11:04,741 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:11:59,663 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:11:59,679 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:11:59,851 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:11:59,851 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:11:59,960 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:12:15,759 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:12:15,759 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:12:15,931 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:12:15,931 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:12:15,978 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:14:21,516 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:14:21,516 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:14:21,672 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:14:21,672 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:14:21,719 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:22:37,234 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:22:37,234 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:22:37,437 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:22:37,437 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:22:37,500 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:23:15,106 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:23:15,106 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:23:15,263 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:23:15,263 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:23:15,310 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:23:22,830 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:23:22,830 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:23:22,986 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:23:22,986 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:23:23,033 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:24:45,457 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:24:45,457 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:24:45,613 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:24:45,613 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:24:45,706 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:24:57,267 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:24:57,267 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:24:57,454 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:24:57,454 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:24:57,516 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:25:14,461 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:25:14,461 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:25:14,632 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:25:14,632 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:25:14,679 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:25:15,399 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:25:15,399 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:25:16,039 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:25:16,039 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:25:16,102 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:25:23,611 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:25:23,611 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:25:23,782 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:25:23,782 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:25:23,829 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 12:25:31,222 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 12:25:31,222 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 12:25:31,378 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 12:25:31,378 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 12:25:31,425 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:02:40,797 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:02:40,813 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:02:41,188 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:02:41,188 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:02:41,266 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:02:58,467 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:02:58,467 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:02:58,639 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:02:58,639 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:02:58,686 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:04:26,682 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:04:26,682 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:04:27,276 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:04:27,276 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:04:27,354 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:04:44,039 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:04:44,055 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:04:44,414 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:04:44,414 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:04:44,508 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:05:41,851 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:05:41,851 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:05:42,195 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:05:42,195 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:05:42,304 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:06:19,692 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:06:19,692 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:06:19,864 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:06:19,864 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:06:19,926 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:06:25,559 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:06:25,559 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:06:25,715 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:06:25,715 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:06:25,762 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:06:37,250 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:06:37,266 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:06:37,406 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:06:37,406 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:06:37,453 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:07:05,455 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:07:05,455 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:07:05,627 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:07:05,627 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:07:05,658 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:07:28,099 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:07:28,099 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:07:28,255 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:07:28,255 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:07:28,302 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:07:34,233 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:07:34,233 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:07:34,390 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:07:34,390 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:07:34,437 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:08:07,503 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:08:07,503 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:08:07,675 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:08:07,675 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:08:07,722 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:10:33,709 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:10:33,709 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:10:33,865 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:10:33,865 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:10:33,912 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:13:07,687 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:13:07,687 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:13:07,858 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:13:07,858 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:13:07,905 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:48:55,038 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:48:55,038 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:48:55,241 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:48:55,241 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:48:55,304 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:49:56,246 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:49:56,246 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:49:56,434 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:49:56,434 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:49:56,480 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:51:22,507 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:51:22,507 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:51:22,911 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:51:22,911 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:51:22,974 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:53:43,169 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:53:43,169 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:53:43,342 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:53:43,342 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:53:43,389 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:55:51,922 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:55:51,922 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:55:52,078 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:55:52,078 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:55:52,141 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 14:59:55,575 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 14:59:55,575 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 14:59:55,778 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 14:59:55,779 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 14:59:55,826 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:04:24,161 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:04:24,161 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:04:24,333 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:04:24,333 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:04:24,380 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:16:44,826 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:16:44,826 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:16:44,983 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:16:44,983 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:16:45,873 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:17:02,601 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:17:02,617 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:17:02,773 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:17:02,789 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:17:02,836 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:19:09,777 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:19:09,777 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:19:09,944 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:19:09,944 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:19:09,991 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:19:47,008 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:19:47,008 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:19:47,211 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:19:47,211 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:19:47,258 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:20:10,979 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:20:10,979 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:20:11,151 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:20:11,151 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:20:11,198 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:21:20,085 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:21:20,085 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:21:20,336 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:21:20,336 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:21:20,382 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:23:22,801 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:23:22,801 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:23:22,972 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:23:22,972 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:23:23,019 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:23:36,666 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:23:36,666 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:23:41,323 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:23:41,323 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:23:41,370 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:24:32,636 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:24:32,636 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:24:32,808 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:24:32,808 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:24:32,855 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 15:26:01,286 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 15:26:01,286 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 15:26:01,443 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 15:26:01,443 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 15:26:01,489 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:10:02,412 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:10:02,412 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:10:02,725 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:10:02,725 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:10:02,803 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:10:27,041 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:10:27,041 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:10:27,197 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:10:27,197 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:10:27,260 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:10:57,823 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:10:57,823 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:10:57,995 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:10:57,995 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:10:58,057 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:11:04,049 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:11:04,049 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:11:04,206 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:11:04,206 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:11:04,237 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:11:17,645 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:11:17,661 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:11:17,817 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:11:17,817 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:11:17,864 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:11:36,134 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:11:36,134 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:11:36,338 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:11:36,338 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:11:36,400 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:11:48,682 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:11:48,682 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:11:48,870 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:11:48,870 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:11:48,932 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:19:43,902 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:19:43,902 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:19:44,073 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:19:44,073 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:19:44,120 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:19:52,156 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:19:52,156 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:19:52,593 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:19:52,593 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:19:52,656 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:20:23,749 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:20:23,749 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:20:23,906 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:20:23,906 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:20:23,968 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:20:39,874 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:20:39,890 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:20:40,046 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:20:40,046 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:20:40,093 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:20:53,353 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:20:53,353 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:20:53,540 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:20:53,540 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:20:53,587 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:21:04,805 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:21:04,805 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:21:04,962 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:21:04,962 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:21:05,009 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:21:12,818 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:21:12,833 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:21:13,005 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:21:13,005 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:21:13,052 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:21:38,905 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:21:38,905 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:21:39,063 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:21:39,063 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:21:39,109 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:41:47,350 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 17:41:47,350 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 17:41:47,507 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-19 17:41:47,507 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:41:47,570 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:42:51,553 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:42:51,553 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:42:51,606 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:25,855 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:25,855 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:25,902 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:27,587 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:27,587 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:27,640 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:28,508 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:28,508 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:28,560 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:29,324 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:29,325 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:29,378 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:30,036 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:30,037 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:30,089 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:32,522 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:32,523 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:32,576 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:33,962 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:33,962 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:34,015 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:37,579 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:37,579 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:37,633 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:39,760 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:39,760 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:43:39,806 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:43:44,157 (log.py: 20) - cmd ---> adb connect 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:44,157 (log.py: 20) - exec cmd: adb connect 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:43:46,268 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:44:03,242 (log.py: 20) - cmd ---> adb disconnect 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:44:03,242 (log.py: 20) - exec cmd: adb disconnect 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:44:03,291 (log.py: 20) - result = 1
-Zlogger INFO 2022-03-19 17:44:05,767 (log.py: 20) - cmd ---> adb disconnect 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:44:05,767 (log.py: 20) - exec cmd: adb disconnect 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:44:05,813 (log.py: 20) - result = 1
-Zlogger INFO 2022-03-19 17:44:14,971 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:44:14,971 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:44:15,025 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:44:16,856 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:44:16,856 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:44:16,909 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:44:20,456 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:44:20,456 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:44:20,509 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:44:22,404 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 17:44:22,405 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:44:22,461 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:44:25,201 (log.py: 20) - on IpComBox Selected: 192.168.1.4:5555
-Zlogger INFO 2022-03-19 17:44:25,201 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:44:25,247 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 17:44:26,880 (log.py: 20) - on IpComBox Selected: 192.168.1.5:5555
-Zlogger INFO 2022-03-19 17:44:26,880 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 17:44:26,942 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 21:54:02,011 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 21:54:02,011 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 21:54:02,214 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 21:54:02,214 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 21:54:02,292 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 21:54:59,716 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 21:54:59,716 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 21:54:59,872 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 21:54:59,872 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 21:54:59,919 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 21:55:18,349 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 21:55:18,349 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 21:55:18,958 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 21:55:18,958 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 21:55:19,052 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 22:04:21,760 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 22:04:21,760 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 22:04:21,916 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 22:04:21,916 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 22:04:21,963 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 22:09:31,495 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 22:09:31,496 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 22:09:31,655 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 22:09:31,656 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 22:09:31,711 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 22:21:04,619 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 22:21:04,621 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 22:21:04,892 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 22:21:04,892 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 22:21:04,945 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 22:24:46,561 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 22:24:46,561 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 22:24:46,717 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 22:24:46,717 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 22:24:46,779 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 22:25:27,519 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 22:25:27,519 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 22:25:27,691 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 22:25:27,691 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 22:25:27,753 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-19 22:28:46,710 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-19 22:28:46,710 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-19 22:28:46,710 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-19 22:28:46,710 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-19 22:28:46,772 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 11:27:21,958 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 11:27:21,958 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 11:27:22,036 (log.py: 20) - on IpComBox Selected: 192.168.1.1:5555
-Zlogger INFO 2022-03-20 11:27:22,036 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 11:27:22,176 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 12:46:57,387 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 12:46:57,387 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 12:46:57,387 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 12:46:57,387 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 12:46:57,481 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 12:48:42,589 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 12:48:42,591 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 12:48:42,598 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 12:48:42,599 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 12:48:42,652 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 12:58:21,124 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 12:58:21,125 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 12:58:21,133 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 12:58:21,133 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 12:58:21,191 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 13:01:19,610 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 13:01:19,611 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 13:01:19,618 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 13:01:19,618 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 13:01:19,674 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 13:01:33,541 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 13:01:33,542 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 13:01:33,548 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 13:01:33,549 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 13:01:33,603 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 13:01:42,094 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 13:01:42,095 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 13:01:42,102 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 13:01:42,103 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 13:01:42,158 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 13:01:50,758 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 13:01:50,759 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 13:01:50,766 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 13:01:50,766 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 13:01:50,811 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 13:02:21,482 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 13:02:21,483 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 13:02:21,490 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 13:02:21,490 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 13:02:21,542 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 13:03:00,833 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 13:03:00,835 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 13:03:00,843 (log.py: 20) - on IpComBox Selected: 
-Zlogger INFO 2022-03-20 13:03:00,843 (log.py: 20) - exec cmd: adb devices
-Zlogger INFO 2022-03-20 13:03:00,901 (log.py: 20) - result = 0
-Zlogger INFO 2022-03-20 14:00:25,195 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:00:25,198 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:00:25,255 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:00:59,534 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:00:59,535 (log.py: 20) - initMenuBars
-Zlogger INFO 2022-03-20 14:01:17,212 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:01:17,213 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:01:17,219 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:02:39,711 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:02:39,713 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:02:39,719 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:03:13,165 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:03:13,167 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:03:13,175 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:03:29,323 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:03:29,324 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:03:29,332 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:04:18,696 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:04:18,698 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:04:18,706 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:04:30,625 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:04:30,626 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:04:30,633 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:20:37,280 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:20:37,281 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:20:37,286 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:21:46,538 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:21:46,540 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:21:46,546 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:29:27,420 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:29:27,421 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:29:27,427 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:29:45,972 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:29:45,974 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:29:45,981 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:29:50,148 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:29:50,149 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:29:50,158 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:30:13,954 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:30:13,955 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:30:13,963 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:32:33,582 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:32:33,583 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:32:33,590 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:34:32,775 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:34:32,776 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:34:32,783 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:35:03,606 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:35:03,607 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:35:03,613 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:35:09,300 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:35:09,301 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:35:09,309 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:38:05,367 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:38:05,369 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:38:05,375 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:39:30,063 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:39:30,064 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:39:30,073 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:39:42,241 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:39:42,242 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:39:42,249 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:42:07,176 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:42:07,177 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:42:07,183 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:42:26,112 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:42:26,114 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:42:26,122 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:42:58,581 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:42:58,582 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:42:58,591 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:43:10,569 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:43:10,570 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:43:10,579 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:44:44,900 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:44:44,901 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:44:44,907 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:45:38,344 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:45:38,345 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:45:38,351 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:45:52,985 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:45:52,986 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:45:52,993 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:47:06,586 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:47:06,588 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:47:06,594 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:48:42,134 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:48:42,135 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:48:42,141 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:49:12,896 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:49:12,897 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:49:12,903 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:50:24,150 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:50:24,151 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:50:24,159 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:54:43,851 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:54:43,852 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:54:43,858 (log.py: 26) - cmd exception.
-Zlogger INFO 2022-03-20 14:55:12,022 (log.py: 20) - initMenuBar :: actions
-Zlogger INFO 2022-03-20 14:55:12,023 (log.py: 20) - initMenuBars
-Zlogger ERROR 2022-03-20 14:55:12,029 (log.py: 26) - cmd exception.
+Zlogger INFO 2022-03-22 16:52:13,132 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 16:52:13,133 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 16:52:13,143 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 16:52:26,521 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 16:52:26,523 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 16:52:26,534 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 16:52:30,899 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 16:52:30,900 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 16:52:30,911 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 16:54:48,284 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 16:54:48,285 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 16:58:49,603 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 16:58:49,604 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 16:58:56,235 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 16:58:56,236 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:01:13,681 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:01:13,683 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:01:20,937 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:01:20,940 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:01:20,965 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:01:31,167 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:01:31,170 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:01:50,969 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:02:03,869 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:02:03,870 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:02:13,598 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:02:13,600 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:02:21,031 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:03:40,838 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:03:40,841 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:04:24,194 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:04:24,196 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:04:31,721 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:04:31,724 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:04:45,686 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:04:45,688 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:04:55,986 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:05:37,178 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:05:37,180 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:05:44,244 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:05:44,246 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:05:47,589 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:10:13,647 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:10:13,649 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:10:20,326 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:10:33,618 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:10:33,619 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:10:39,977 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:10:50,730 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:10:50,731 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:10:55,081 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:11:01,989 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:11:01,991 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:11:11,211 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:11:11,212 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:13:46,733 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:13:46,734 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:14:39,800 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:14:39,801 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:14:39,817 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:17:57,043 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:17:57,045 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:18:08,365 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:18:08,366 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:18:08,375 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:18:20,005 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:18:20,007 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:18:20,017 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:18:43,632 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:18:43,633 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:18:43,640 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:19:05,194 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:19:05,195 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:19:05,202 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:19:11,890 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:19:11,892 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:19:11,899 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:19:54,963 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:19:54,965 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:19:55,018 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:19:58,638 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:19:58,639 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:19:58,645 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:20:07,729 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:20:07,731 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:20:07,745 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:20:58,937 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:20:58,938 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:20:58,945 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:21:31,984 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:21:31,985 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:22:03,373 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:22:03,374 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:22:03,381 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:22:21,925 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:22:21,926 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:22:21,936 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:22:39,923 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:22:39,925 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:22:39,936 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:22:42,435 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-22 17:23:24,333 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:23:24,335 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:23:24,341 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:23:26,844 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-22 17:23:35,723 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:23:35,724 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:23:35,732 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:37:33,093 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-22 17:38:17,593 (log.py: 20) - on_adb_cmd_exectued
+Zlogger INFO 2022-03-22 17:38:17,594 (log.py: 20) - devices=List of devices attached
+Zlogger INFO 2022-03-22 17:38:17,594 (log.py: 20) - devices=172.31.10.236:5555	device
+Zlogger INFO 2022-03-22 17:38:17,595 (log.py: 20) - devices=
+Zlogger INFO 2022-03-22 17:38:17,596 (log.py: 20) - devices=
+Zlogger INFO 2022-03-22 17:38:43,722 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:38:43,724 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:38:43,733 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:38:44,374 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-22 17:38:49,329 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:38:49,330 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:38:49,338 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:38:52,344 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-22 17:39:00,976 (log.py: 20) - on_adb_cmd_exectued
+Zlogger INFO 2022-03-22 17:39:00,977 (log.py: 20) - devices=List of devices attached
+Zlogger INFO 2022-03-22 17:39:00,977 (log.py: 20) - devices=172.31.10.236:5555	device
+Zlogger INFO 2022-03-22 17:39:00,978 (log.py: 20) - devices=
+Zlogger INFO 2022-03-22 17:39:00,978 (log.py: 20) - devices=
+Zlogger INFO 2022-03-22 17:44:24,112 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:44:24,114 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:44:24,123 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:44:33,834 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:44:33,836 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:44:33,842 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-22 17:44:51,901 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:44:51,902 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:44:51,906 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-22 17:45:35,599 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:45:35,600 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-22 17:45:35,602 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-22 17:50:56,898 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-22 17:50:56,899 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-22 17:50:56,909 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:08:58,346 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:08:58,349 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:08:58,414 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:14:01,070 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:14:01,072 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:14:01,085 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:14:20,216 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-24 19:31:38,274 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:31:38,275 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:31:38,284 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:40:53,094 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:40:53,095 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:40:53,105 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:41:40,703 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:41:40,801 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:41:40,817 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:43:32,287 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:43:32,288 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:43:33,031 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:43:47,811 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:43:47,812 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:43:48,137 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:44:34,383 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:44:34,384 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:44:34,722 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:46:33,305 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:46:33,306 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:46:34,027 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:47:59,305 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:47:59,306 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:47:59,870 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:48:17,651 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-24 19:50:05,592 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:50:05,593 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-24 19:50:16,738 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:50:16,739 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:50:16,902 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:50:28,902 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:50:28,903 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:50:32,360 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:53:26,187 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:53:26,188 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:53:26,351 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:53:39,600 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:53:39,601 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:53:39,801 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:53:51,313 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:53:51,314 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:53:51,497 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:54:17,780 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:54:17,781 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:54:17,960 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:54:26,748 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:54:26,749 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:54:26,907 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:54:33,852 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:54:33,853 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:54:34,008 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:54:37,911 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:54:37,912 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:54:38,106 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:54:50,059 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:54:50,061 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:54:50,231 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:56:03,564 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:56:03,565 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:56:03,728 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:56:35,668 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 19:56:35,669 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 19:56:35,941 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 19:56:38,170 (log.py: 20) - _invoke_adb_cmd
+Zlogger INFO 2022-03-24 20:01:51,010 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 20:01:51,012 (log.py: 20) - initMenuBars
+Zlogger INFO 2022-03-24 20:02:03,609 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 20:02:03,612 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 20:02:04,658 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 20:02:37,060 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 20:02:37,061 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 20:02:37,409 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 20:03:42,828 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 20:03:42,829 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 20:03:43,182 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 20:04:26,884 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 20:04:26,886 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 20:04:27,133 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 20:06:10,791 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 20:06:10,792 (log.py: 20) - initMenuBars
+Zlogger ERROR 2022-03-24 20:06:10,954 (log.py: 26) - onIpComBoxSelected.
+Zlogger INFO 2022-03-24 20:09:13,796 (log.py: 20) - initMenuBar :: actions
+Zlogger INFO 2022-03-24 20:09:13,797 (log.py: 20) - initMenuBars

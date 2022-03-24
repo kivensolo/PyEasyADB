@@ -28,7 +28,7 @@ class DeviceA_Area(QWidget):
 
         # 创建a2图标
         self.btn_a2 = AppPushButton(self, self.slot_a2)
-        self.btn_a2.setText("a2")
+        self.btn_a2.setText("a22222")
         self.hLayout.addWidget(self.btn_a2)
 
         # 创建a3图标

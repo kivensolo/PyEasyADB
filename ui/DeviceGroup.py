@@ -30,11 +30,6 @@ class OldUIManager:
         # self.switchBtn.setGeometry(10, 10, 60, 30)
         # self.switchBtn.checkedChanged.connect(self.getState)
 
-        self.btn_disconnect = QPushButton(parent)
-        self.btn_disconnect.setText('断开')
-        self.btn_connect = QPushButton(parent)
-        self.btn_connect.setText('连接')
-
         self.deviceImageView = QLabel(parent)
         self.deviceImageView.setPixmap(QPixmap(OldUIManager.resImages['Device']))
 
@@ -112,9 +107,7 @@ class OldUIManager:
         # 第1行
         self.gridlayout.addWidget(self.deviceImageView, 1, 0)
         self.gridlayout.addWidget(self.ipComboBox, 1, 1)
-        self.gridlayout.addWidget(self.btn_connect, 1, 2)
-        self.gridlayout.addWidget(self.btn_disconnect, 1, 3)
-        self.gridlayout.addWidget(self.linkImageStateView, 1, 4)
+        self.gridlayout.addWidget(self.linkImageStateView, 1, 2)
         # self.gridlayout.addWidget(self.switchBtn, 1, 6)
 
         # 第2行
@@ -157,17 +150,6 @@ class OldUIManager:
         self.initIpData()
         self.ipComboBox.activated[str].connect(lambda: self.onIpComBoxSelected())
 
-        self.btn_connect.setGeometry(QtCore.QRect(0, 0, 71, 31))
-        self.btn_connect.setObjectName("connect")
-        # self.btn_connect.setStyleSheet("background:rgb(164,111,255)")
-        # self.btn_connect.setStyleSheet("color:rgb(126,255,46)")
-        self.btn_connect.setFont(getKTFontStyle())
-        self.btn_connect.clicked.connect(lambda: self.DoIpAction(self.btn_connect.objectName()))
-
-        self.btn_disconnect.setGeometry(QtCore.QRect(0, 0, 71, 31))
-        self.btn_disconnect.setObjectName("disconnect")
-        self.btn_disconnect.setFont(getKTFontStyle())
-        self.btn_disconnect.clicked.connect(lambda: self.DoIpAction(self.btn_disconnect.objectName()))
 
         #
         self.linkImageStateView.setGeometry(QtCore.QRect(0, 0, 71, 31))
@@ -307,16 +289,12 @@ class OldUIManager:
             return
         cmd = "adb {0} {1}".format(act, self.selected_ip)
         log.d("cmd ---> " + cmd)
-        self.updateLogView("cmd ---> " + cmd)
         status, result = Tools.exec_cmd(cmd)
         if status:
             if act == 'connect':
                 self.changeConnectBtnState(False, True)
-                deviceInfo = Tools.getDeviceInfo()
-                self.updateLogView("Connect with ---> " + deviceInfo)
             else:
                 self.changeConnectBtnState(True, False)
-                self.updateLogView(result)
 
     @staticmethod
     def doAdbCmd(isShell=False, parms=None):
@@ -342,10 +320,6 @@ class OldUIManager:
         :return:
         """
         OldUIManager.isDeviceConnected = not conEnable
-        self.btn_connect.setCheckable(conEnable)
-        self.btn_connect.setEnabled(conEnable)
-        self.btn_disconnect.setCheckable(disConEnable)
-        self.btn_disconnect.setEnabled(disConEnable)
         if disConEnable:
             resType = 'Linked'
         else:
@@ -363,8 +337,4 @@ class OldUIManager:
 
     def updateConnectStateImg(self):
         # 更新连接状态图标
-        pass
-
-    def updateLogView(self, info=''):
-        # self.consoleView.setPlainText(info)
         pass

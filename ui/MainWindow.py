@@ -151,15 +151,27 @@ class MainWindow(BaseWindow):
 
     def init_center_panel(self):
         self.center_panel = QWidget()
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
         # left, top, right, bottom
         layout.setContentsMargins(5, 5, 5, 5)
-        centralwidget = QWidget(self)
-        centralwidget.setObjectName("centralwidget")
-        centralwidget.setStyleSheet("background-color: #0000")
+        # centralwidget = QWidget(self)
         # centralwidget.setGeometry(QtCore.QRect(221, 70, 500, 400))
-        OldUIManager(self, centralwidget).initViews()
-        layout.addWidget(centralwidget)
+        # 创建设备信息 的多分页窗口
+        self.stacked_device_info = QtWidgets.QStackedWidget(self)  # QStackedWidget表示多分页的窗口
+        self.stacked_device_info.setObjectName("stackedWidget_param")
+        self.stacked_device_info.setGeometry(221, 70, 500, 400)
+        # self.stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
+        # 创建分页对象，并载入分页
+        file_page = DevicePage.DeviceA_Area()
+        common_page = DevicePage.DeviceB_Area()
+        advance_page = DevicePage.DeviceA_Area()
+        self.stacked_device_info.addWidget(file_page)
+        self.stacked_device_info.addWidget(common_page)
+        self.stacked_device_info.addWidget(advance_page)
+        self.stacked_device_info.setCurrentIndex(0) #切换至选中页
+
+        # OldUIManager(self, centralwidget).initViews()
+        layout.addWidget(self.stacked_device_info)
         self.center_panel.setLayout(layout)
 
     def init_left_panel(self):
@@ -175,52 +187,10 @@ class MainWindow(BaseWindow):
         layout.addWidget(self.tree_view)
         self.left_panel.setLayout(layout)
 
-        # stackedWidget_param = QtWidgets.QStackedWidget(self)  # QStackedWidget表示多分页的窗口
-        # stackedWidget_param.setObjectName("stackedWidget_param")
-        # stackedWidget_param.setGeometry(QtCore.QRect(1, 70, 220, 400))
-        # stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
         # TODO 需要先查一遍设备
         self.update_tree_view()
         # TODO 切换设备信息页面
         # tree_view.clicked.connect(self.getDebugData)
-
-    def update_tree_view(self):
-        """
-        更新tree_view的数据样式
-        :param tree_view:
-        :return:
-        TODO 优化，学习TreeView 只需要刷新数据，而不需要重新构建UI
-        """
-        tree_view = self.tree_view
-        self.tree_model = QStandardItemModel()
-        device_item = QStandardItem("Devices")
-        device_item.type = 'deviceRoot'
-        device_item.removeRows(0, device_item.rowCount())
-        other_item = QStandardItem("Other")
-        self.local_ip_List.clear()
-        all_device = self.dbManager.get_all_device()
-        # TODO 自定义排序规则
-        all_device.sort()
-        for device in all_device:
-            addr = device[0] + ":" + device[1]  # ip:port
-            self.local_ip_List.append(addr)
-            if addr in self.active_ip_list:
-                qicon = IconTool.buildQIcon("logo.png")
-            else:
-                qicon = IconTool.buildQIcon("logo_gray.png")
-            item = QStandardItem(qicon, addr)
-            item.ip = addr
-            item.type = "Device"
-            device_item.appendRow(item)
-        self.tree_model.appendColumn([device_item, other_item])
-        # setHeaderData 要放在appendColumn之后
-        self.tree_model.setHeaderData(0, Qt.Horizontal, '设备信息')
-        tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        # 数据绑定至UI
-        tree_view.setModel(self.tree_model)
-        # tree_view.customContextMenuRequested.connect(self.openContextMenu)
-        tree_view.doubleClicked.connect(self.onTreeItemDoubleClicked)
 
     def init_status_bar(self):
         statusbar = QStatusBar(self)
@@ -273,25 +243,6 @@ class MainWindow(BaseWindow):
         # 将menu添加到menubar上
         self.setMenuBar(menubar)
 
-    def init_test_func_group(self):
-        # 创建二级菜单栏 的多分页窗口
-        stackedWidget_func = QtWidgets.QStackedWidget(self) # QStackedWidget表示多分页的窗口
-        stackedWidget_func.setObjectName("stackedWidget_func")
-        stackedWidget_func.setGeometry(QtCore.QRect(0, 20, 1280, 50))
-        stackedWidget_func.setStyleSheet(
-            "QWidget{background-color:rgb(211,240,168);border:none}"
-        )
-
-        # 2.2 创建分页对象，并载入分页
-        file_page = DevicePage.DeviceA_Area()
-        stackedWidget_func.addWidget(file_page)
-        common_page = DevicePage.DeviceB_Area()
-        stackedWidget_func.addWidget(common_page)
-        advance_page = DevicePage.DeviceA_Area()
-        stackedWidget_func.addWidget(advance_page)
-
-    #     stackedWidget_func.setCurrentIndex(0) 切换至选中页
-
     def initWindow(self):
         self.resize(int(Utils.getWindowWidth()*0.618), int(Utils.getWindowHeight()*0.618))
         self.statusBar().showMessage('ready')
@@ -301,12 +252,64 @@ class MainWindow(BaseWindow):
         """ 初始化View  """
         # 基础Qt Widget
 
+# ----------------------------------左侧TreeView START-----------------------------------------------
+    def update_tree_view(self):
+        """
+        更新tree_view的数据样式
+        :param tree_view:
+        :return:
+        TODO 优化，学习TreeView 只需要刷新数据，而不需要重新构建UI
+        https://blog.csdn.net/qq_27061049/article/details/89641210
+        """
+        tree_view = self.tree_view
+        self.tree_model = QStandardItemModel()
+        device_item = QStandardItem("Devices")
+        device_item.type = 'deviceRoot'
+        device_item.removeRows(0, device_item.rowCount())
+        other_item = QStandardItem("Other")
+        self.local_ip_List.clear()
+        all_device = self.dbManager.get_all_device()
+        # TODO 自定义排序规则
+        all_device.sort()
+        for device in all_device:
+            addr = device[0] + ":" + device[1]  # ip:port
+            self.local_ip_List.append(addr)
+            if addr in self.active_ip_list:
+                qicon = IconTool.buildQIcon("logo.png")
+            else:
+                qicon = IconTool.buildQIcon("logo_gray.png")
+            item = QStandardItem(qicon, addr)
+            item.ip = addr
+            item.type = "Device"
+            device_item.appendRow(item)
+        self.tree_model.appendColumn([device_item, other_item])
+        # setHeaderData 要放在appendColumn之后
+        self.tree_model.setHeaderData(0, Qt.Horizontal, '设备信息')
+        tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # 数据绑定至UI
+        tree_view.setModel(self.tree_model)
+        # tree_view.customContextMenuRequested.connect(self.openContextMenu)
+        tree_view.doubleClicked.connect(self.onTreeItemDoubleClicked)
+        tree_view.clicked.connect(self.on_tree_item_clicked)
+
     @pyqtSlot(QModelIndex)
     def onTreeItemDoubleClicked(self, index):
         # 当树状item被点击时，可以通过获取item类型来处罚设备点击逻辑
         item = self.tree_model.itemFromIndex(index)
         print("onTreeItemDoubleClicked %s" % item.ip)
-        self.connect_device(item.ip)
+        # self.connect_device(item.ip)
+
+    @pyqtSlot(QModelIndex)
+    def on_tree_item_clicked(self, index):
+        # self.stackedWidget_param.setCurrentIndex(index)
+        item = self.tree_model.itemFromIndex(index)
+        if item.ip == "192.10.20.1:5555":
+            self.stacked_device_info.setCurrentIndex(1)
+        elif item.ip == "172.31.10.236:5555":
+            self.stacked_device_info.setCurrentIndex(0)
+        pass
+# ----------------------------------左侧TreeView End-----------------------------------------------
 
 # ----------------------------------ADB 操作 START-----------------------------------------------
     def connect_device(self, addr):
