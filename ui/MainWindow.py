@@ -296,19 +296,20 @@ class MainWindow(BaseWindow):
     @pyqtSlot(QModelIndex)
     def onTreeItemDoubleClicked(self, index):
         # 当树状item被点击时，可以通过获取item类型来处罚设备点击逻辑
-        item = self.tree_model.itemFromIndex(index)
-        print("onTreeItemDoubleClicked %s" % item.ip)
+        item = self.tree_model.itemFromIndex(index)  # QStandardItem
+        if item.type == "Device":
+            print("onTreeItemDoubleClicked %s" % item.ip)
         # self.connect_device(item.ip)
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):
         # self.stackedWidget_param.setCurrentIndex(index)
         item = self.tree_model.itemFromIndex(index)
-        if item.ip == "192.10.20.1:5555":
-            self.stacked_device_info.setCurrentIndex(1)
-        elif item.ip == "172.31.10.236:5555":
-            self.stacked_device_info.setCurrentIndex(0)
-        pass
+        if item.type == "Device":
+            if item.ip == "192.10.20.1:5555":
+                self.stacked_device_info.setCurrentIndex(1)
+            elif item.ip == "172.31.10.236:5555":
+                self.stacked_device_info.setCurrentIndex(0)
 # ----------------------------------左侧TreeView End-----------------------------------------------
 
 # ----------------------------------ADB 操作 START-----------------------------------------------
