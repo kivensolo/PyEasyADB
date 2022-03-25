@@ -2,6 +2,7 @@ import subprocess
 
 from logcat import log
 from utils import Tools
+from utils.CmdExecutor import CmdExecutor
 
 
 def DoIpAction(self, act):
@@ -22,6 +23,23 @@ def DoIpAction(self, act):
             deviceInfo = Tools.getDeviceInfo()
         else:
             self.changeConnectBtnState(True, False)
+
+
+def _do_adb_cmd(cmd, block):
+    log.d("do_adb_cmd: " + cmd)
+    executor = CmdExecutor()
+    executor.setFinishCallback(block)
+    executor.exec(cmd)
+
+
+def get_devices_state(block):
+    cmd = 'adb devices'
+    _do_adb_cmd(cmd, block)
+
+def connect_device(device_ip, block):
+    cmd = "adb connect %s" % device_ip
+    _do_adb_cmd(cmd, block)
+
 
 def getDeviceInfo():
     # model = 'UnKnow'

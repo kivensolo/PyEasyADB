@@ -5,7 +5,10 @@ from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 
 
 class CmdExecutor(QThread):
-
+    """
+    CMD命令执行的子线程
+    """
+    # 线程结束信号,信号包含内容都是一个list
     finishSignal = pyqtSignal(list)
 
     def __init__(self, parent=None):
@@ -18,25 +21,25 @@ class CmdExecutor(QThread):
         self._initConnectTimer()
 
     def _initConnectTimer(self):
-        self.connectTime = QTimer()
-        self.connectTime.timeout.connect(self._onCmdExectuedTimeout)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self._onCmdExectuedTimeout)
 
     def _onCmdExectuedTimeout(self):
         """
-        cmd执行超时的回调函数
+        cmd执行超时的槽函数
         :return:
         """
-        if self._intConnectTime >= 20:
-            self.requestInterruption()
-            self.connectTime.stop()
-            self.finishSignal.emit(['cmdExectuedTimeout'])
+        if self._intConnectTime >= 20:  # 超过20s
+            self.requestInterruption()  # 请求终止线程
+            self.timer.stop()
+            self.finishSignal.emit(['cmdExectuedTimeout'])  # 发送超时信号
         else:
             self._intConnectTime = self._intConnectTime + 1
 
     def exec(self, cmd):
         self.cmd = cmd
         self._intConnectTime = 0
-        self.connectTime.start(1000)
+        self.timer.start(1000)
         self.start()
 
     def threadFinish(self):
@@ -44,29 +47,31 @@ class CmdExecutor(QThread):
         if self.isRunning():
             self.wait()
         print(self.isFinished())
-        self.finishSignal.emit(self.l)
+        self.finishSignal.emit(self.result)  # 发送正常结束的信号
 
     def run(self):
         self.finished.connect(self.threadFinish)
         from subprocess import Popen, PIPE
-        p = Popen(self.cmd, stdout=PIPE, bufsize=-1)
-        stdout_data, stderr_data = p.communicate(input=None, timeout=None)
+        # 日志输出文件初始化 --- Start
+        _process = Popen(self.cmd, stdout=PIPE, bufsize=-1, encoding='utf-8')
+        stdout_data, stderr_data = _process.communicate(input=None, timeout=None)
         if stderr_data is not None:
-            print("CmdExecutor stderr_data = " + stderr_data.decode('utf-8'))
+            print("CmdExecutor stderr_data = " + stderr_data)
+            self.result = stderr_data.split('\n')
         if stdout_data is not None:
-            print("CmdExecutor stdout_data = "+stdout_data.decode('utf-8'))
-        self.l = stdout_data.decode('utf-8').split('\n')
-        # for line in iter(p.stdout.readline, b''):
+            print("CmdExecutor stdout_data = " + stdout_data)
+            self.result = stdout_data.split('\n')
+        # for line in iter(_process.stdout.readline, b''):
         #     l.append(line.decode('utf-8'))
         #     # print("aaaaaaaaaaaaaa : "+line.decode('utf-8'))
-        p.stdout.close()
-        # p.wait()
-        if self.isInterruptionRequested():
+        _process.stdout.close()   # close触发finish?
+        # _process.wait()
+        if self.isInterruptionRequested():  # 判断是否请求终止线程
             return
-        self.connectTime.stop()
+        self.timer.stop()
 
-    def setFinishCallback(self, block):
+    def setFinishCallback(self, get_slot):
         if self._lastCallback is not None:
             self.finishSignal.disconnect(self._lastCallback)
-        self.finishSignal.connect(block)
-        self._lastCallback = block
+        self.finishSignal.connect(get_slot)  # 连接信号与槽
+        self._lastCallback = get_slot

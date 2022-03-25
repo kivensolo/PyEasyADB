@@ -53,7 +53,7 @@ class ConsoleWindow(QMainWindow):
         self.clearButton.setIcon(icon)
         self.clearButton.setFixedWidth(18)
         self.clearButton.setFixedHeight(20)
-        self.clearButton.clicked.connect(self.clear)
+        self.clearButton.clicked.connect(self._clear)
         self.clearButton.setToolTip("Clear the logcat")
         self.setStyleSheet('''
             QPushButton{
@@ -82,10 +82,12 @@ class ConsoleWindow(QMainWindow):
         self.leftWiget.setFixedWidth(22)
 
         # 右
+        # 日志窗口控件初始化
         self.textEdit = QTextBrowser()
         self.textEdit.setOpenLinks(True)
         self.textEdit.setOpenExternalLinks(True)
         self.textEdit.setReadOnly(True)
+        self.textEdit.unsetCursor()
 
         self.rightWiget = QWidget()
         self.rightWiget.setAutoFillBackground(True)
@@ -102,8 +104,8 @@ class ConsoleWindow(QMainWindow):
         self.setCentralWidget(self.mainSplitter)
 
         # 重定向输出
-        sys.stdout = ConsoleEmittor(textWritten=self.normalOutputWritten)
-        sys.stderr = ConsoleEmittor(textWritten=self.normalOutputWritten)
+        # sys.stdout = ConsoleEmittor(textWritten=self.normalOutputWritten)
+        # sys.stderr = ConsoleEmittor(textWritten=self.normalOutputWritten)
 
     def normalOutputWritten(self, text):
         cursor = self.textEdit.textCursor()
@@ -122,9 +124,35 @@ class ConsoleWindow(QMainWindow):
         aboutAction = QAction(IconTool.buildQIcon('setting.png'), 'About', self)
         helpMenu.addAction(aboutAction)
 
-    def clear(self):
+    def append_line(self, msg):
+        self.textEdit.moveCursor(QTextCursor.End)
+        content = self.check_link_addr(msg)
+        log = "{0}: {1} <br />".format(self._buildStandardTime(), content)
+        self.textEdit.insertHtml(log)
+
+    def _clear(self):
         self.textEdit.clear()
         return
+
+    def _buildStandardTime(self):
+        import time
+        ct = time.time()
+        local_time = time.localtime(ct)
+        data_head = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+        data_secs = (ct - int(ct)) * 1000
+        time_stamp = "%s.%03d" % (data_head, data_secs)
+        return time_stamp
+
+    def check_link_addr(self, text):
+        if isinstance(text, str):
+            import re
+            regexUrl = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*,]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
+                                  re.IGNORECASE)
+            urls = regexUrl.findall(text)
+            for url in urls:
+                preS = "<a href=\"" + url + "\">" + url + "</a>"
+                text = text.replace(url, preS)
+        return text
 
 
 if __name__ == "__main__":

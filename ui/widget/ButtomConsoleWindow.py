@@ -4,6 +4,7 @@ import sys
 
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication
 
+from logcat.log import z_logger
 from ui.widget.ConsoleView import ConsoleWindow
 from utils.UITools import IconTool
 from utils.Utils import Utils
@@ -16,6 +17,7 @@ class ButtomWindow(QTabWidget):
     def __init__(self, parent=None):
         super(ButtomWindow, self).__init__(parent)
         self.consoleView = ConsoleWindow()
+        z_logger.add_gui_log_handler(self.consoleView)
         self.tabBar = QTabBar()
         self.init_ui()
 

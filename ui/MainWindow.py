@@ -1,17 +1,19 @@
 from PyQt5.QtCore import QSize, QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QTimer
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor, QStandardItemModel, QStandardItem
+from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, QLabel, QMenuBar, QMenu, QAction, \
     QStatusBar, QToolTip, qApp, QTextEdit, QLineEdit, QVBoxLayout, QGroupBox, QGridLayout, QHBoxLayout, QMainWindow, \
-    QToolBar, QSplitter, QTreeView, QAbstractItemView, QWidget
+    QToolBar, QSplitter, QTreeView, QAbstractItemView, QWidget, QTreeWidgetItem
 
 from config.settings import PATH_LOGO_ICON, APP_VERSION, DB_NAME
 from logcat import log
+from logcat.log import z_logger
 from ui import DevicePage
 from ui.DeviceGroup import OldUIManager
 from ui.sql import DBManager
 from ui.widget.ButtomConsoleWindow import ButtomWindow
 from ui.widget.NewConnectDialog import NewConnectDialog
+from utils import ADBTools
 from utils.CmdExecutor import CmdExecutor
 from utils.UITools import IconTool
 from utils.UiWidgts import AppPushButton
@@ -188,7 +190,7 @@ class MainWindow(BaseWindow):
         self.left_panel.setLayout(layout)
 
         # TODO 需要先查一遍设备
-        self.update_tree_view()
+        self.init_tree_view()
         # TODO 切换设备信息页面
         # tree_view.clicked.connect(self.getDebugData)
 
@@ -208,7 +210,7 @@ class MainWindow(BaseWindow):
         menubar.setObjectName("menubar")
         _translate = QtCore.QCoreApplication.translate
 
-        log.d('initMenuBar :: actions')
+        z_logger.debug('initMenuBar :: actions')
         # QAction可以操作菜单栏,工具栏,或自定义键盘快捷键
         act_close = QAction(self)
         act_close.setObjectName("act_close")
@@ -232,7 +234,7 @@ class MainWindow(BaseWindow):
             menus[1]: [act_exit]              # 菜单2对应的action
         }
 
-        log.d('initMenuBars')
+        z_logger.debug('initMenuBars')
         # 初始化菜单项
         for menu in menus:
             menu_item = menubar.addMenu(menu)
@@ -253,21 +255,26 @@ class MainWindow(BaseWindow):
         # 基础Qt Widget
 
 # ----------------------------------左侧TreeView START-----------------------------------------------
-    def update_tree_view(self):
+    def init_tree_view(self):
         """
         更新tree_view的数据样式
         :param tree_view:
         :return:
         TODO 优化，学习TreeView 只需要刷新数据，而不需要重新构建UI
         https://blog.csdn.net/qq_27061049/article/details/89641210
+        https://blog.csdn.net/seniorwizard/article/details/110199352?spm=1001.2101.3001.6650.8&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8.pc_relevant_default&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8.pc_relevant_default&utm_relevant_index=13
         """
-        tree_view = self.tree_view
+        # 表头信息
         self.tree_model = QStandardItemModel()
+
         device_item = QStandardItem("Devices")
-        device_item.type = 'deviceRoot'
+        # self.tree_model.setItem(0, 1, device_item2)
+        device_item.type = 'DeviceRoot'
         device_item.removeRows(0, device_item.rowCount())
         other_item = QStandardItem("Other")
+
         self.local_ip_List.clear()
+        # 获取所有本地缓存ip数据
         all_device = self.dbManager.get_all_device()
         # TODO 自定义排序规则
         all_device.sort()
@@ -282,30 +289,69 @@ class MainWindow(BaseWindow):
             item.ip = addr
             item.type = "Device"
             device_item.appendRow(item)
+        # 添加列
         self.tree_model.appendColumn([device_item, other_item])
         # setHeaderData 要放在appendColumn之后
         self.tree_model.setHeaderData(0, Qt.Horizontal, '设备信息')
-        tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree_view.customContextMenuRequested.connect(self.on_ip_menu_show) # 右键菜单显示函数
+        self.tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # 数据绑定至UI
-        tree_view.setModel(self.tree_model)
-        # tree_view.customContextMenuRequested.connect(self.openContextMenu)
-        tree_view.doubleClicked.connect(self.onTreeItemDoubleClicked)
-        tree_view.clicked.connect(self.on_tree_item_clicked)
+        self.tree_view.setModel(self.tree_model)
+        self.tree_view.doubleClicked.connect(self.onTreeItemDoubleClicked)
+        self.tree_view.clicked.connect(self.on_tree_item_clicked)
+        # 展开整个树形视图
+        self.tree_view.expandAll()
+
+        self.tree_view.contextMenu = QMenu()
+        self.actionC = self.tree_view.contextMenu.addAction(IconTool.buildQIcon("logo.png"), '| 删除设备')
+        # self.actionC.setShortcut('Ctrl+D')  #设置快捷键
+        self.actionC.triggered.connect(self.actionRemove)#连接删除功能函数
+        # self.actionC.setDisabled(True)
+        self.action_disconnect = self.tree_view.contextMenu.addAction(IconTool.buildQIcon("logo.png"), '| 断开连接')
+        # self.action_disconnect.setShortcut('Ctrl+S')  #设置快捷键
+        self.action_disconnect.triggered.connect(self.actionRemove)#连接删除功能函数
+
+    def on_ip_menu_show(self):
+        self.tree_view.contextMenu.move(QCursor.pos())  # 移动到鼠标点击位置
+        self.tree_view.contextMenu.show()
+
+    def actionRemove(self):
+        pass
+
+    def del_tree_node(self):
+        item_child = self.tree_view.currentItem()
+        root = self.tree_view.invisibleRootItem()
+        for item in self.tree_view.selectedItems():
+            (item.parent() or root).removeChild(item_child)
+        # 从数据库中移除
+
+    def add_tree_node(self, ip):
+        item_child = self.tree_view.currentItem()
+        node = QStandardItem(IconTool.buildQIcon("logo_gray.png"), ip)
+        node.ip = ip
+        node.type = "Device"
+        item_child.appendRow(node)
 
     @pyqtSlot(QModelIndex)
     def onTreeItemDoubleClicked(self, index):
         # 当树状item被点击时，可以通过获取item类型来处罚设备点击逻辑
         item = self.tree_model.itemFromIndex(index)  # QStandardItem
         if item.type == "Device":
-            print("onTreeItemDoubleClicked %s" % item.ip)
-        # self.connect_device(item.ip)
+            z_logger.debug("onTreeItemDoubleClicked %s" % item.ip)
+            self.connect_device(item.ip)
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):
         # self.stackedWidget_param.setCurrentIndex(index)
         item = self.tree_model.itemFromIndex(index)
-        if item.type == "Device":
+        if item.type == "DeviceRoot":
+            print("刷新设备状态")
+            self.check_device_status()
+            pass
+        elif item.type == "Device":
+            z_logger.debug("单点设备IP, 192.168.1.4")
+            z_logger.debug("http://192.168.1.111")
             if item.ip == "192.10.20.1:5555":
                 self.stacked_device_info.setCurrentIndex(1)
             elif item.ip == "172.31.10.236:5555":
@@ -314,18 +360,16 @@ class MainWindow(BaseWindow):
 
 # ----------------------------------ADB 操作 START-----------------------------------------------
     def connect_device(self, addr):
-        # timer = QTimer()
-        # timer.start(500)
-        self.currentCmd = "adb connect %s" % addr
-        self._invoke_adb_cmd()
+        ADBTools.connect_device(addr, self.on_adb_cmd_exectued)
 
     @pyqtSlot()
     def check_device_status(self):
-        self.currentCmd = 'adb devices'
-        self._invoke_adb_cmd()
+        # self.currentCmd = 'adb devices'
+        # self._invoke_adb_cmd()
+        ADBTools.get_devices_state(self.on_adb_cmd_exectued)
 
     def _invoke_adb_cmd(self):
-        log.d("_invoke_adb_cmd")
+        z_logger.debug("_invoke_adb_cmd")
         cmdExecutor = get_cmd_executor(self.on_adb_cmd_exectued)
         cmdExecutor.exec(self.currentCmd)
 
@@ -333,18 +377,20 @@ class MainWindow(BaseWindow):
         # check current cmd
         # for r in result:
         #     print(r)
-        log.d("on_adb_cmd_exectued")
-
+        z_logger.debug('on_adb_cmd_exectued')
         if "cmdExectuedTimeout" in result:
-            print("cmdExectuedTimeout")
+            z_logger.debug("cmdExectuedTimeout")
             return
         if self.currentCmd.startswith('adb connect'):
-            self.check_device_status()
+            if result.startswith('already connected to'):
+                z_logger.debug("Already connected!")
+            else:
+                z_logger.debug("Already connected!")
+                self.check_device_status()
         elif self.currentCmd == 'adb devices':
             for r in result: # ['List of devices attached\r', '172.31.10.236:5555\tdevice\r', '\r', '']
                 # 找到连接成功的设备
-                print("devices=" + r)
-                log.d("devices=" + r)
+                z_logger.debug("devices=" + r)
                 if r in self.local_ip_List:
                     # 修改图标的颜色
                     self.active_ip_list.append(r)

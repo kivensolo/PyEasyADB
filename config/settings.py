@@ -8,9 +8,12 @@ BASE_PATH = os.getcwd()
 
 # 日志配置
 LOGS_PATH = "%s\\logs" % BASE_PATH
+
 LOG_CMD_OUT = "pro_{0}.log".format(time.strftime("%Y-%m-%d"))
 LOG_CMD_ERROR = "pro_{0}.err".format(time.strftime("%Y-%m-%d"))
-LOG_APP_FILE = os.path.join(LOGS_PATH, ".".join(["log_esay_adb", "log"]))
+
+_Log_NAME = "log_{0}.log".format(time.strftime("%Y-%m-%d"))
+LOG_APP_FILE = os.path.join(LOGS_PATH, _Log_NAME)
 
 # 应用数据库名
 DB_NAME = "easyADB.db"
