@@ -11,6 +11,7 @@ class DBManager:
     """
     TABLE_DEVICE = "device"
     TABLE_PACKAGE = "package"
+    COLUMN_NAME = "name"
 
     def __init__(self):
         try:
@@ -18,8 +19,9 @@ class DBManager:
             cursor = conn.cursor()
             cursor.execute(
                 'CREATE TABLE IF NOT EXISTS {0} '
-                '(ip varchar(20) primary key,port varchar(10) default \'0\',active binary(1) default 0)'
-                    .format(DBManager.TABLE_DEVICE))
+                '(ip varchar(20) primary key,'
+                'port varchar(10) default \'0\','
+                'active binary(1) default 0)'.format(DBManager.TABLE_DEVICE))
             cursor.execute('CREATE TABLE IF NOT EXISTS {0} (name varchar(50) primary key)'.format(DBManager.TABLE_PACKAGE))
             # cursor.execute('create table if not exists '+DBManager.TABLE_HISTORY+
             #                '(id integer primary key autoincrement, '
@@ -62,6 +64,7 @@ class DBManager:
             conn = sqlite3.connect(DB_NAME)
             cursor: Cursor = conn.cursor()
             cursor.execute(sql)
+            conn.commit()
             result = cursor.fetchall()
         except Exception:
             return []
@@ -70,52 +73,25 @@ class DBManager:
             conn.close()
         return result
 
+    def insertPackageRow(self, package):
+        self.exec_sql('INSERT INTO {0} VALUES (\'{1}\')'.format(DBManager.TABLE_PACKAGE, package))
 
-    # def createIpTable(self):
-    #     if not self.conn:
-    #         return
-    #     # self.cursor.execute("CREATE TABLE IF NOT EXISTS {0}(id INTEGER PRIMARY KEY,{1} TEXT,{2} INTEGER)"
-    #     #                  .format(self.table_ip, self.ipRow_Address, self.ipRow_UseCounts))
-    #     self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}({1} TEXT, {2} TEXT, {3} INTEGER)'
-    #                      .format(self.table_ip, self.ip_column_address,
-    #                              self.ip_column_port, self.ip_column_usecounts))
-    #     self.__commint()
-    #
-    # def createPkgTable(self):
-    #     # self.cursor.execute("CREATE TABLE IF NOT EXISTS {0}(id INTEGER PRIMARY KEY,{1} TEXT)"
-    #     #                  .format(self.table_package, self.pkg_column_name))
-    #     self.cursor.execute('CREATE TABLE IF NOT EXISTS {0}({1} TEXT)'
-    #                      .format(self.table_package, self.pkg_column_name))
-    #     self.__commint()
-
-    # def insertPackageRow(self, package):
-    #     self.cursor.execute('INSERT INTO package VALUES (\'%s\')' % package)
-    #     self.__commint()
-
-    def updateData(self, newIp, idx=0):
-        self.cursor.execute('UPDATE {0} SET ip={1} WHERE id={2}'
-                         .format(self.table_ip, newIp, idx))
-        self.__commint()
+    def update_ip_data(self, newIp, idx=0):
+        sql = 'UPDATE {0} SET ip={1} WHERE id={2}'.\
+            format(DBManager.TABLE_DEVICE, newIp, idx)
+        self.exec_sql(sql)
 
     def queryData(self, column='*', table_name='default'):
-        return self.cursor.execute('SELECT {0} FROM {1}'.format(column, table_name))
+        sql = 'SELECT {0} FROM {1}'.format(column, table_name)
+        return self.exec_sql(sql)
 
     def get_all_device(self):
         """
         从数据库中获取所有设备信息
         :return: 数据List集合
         """
-        try:
-            conn = sqlite3.connect(DB_NAME)
-            cursor: Cursor = conn.cursor()
-            cursor.execute('select * from %s' % DBManager.TABLE_DEVICE)
-            result = cursor.fetchall()
-        except Exception:
-            return []
-        finally:
-            cursor.close()
-            conn.close()
-        return result
+        sql = 'select * from %s' % DBManager.TABLE_DEVICE
+        return self.exec_sql(sql)
 
     def add_device_to_db(self, ip="", port="5555", active=0):
         """
@@ -153,7 +129,6 @@ class DBManager:
         finally:
             cursor.close()
             conn.close()
-
 
     def __commint(self):
         self.conn.commit()

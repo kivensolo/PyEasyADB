@@ -19,7 +19,7 @@ def globalEditTextFontStyle():
     return QFont('Helvetica', 13)
 
 
-def getKTFontStyle(size=12,font=QFont.Bold):
+def getKTFontStyle(size=11, font=QFont.Bold):
     return QFont("楷体", size, font)
 
 

@@ -1,6 +1,17 @@
+from PyQt5 import QtCore
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
+
+from utils.Tools import getKTFontStyle
+
+
+class AppDeviceLabel(QLabel):
+    def __init__(self):
+        super().__init__()
+        self.setFont(getKTFontStyle())
+        self.setTextFormat(QtCore.Qt.AutoText)
+        self.setScaledContents(True)
 
 
 class AppPushButton(QPushButton):

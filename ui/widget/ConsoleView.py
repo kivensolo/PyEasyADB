@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import logging
 import sys
 
 from PyQt5.QtCore import Qt
@@ -8,7 +9,6 @@ from PyQt5.QtWidgets import QMainWindow, QAction, \
     QSplitter, QApplication, QWidget, QHBoxLayout, QComboBox, QPushButton, \
     QLineEdit, QSizePolicy, QVBoxLayout, QTextBrowser
 
-from utils.ConsoleStreamEmittor import ConsoleEmittor
 from utils.UITools import IconTool
 
 
@@ -21,7 +21,19 @@ class ConsoleWindow(QMainWindow):
     def __init__(self, parent=None):
         super(ConsoleWindow, self).__init__(parent)
         self.isConUrl = False
-
+        self.setStyleSheet('''
+            QPushButton{
+                border: none;
+                background-color: #0000 ;
+            }
+            
+            QPushButton:hover {
+                border: 1px solid #C0C0C0;
+                border-radius:2px;
+                background-color:#C0C0C0;  
+                border-style: solid;
+            }
+            ''')
         # 上
         self.searchButton = QLineEdit()
         self.searchButton.setPlaceholderText("搜索")
@@ -55,21 +67,6 @@ class ConsoleWindow(QMainWindow):
         self.clearButton.setFixedHeight(20)
         self.clearButton.clicked.connect(self._clear)
         self.clearButton.setToolTip("Clear the logcat")
-        self.setStyleSheet('''
-            QPushButton{
-                border: none;
-                background-color: #0000 ;
-            }
-            
-            QPushButton:hover {
-            border: 1px solid #C0C0C0;
-            background-color: yellow;
-            border-style: inset;
-            border-radius:2px;
-            background-color:#C0C0C0;  
-            border-style: solid;
-            }
-            ''')
 
         self.layoutLeft = QVBoxLayout()
         self.layoutLeft.setAlignment(Qt.AlignTop)
@@ -124,10 +121,14 @@ class ConsoleWindow(QMainWindow):
         aboutAction = QAction(IconTool.buildQIcon('setting.png'), 'About', self)
         helpMenu.addAction(aboutAction)
 
-    def append_line(self, msg):
+    def append_line(self, level, msg):
         self.textEdit.moveCursor(QTextCursor.End)
         content = self.check_link_addr(msg)
         log = "{0}: {1} <br />".format(self._buildStandardTime(), content)
+        if level >= logging.ERROR:
+            log = "<font color=\"red\">{0}</font>".format(log)
+        elif level == logging.WARNING:
+            log = "<font color=\"yellow\">{0}</font>".format(log)
         self.textEdit.insertHtml(log)
 
     def _clear(self):

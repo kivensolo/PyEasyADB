@@ -10,6 +10,7 @@ from logcat import log
 from logcat.log import z_logger
 from ui import DevicePage
 from ui.DeviceGroup import OldUIManager
+from ui.DeviceInfoView import DeviceInfoDetail
 from ui.sql import DBManager
 from ui.widget.ButtomConsoleWindow import ButtomWindow
 from ui.widget.NewConnectDialog import NewConnectDialog
@@ -158,19 +159,16 @@ class MainWindow(BaseWindow):
         layout.setContentsMargins(5, 5, 5, 5)
         # centralwidget = QWidget(self)
         # centralwidget.setGeometry(QtCore.QRect(221, 70, 500, 400))
+
         # 创建设备信息 的多分页窗口
         self.stacked_device_info = QtWidgets.QStackedWidget(self)  # QStackedWidget表示多分页的窗口
         self.stacked_device_info.setObjectName("stackedWidget_param")
         self.stacked_device_info.setGeometry(221, 70, 500, 400)
         # self.stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
         # 创建分页对象，并载入分页
-        file_page = DevicePage.DeviceA_Area()
-        common_page = DevicePage.DeviceB_Area()
-        advance_page = DevicePage.DeviceA_Area()
+        file_page = DeviceInfoDetail()
         self.stacked_device_info.addWidget(file_page)
-        self.stacked_device_info.addWidget(common_page)
-        self.stacked_device_info.addWidget(advance_page)
-        self.stacked_device_info.setCurrentIndex(0) #切换至选中页
+        self.stacked_device_info.setCurrentIndex(0)  # 切换至选中页
 
         # OldUIManager(self, centralwidget).initViews()
         layout.addWidget(self.stacked_device_info)
@@ -345,17 +343,16 @@ class MainWindow(BaseWindow):
     def on_tree_item_clicked(self, index):
         # self.stackedWidget_param.setCurrentIndex(index)
         item = self.tree_model.itemFromIndex(index)
-        if item.type == "DeviceRoot":
-            print("刷新设备状态")
+        if item.type == 'DeviceRoot':
+            z_logger.debug('刷新设备状态')
             self.check_device_status()
-            pass
         elif item.type == "Device":
             z_logger.debug("单点设备IP, 192.168.1.4")
             z_logger.debug("http://192.168.1.111")
-            if item.ip == "192.10.20.1:5555":
-                self.stacked_device_info.setCurrentIndex(1)
-            elif item.ip == "172.31.10.236:5555":
-                self.stacked_device_info.setCurrentIndex(0)
+            # if item.ip == "192.10.20.1:5555":
+            #     self.stacked_device_info.setCurrentIndex(1)
+            # elif item.ip == "172.31.10.236:5555":
+            # self.stacked_device_info.setCurrentIndex(0)
 # ----------------------------------左侧TreeView End-----------------------------------------------
 
 # ----------------------------------ADB 操作 START-----------------------------------------------
@@ -390,10 +387,11 @@ class MainWindow(BaseWindow):
         elif self.currentCmd == 'adb devices':
             for r in result: # ['List of devices attached\r', '172.31.10.236:5555\tdevice\r', '\r', '']
                 # 找到连接成功的设备
-                z_logger.debug("devices=" + r)
                 if r in self.local_ip_List:
-                    # 修改图标的颜色
-                    self.active_ip_list.append(r)
+                    z_logger.debug("devices=" + r)
+                    if not r:
+                        # 修改图标的颜色
+                        self.active_ip_list.append(r)
                     # print("\n 当前ips：" + self.active_ip_list)
             # 更新设备状态
 # ----------------------------------ADB 操作 END-----------------------------------------------

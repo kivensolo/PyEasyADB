@@ -41,18 +41,6 @@ class OldUIManager:
         pixMap = QPixmap(OldUIManager.resImages['Unlink'])
         self.linkImageStateView.setPixmap(pixMap)
 
-        # 包名控件初始化
-        self.pkg_Tip = QLabel(parent)
-        self.pkg_Tip.setText('目标App包名:')
-        self.pkgComboBox = QComboBox(parent)
-
-        self.btnAddNewPkg = QPushButton(parent)
-        self.btnAddNewPkg.setText("添加新包名:")
-        # self.btnAddNewPkg.setGeometry(QtCore.QRect(10, 100, 101, 31))
-        self.btnAddNewPkg.setObjectName("btn_addNewPkg")
-        self.btnAddNewPkg.setFont(getKTFontStyle())
-        self.btnAddNewPkg.clicked.connect(lambda: self.onPkgAdd())
-        self.pkg_inputEditText = QLineEdit(parent)
         self.activityClassPath = QLineEdit(parent)
 
         # 控制台view初始化
@@ -61,7 +49,6 @@ class OldUIManager:
         # self.sqlHelper = DBManager(DB_NAME)
 
         self.selected_ip = ''
-        self.selected_pkg = ''
 
         self.action_start = QPushButton(parent)
         self.action_start.setText("Start")
@@ -111,15 +98,11 @@ class OldUIManager:
         # self.gridlayout.addWidget(self.switchBtn, 1, 6)
 
         # 第2行
-        self.gridlayout.addWidget(self.pkg_Tip, 2, 0)
-        self.gridlayout.addWidget(self.pkgComboBox, 2, 1)
 
         # 第3行
         self.gridlayout.addWidget(self.btnAddNewPkg, 3, 0)
-        self.gridlayout.addWidget(self.pkg_inputEditText, 3, 1)
 
         # 第4行
-        self.gridlayout.addWidget(self.activityClassPath, 4, 1)
         self.gridlayout.addWidget(self.action_start, 4, 0)
 
         # self.gridGroupBox.setLayout(self.gridlayout)
@@ -147,40 +130,11 @@ class OldUIManager:
         self.ipComboBox.setGeometry(QtCore.QRect(0, 0, 181, 31))
         self.ipComboBox.setObjectName("ipComboBox")
         self.ipComboBox.setFont(getWRYHFontStyle())
-        self.initIpData()
         self.ipComboBox.activated[str].connect(lambda: self.onIpComBoxSelected())
 
-
-        #
         self.linkImageStateView.setGeometry(QtCore.QRect(0, 0, 71, 31))
         # self.linkImageStateView.setStyleSheet("background:rgb(164,111,255)")
         self.linkImageStateView.setObjectName("linkedView")
-
-        # 包名提示&选择
-        self.pkg_Tip.setGeometry(QtCore.QRect(0, 0, 111, 41))
-        self.pkg_Tip.setFont(getKTFontStyle())
-        self.pkg_Tip.setTextFormat(QtCore.Qt.AutoText)
-        self.pkg_Tip.setScaledContents(True)
-        self.pkg_Tip.setObjectName("pkgChoiceTips")
-
-        self.pkgComboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
-        self.pkgComboBox.setObjectName("pkgComboBoxView")
-        self.pkgComboBox.setFont(getWRYHFontStyle())
-        self.selected_pkg = self.pkgComboBox.currentText()
-        self.pkg_inputEditText.setGeometry(QtCore.QRect(0, 0, 261, 31))
-        self.pkg_inputEditText.setObjectName("package_add")
-        self.pkg_inputEditText.setFont(getWRYHFontStyle(12))
-
-        # 旧版consoleView
-        # self.consoleView.setGeometry(QtCore.QRect(0, 0, 864, 210))
-        # self.consoleView.setStyleSheet("background:rgb(128,128,128)")
-        # self.consoleView.setTextColor(QColor('yellow'))
-        # self.consoleView.setLineWrapMode(QTextEdit.NoWrap)  # 保持换行单词完整
-        # self.consoleView.setFontPointSize(13)
-
-        self.activityClassPath.setGeometry(QtCore.QRect(0, 0, 291, 31))
-        self.activityClassPath.setObjectName("class_path")
-        self.activityClassPath.setFont(getWRYHFontStyle(12))
 
         self.initPkgActionButtons()
 
@@ -214,17 +168,6 @@ class OldUIManager:
         currentPkgName = self.pkgComboBox.currentText()
         if currentPkgName:
             self.doAdbCmd(True, "{0} {1}{2} ".format(action, currentPkgName, params))
-
-    def initIpData(self):
-        """
-        从数据库初始化ip数据信息
-        :return:
-        """
-        # if not self.sqlHelper:
-        #     print('init ip data failed !')
-        #     return
-        # self.sqlHelper.createIpTable()
-        self.updateIpComBox()
 
     def updateIpComBox(self):
         """
@@ -326,14 +269,6 @@ class OldUIManager:
             resType = 'Unlink'
         pixMap = QPixmap(OldUIManager.resImages[resType])
         self.linkImageStateView.setPixmap(pixMap)
-
-    def onPkgAdd(self):
-        new_pkg = self.pkg_inputEditText.text()
-        if not new_pkg:
-            self.toast(" 请先添加有效包名 !!!")
-            return
-        print("addNewPkg() --- " + new_pkg)
-        # self.sqlHelper.insertPackageRow(new_pkg)
 
     def updateConnectStateImg(self):
         # 更新连接状态图标

@@ -137,7 +137,7 @@ class GuiLoggerHandler(logging.Handler):
     为UI控件提供的日志处理器
     """
     def emit(self, record):
-        self.editView.append_line(self.format(record))
+        self.editView.append_line(record.levelno, self.format(record))
 
 
 class WindowLogController:

@@ -1,6 +1,7 @@
 import subprocess
 
 from logcat import log
+from logcat.log import z_logger
 from utils import Tools
 from utils.CmdExecutor import CmdExecutor
 
@@ -15,7 +16,7 @@ def DoIpAction(self, act):
         print("数据异常，无法连接")
         return
     cmd = "adb {0} {1}".format(act, self.selected_ip)
-    log.d("cmd ---> " + cmd)
+    z_logger.debug("cmd ---> " + cmd)
     status, result = Tools.exec_cmd(cmd)
     if status:
         if act == 'connect':
@@ -25,20 +26,32 @@ def DoIpAction(self, act):
             self.changeConnectBtnState(True, False)
 
 
-def _do_adb_cmd(cmd, block):
-    log.d("do_adb_cmd: " + cmd)
+def _exec_cmd(cmd, block):
+    z_logger.debug("do_adb_cmd: " + cmd)
     executor = CmdExecutor()
     executor.setFinishCallback(block)
     executor.exec(cmd)
 
 
+def start_app_page(class_path, block):
+    """
+    根据class路径启动目标应用页面
+    :param class_path:
+    :param block:
+    :return:
+    """
+    adb_cmd = "adb shell am start -n {0}".format(class_path)
+    _exec_cmd(adb_cmd, block)
+
+
 def get_devices_state(block):
     cmd = 'adb devices'
-    _do_adb_cmd(cmd, block)
+    _exec_cmd(cmd, block)
+
 
 def connect_device(device_ip, block):
     cmd = "adb connect %s" % device_ip
-    _do_adb_cmd(cmd, block)
+    _exec_cmd(cmd, block)
 
 
 def getDeviceInfo():
