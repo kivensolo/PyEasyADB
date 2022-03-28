@@ -16,7 +16,7 @@ class CmdExecutor(QThread):
         # 执行命令
         self.cmd = None
         # 连接计数器
-        self._intConnectTime = None
+        self._intConnectTime = 0
         self._lastCallback = None
         self._initConnectTimer()
 
@@ -43,7 +43,6 @@ class CmdExecutor(QThread):
         self.start()
 
     def threadFinish(self):
-        print(self.isFinished())
         if self.isRunning():
             self.wait()
         print(self.isFinished())

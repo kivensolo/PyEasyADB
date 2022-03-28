@@ -2,12 +2,14 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox, QApplication, QPushButton, QLineEdit, \
-    QGridLayout
+    QListWidget, QListWidgetItem
 
 from logcat.log import z_logger
 from ui.sql import DBManager
+from ui.widget.ComboBoxItem import ComboBoxItem
+from ui.widget.ExtComBox import ExtComBox
 from utils import ADBTools
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
 from utils.UITools import IconTool
@@ -31,16 +33,9 @@ class DeviceInfoDetail(QWidget):
 
         # 设备名称等信息
         self._init_device_info_layout()
-
-        # 包名控件初始化
         self._init_choose_pkg_layout()
-
-        # 新增包名
         self._init_package_add_layout()
-
-        # 类路径
         self._init_class_path_layout()
-
         self._init_actions_layout()
 
         self.root_layout.addLayout(self.device_name_layout)
@@ -70,6 +65,12 @@ class DeviceInfoDetail(QWidget):
         self.device_name_layout.addStretch()
 
     def _init_choose_pkg_layout(self):
+        """
+        包名控件初始化
+        :return:
+        """
+        # self.setStyleSheet("QComboBox { min-height: 30px; min-width: 180px; } "
+        #                    "QComboBox QAbstractItemView::item { min-height: 30px; min-width: 60px; }")
         self.selected_pkg = ''
         self.package_layout = QHBoxLayout(self)
         self.package_layout.alignment()
@@ -79,16 +80,36 @@ class DeviceInfoDetail(QWidget):
         self.pkg_Tip.setObjectName("pkgChoiceTips")
         self.pkgComboBox = QComboBox(self)
         # TODO 控件宽度改变
-        self.pkgComboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
-        # self.pkgComboBox.setMinimumSize(QSize(250,31))
+        # 设置下拉显示固定个数，超过个数，滚动显示
+        self.pkgComboBox.setMaxVisibleItems(7)
+        # 宽度调整策略，按照内容最大宽度
+        # self.pkgComboBox.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+        # self.pkgComboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
+        self.pkgComboBox.setMinimumSize(QSize(250,31))
         self.pkgComboBox.setObjectName("pkgComboBoxView")
         self.pkgComboBox.setFont(getWRYHFontStyle())
+        self.pkgComboBox.setStyleSheet(
+           "QComboBox QAbstractItemView::item { min-height: 60px; min-width: 60px;"
+           "outline:0px;}"
+           "QComboBox QAbstractItemView::item:selected{background-color: #25ACFF;}"
+           "QComboBox QAbstractItemView::item:hover{background-color: #75CAFF;}"
+        )
+
+        # ComboBox与额外的View及数据源绑定
+        # self.package_list_widget = QListWidget()
+        # self.pkgComboBox.setModel(self.package_list_widget.model())
+        # self.pkgComboBox.setView(self.package_list_widget)
+
         self.package_layout.addWidget(self.pkg_Tip)
         self.package_layout.addWidget(self.pkgComboBox)
         self.package_layout.addStretch()  # 添加可拉伸弹簧
         self.initPkgData()
 
     def _init_class_path_layout(self):
+        """
+         Activity类路径
+        :return:
+        """
         self.action_start = QPushButton(self)
         self.action_start.setText("Start")
         self.action_start.setGeometry(QtCore.QRect(0, 0, 81, 31))
@@ -97,19 +118,23 @@ class DeviceInfoDetail(QWidget):
         self.action_start.clicked.connect(lambda: self.invokePkgAction())
         self.activity_class_layout = QHBoxLayout(self)
         self.activityClassPath = QLineEdit(self)
-        self.activityClassPath.setPlaceholderText("目标页面类文件路径")
-        self.activityClassPath.setGeometry(QtCore.QRect(0, 0, 291, 31))
+        self.activityClassPath.setPlaceholderText("input activity class path")
+        self.activityClassPath.setGeometry(QtCore.QRect(0, 0, 291, 40))
         self.activityClassPath.setObjectName("class_path")
-        self.activityClassPath.setFont(getWRYHFontStyle(12))
+        self.activityClassPath.setFont(getKTFontStyle(size=12, font=QFont.System))
         self.activity_class_layout.addWidget(self.action_start)
         self.activity_class_layout.addWidget(self.activityClassPath)
         self.activity_class_layout.addStretch()
 
     def _init_package_add_layout(self):
+        """
+        新增包名的layout
+        :return:
+        """
         self.package_edit_layout = QHBoxLayout(self)
         # self.package_edit_layout.alignment()
         self.btnAddNewPkg = QPushButton(self)
-        self.btnAddNewPkg.setText("添加新包名:")
+        self.btnAddNewPkg.setText("包名添加")
         # self.btnAddNewPkg.setStyleSheet("""
         #    QPushButton{
         #         background-color: #A0A0A0 ;
@@ -187,6 +212,7 @@ class DeviceInfoDetail(QWidget):
         if not self.dbManager:
             z_logger.error('数据库连接异常，请重启应用.')
             return
+        self.total_pkgs = []
         self.updatePkgComBox()
 
     def updatePkgComBox(self):
@@ -201,8 +227,29 @@ class DeviceInfoDetail(QWidget):
         self.pkgComboBox.clear()
         for item in packages:
             if item:
+                # 原始数据添加模式 默认情况下，QStandardItemModel存储项目，QListView子类显示弹出列表。
                 self.pkgComboBox.addItem(item[0])
+                # self.total_pkgs.append(item[0])
+                # # 设置新的模型和视图
+                # item_view = ComboBoxItem(item[0])
+                # item_view.closeSignal.connect(self.delete_pkg)
+                # item_view.chooseSignal.connect(self.choose)
+                # listwitem = QListWidgetItem(self.package_list_widget)
+                # # 将自定义item_view设置为在给定项目中显示
+                # self.package_list_widget.setItemWidget(listwitem, item_view)
+                # 新模式存在的问题，pkgComboBox内容选择没更新到pkgComboBox中。
         self.selected_pkg = self.pkgComboBox.currentText()
+        # self.selected_pkg = self.total_pkgs[0]
+
+    def choose(self, data):
+        self.pkgComboBox.setEditText(data)
+
+    def delete_pkg(self, data):
+        # 删除事件回调
+        index = self.total_pkgs.index(data)
+        self.package_list_widget.takeItem(index)
+        # self.total_pkgs.remove(data)
+        del self.total_pkgs[index]
 
     def on_package_add(self):
         """

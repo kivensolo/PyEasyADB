@@ -1,4 +1,4 @@
-from PyQt5.QtCore import QSize, QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QTimer
+from PyQt5.QtCore import QSize, QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QTimer, pyqtSignal
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, QLabel, QMenuBar, QMenu, QAction, \
@@ -14,7 +14,7 @@ from ui.DeviceInfoView import DeviceInfoDetail
 from ui.sql import DBManager
 from ui.widget.ButtomConsoleWindow import ButtomWindow
 from ui.widget.NewConnectDialog import NewConnectDialog
-from utils import ADBTools
+from utils.ADBTools import ADBTools
 from utils.CmdExecutor import CmdExecutor
 from utils.UITools import IconTool
 from utils.UiWidgts import AppPushButton
@@ -67,11 +67,11 @@ class MainWindow(BaseWindow):
         self.center_panel = None
         self.right_panel = None
 
-        self.currentCmd = 'adb devices'
         self.active_ip_list = []
 
         self.init_all_ui()
         self.show()
+        self.adbTools = ADBTools()
 
     def init_all_ui(self):
         # 初始化菜单栏
@@ -347,8 +347,8 @@ class MainWindow(BaseWindow):
             z_logger.debug('刷新设备状态')
             self.check_device_status()
         elif item.type == "Device":
-            z_logger.debug("单点设备IP, 192.168.1.4")
-            z_logger.debug("http://192.168.1.111")
+            z_logger.debug("TODO 切换设备信息")
+            # z_logger.debug("http://192.168.1.111")
             # if item.ip == "192.10.20.1:5555":
             #     self.stacked_device_info.setCurrentIndex(1)
             # elif item.ip == "172.31.10.236:5555":
@@ -357,42 +357,39 @@ class MainWindow(BaseWindow):
 
 # ----------------------------------ADB 操作 START-----------------------------------------------
     def connect_device(self, addr):
-        ADBTools.connect_device(addr, self.on_adb_cmd_exectued)
+        self.adbTools.connect_device(addr, self.on_adb_cmd_exectued)
 
     @pyqtSlot()
     def check_device_status(self):
-        # self.currentCmd = 'adb devices'
-        # self._invoke_adb_cmd()
-        ADBTools.get_devices_state(self.on_adb_cmd_exectued)
+        self.adbTools.get_devices_state(self.on_adb_cmd_exectued)
 
-    def _invoke_adb_cmd(self):
-        z_logger.debug("_invoke_adb_cmd")
-        cmdExecutor = get_cmd_executor(self.on_adb_cmd_exectued)
-        cmdExecutor.exec(self.currentCmd)
-
+    @pyqtSlot(list)
     def on_adb_cmd_exectued(self, result):
         # check current cmd
-        # for r in result:
-        #     print(r)
         z_logger.debug('on_adb_cmd_exectued')
         if "cmdExectuedTimeout" in result:
             z_logger.debug("cmdExectuedTimeout")
             return
-        if self.currentCmd.startswith('adb connect'):
-            if result.startswith('already connected to'):
-                z_logger.debug("Already connected!")
-            else:
-                z_logger.debug("Already connected!")
-                self.check_device_status()
-        elif self.currentCmd == 'adb devices':
-            for r in result: # ['List of devices attached\r', '172.31.10.236:5555\tdevice\r', '\r', '']
-                # 找到连接成功的设备
-                if r in self.local_ip_List:
-                    z_logger.debug("devices=" + r)
-                    if not r:
-                        # 修改图标的颜色
-                        self.active_ip_list.append(r)
-                    # print("\n 当前ips：" + self.active_ip_list)
+        for item in result:
+            if len(item) < 1:
+                continue
+            print(item)
+            if self.adbTools.current_cmd.startswith('adb connect'):
+                if item.startswith('already connected to'):
+                    z_logger.debug("Already connected!")
+                else:
+                    # 可能会存在空的情况
+                    z_logger.debug("Connected!")
+                    self.check_device_status()
+            elif self.adbTools.current_cmd == 'adb devices':
+                for r in result: # ['List of devices attached\r', '172.31.10.236:5555\tdevice\r', '\r', '']
+                    # 找到连接成功的设备
+                    if r in self.local_ip_List:
+                        z_logger.debug("devices=" + r)
+                        if not r:
+                            # 修改图标的颜色
+                            self.active_ip_list.append(r)
+                        # print("\n 当前ips：" + self.active_ip_list)
             # 更新设备状态
 # ----------------------------------ADB 操作 END-----------------------------------------------
 
