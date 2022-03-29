@@ -97,13 +97,14 @@ class AppLogger:
     def add_gui_log_handler(self, view):
         """
         添加自定义的GUI log记录器
-        :param view:
-        :return:
+        :param view: 自定义的日志输出View
+        :return: None
         """
         gui_handler = GuiLoggerHandler()
         gui_handler.editView = view
         # 使用logging的format
         # gui_handler.setFormatter(logging.Formatter(log_format))
+        gui_handler.setLevel(logging.INFO)
         self._logger.addHandler(gui_handler)
 
     def modify_rotating(self, maxBytes=None, backupCount=None):

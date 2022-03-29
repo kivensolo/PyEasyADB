@@ -53,6 +53,7 @@ class MainWindow(BaseWindow):
 
         # 初始化数据库帮助类
         self.dbManager = DBManager()
+        self.current_device_ip = ""
 
         # 主窗口分割器
         self.main_splitter = None
@@ -344,15 +345,11 @@ class MainWindow(BaseWindow):
         # self.stackedWidget_param.setCurrentIndex(index)
         item = self.tree_model.itemFromIndex(index)
         if item.type == 'DeviceRoot':
-            z_logger.debug('刷新设备状态')
+            # z_logger.debug('刷新设备状态')
             self.check_device_status()
         elif item.type == "Device":
-            z_logger.debug("TODO 切换设备信息")
-            # z_logger.debug("http://192.168.1.111")
-            # if item.ip == "192.10.20.1:5555":
-            #     self.stacked_device_info.setCurrentIndex(1)
-            # elif item.ip == "172.31.10.236:5555":
-            # self.stacked_device_info.setCurrentIndex(0)
+            self.current_device_ip = item.ip
+            # TODO 更新设备信息
 # ----------------------------------左侧TreeView End-----------------------------------------------
 
 # ----------------------------------ADB 操作 START-----------------------------------------------
@@ -365,10 +362,9 @@ class MainWindow(BaseWindow):
 
     @pyqtSlot(list)
     def on_adb_cmd_exectued(self, result):
-        # check current cmd
-        z_logger.debug('on_adb_cmd_exectued')
+        z_logger.debug('On adb cmd exectued:' + str(result))
         if "cmdExectuedTimeout" in result:
-            z_logger.debug("cmdExectuedTimeout")
+            z_logger.info("Cmd exec time out!")
             return
         for item in result:
             if len(item) < 1:
@@ -379,18 +375,37 @@ class MainWindow(BaseWindow):
                     z_logger.debug("Already connected!")
                 else:
                     # 可能会存在空的情况
-                    z_logger.debug("Connected!")
+                    z_logger.info("设备已连接")
                     self.check_device_status()
             elif self.adbTools.current_cmd == 'adb devices':
-                for r in result: # ['List of devices attached\r', '172.31.10.236:5555\tdevice\r', '\r', '']
-                    # 找到连接成功的设备
-                    if r in self.local_ip_List:
-                        z_logger.debug("devices=" + r)
-                        if not r:
-                            # 修改图标的颜色
-                            self.active_ip_list.append(r)
-                        # print("\n 当前ips：" + self.active_ip_list)
-            # 更新设备状态
+                self.check_devices_state(result)
+
+    def check_devices_state(self, result):
+        """
+        检查ADb连接的设备状态
+        :param result:
+            [
+                'List of devices attached\r',
+                '172.31.10.236:5555\tdevice\r',
+                '\r',
+                ''
+            ]
+        :return:
+        """
+        for r in result:
+            # TODO 优化数据检查
+            if r in self.local_ip_List:
+                z_logger.debug("devices=" + r)
+                if not r:
+                    self.active_ip_list.append(r)
+                    z_logger.debug("active devices:" + r)
+        if len(self.active_ip_list) > 0:
+            self.current_device_ip = self.active_ip_list[0]
+            z_logger.info("当前选中设备：" + self.current_device_ip)
+        else:
+            z_logger.info("当前无任何连接设备")
+
+
 # ----------------------------------ADB 操作 END-----------------------------------------------
 
 
