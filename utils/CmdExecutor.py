@@ -3,6 +3,9 @@
 
 from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 
+from logcat.log import z_logger
+from subprocess import Popen, PIPE
+
 
 class CmdExecutor(QThread):
     """
@@ -19,6 +22,8 @@ class CmdExecutor(QThread):
         self._intConnectTime = 0
         self._lastCallback = None
         self._initConnectTimer()
+        # 线程结束的事件绑定
+        self.finished.connect(self.threadFinish)
 
     def _initConnectTimer(self):
         self.timer = QTimer()
@@ -45,21 +50,20 @@ class CmdExecutor(QThread):
     def threadFinish(self):
         if self.isRunning():
             self.wait()
-        print(self.isFinished())
-        self.finishSignal.emit(self.result)  # 发送正常结束的信号
+        # print(self.isFinished())
+        # 发送正常结束的信号
+        self.finishSignal.emit(self.result)
 
     def run(self):
-        self.finished.connect(self.threadFinish)
-        from subprocess import Popen, PIPE
         # 日志输出文件初始化 --- Start
         _process = Popen(self.cmd, stdout=PIPE, bufsize=-1, encoding='utf-8')
         stdout_data, stderr_data = _process.communicate(input=None, timeout=None)
         if stderr_data is not None:
-            print("CmdExecutor stderr_data = " + stderr_data)
-            self.result = stderr_data.split('\n')
+            # print("CmdExecutor stderr_data = " + stderr_data)
+            self.result = stderr_data.strip().split('\n')
         if stdout_data is not None:
-            print("CmdExecutor stdout_data = " + stdout_data)
-            self.result = stdout_data.split('\n')
+            # print("CmdExecutor stdout_data = " + stdout_data)
+            self.result = stdout_data.strip().split('\n')
         # for line in iter(_process.stdout.readline, b''):
         #     l.append(line.decode('utf-8'))
         #     # print("aaaaaaaaaaaaaa : "+line.decode('utf-8'))

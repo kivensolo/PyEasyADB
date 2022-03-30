@@ -56,6 +56,10 @@ class ADBTools():
         cmd = "adb connect %s" % device_ip
         self._exec_cmd(cmd, block)
 
+    def disconnect_device(self, device_ip, block):
+        cmd = "adb disconnect %s" % device_ip
+        self._exec_cmd(cmd, block)
+
     def getDeviceInfo(self):
         # model = 'UnKnow'
         # version = '0.0'

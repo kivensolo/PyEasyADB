@@ -309,7 +309,7 @@ class MainWindow(BaseWindow):
         # self.actionC.setDisabled(True)
         self.action_disconnect = self.tree_view.contextMenu.addAction(IconTool.buildQIcon("logo.png"), '| 断开连接')
         # self.action_disconnect.setShortcut('Ctrl+S')  #设置快捷键
-        self.action_disconnect.triggered.connect(self.actionRemove)#连接删除功能函数
+        self.action_disconnect.triggered.connect(self.disconnect_device) # 连接删除功能函数
 
     def on_ip_menu_show(self):
         self.tree_view.contextMenu.move(QCursor.pos())  # 移动到鼠标点击位置
@@ -353,6 +353,13 @@ class MainWindow(BaseWindow):
 # ----------------------------------左侧TreeView End-----------------------------------------------
 
 # ----------------------------------ADB 操作 START-----------------------------------------------
+    @pyqtSlot()
+    def disconnect_device(self):
+        index = self.tree_view.selectionModel().currentIndex()
+        item = self.tree_model.itemFromIndex(index)  # QStandardItem
+        if item.type == "Device":
+            self.adbTools.disconnect_device(item.ip, self.on_adb_cmd_exectued)
+
     def connect_device(self, addr):
         self.adbTools.connect_device(addr, self.on_adb_cmd_exectued)
 
@@ -366,30 +373,25 @@ class MainWindow(BaseWindow):
         if "cmdExectuedTimeout" in result:
             z_logger.info("Cmd exec time out!")
             return
-        for item in result:
-            if len(item) < 1:
-                continue
-            print(item)
-            if self.adbTools.current_cmd.startswith('adb connect'):
-                if item.startswith('already connected to'):
-                    z_logger.debug("Already connected!")
-                else:
-                    # 可能会存在空的情况
-                    z_logger.info("设备已连接")
-                    self.check_device_status()
-            elif self.adbTools.current_cmd == 'adb devices':
-                self.check_devices_state(result)
 
-    def check_devices_state(self, result):
+        if self.adbTools.current_cmd.startswith('adb connect'):
+            if 'already connected to' in result:
+                z_logger.info("Already connected!")
+            else:
+                # 可能会存在空的情况
+                z_logger.info("设备已连接....刷新设备状态")
+                self.check_device_status()
+        elif self.adbTools.current_cmd.startswith('adb disconnect'):
+            z_logger.info("设备已断开")
+        elif self.adbTools.current_cmd == 'adb devices':
+            self.parse_devices_states(result)
+
+    def parse_devices_states(self, result):
         """
-        检查ADb连接的设备状态
+        解析ADb连接的设备状态数据
         :param result:
-            [
-                'List of devices attached\r',
-                '172.31.10.236:5555\tdevice\r',
-                '\r',
-                ''
-            ]
+            ['List of devices attached',
+            '172.31.10.236:5555\tdevice']
         :return:
         """
         for r in result:
@@ -399,11 +401,12 @@ class MainWindow(BaseWindow):
                 if not r:
                     self.active_ip_list.append(r)
                     z_logger.debug("active devices:" + r)
+
         if len(self.active_ip_list) > 0:
             self.current_device_ip = self.active_ip_list[0]
             z_logger.info("当前选中设备：" + self.current_device_ip)
         else:
-            z_logger.info("当前无任何连接设备")
+            z_logger.info("TODO 当前无任何连接设备")
 
 
 # ----------------------------------ADB 操作 END-----------------------------------------------
