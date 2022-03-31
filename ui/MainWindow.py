@@ -3,7 +3,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, QLabel, QMenuBar, QMenu, QAction, \
     QStatusBar, QToolTip, qApp, QTextEdit, QLineEdit, QVBoxLayout, QGroupBox, QGridLayout, QHBoxLayout, QMainWindow, \
-    QToolBar, QSplitter, QTreeView, QAbstractItemView, QWidget, QTreeWidgetItem
+    QToolBar, QSplitter, QTreeView, QAbstractItemView, QWidget, QTreeWidgetItem, QListWidgetItem
 
 from config.settings import PATH_LOGO_ICON, APP_VERSION, DB_NAME
 from logcat import log
@@ -126,7 +126,7 @@ class MainWindow(BaseWindow):
         toolbar.setContentsMargins(5, 5, 5, 5)
         toolbar.setStyleSheet("QWidget{background-color:rgb(229,229,229);border:none}")
         icon = IconTool.buildQIcon("new_connect.png")
-        tool_item_add_new = AppPushButton(toolbar, self.add_new_device)
+        tool_item_add_new = AppPushButton(toolbar, self.show_new_device_dialog)
         tool_item_add_new.setStyleSheet("QPushButton:pressed{background-color:rgb(206,220,232)}")
         tool_item_add_new.setIcon(icon)
         tool_item_add_new.setStatusTip("新建连接")
@@ -138,18 +138,25 @@ class MainWindow(BaseWindow):
         self.addToolBar(toolbar)
 
     @pyqtSlot()
-    def add_new_device(self):
+    def show_new_device_dialog(self):
         print("add new device\n")
-        new_connect_dialog = NewConnectDialog(self)
+        new_connect_dialog = NewConnectDialog(self, self.add_device)
         # new_connect_dialog.finishSignal.connect(self.on_new_device_added)
         new_connect_dialog.setWindowModality(Qt.ApplicationModal)
         new_connect_dialog.exec()
 
-    def on_new_device_added(self):
-        pass
+    @pyqtSlot()
+    def add_device(self, ip):
+        z_logger.info("添加新设备:" + ip)
+        item = QStandardItem(IconTool.buildQIcon("logo.png"), ip)
+        item.ip = ip
+        item.type = "Device"
+        # FIXME 没选择的话，不会有问题
+        item_child_index = self.tree_view.currentIndex()
+        item_model = self.tree_model.itemFromIndex(item_child_index)
+        item_model.parent().appendRow(item)
 
-
-    # def onExecConnect(self, url):
+# def onExecConnect(self, url):
     #     print("onExecConnect ")
     #     self.statusBar().showMessage(url)
 
@@ -292,22 +299,25 @@ class MainWindow(BaseWindow):
         self.tree_model.appendColumn([device_item, other_item])
         # setHeaderData 要放在appendColumn之后
         self.tree_model.setHeaderData(0, Qt.Horizontal, '设备信息')
-        self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.tree_view.customContextMenuRequested.connect(self.on_ip_menu_show) # 右键菜单显示函数
-        self.tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        # 数据绑定至UI
-        self.tree_view.setModel(self.tree_model)
-        self.tree_view.doubleClicked.connect(self.onTreeItemDoubleClicked)
-        self.tree_view.clicked.connect(self.on_tree_item_clicked)
-        # 展开整个树形视图
-        self.tree_view.expandAll()
 
-        self.tree_view.contextMenu = QMenu()
-        self.actionC = self.tree_view.contextMenu.addAction(IconTool.buildQIcon("logo.png"), '| 删除设备')
+        treeView = self.tree_view
+        treeView.setContextMenuPolicy(Qt.CustomContextMenu)
+        treeView.setRootIsDecorated(False)
+        treeView.customContextMenuRequested.connect(self.on_ip_menu_show) # 右键菜单显示函数
+        treeView.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        # set model to treeview
+        treeView.setModel(self.tree_model)
+        treeView.doubleClicked.connect(self.onTreeItemDoubleClicked)
+        treeView.clicked.connect(self.on_tree_item_clicked)
+        # 展开整个树形视图
+        treeView.expandAll()
+
+        treeView.contextMenu = QMenu()
+        self.actionC = treeView.contextMenu.addAction(IconTool.buildQIcon("logo.png"), '| 删除设备')
         # self.actionC.setShortcut('Ctrl+D')  #设置快捷键
-        self.actionC.triggered.connect(self.actionRemove)#连接删除功能函数
+        self.actionC.triggered.connect(self.del_device)#连接删除功能函数
         # self.actionC.setDisabled(True)
-        self.action_disconnect = self.tree_view.contextMenu.addAction(IconTool.buildQIcon("logo.png"), '| 断开连接')
+        self.action_disconnect = treeView.contextMenu.addAction(IconTool.buildQIcon("logo.png"), '| 断开连接')
         # self.action_disconnect.setShortcut('Ctrl+S')  #设置快捷键
         self.action_disconnect.triggered.connect(self.disconnect_device) # 连接删除功能函数
 
@@ -315,15 +325,12 @@ class MainWindow(BaseWindow):
         self.tree_view.contextMenu.move(QCursor.pos())  # 移动到鼠标点击位置
         self.tree_view.contextMenu.show()
 
-    def actionRemove(self):
-        pass
-
-    def del_tree_node(self):
-        item_child = self.tree_view.currentItem()
-        root = self.tree_view.invisibleRootItem()
-        for item in self.tree_view.selectedItems():
-            (item.parent() or root).removeChild(item_child)
-        # 从数据库中移除
+    @pyqtSlot()
+    def del_device(self):
+        item_child_index = self.tree_view.currentIndex()
+        item_model = self.tree_model.itemFromIndex(item_child_index)
+        item_model.parent().removeRow(item_child_index.row())
+        self.dbManager.remove_device_from_db(item_model.ip)
 
     def add_tree_node(self, ip):
         item_child = self.tree_view.currentItem()
@@ -389,24 +396,37 @@ class MainWindow(BaseWindow):
     def parse_devices_states(self, result):
         """
         解析ADb连接的设备状态数据
-        :param result:
+        :param result: List data:
             ['List of devices attached',
             '172.31.10.236:5555\tdevice']
         :return:
         """
-        for r in result:
+        for line in result:
+            if line.startswith("List of devices attached"):
+                continue
             # TODO 优化数据检查
-            if r in self.local_ip_List:
-                z_logger.debug("devices=" + r)
-                if not r:
-                    self.active_ip_list.append(r)
-                    z_logger.debug("active devices:" + r)
-
-        if len(self.active_ip_list) > 0:
+            dev = line.split("\t")
+            if len(dev) >= 2 and dev[0] not in self.active_ip_list:
+                device_name = dev[0]
+                device_state = dev[1]
+                if device_state == 'device':  # 正常连接的设备
+                    z_logger.debug("active devices:" + line)
+                    self.active_ip_list.append(device_name)
+                    self.dbManager.add_device_to_db(device_name)
+                else:  # 离线设备device_state == 'offline'
+                    self.active_ip_list.remove(device_name)
+                    self.dbManager.change_device_state(device_name,False)
+                    pass
+            else:
+                z_logger.debug("devices already at local:" + line)
+        if len(self.active_ip_list) > 0 and self.current_device_ip is None:
+            # FIXME 手机端设备是名称
             self.current_device_ip = self.active_ip_list[0]
+            # TODO 同步数据库中的设备状态
             z_logger.info("当前选中设备：" + self.current_device_ip)
-        else:
-            z_logger.info("TODO 当前无任何连接设备")
+
+        # TODo 更新treeView
+
 
 
 # ----------------------------------ADB 操作 END-----------------------------------------------

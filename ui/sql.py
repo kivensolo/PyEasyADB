@@ -3,6 +3,7 @@ import sqlite3
 from sqlite3 import Cursor
 
 from config.settings import DB_NAME
+from logcat.log import z_logger
 
 
 class DBManager:
@@ -129,6 +130,58 @@ class DBManager:
         finally:
             cursor.close()
             conn.close()
+
+    def remove_device_from_db(self, ip="", port="5555"):
+        z_logger.debug("remove_device_from_db :" + ip)
+        ip_group = re.split(":", ip)
+        host = ip
+        _port = port
+        if ip_group.__len__() == 2:
+            host = ip_group[0]
+            _port = ip_group[1]
+
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            # 删除设备的
+            sql_cmd = 'DELETE FROM device WHERE ip =\'{0}\''.format(host)
+            result = cursor.execute(sql_cmd)
+            # for item in result:
+            #     if item and item[1] == _port:
+            #         return False, "此设备已有记录,无需再次添加！"
+            conn.commit()
+            return True, '设备已移除'
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close()
+            conn.close()
+
+    def change_device_state(self, ip='', isConnected=True):
+        """
+        改变设备连接状态
+        :param ip:  目标设备ip
+        :param isConnected:  是否连接
+        :return:
+        """
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            # 更新指定设备active字段
+            sql_cmd = "UPDATE device SET active={0} WHERE ip={1}" .format(isConnected, ip)
+            result = cursor.execute(sql_cmd)
+            # for item in result:
+            #     if item and item[1] == _port:
+            #         return False, "此设备已有记录,无需再次添加！"
+            conn.commit()
+            return True, '设备状态已变更'
+        except Exception as e:
+            print(e)
+        finally:
+            cursor.close()
+            conn.close()
+
+
 
     def __commint(self):
         self.conn.commit()

@@ -12,10 +12,11 @@ class NewConnectDialog(BaseDialog):
     """
     新建连接的Dialog, 使用绝对布局
     """
-    def __init__(self, window):
+    def __init__(self, window, block):
         # super(NewConnectDialog, self).__init__()
         super().__init__("新建连接")
         self.window = window
+        self.block = block
         self.connectButton = QPushButton(self)
         self.inputEdit = QLineEdit(self)
         self.helpLabel = QLabel(self)
@@ -64,6 +65,7 @@ class NewConnectDialog(BaseDialog):
         if state:
             print("ip合适，已储存至数据库")
             # TODO 事件发送 传递给MainWindow，刷新treeView
+            self.block(new_ip+":5555")
             self.close()
         else:
             print(msg)
