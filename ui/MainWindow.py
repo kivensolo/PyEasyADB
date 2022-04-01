@@ -168,14 +168,6 @@ class MainWindow(BaseWindow):
         new_connect_dialog.setWindowModality(Qt.ApplicationModal)
         new_connect_dialog.exec()
 
-    @pyqtSlot()
-    def add_device(self, ip):
-        z_logger.info("设备添加:" + ip)
-        item = QStandardItem(self.icon_connect, ip)
-        item.ip = ip
-        item.type = TYPE_DEVICE
-        item_model = self.get_current_item_model()
-        item_model.parent().appendRow(item)
 
     def init_center_panel(self):
         self.center_panel = QWidget()
@@ -331,13 +323,11 @@ class MainWindow(BaseWindow):
         self.check_device_status()
         # 右键菜单键设置
         treeView.contextMenu = QMenu()
-        self.action_remove_device = treeView.contextMenu.addAction(self.icon_disconnect, '| 删除设备')
-        # self.actionC.setShortcut('Ctrl+D')  #设置快捷键
-        self.action_remove_device.triggered.connect(self.del_device)#连接删除功能函数
         # self.actionC.setDisabled(True)
         self.action_disconnect = treeView.contextMenu.addAction(self.icon_disconnect, '| 断开连接')
-        # self.action_disconnect.setShortcut('Ctrl+S')  #设置快捷键
-        self.action_disconnect.triggered.connect(self.disconnect_device) # 连接删除功能函数
+        self.action_disconnect.triggered.connect(self.disconnect_device)
+        self.action_remove_device = treeView.contextMenu.addAction(self.icon_disconnect, '| 删除设备')
+        self.action_remove_device.triggered.connect(self.del_device)
 
     def set_treeview_default_index(self, treeView):
         """
@@ -364,8 +354,10 @@ class MainWindow(BaseWindow):
         if is_device_node(item_model):
             if item_model.ip in self.active_ip_list:
                 self.action_remove_device.setDisabled(True)
+                self.action_disconnect.setDisabled(False)
             else:
                 self.action_remove_device.setDisabled(False)
+                self.action_disconnect.setDisabled(True)
             self.tree_view.contextMenu.move(QCursor.pos())  # 移动到鼠标点击位置
             self.tree_view.contextMenu.show()
 
@@ -382,6 +374,20 @@ class MainWindow(BaseWindow):
         if result:
             z_logger.info('删除设备(%s)成功!' % str(item_model.ip))
             self.local_ip_List.remove(item_model.ip)
+
+    @pyqtSlot()
+    def add_device(self, ip):
+        z_logger.info("设备添加成功:" + ip)
+        item = QStandardItem(self.icon_disconnect, ip)
+        item.ip = ip
+        item.type = TYPE_DEVICE
+        # FIXME 优化，此方法可能None异常
+        item_model = self.get_current_item_model()
+        item_model.parent().appendRow(item)
+        result, msg = self.dbManager.add_device_to_db(ip)
+        if result:
+            z_logger.debug("已储存新设备至数据库")
+            self.local_ip_List.append(ip)
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_double_clicked(self, index):
@@ -408,7 +414,7 @@ class MainWindow(BaseWindow):
             self.current_device_ip = item.ip
             # TODO 更新设备信息
 
-    def update_tree_item(self, isconnect: True):
+    def update_current_treeitem(self, isconnect: True):
         """
         更新tree的子节点
         :param isconnect: 是否为连接状态
@@ -447,10 +453,10 @@ class MainWindow(BaseWindow):
 # ----------------------------------ADB 操作 START-----------------------------------------------
     @pyqtSlot()
     def disconnect_device(self):
-        index = self.tree_view.selectionModel().currentIndex()
-        item = self.tree_model.itemFromIndex(index)  # QStandardItem
-        if is_device_node(item):
-            self.adbTools.disconnect_device(item.ip, self.on_adb_cmd_exectued)
+        item_model = self.get_current_item_model()
+        if is_device_node(item_model):
+            self.temp_disconnect_ip = item_model.ip
+            self.adbTools.disconnect_device(item_model.ip, self.on_adb_cmd_exectued)
 
     def connect_device(self, addr):
         self.adbTools.connect_device(addr, self.on_adb_cmd_exectued)
@@ -476,7 +482,8 @@ class MainWindow(BaseWindow):
                 self.check_device_status()
         elif self.adbTools.current_cmd.startswith('adb disconnect'):
             z_logger.info("设备断开成功!")
-            self.update_tree_item(False)
+            self.active_ip_list.remove(self.temp_disconnect_ip)
+            self.update_current_treeitem(False)
         elif self.adbTools.current_cmd == 'adb devices':
             self.parse_devices_states(result)
 
@@ -505,13 +512,13 @@ class MainWindow(BaseWindow):
                 if device_name not in self.active_ip_list:
                     self.active_ip_list.append(device_name)
                     self.dbManager.add_device_to_db(device_name)
-                    self.update_tree_item(False)
+                    self.update_current_treeitem(False)
                 else:
                     z_logger.debug("Already in local.(%s)" % line)
             else:
                 # 离线设备 device_state == 'offline' 或 'unknow'
                 self.dbManager.change_device_state(device_name,False)
-                self.update_tree_item(False)
+                self.update_current_treeitem(False)
 
         if len(self.active_ip_list) > 0 and self.current_device_ip is None:
             # FIXME 手机端设备是名称

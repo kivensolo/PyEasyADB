@@ -3,6 +3,7 @@ import sys
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton
 
+from logcat.log import z_logger
 from ui.widget.BaseDialog import BaseDialog
 from utils import Tools
 from utils.UITools import IconTool
@@ -63,9 +64,7 @@ class NewConnectDialog(BaseDialog):
             return
         state, msg = self.window.dbManager.add_device_to_db(new_ip)
         if state:
-            print("ip合适，已储存至数据库")
-            # TODO 事件发送 传递给MainWindow，刷新treeView
-            self.block(new_ip+":5555")
+            self.block(new_ip)
             self.close()
         else:
             print(msg)
