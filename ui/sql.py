@@ -5,7 +5,10 @@ from sqlite3 import Cursor
 from config.settings import DB_NAME
 from logcat.log import z_logger
 
-
+"""
+python数据库操作文章
+https://www.zhihu.com/question/391210389/answer/2305057909
+"""
 class DBManager:
     """
     应用程序数据库管理类
@@ -20,9 +23,10 @@ class DBManager:
             cursor = conn.cursor()
             cursor.execute(
                 'CREATE TABLE IF NOT EXISTS {0} '
-                '(ip varchar(20) primary key,'
-                'port varchar(10) default \'0\','
-                'active binary(1) default 0)'.format(DBManager.TABLE_DEVICE))
+                '(ip VARCHAR(20) PRIMARY KEY,'
+                'port VARCHAR(10) DEFAULT 0,'
+                'device_info VARCHAR(50) NOT NULL DEFAULT \'10086\','
+                'active binary(1) DEFAULT 0)'.format(DBManager.TABLE_DEVICE))
             cursor.execute('CREATE TABLE IF NOT EXISTS {0} (name varchar(50) primary key)'.format(DBManager.TABLE_PACKAGE))
             # cursor.execute('create table if not exists '+DBManager.TABLE_HISTORY+
             #                '(id integer primary key autoincrement, '
@@ -82,6 +86,10 @@ class DBManager:
             format(DBManager.TABLE_DEVICE, newIp, idx)
         self.exec_sql(sql)
 
+    def update_device_prop(self, info, ip):
+        sql = 'UPDATE {0} SET device_info=\'{1}\' WHERE ip=\'{2}\''.format(DBManager.TABLE_DEVICE, info, ip)
+        self.exec_sql(sql)
+
     def queryData(self, column='*', table_name='default'):
         sql = 'SELECT {0} FROM {1}'.format(column, table_name)
         return self.exec_sql(sql)
@@ -115,23 +123,53 @@ class DBManager:
             conn = sqlite3.connect(DB_NAME)
             cursor = conn.cursor()
             # 同一ip有多条端口数据  优化，改为一条数据
-            sql_cmd = 'SELECT * FROM device WHERE ip =\'{0}\''.format(ip)
+            sql_cmd = 'SELECT * FROM device WHERE ip =\'{0}\''.format(host)
             result = cursor.execute(sql_cmd)
             for item in result:
                 if item and item[1] == _port:
                     return False, "此设备已有记录,无需再次添加！"
 
             # cursor.execute("delete from device where ip = \'" + ip + "\'")
-            cursor.execute('INSERT INTO device VALUES (\'{0}\',{1}, {2})'.format(host, _port, active))
+            cursor.execute('INSERT INTO device VALUES (\'{0}\',{1}, \'{2}\',{3})'.format(host, _port, "", active))
             conn.commit()
             return True, '设备已入库'
         except Exception as e:
-            print(e)
+            z_logger.error('设备入库失败, 请检查Sql语句:' + str(e))
+        finally:
+            cursor.close()
+            conn.close()
+            # return False, '设备入库失败, 请检查Sql语句'
+
+    @staticmethod
+    def get_device_prop_info(addr):
+        ip_group = re.split(":", addr)
+        host = addr
+        if len(ip_group) == 2:
+            host = ip_group[0]
+        sql_cmd = 'SELECT device_info FROM device WHERE ip =\'{0}\''.format(host)
+        result, result = DBManager._query_data(sql_cmd)
+        if result:
+            return True, result[0]
+        else:
+            return False, ''
+
+    @staticmethod
+    def _query_data(sql):
+        try:
+            conn = sqlite3.connect(DB_NAME)
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            result_list = cursor.fetchall()
+            return True, result_list
+        except Exception as e:
+            z_logger.error("数据库查询异常." + str(e))
+            return False, ['']
         finally:
             cursor.close()
             conn.close()
 
-    def remove_device_from_db(self, ip="", port="5555"):
+    @staticmethod
+    def remove_device_from_db(ip="", port="5555"):
         z_logger.debug("remove_device_from_db :" + ip)
         ip_group = re.split(":", ip)
         host = ip

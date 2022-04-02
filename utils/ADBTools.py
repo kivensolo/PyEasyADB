@@ -5,7 +5,7 @@ from utils import Tools
 from utils.CmdExecutor import CmdExecutor
 
 
-class ADBTools():
+class ADBTools:
 
     def __init__(self):
         super(ADBTools, self).__init__()
@@ -58,6 +58,10 @@ class ADBTools():
 
     def disconnect_device(self, device_ip, block):
         cmd = "adb disconnect %s" % device_ip
+        self._exec_cmd(cmd, block)
+
+    def get_device_info(self, ip, block):
+        cmd = "adb -s {0} shell getprop".format(ip)
         self._exec_cmd(cmd, block)
 
     def getDeviceInfo(self):

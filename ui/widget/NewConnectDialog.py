@@ -67,7 +67,7 @@ class NewConnectDialog(BaseDialog):
             self.block(new_ip)
             self.close()
         else:
-            print(msg)
+            z_logger.error(msg)
 
 
 if __name__ == "__main__":

@@ -8,8 +8,6 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox
 
 from logcat.log import z_logger
 from ui.sql import DBManager
-from ui.widget.ComboBoxItem import ComboBoxItem
-from ui.widget.ExtComBox import ExtComBox
 from utils import ADBTools
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
 from utils.UITools import IconTool
@@ -21,9 +19,10 @@ class DeviceInfoDetail(QWidget):
                  'Unlink': '././res/img/unlink_32x28.png',
                  'Device': '././res/img/device.png'}
 
-    def __init__(self):
+    def __init__(self, parent):
         super().__init__()
         self.dbManager = DBManager()
+        self.parent = parent
 
         self.setAttribute(Qt.WA_StyledBackground)
         # self.setStyleSheet("background-color:#FFAAFF");
@@ -269,6 +268,64 @@ class DeviceInfoDetail(QWidget):
             z_logger.debug("包名添加成功!")
         else:
             z_logger.error("此包名已存在，无需再次添加")
+
+    def update_device_info(self, ip, isconnect):
+        self.current_ip = ip
+        z_logger.debug("Update device info!")
+        result, value_tuple = self.parent.dbManager.get_device_prop_info(ip)
+        if result and len(value_tuple) != 0:
+            if value_tuple[0] == '' and not isconnect:
+                # 未连接设备的情况下，从数据库中成功查询为空
+                self.device_info_name.setText("请先连接此设备")
+            else:
+                z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
+                self.device_info_name.setText(value_tuple[0])
+        else:
+            if isconnect:
+                z_logger.debug("No this device prop cache, get with adb!")
+                self.parent.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
+            else:
+                self.device_info_name.setText("请先连接此设备")
+
+    def on_device_prop_get_by_adb(self, result_list):
+        """
+        从ADB获取到设备属性数据
+        :param result_list:
+        :return:
+        """
+        # z_logger.debug("result_list="+str(result_list))
+        manufacturer = ''
+        model = ''
+        sys_version = ''
+        api_level = ''
+        if len(result_list):
+            if len(result_list) < 4:
+                self.device_info_name.setText("Unknow Device")
+            else:
+                # 会存在['']的情况
+                for line in result_list:
+                    if 'android.os.Build.MANUFACTURER' in line:
+                        manufacturer = self.get_prop_value(line)
+                    if 'ro.product.model' in line:
+                        model = self.get_prop_value(line)
+                    if 'ro.build.version.release' in line:
+                        sys_version = self.get_prop_value(line)
+                    if 'ro.build.version.sdk' in line:
+                        api_level = self.get_prop_value(line)
+                result = "{0} {1} Android {2},API {3}".format(manufacturer, model, sys_version, api_level)
+                z_logger.debug("result="+result)
+                self.device_info_name.setText(result)
+                self.parent.dbManager.update_device_prop(result, self.current_ip.split(":")[0])
+        else:
+            self.device_info_name.setText("Unknow Device")
+
+    @staticmethod
+    def get_prop_value(content):
+        strArr = content.split(":")
+        if len(strArr) == 2:
+            return strArr[1].replace("[", "").replace("]", "").strip()
+        return ''
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

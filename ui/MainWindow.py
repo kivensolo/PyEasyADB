@@ -76,7 +76,7 @@ class MainWindow(BaseWindow):
 
         # 初始化数据库帮助类
         self.dbManager = DBManager()
-        self.current_device_ip = ""
+        self.current_device_addr = ""
 
         # 主窗口分割器
         self.main_splitter = None
@@ -183,7 +183,7 @@ class MainWindow(BaseWindow):
         self.stacked_device_info.setGeometry(221, 70, 500, 400)
         # self.stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
         # 创建分页对象，并载入分页
-        file_page = DeviceInfoDetail()
+        file_page = DeviceInfoDetail(self)
         self.stacked_device_info.addWidget(file_page)
         self.stacked_device_info.setCurrentIndex(0)  # 切换至选中页
 
@@ -298,7 +298,7 @@ class MainWindow(BaseWindow):
             # else:
             #     qicon = self.icon_disconnect
             item = QStandardItem(addr)
-            item.ip = addr
+            item.addr = addr
             item.type = TYPE_DEVICE
             device_item.appendRow(item)
             self.local_ip_List.append(addr)
@@ -352,7 +352,7 @@ class MainWindow(BaseWindow):
     def on_ip_menu_show(self):
         item_model = self.get_current_item_model()
         if is_device_node(item_model):
-            if item_model.ip in self.active_ip_list:
+            if item_model.addr in self.active_ip_list:
                 self.action_remove_device.setDisabled(True)
                 self.action_disconnect.setDisabled(False)
             else:
@@ -370,16 +370,16 @@ class MainWindow(BaseWindow):
         item_child_index = self.tree_view.currentIndex()
         item_model = self.tree_model.itemFromIndex(item_child_index)
         item_model.parent().removeRow(item_child_index.row())
-        result, msg = self.dbManager.remove_device_from_db(item_model.ip)
+        result, msg = self.dbManager.remove_device_from_db(item_model.addr)
         if result:
-            z_logger.info('删除设备(%s)成功!' % str(item_model.ip))
-            self.local_ip_List.remove(item_model.ip)
+            z_logger.info('删除设备(%s)成功!' % str(item_model.addr))
+            self.local_ip_List.remove(item_model.addr)
 
     @pyqtSlot()
     def add_device(self, ip):
         z_logger.info("设备添加成功:" + ip)
         item = QStandardItem(self.icon_disconnect, ip)
-        item.ip = ip
+        item.addr = ip
         item.type = TYPE_DEVICE
         # FIXME 优化，此方法可能None异常
         item_model = self.get_current_item_model()
@@ -394,8 +394,8 @@ class MainWindow(BaseWindow):
         # 当树状item被点击时，可以通过获取item类型来处罚设备点击逻辑
         item = self.tree_model.itemFromIndex(index)  # QStandardItem
         if is_device_node(item):
-            z_logger.debug("on_tree_item_double_clicked %s" % item.ip)
-            self.connect_device(item.ip)
+            z_logger.debug("on_tree_item_double_clicked %s" % item.addr)
+            self.connect_device(item.addr)
         elif item.type == 'DeviceRoot':
             # z_logger.debug('刷新设备状态')
             self.check_device_status()
@@ -410,9 +410,15 @@ class MainWindow(BaseWindow):
         # self.stackedWidget_param.setCurrentIndex(index)
         item = self.tree_model.itemFromIndex(index)
         if is_device_node(item):
-            z_logger.debug('on_tree_item_clicked:' + item.ip)
-            self.current_device_ip = item.ip
-            # TODO 更新设备信息
+            z_logger.debug('on_tree_item_clicked:' + item.addr)
+            if self.current_device_addr == item.addr:
+                return
+            self.current_device_addr = item.addr
+            device_info_detail = self.stacked_device_info.currentWidget()
+            isconencted = item.addr in self.active_ip_list
+            if isinstance(device_info_detail, DeviceInfoDetail):
+                device_info_detail.update_device_info(self.current_device_addr, isconencted)
+
 
     def update_current_treeitem(self, isconnect: True):
         """
@@ -443,7 +449,7 @@ class MainWindow(BaseWindow):
             device_ips = item.rowCount()
             for child_index in range(device_ips):
                 child = item.child(child_index)
-                if child.ip in self.active_ip_list:
+                if child.addr in self.active_ip_list:
                     child.setIcon(self.icon_connect)
                 else:
                     child.setIcon(self.icon_disconnect)
@@ -455,8 +461,8 @@ class MainWindow(BaseWindow):
     def disconnect_device(self):
         item_model = self.get_current_item_model()
         if is_device_node(item_model):
-            self.temp_disconnect_ip = item_model.ip
-            self.adbTools.disconnect_device(item_model.ip, self.on_adb_cmd_exectued)
+            self.temp_disconnect_ip = item_model.addr
+            self.adbTools.disconnect_device(item_model.addr, self.on_adb_cmd_exectued)
 
     def connect_device(self, addr):
         self.adbTools.connect_device(addr, self.on_adb_cmd_exectued)
@@ -511,6 +517,7 @@ class MainWindow(BaseWindow):
                 z_logger.debug("active devices:" + line)
                 if device_name not in self.active_ip_list:
                     self.active_ip_list.append(device_name)
+                    # 尝试储存至数据库
                     self.dbManager.add_device_to_db(device_name)
                     self.update_current_treeitem(False)
                 else:
@@ -520,11 +527,11 @@ class MainWindow(BaseWindow):
                 self.dbManager.change_device_state(device_name,False)
                 self.update_current_treeitem(False)
 
-        if len(self.active_ip_list) > 0 and self.current_device_ip is None:
+        if len(self.active_ip_list) > 0 and self.current_device_addr is None:
             # FIXME 手机端设备是名称
-            self.current_device_ip = self.active_ip_list[0]
+            self.current_device_addr = self.active_ip_list[0]
             # TODO 同步数据库中的设备状态
-            z_logger.info("当前选中设备：" + self.current_device_ip)
+            z_logger.info("当前选中设备：" + self.current_device_addr)
 
         z_logger.debug("当前已连接设备列表：" + str(self.active_ip_list))
         self.refresh_treeview_by_data()
