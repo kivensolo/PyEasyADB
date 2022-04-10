@@ -23,6 +23,7 @@ from utils.Utils import Utils
 from ui.BaseWindow import BaseWindow
 
 TYPE_DEVICE = "Device"
+TYPE_ROOT_DEVICE = 'DeviceRoot'
 
 def initBtnTips():
     # 这种静态的方法设置一个用于显示工具提示的字体。这里使用10px滑体字体。
@@ -49,6 +50,13 @@ def is_device_node(item: QStandardItem):
     """
     return item and item.type == TYPE_DEVICE
 
+def is_device_root_node(item: QStandardItem):
+    """
+    判断节点数据是否是设备根节点
+    :param item: 节点标准数据
+    :return:
+    """
+    return item and item.type == TYPE_ROOT_DEVICE
 
 def is_device_active(state):
     """
@@ -287,7 +295,7 @@ class MainWindow(BaseWindow):
 
         device_item = QStandardItem("Devices")
         # self.tree_model.setItem(0, 1, device_item2)
-        device_item.type = 'DeviceRoot'
+        device_item.type = TYPE_ROOT_DEVICE
         device_item.removeRows(0, device_item.rowCount())
         other_item = QStandardItem("Other")
 
@@ -387,7 +395,12 @@ class MainWindow(BaseWindow):
         item.type = TYPE_DEVICE
         # FIXME 优化，此方法可能None异常
         item_model = self.get_current_item_model()
-        item_model.parent().appendRow(item)
+        if is_device_node(item_model):
+            item_model.parent().appendRow(item)
+        elif is_device_root_node(item_model):
+            item_model.appendRow(item)
+        else:
+            z_logger.error('添加设备时，数据获取异常')
         result, msg = self.dbManager.add_device_to_db(ip)
         if result:
             z_logger.debug("已储存新设备至数据库")
@@ -398,9 +411,13 @@ class MainWindow(BaseWindow):
         # 当树状item被点击时，可以通过获取item类型来处罚设备点击逻辑
         item = self.tree_model.itemFromIndex(index)  # QStandardItem
         if is_device_node(item):
-            z_logger.debug("on_tree_item_double_clicked %s" % item.addr)
-            self.connect_device(item.addr)
-        elif item.type == 'DeviceRoot':
+            z_logger.debug("On tree item double clicked %s" % item.addr)
+            if item.addr not in self.active_ip_list:
+                z_logger.info("连接设备中......(%s)" % item.addr)
+                self.connect_device(item.addr)
+            else:
+                z_logger.debug("Already in active device list.")
+        elif is_device_root_node(item):
             # z_logger.debug('刷新设备状态')
             self.check_device_status()
 
@@ -423,7 +440,6 @@ class MainWindow(BaseWindow):
             if isinstance(device_info_detail, DeviceInfoDetail):
                 device_info_detail.update_device_info(self.current_device_addr, isconencted)
 
-
     def update_current_treeitem(self, isconnect: True):
         """
         更新tree的子节点
@@ -436,8 +452,10 @@ class MainWindow(BaseWindow):
                 item_model.setIcon(self.icon_connect)
             else:
                 item_model.setIcon(self.icon_disconnect)
+        elif is_device_root_node(item_model):
+            z_logger.debug("更新设备列表")
         else:
-            z_logger.debug("无需更新树形节点")
+            z_logger.debug("无需更新节点")
 
     def refresh_treeview_by_data(self):
         """
@@ -445,10 +463,10 @@ class MainWindow(BaseWindow):
         :return:
         """
         rowCount = self.tree_model.rowCount()
-        z_logger.debug("refresh treeview with active_ip_list.")
+        z_logger.debug("Refresh treeview with active_ip_list.")
         for index in range(rowCount):
             item: QStandardItem = self.tree_model.item(index)
-            if item.type != "DeviceRoot":
+            if not is_device_root_node(item):
                 continue
             device_ips = item.rowCount()
             for child_index in range(device_ips):
@@ -473,19 +491,32 @@ class MainWindow(BaseWindow):
 
     @pyqtSlot()
     def check_device_status(self):
-        z_logger.debug("check device status....")
+        z_logger.debug("Check device status....")
         self.adbTools.get_devices_state(self.on_adb_cmd_exectued)
 
     @pyqtSlot(list)
     def on_adb_cmd_exectued(self, result):
+        """
+        ADB命令执行完毕的回调函数，进行各种命令结果的处理
+        :param result: List for result.
+        :return:
+        """
         z_logger.debug('On adb cmd result:' + str(result))
         if "cmdExectuedTimeout" in result:
-            z_logger.info("命令执行超时!")
+            if self.adbTools.current_cmd.startswith('adb connect'):
+                z_logger.error('很遗憾, 设备连接超时！')
+            else:
+                z_logger.error("命令执行超时!")
             return
 
         if self.adbTools.current_cmd.startswith('adb connect'):
-            if 'already connected to' in result:
+            result_info = result[0]
+            if 'already connected to' in result_info:
+                # ['already connected to xxxxxx']
                 z_logger.info("Already connected!")
+            elif 'cannot connect to' in result_info:
+                # ['cannot connect to xxxx: 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。 (10060)']
+                z_logger.error(result_info)
             else:
                 # 可能会存在空的情况
                 z_logger.info("设备连接成功!")
@@ -522,14 +553,15 @@ class MainWindow(BaseWindow):
             device_state = dev_line[1]
             if is_device_active(device_state):
                 # 正常连接的设备
-                z_logger.debug("active devices:" + line)
+                z_logger.debug("[Parse States] active devices:" + line)
                 if device_name not in self.active_ip_list:
                     self.active_ip_list.append(device_name)
-                    # 尝试储存至数据库
-                    self.dbManager.add_device_to_db(device_name)
-                    self.update_current_treeitem(False)
+                    # 若发现新设备,自动添加设备
+                    if device_name not in self.local_ip_List:
+                        z_logger.debug("[Parse States] This Device is not in local, add new：%s}" % device_name)
+                        self.add_device(device_name)
                 else:
-                    z_logger.debug("Already in local.(%s)" % line)
+                    z_logger.debug("[Parse States] Already in local.(%s)" % line)
             else:
                 # 离线设备 device_state == 'offline' 或 'unknow'
                 self.dbManager.change_device_state(device_name,False)

@@ -293,21 +293,27 @@ class DeviceInfoDetail(QWidget):
 
     def update_device_info(self, ip, isconnect):
         """
-        :param ip:
+        更新设备信息
+        :param ip: 设备ip
         :param isconnect: 当前设备是否已连接
-        :return:
+        :return: None
         """
         self.current_ip = ip
-        z_logger.debug("Update device info! conenct=" + str(isconnect))
+        z_logger.debug("Update device info! isConenct? =" + str(isconnect))
         result, value_tuple = self.parent.dbManager.get_device_prop_info(ip)
         if result and len(value_tuple) != 0:
-            if value_tuple[0] == '' and not isconnect:
-                # 未连接设备的情况下，从数据库中成功查询为空
-                self.device_info_name.setText("请先连接此设备")
+            # 从数据库查询到数据
+            if value_tuple[0] == '':
+                if not isconnect:  # 未连接设备的情况下
+                    self.device_info_name.setText("请先连接此设备")
+                else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
+                    z_logger.debug("[Update_Device] Current device is connected, but no device info!")
+                    self.parent.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
             else:
                 z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
                 self.device_info_name.setText(value_tuple[0])
         else:
+            # 从数据库查询不到数据，通常是手动添加的未连接设备
             if isconnect:
                 z_logger.debug("No this device prop cache, get with adb!")
                 self.parent.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
