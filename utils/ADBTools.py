@@ -20,7 +20,7 @@ class ADBTools:
         :param block:  回调函数
         :return:  list
         """
-        z_logger.debug("do_adb_cmd: " + cmd)
+        z_logger.debug("exec cmd: " + cmd)
         self.current_cmd = cmd
         self.executor.setFinishCallback(block)
         self.executor.exec(cmd)
@@ -40,7 +40,7 @@ class ADBTools:
         :return:
         """
         adb_cmd = "adb -s {0} shell am start {1}".format(ip, class_path)
-        z_logger.info("start app : %s" % class_path)
+        z_logger.info("Start app: %s" % class_path)
         self._exec_cmd(adb_cmd, block)
 
     def get_devices_state(self, block):

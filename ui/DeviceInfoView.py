@@ -205,25 +205,28 @@ class DeviceInfoDetail(QWidget):
         currentPkgName = self.get_current_choose_pkg()
         if currentPkgName:
             class_Path = "{0}/{1}".format(currentPkgName, self.activityClassPath.text())
-            self.parent.adbTools.start_app_page(self.current_ip, class_Path, self._onStartAppEnd)
+            self.parent.adbTools.start_app_page(self.current_ip, class_Path, self._onInvokeActionEnd)
 
     def invokeCommonAction(self, action, isShell=False):
         if not self.parent.is_current_device_connect():
             return
         currentPkgName = self.get_current_choose_pkg()
         if currentPkgName:
-            self.parent.adbTools.do_common_action(self.current_ip, currentPkgName, action, self._onStartAppEnd, isShell)
+            self.parent.adbTools.do_common_action(self.current_ip, currentPkgName, action, self._onInvokeActionEnd, isShell)
 
     @pyqtSlot(list)
-    def _onStartAppEnd(self, result):
+    def _onInvokeActionEnd(self, result):
         for line in result:
             if "Error:" in line:
                 z_logger.error("操作错误:" + str(line))
                 return
-            if "Failure" in line:
+            elif "Failure" in line:
                 z_logger.info("操作失败:" + str(line))
                 return
-        z_logger.info("操作完毕")
+            elif "Unknown package" in line:
+                # 卸载不存在应用的时候，adb会抛异常，但是python输出流无法捕获
+                z_logger.error("操作失败，请确认目标设备中存在此应用:" + str(line))
+        z_logger.debug("操作完毕")
 
     def initPkgData(self):
         """
