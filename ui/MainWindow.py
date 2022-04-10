@@ -29,6 +29,7 @@ def initBtnTips():
     QToolTip.setFont(QFont('SansSerif', 10))
 
 
+# 未使用
 def get_cmd_executor(finish_callback):
     """
      获取命令执行对象
@@ -107,6 +108,7 @@ class MainWindow(BaseWindow):
 
         self.init_left_panel()
         self.init_center_panel()
+        self.set_treeview_default_index(self.tree_view)
 
         # 初始化底部状态栏
         self.init_status_bar()
@@ -268,7 +270,10 @@ class MainWindow(BaseWindow):
         """ 初始化View  """
         # 基础Qt Widget
 
-# ----------------------------------左侧TreeView START-----------------------------------------------
+    def is_current_device_connect(self):
+        return self.current_device_addr in self.active_ip_list
+
+    # ----------------------------------左侧TreeView START-----------------------------------------------
     def init_tree_view(self):
         """
         初始化tree_view配置及数据
@@ -318,8 +323,6 @@ class MainWindow(BaseWindow):
         # 展开整个树形视图
         treeView.expandAll()
 
-        self.set_treeview_default_index(treeView)
-
         self.check_device_status()
         # 右键菜单键设置
         treeView.contextMenu = QMenu()
@@ -339,8 +342,9 @@ class MainWindow(BaseWindow):
         if root.hasChildren():
             child = root.child(0, 0).child(0, 0)
             if child:
-                idnex = self.tree_model.indexFromItem(child)
-                treeView.setCurrentIndex(idnex)
+                index = self.tree_model.indexFromItem(child)
+                treeView.setCurrentIndex(index)
+                self.on_tree_item_clicked(index)
 
     def get_current_item_model(self):
         # 得到当前选中项的 QModelIndex
@@ -499,6 +503,10 @@ class MainWindow(BaseWindow):
         :param result: List data:
             ['List of devices attached',
             '172.31.10.236:5555\tdevice']
+
+            device , 设备连接正常
+            offline , 设备离线，连接出现异常
+            unauthorized 设备为进行授权，需要在设备上是否允许调试对话框进行授权
         :return:
         """
         # 每次都清除本地记录的活跃设备数据

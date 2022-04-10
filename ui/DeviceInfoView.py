@@ -1,7 +1,7 @@
 import sys
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, pyqtSlot
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox, QApplication, QPushButton, QLineEdit, \
     QListWidget, QListWidgetItem
@@ -49,15 +49,18 @@ class DeviceInfoDetail(QWidget):
         self.device_name_layout.setContentsMargins(0, 0, 0, 0)  # 设置水平布局在Widget内上下左右的间距
         self.device_name_layout.setSpacing(10)  # 设置间距
         self.device_name_layout.setDirection(0)  # 自左向右的布局
-        self.device_name_layout.addSpacing(10)  # 左侧空隙
+        # self.device_name_layout.addSpacing(10)  # 左侧空隙
         self.deviceImageView = QLabel(self)
         self.deviceImageView.setPixmap(IconTool.buildQPixmap("device.png"))
         self.deviceImageView.setAlignment(Qt.AlignLeft)
         self.device_info_name = AppDeviceLabel()
-        self.device_info_name.setText('ZTE-2.5.2-ALL')
-        self.device_info_name.setObjectName("device_infos")
+        # self.device_info_name.setText('测试数据模拟效果')
+        self.device_info_name.setObjectName("device_prop")
         self.device_info_name.setStyleSheet("""
-            background-color: #C0C0C0 ;
+            background-color: #FFFFFF ;
+            border-width: 2px;
+            border-style: solid;
+            border-color: #ADADAD;
         """)
         self.device_name_layout.addWidget(self.deviceImageView)
         self.device_name_layout.addWidget(self.device_info_name)
@@ -171,21 +174,21 @@ class DeviceInfoDetail(QWidget):
         self.action_clear.setGeometry(QtCore.QRect(0, 0, 81, 31))
         self.action_clear.setObjectName("act_clear")
         self.action_clear.setFont(getWRYHFontStyle())
-        self.action_clear.clicked.connect(lambda: self.invokePkgAction())
+        self.action_clear.clicked.connect(lambda: self.invokeCommonAction("pm clear", True))
 
         self.action_uninstall = QPushButton(self)
         self.action_uninstall.setText("Uninstall")
         self.action_uninstall.setGeometry(QtCore.QRect(0, 0, 71, 31))
         self.action_uninstall.setObjectName("act_uninstall")
         self.action_uninstall.setFont(getWRYHFontStyle())
-        self.action_uninstall.clicked.connect(lambda: self.invokePkgAction())
+        self.action_uninstall.clicked.connect(lambda: self.invokeCommonAction("uninstall"))
 
         self.action_stop = QPushButton(self)
         self.action_stop.setText("Stop")
         self.action_stop.setGeometry(QtCore.QRect(0, 0, 71, 31))
         self.action_stop.setObjectName("act_stop")
         self.action_stop.setFont(getWRYHFontStyle())
-        self.action_stop.clicked.connect(lambda: self.invokePkgAction())
+        self.action_stop.clicked.connect(lambda: self.invokeCommonAction("am force-stop", True))
 
         self.actionLayout.addWidget(self.action_clear, alignment=Qt.AlignLeft)
         self.actionLayout.addWidget(self.action_uninstall, alignment=Qt.AlignLeft)
@@ -197,11 +200,30 @@ class DeviceInfoDetail(QWidget):
         return self.pkgComboBox.currentText()
 
     def invokePkgAction(self):
-        # TODO 判断设备是否连接
+        if not self.parent.is_current_device_connect():
+            return
         currentPkgName = self.get_current_choose_pkg()
         if currentPkgName:
             class_Path = "{0}/{1}".format(currentPkgName, self.activityClassPath.text())
-            ADBTools.start_app_page(class_Path, None)
+            self.parent.adbTools.start_app_page(self.current_ip, class_Path, self._onStartAppEnd)
+
+    def invokeCommonAction(self, action, isShell=False):
+        if not self.parent.is_current_device_connect():
+            return
+        currentPkgName = self.get_current_choose_pkg()
+        if currentPkgName:
+            self.parent.adbTools.do_common_action(self.current_ip, currentPkgName, action, self._onStartAppEnd, isShell)
+
+    @pyqtSlot(list)
+    def _onStartAppEnd(self, result):
+        for line in result:
+            if "Error:" in line:
+                z_logger.error("操作错误:" + str(line))
+                return
+            if "Failure" in line:
+                z_logger.info("操作失败:" + str(line))
+                return
+        z_logger.info("操作完毕")
 
     def initPkgData(self):
         """
@@ -265,13 +287,18 @@ class DeviceInfoDetail(QWidget):
         if len(result) == 0:
             self.dbManager.insertPackageRow(new_pkg)
             self.updatePkgComBox()
-            z_logger.debug("包名添加成功!")
+            z_logger.info("包名添加成功:" + new_pkg)
         else:
-            z_logger.error("此包名已存在，无需再次添加")
+            z_logger.info("此包名已存在，您无需再次添加!")
 
     def update_device_info(self, ip, isconnect):
+        """
+        :param ip:
+        :param isconnect: 当前设备是否已连接
+        :return:
+        """
         self.current_ip = ip
-        z_logger.debug("Update device info!")
+        z_logger.debug("Update device info! conenct=" + str(isconnect))
         result, value_tuple = self.parent.dbManager.get_device_prop_info(ip)
         if result and len(value_tuple) != 0:
             if value_tuple[0] == '' and not isconnect:
@@ -329,6 +356,6 @@ class DeviceInfoDetail(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mainWin = DeviceInfoDetail()
+    mainWin = DeviceInfoDetail(None)
     mainWin.show()
     sys.exit(app.exec_())
