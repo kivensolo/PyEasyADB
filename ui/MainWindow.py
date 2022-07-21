@@ -1,3 +1,5 @@
+import xml.dom.minidom
+
 from PyQt5.QtCore import QSize, QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QTimer, pyqtSignal
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor, QStandardItemModel, QStandardItem, QCursor
@@ -68,9 +70,10 @@ def is_device_active(state):
 
 
 class MainWindow(BaseWindow):
-    tree_model = None
+    treeModel = None
     # 本地缓存ip数据
     local_ip_List = []
+    cmdDataList = []
 
     """
     QMainWindow 类提供了一个主要的应用程序窗口。
@@ -286,12 +289,44 @@ class MainWindow(BaseWindow):
         """
         初始化tree_view配置及数据
         :return:
+        TODO 改为子线程？
         TODO 优化，学习TreeView 只需要刷新数据，而不需要重新构建UI
         https://blog.csdn.net/qq_27061049/article/details/89641210
         https://blog.csdn.net/seniorwizard/article/details/110199352?spm=1001.2101.3001.6650.8&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8.pc_relevant_default&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8.pc_relevant_default&utm_relevant_index=13
         """
         # 表头信息
-        self.tree_model = QStandardItemModel()
+        self.treeModel = QStandardItemModel()
+        # 打开xml文档
+        dom = xml.dom.minidom.parse("./config/cmdConfig.xml")
+        # 得到文档根元素对象
+        root = dom.documentElement
+        groups = root.getElementsByTagName("Group")
+        print("****所有分组信息****")
+        for group in groups:
+            attrName = group.getAttribute("name")
+            print("====|发现分组：" + attrName)
+            groupItem = QStandardItem(attrName)
+            groupItem.type = attrName
+
+            # TODO 这里要用递归
+            childGroups = group.getElementsByTagName("Group")
+            childItems = group.getElementsByTagName("item")
+            for adbItem in childItems:
+                name = adbItem.getAttribute("name")
+                cmd = None
+                if adbItem.firstChild is not None:
+                    cmd = adbItem.firstChild.data
+                print("    |发现命令" + name + "=" + str(cmd))
+                item = QStandardItem(name)
+                item.name = name
+                item.cmd = cmd
+                groupItem.appendRow(item)
+            self.cmdDataList.append(groupItem)
+
+        print(root.nodeName) # 结点名字
+        print(root.nodeValue) # 结点的值
+        print(root.nodeType) # 节点类型
+        print(root.ELEMENT_NODE)
 
         device_item = QStandardItem("Devices")
         # self.tree_model.setItem(0, 1, device_item2)
@@ -316,16 +351,17 @@ class MainWindow(BaseWindow):
             device_item.appendRow(item)
             self.local_ip_List.append(addr)
         # 添加列
-        self.tree_model.appendColumn([device_item, other_item])
+        self.cmdDataList.insert(0, device_item)
+        self.treeModel.appendColumn(self.cmdDataList)
         # setHeaderData 要放在appendColumn之后
-        self.tree_model.setHeaderData(0, Qt.Horizontal, '设备信息')
+        self.treeModel.setHeaderData(0, Qt.Horizontal, '设备信息')
         treeView = self.tree_view
         treeView.setContextMenuPolicy(Qt.CustomContextMenu)
         treeView.setRootIsDecorated(False)
         treeView.customContextMenuRequested.connect(self.on_ip_menu_show) # 右键菜单显示函数
         treeView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # set model to treeview
-        treeView.setModel(self.tree_model)
+        treeView.setModel(self.treeModel)
         treeView.doubleClicked.connect(self.on_tree_item_double_clicked)
         treeView.clicked.connect(self.on_tree_item_clicked)
         # 展开整个树形视图
@@ -346,11 +382,11 @@ class MainWindow(BaseWindow):
         :param treeView:
         :return:
         """
-        root = self.tree_model.invisibleRootItem()
+        root = self.treeModel.invisibleRootItem()
         if root.hasChildren():
             child = root.child(0, 0).child(0, 0)
             if child:
-                index = self.tree_model.indexFromItem(child)
+                index = self.treeModel.indexFromItem(child)
                 treeView.setCurrentIndex(index)
                 self.on_tree_item_clicked(index)
 
@@ -358,7 +394,7 @@ class MainWindow(BaseWindow):
         # 得到当前选中项的 QModelIndex
         item_child_index = self.tree_view.currentIndex()
         # 获取取到QStandardItem
-        item_model = self.tree_model.itemFromIndex(item_child_index)
+        item_model = self.treeModel.itemFromIndex(item_child_index)
         return item_model
 
     def on_ip_menu_show(self):
@@ -380,7 +416,7 @@ class MainWindow(BaseWindow):
         :return:
         """
         item_child_index = self.tree_view.currentIndex()
-        item_model = self.tree_model.itemFromIndex(item_child_index)
+        item_model = self.treeModel.itemFromIndex(item_child_index)
         item_model.parent().removeRow(item_child_index.row())
         result, msg = self.dbManager.remove_device_from_db(item_model.addr)
         if result:
@@ -409,7 +445,7 @@ class MainWindow(BaseWindow):
     @pyqtSlot(QModelIndex)
     def on_tree_item_double_clicked(self, index):
         # 当树状item被点击时，可以通过获取item类型来处罚设备点击逻辑
-        item = self.tree_model.itemFromIndex(index)  # QStandardItem
+        item = self.treeModel.itemFromIndex(index)  # QStandardItem
         if is_device_node(item):
             z_logger.debug("On tree item double clicked %s" % item.addr)
             if item.addr not in self.active_ip_list:
@@ -429,7 +465,7 @@ class MainWindow(BaseWindow):
         :return:
         """
         # self.stackedWidget_param.setCurrentIndex(index)
-        item = self.tree_model.itemFromIndex(index)
+        item = self.treeModel.itemFromIndex(index)
         if is_device_node(item):
             z_logger.debug('on_tree_item_clicked:' + item.addr)
             if self.current_device_addr == item.addr:
@@ -462,10 +498,10 @@ class MainWindow(BaseWindow):
         更新treeView现有数据的样式（目前只是连接状态样式）
         :return:
         """
-        rowCount = self.tree_model.rowCount()
+        rowCount = self.treeModel.rowCount()
         z_logger.debug("Refresh treeview with active_ip_list.")
         for index in range(rowCount):
-            item: QStandardItem = self.tree_model.item(index)
+            item: QStandardItem = self.treeModel.item(index)
             if not is_device_root_node(item):
                 continue
             device_ips = item.rowCount()
