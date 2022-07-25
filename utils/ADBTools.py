@@ -13,7 +13,7 @@ class ADBTools:
         self.executor = CmdExecutor()
         self.current_cmd = ''
 
-    def _exec_cmd(self, cmd, block):
+    def exec_cmd(self, cmd, block):
         """
         执行ADB命令
         :param cmd: ADB执行命令
@@ -30,7 +30,7 @@ class ADBTools:
             adb_cmd = "adb -s {0} shell {1} {2}".format(ip, action, package)
         else:
             adb_cmd = "adb -s {0} {1} {2}".format(ip, action, package)
-        self._exec_cmd(adb_cmd, block)
+        self.exec_cmd(adb_cmd, block)
 
     def start_app_page(self, ip, class_path, block):
         """
@@ -41,20 +41,20 @@ class ADBTools:
         """
         adb_cmd = "adb -s {0} shell am start {1}".format(ip, class_path)
         z_logger.info("Start app: %s" % class_path)
-        self._exec_cmd(adb_cmd, block)
+        self.exec_cmd(adb_cmd, block)
 
     def get_devices_state(self, block):
         cmd = 'adb devices'
-        self._exec_cmd(cmd, block)
+        self.exec_cmd(cmd, block)
 
     def connect_device(self, device_ip, block):
         cmd = "adb connect %s" % device_ip
-        self._exec_cmd(cmd, block)
+        self.exec_cmd(cmd, block)
 
     def disconnect_device(self, device_ip, block):
         cmd = "adb disconnect %s" % device_ip
-        self._exec_cmd(cmd, block)
+        self.exec_cmd(cmd, block)
 
     def get_device_info(self, ip, block):
         cmd = "adb -s {0} shell getprop".format(ip)
-        self._exec_cmd(cmd, block)
+        self.exec_cmd(cmd, block)

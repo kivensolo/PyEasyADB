@@ -5,13 +5,10 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, QLabel, QMenuBar, QMenu, QAction, \
     QStatusBar, QToolTip, qApp, QTextEdit, QLineEdit, QVBoxLayout, QGroupBox, QGridLayout, QHBoxLayout, QMainWindow, \
-    QToolBar, QSplitter, QTreeView, QAbstractItemView, QWidget, QTreeWidgetItem, QListWidgetItem
+    QToolBar, QSplitter, QTreeView, QAbstractItemView, QWidget, QTreeWidgetItem, QListWidgetItem, QStyleFactory
 
-from config.settings import PATH_LOGO_ICON, APP_VERSION, DB_NAME
-from logcat import log
 from logcat.log import z_logger
-from ui import DevicePage
-from ui.DeviceGroup import OldUIManager
+from ui import TreeItemType
 from ui.DeviceInfoView import DeviceInfoDetail
 from ui.sql import DBManager
 from ui.widget.ButtomConsoleWindow import ButtomWindow
@@ -24,8 +21,6 @@ from utils.Utils import Utils
 
 from ui.BaseWindow import BaseWindow
 
-TYPE_DEVICE = "Device"
-TYPE_ROOT_DEVICE = 'DeviceRoot'
 
 def initBtnTips():
     # 这种静态的方法设置一个用于显示工具提示的字体。这里使用10px滑体字体。
@@ -50,7 +45,8 @@ def is_device_node(item: QStandardItem):
     :param item: 节点标准数据
     :return:
     """
-    return item and item.type == TYPE_DEVICE
+    return item and item.type == TreeItemType.TYPE_DEVICE
+
 
 def is_device_root_node(item: QStandardItem):
     """
@@ -58,7 +54,8 @@ def is_device_root_node(item: QStandardItem):
     :param item: 节点标准数据
     :return:
     """
-    return item and item.type == TYPE_ROOT_DEVICE
+    return item and item.type == TreeItemType.TYPE_ROOT_DEVICE
+
 
 def is_device_active(state):
     """
@@ -73,7 +70,7 @@ class MainWindow(BaseWindow):
     treeModel = None
     # 本地缓存ip数据
     local_ip_List = []
-    cmdDataList = []
+    tree_data_list = []
 
     """
     QMainWindow 类提供了一个主要的应用程序窗口。
@@ -294,49 +291,16 @@ class MainWindow(BaseWindow):
         https://blog.csdn.net/qq_27061049/article/details/89641210
         https://blog.csdn.net/seniorwizard/article/details/110199352?spm=1001.2101.3001.6650.8&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8.pc_relevant_default&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8.pc_relevant_default&utm_relevant_index=13
         """
-        # 表头信息
-        self.treeModel = QStandardItemModel()
-        # 打开xml文档
-        dom = xml.dom.minidom.parse("./config/cmdConfig.xml")
-        # 得到文档根元素对象
-        root = dom.documentElement
-        groups = root.getElementsByTagName("Group")
-        print("****所有分组信息****")
-        for group in groups:
-            attrName = group.getAttribute("name")
-            print("====|发现分组：" + attrName)
-            groupItem = QStandardItem(attrName)
-            groupItem.type = attrName
-
-            # TODO 这里要用递归
-            childGroups = group.getElementsByTagName("Group")
-            childItems = group.getElementsByTagName("item")
-            for adbItem in childItems:
-                name = adbItem.getAttribute("name")
-                cmd = None
-                if adbItem.firstChild is not None:
-                    cmd = adbItem.firstChild.data
-                print("    |发现命令" + name + "=" + str(cmd))
-                item = QStandardItem(name)
-                item.name = name
-                item.cmd = cmd
-                groupItem.appendRow(item)
-            self.cmdDataList.append(groupItem)
-
-        print(root.nodeName) # 结点名字
-        print(root.nodeValue) # 结点的值
-        print(root.nodeType) # 节点类型
-        print(root.ELEMENT_NODE)
-
-        device_item = QStandardItem("Devices")
-        # self.tree_model.setItem(0, 1, device_item2)
-        device_item.type = TYPE_ROOT_DEVICE
-        device_item.removeRows(0, device_item.rowCount())
-        other_item = QStandardItem("Other")
+        self.load_adb_cmds()
 
         self.local_ip_List.clear()
         # 获取所有本地缓存ip数据
         all_device = self.dbManager.get_all_device()
+
+        device_item = QStandardItem("设备列表")
+        # self.tree_model.setItem(0, 1, device_item2)
+        device_item.type = TreeItemType.TYPE_ROOT_DEVICE
+        device_item.removeRows(0, device_item.rowCount())
         # TODO 自定义排序规则
         all_device.sort()
         for device in all_device:
@@ -347,23 +311,30 @@ class MainWindow(BaseWindow):
             #     qicon = self.icon_disconnect
             item = QStandardItem(addr)
             item.addr = addr
-            item.type = TYPE_DEVICE
+            item.type = TreeItemType.TYPE_DEVICE
             device_item.appendRow(item)
             self.local_ip_List.append(addr)
-        # 添加列
-        self.cmdDataList.insert(0, device_item)
-        self.treeModel.appendColumn(self.cmdDataList)
+        # 设备数据插入到第一条中
+        self.tree_data_list.insert(0, device_item)
+
+        # TreeModel
+        self.treeModel = QStandardItemModel()
+        self.treeModel.appendColumn(self.tree_data_list)
         # setHeaderData 要放在appendColumn之后
-        self.treeModel.setHeaderData(0, Qt.Horizontal, '设备信息')
+        self.treeModel.setHeaderData(0, Qt.Horizontal, '功能区')
+
+        # TreeView设置
         treeView = self.tree_view
         treeView.setContextMenuPolicy(Qt.CustomContextMenu)
         treeView.setRootIsDecorated(False)
-        treeView.customContextMenuRequested.connect(self.on_ip_menu_show) # 右键菜单显示函数
+        treeView.customContextMenuRequested.connect(self.on_ip_menu_show)  # 右键菜单显示函数
         treeView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # set model to treeview
         treeView.setModel(self.treeModel)
         treeView.doubleClicked.connect(self.on_tree_item_double_clicked)
         treeView.clicked.connect(self.on_tree_item_clicked)
+        # 设置成有虚线连接的方式
+        treeView.setStyle(QStyleFactory.create('windows'))
         # 展开整个树形视图
         treeView.expandAll()
 
@@ -375,6 +346,51 @@ class MainWindow(BaseWindow):
         self.action_disconnect.triggered.connect(self.disconnect_device)
         self.action_remove_device = treeView.contextMenu.addAction(self.icon_disconnect, '| 删除设备')
         self.action_remove_device.triggered.connect(self.del_device)
+
+    def load_adb_cmds(self):
+        root_adb_node = QStandardItem("命令列表")
+        dom = xml.dom.minidom.parse("./config/cmdConfig.xml")
+        root = dom.documentElement
+        childNodes = root.getElementsByTagName("group")
+        print("****所有分组信息****")
+        self.parseNode(root_adb_node, childNodes, 1)
+
+    def parseNode(self, prentQItem, groupElements, level):
+        """
+        :param prentQItem: 父级UI节点
+        :param groupElements: 当前分组元素的列表
+        :param level: 父级UI节点所在层级
+        :return:
+        """
+        for group in groupElements:
+            # ELEMENT_NODE
+            _attrName = group.getAttribute("name")
+            print("\t\t|发现分组：" + _attrName)
+            currentFolder = QStandardItem(_attrName)
+            if level == 1 or prentQItem is not None:
+                prentQItem.appendRow(currentFolder)
+
+            # load child group element
+            _groupChildrens = group.getElementsByTagName("sub_group")
+            if _groupChildrens.length > 0:
+                self.parseNode(currentFolder, _groupChildrens, level+1)
+            if level == 1:
+                cmdChildrens = group.getElementsByTagName("item")
+            else:
+                cmdChildrens = group.getElementsByTagName("citem")
+            for item in cmdChildrens:
+                name = item.getAttribute("name")
+                cmd = None
+                if item.firstChild is not None:
+                    cmd = item.firstChild.data
+                print("\t\t|Add cmd:" + name + "=" + str(cmd))
+                item = QStandardItem(name)
+                item.type = TreeItemType.TYPE_ADB_CMD
+                item.name = name
+                item.cmd = cmd
+                currentFolder.appendRow(item)
+            if level == 1:
+                self.tree_data_list.append(prentQItem)
 
     def set_treeview_default_index(self, treeView):
         """
@@ -428,7 +444,7 @@ class MainWindow(BaseWindow):
         z_logger.info("设备添加成功:" + ip)
         item = QStandardItem(self.icon_disconnect, ip)
         item.addr = ip
-        item.type = TYPE_DEVICE
+        item.type = TreeItemType.TYPE_DEVICE
         # FIXME 优化，此方法可能None异常
         item_model = self.get_current_item_model()
         if is_device_node(item_model):
@@ -444,7 +460,11 @@ class MainWindow(BaseWindow):
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_double_clicked(self, index):
-        # 当树状item被点击时，可以通过获取item类型来处罚设备点击逻辑
+        """
+        树状Item被双击的槽函数回调
+        :param index: 可以通过获取item类型来触发设备点击逻辑
+        :return:
+        """
         item = self.treeModel.itemFromIndex(index)  # QStandardItem
         if is_device_node(item):
             z_logger.debug("On tree item double clicked %s" % item.addr)
@@ -456,6 +476,12 @@ class MainWindow(BaseWindow):
         elif is_device_root_node(item):
             # z_logger.debug('刷新设备状态')
             self.check_device_status()
+        elif item.type == TreeItemType.TYPE_ADB_CMD:
+            if len(self.active_ip_list) == 0:
+                z_logger.error("请先连接设备")
+            else:
+                z_logger.info(item.cmd)
+                self.adbTools.exec_cmd(item.cmd, self.on_adb_cmd_exectued)
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):
@@ -563,6 +589,9 @@ class MainWindow(BaseWindow):
             self.update_current_treeitem(False)
         elif self.adbTools.current_cmd == 'adb devices':
             self.parse_devices_states(result)
+        else:
+            # TODO 进行日志打印和展示
+            z_logger.info(result)
 
     def parse_devices_states(self, result):
         """

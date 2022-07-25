@@ -1,27 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CMD>
-    <Group name="Display">
+    <group name="Display">
+        <sub_group name="Prop">
+            <citem name="Get prop">44444</citem>
+            <citem name="Set prop">44444444</citem>
+        </sub_group>
         <item name="Screenshot">123123</item>
         <item name="Screenrecord">2222</item>
         <item name="Density">3333333</item>
-    </Group>
-    <Group name="System">
-        <Group name="Prop">
-            <item name="Get prop">44444</item>
-            <item name="Set prop">44444444</item>
-        </Group>
+    </group>
+    <group name="System">
+        <sub_group name="Prop2">
+            <citem name="Get prop">44444</citem>
+            <citem name="Set prop">44444444</citem>
+        </sub_group>
         <item name="Memory">4444444444444444</item>
-    </Group>
-    <Group name="Packages">
-        <item name="All packages"/>
+    </group>
+    <group name="Packages">
+        <item name="All packages">adb shell pm list packages</item>
         <item name="Set prop"/>
         <item name="Install and uninstall"/>
-    </Group>
-    <Group name="About">
-        <Group name="About">
+    </group>
+    <group name="About">
+        <sub_group name="About">
             <item name="Help"/>
             <item name="Version"/>
-        </Group>
-    </Group>
+        </sub_group>
+    </group>
 
 </CMD>
