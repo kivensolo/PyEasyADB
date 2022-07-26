@@ -20,7 +20,7 @@ class AppPushButton(QPushButton):
     App公共的PushButton
     https://blog.csdn.net/sazass/article/details/117018947
     """
-    def __init__(self, text, slotFun):
+    def __init__(self, text = "", slotFun = None):
         super().__init__(text, objectName="ToolButton")
         self.font = QFont()
         # self.font.setFamily("黑体")

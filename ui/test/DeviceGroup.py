@@ -2,13 +2,11 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QPixmap, QColor
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QLabel, QComboBox, QTextEdit, QGridLayout, \
-    QHBoxLayout, QGroupBox, QVBoxLayout
+    QHBoxLayout,  QVBoxLayout
 
-from config.settings import DB_NAME
 from logcat import log
-from ui.sql import DBManager
 from utils import Tools
-from utils.Tools import getKTFontStyle, getWRYHFontStyle
+from utils.Tools import getWRYHFontStyle
 
 
 class OldUIManager:

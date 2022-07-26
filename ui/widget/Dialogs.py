@@ -13,7 +13,7 @@ class NewConnectDialog(BaseDialog):
     """
     新建连接的Dialog, 使用绝对布局
     """
-    def __init__(self, window, block):
+    def __init__(self, window = None, block = None):
         # super(NewConnectDialog, self).__init__()
         super().__init__("新建连接")
         self.window = window

@@ -10,10 +10,10 @@ from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, Q
 from logcat.log import z_logger
 from ui import TreeItemType
 from ui.CenterLayout import CenterLayout
+from ui.component.ToolBarView import AppToolBar
 from ui.sql import DBManager
 from ui.style import StyleSheetConfig
 from ui.widget.ButtomConsoleWindow import ButtomWindow
-from ui.widget.NewConnectDialog import NewConnectDialog
 from utils.ADBTools import ADBTools
 from utils.CmdExecutor import CmdExecutor
 from utils.UITools import IconTool
@@ -79,6 +79,7 @@ class MainWindow(BaseWindow):
     """
     def __init__(self):
         super().__init__()
+        self.toolbar = None
         self.initWindow()
 
         self.icon_connect = IconTool.buildQIcon("state_connect.png")
@@ -111,7 +112,8 @@ class MainWindow(BaseWindow):
     def init_all_ui(self):
         # 初始化菜单栏
         self.init_menu_bar()
-        self.init_toolbar()
+        self.toolbar = AppToolBar(self)
+        self.addToolBar(self.toolbar)
         # 初始化功能区
         # self.init_test_func_group()
 
@@ -148,36 +150,13 @@ class MainWindow(BaseWindow):
 
     def closeEvent(self, event):
         #  关闭窗口的时候,触发QCloseEvent。重写closeEvent()事件处理程序
-        reply = QMessageBox.question(self, '提示', "要离开了么?",
-                                     QMessageBox.Yes | QMessageBox.No,
-                                     QMessageBox.No)
-        if reply == QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()
-
-    def init_toolbar(self):
-        toolbar = QToolBar(self)
-        toolbar.setContentsMargins(5, 5, 5, 5)
-        toolbar.setStyleSheet("QWidget{background-color:rgb(229,229,229);border:none}")
-        icon = IconTool.buildQIcon("new_connect.png")
-        tool_item_add_new = AppPushButton("新建连接", self.show_new_device_dialog)
-        tool_item_add_new.setIcon(icon)
-        # 如何垂直布局
-        tool_item_add_new.setIconSize(QSize(30, 30))
-        # tool_item_add_new.setFlat(True)  # 按钮扁平化,去掉按钮边框
-
-        # self.tool_item_add_new.setGeometry(QtCore.QRect(0, 0, 120, 120))
-        toolbar.addWidget(tool_item_add_new)
-        self.addToolBar(toolbar)
-
-    @pyqtSlot()
-    def show_new_device_dialog(self):
-        new_connect_dialog = NewConnectDialog(self, self.add_device)
-        # new_connect_dialog.finishSignal.connect(self.on_new_device_added)
-        new_connect_dialog.setWindowModality(Qt.ApplicationModal)
-        new_connect_dialog.exec()
-
+        # reply = QMessageBox.question(self, '提示', "要离开了么?",
+        #                              QMessageBox.Yes | QMessageBox.No,
+        #                              QMessageBox.No)
+        # if reply == QMessageBox.Yes:
+        event.accept()
+        # else:
+        #     event.ignore()
 
     def init_center_panel(self):
         self.center_panel = QWidget()
@@ -492,7 +471,7 @@ class MainWindow(BaseWindow):
         else:
             pkgName = ""
             if item.needTarget == "true":
-                pkgName = self.centerArea.get_current_choose_pkg()
+                pkgName = self.toolbar.get_current_choose_pkg()
                 if pkgName is None:
                     z_logger.error("请先选择目标应用")
                     return
@@ -518,10 +497,8 @@ class MainWindow(BaseWindow):
             if self.current_device_addr == item.addr:
                 return
             self.current_device_addr = item.addr
-            device_info_detail = self.stacked_device_info.currentWidget()
             isconencted = item.addr in self.active_ip_list
-            if isinstance(device_info_detail, CenterLayout):
-                device_info_detail.update_device_info(self.current_device_addr, isconencted)
+            self.toolbar.update_device_info(self.current_device_addr, isconencted)
 
     def update_current_treeitem(self, isconnect: True):
         """
