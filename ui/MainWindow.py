@@ -9,8 +9,9 @@ from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, Q
 
 from logcat.log import z_logger
 from ui import TreeItemType
-from ui.DeviceInfoView import DeviceInfoDetail
+from ui.CenterLayout import CenterLayout
 from ui.sql import DBManager
+from ui.style import StyleSheetConfig
 from ui.widget.ButtomConsoleWindow import ButtomWindow
 from ui.widget.NewConnectDialog import NewConnectDialog
 from utils.ADBTools import ADBTools
@@ -160,11 +161,10 @@ class MainWindow(BaseWindow):
         toolbar.setContentsMargins(5, 5, 5, 5)
         toolbar.setStyleSheet("QWidget{background-color:rgb(229,229,229);border:none}")
         icon = IconTool.buildQIcon("new_connect.png")
-        tool_item_add_new = AppPushButton(toolbar, self.show_new_device_dialog)
-        tool_item_add_new.setStyleSheet("QPushButton:pressed{background-color:rgb(206,220,232)}")
+        tool_item_add_new = AppPushButton("新建连接", self.show_new_device_dialog)
         tool_item_add_new.setIcon(icon)
-        tool_item_add_new.setStatusTip("新建连接")
-        tool_item_add_new.setIconSize(QSize(24, 20))
+        # 如何垂直布局
+        tool_item_add_new.setIconSize(QSize(30, 30))
         # tool_item_add_new.setFlat(True)  # 按钮扁平化,去掉按钮边框
 
         # self.tool_item_add_new.setGeometry(QtCore.QRect(0, 0, 120, 120))
@@ -193,8 +193,8 @@ class MainWindow(BaseWindow):
         self.stacked_device_info.setGeometry(221, 70, 500, 400)
         # self.stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
         # 创建分页对象，并载入分页
-        file_page = DeviceInfoDetail(self)
-        self.stacked_device_info.addWidget(file_page)
+        self.centerArea = CenterLayout(self)
+        self.stacked_device_info.addWidget(self.centerArea)
         self.stacked_device_info.setCurrentIndex(0)  # 切换至选中页
 
         # OldUIManager(self, centralwidget).initViews()
@@ -384,11 +384,13 @@ class MainWindow(BaseWindow):
                 if item.firstChild is not None:
                     cmd = item.firstChild.data
                 print("\t\t|Add cmd:" + name + "=" + str(cmd))
-                item = QStandardItem(name)
-                item.type = TreeItemType.TYPE_ADB_CMD
-                item.name = name
-                item.cmd = cmd
-                currentFolder.appendRow(item)
+                qItem = QStandardItem(name)
+                qItem.type = TreeItemType.TYPE_ADB_CMD
+                qItem.name = name
+                qItem.needTarget = item.getAttribute("target")
+                qItem.isShell = item.getAttribute("isShell")
+                qItem.cmd = cmd
+                currentFolder.appendRow(qItem)
             if level == 1:
                 self.tree_data_list.append(prentQItem)
 
@@ -477,11 +479,30 @@ class MainWindow(BaseWindow):
             # z_logger.debug('刷新设备状态')
             self.check_device_status()
         elif item.type == TreeItemType.TYPE_ADB_CMD:
-            if len(self.active_ip_list) == 0:
-                z_logger.error("请先连接设备")
-            else:
-                z_logger.info(item.cmd)
-                self.adbTools.exec_cmd(item.cmd, self.on_adb_cmd_exectued)
+            self._dealWithADB(item)
+
+    def _dealWithADB(self, item):
+        """
+        处理ADB命令
+        :param item:
+        :return:
+        """
+        if len(self.active_ip_list) == 0:
+            z_logger.error("请先连接设备")
+        else:
+            pkgName = ""
+            if item.needTarget == "true":
+                pkgName = self.centerArea.get_current_choose_pkg()
+                if pkgName is None:
+                    z_logger.error("请先选择目标应用")
+                    return
+            self.adbTools.exec_cmd(
+                self.current_device_addr,
+                item.cmd,
+                pkgName,
+                item.isShell,
+                self.on_adb_cmd_exectued
+            )
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):
@@ -499,7 +520,7 @@ class MainWindow(BaseWindow):
             self.current_device_addr = item.addr
             device_info_detail = self.stacked_device_info.currentWidget()
             isconencted = item.addr in self.active_ip_list
-            if isinstance(device_info_detail, DeviceInfoDetail):
+            if isinstance(device_info_detail, CenterLayout):
                 device_info_detail.update_device_info(self.current_device_addr, isconencted)
 
     def update_current_treeitem(self, isconnect: True):
@@ -556,15 +577,16 @@ class MainWindow(BaseWindow):
         z_logger.debug("Check device status....")
         self.adbTools.get_devices_state(self.on_adb_cmd_exectued)
 
-    @pyqtSlot(list)
+    @pyqtSlot(str)
     def on_adb_cmd_exectued(self, result):
         """
         ADB命令执行完毕的回调函数，进行各种命令结果的处理
         :param result: List for result.
         :return:
         """
+        resultList = result.split('\n')
         z_logger.debug('On adb cmd result:' + str(result))
-        if "cmdExectuedTimeout" in result:
+        if "cmdExectuedTimeout" in resultList:
             if self.adbTools.current_cmd.startswith('adb connect'):
                 z_logger.error('很遗憾, 设备连接超时！')
             else:
@@ -572,7 +594,7 @@ class MainWindow(BaseWindow):
             return
 
         if self.adbTools.current_cmd.startswith('adb connect'):
-            result_info = result[0]
+            result_info = resultList[0]
             if 'already connected to' in result_info:
                 # ['already connected to xxxxxx']
                 z_logger.info("Already connected!")
@@ -588,10 +610,10 @@ class MainWindow(BaseWindow):
             self.active_ip_list.remove(self.temp_disconnect_ip)
             self.update_current_treeitem(False)
         elif self.adbTools.current_cmd == 'adb devices':
-            self.parse_devices_states(result)
+            self.parse_devices_states(resultList)
         else:
-            # TODO 进行日志打印和展示
-            z_logger.info(result)
+            if len(result) != 0:
+                z_logger.info("Result=" + result)
 
     def parse_devices_states(self, result):
         """

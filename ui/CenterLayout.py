@@ -8,16 +8,16 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox
 
 from logcat.log import z_logger
 from ui.sql import DBManager
-from utils import ADBTools
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
 from utils.UITools import IconTool
 from utils.UiWidgts import AppDeviceLabel
 
 
-class DeviceInfoDetail(QWidget):
-    resImages = {'Linked': '.././res/img/link_32x32.png',
-                 'Unlink': '././res/img/unlink_32x28.png',
-                 'Device': '././res/img/device.png'}
+class CenterLayout(QWidget):
+    """
+    工具的中间主要布局
+    """
+    resImages = {'Device': '././res/img/device.png'}
 
     def __init__(self, parent):
         super().__init__()
@@ -35,13 +35,11 @@ class DeviceInfoDetail(QWidget):
         self._init_choose_pkg_layout()
         self._init_package_add_layout()
         self._init_class_path_layout()
-        self._init_actions_layout()
 
         self.root_layout.addLayout(self.device_name_layout)
         self.root_layout.addLayout(self.package_layout)
         self.root_layout.addLayout(self.package_edit_layout)
         self.root_layout.addLayout(self.activity_class_layout)
-        self.root_layout.addLayout(self.actionLayout)
         self.root_layout.addStretch()
 
     def _init_device_info_layout(self):
@@ -163,39 +161,6 @@ class DeviceInfoDetail(QWidget):
         self.package_edit_layout.addWidget(self.pkg_inputEditText)
         self.package_edit_layout.addStretch()  # 添加可拉伸弹簧
 
-    def _init_actions_layout(self):
-        """
-        初始化应用行为操作按钮控件
-        :return:
-        """
-        self.actionLayout = QHBoxLayout()
-        self.action_clear = QPushButton(self)
-        self.action_clear.setText("Clear")
-        self.action_clear.setGeometry(QtCore.QRect(0, 0, 81, 31))
-        self.action_clear.setObjectName("act_clear")
-        self.action_clear.setFont(getWRYHFontStyle())
-        self.action_clear.clicked.connect(lambda: self.invokeCommonAction("pm clear", True))
-
-        self.action_uninstall = QPushButton(self)
-        self.action_uninstall.setText("Uninstall")
-        self.action_uninstall.setGeometry(QtCore.QRect(0, 0, 71, 31))
-        self.action_uninstall.setObjectName("act_uninstall")
-        self.action_uninstall.setFont(getWRYHFontStyle())
-        self.action_uninstall.clicked.connect(lambda: self.invokeCommonAction("uninstall"))
-
-        self.action_stop = QPushButton(self)
-        self.action_stop.setText("Stop")
-        self.action_stop.setGeometry(QtCore.QRect(0, 0, 71, 31))
-        self.action_stop.setObjectName("act_stop")
-        self.action_stop.setFont(getWRYHFontStyle())
-        self.action_stop.clicked.connect(lambda: self.invokeCommonAction("am force-stop", True))
-
-        self.actionLayout.addWidget(self.action_clear, alignment=Qt.AlignLeft)
-        self.actionLayout.addWidget(self.action_uninstall, alignment=Qt.AlignLeft)
-        self.actionLayout.addWidget(self.action_stop, alignment=Qt.AlignLeft)
-        self.actionLayout.setSpacing(10)
-        self.actionLayout.addStretch()
-
     def get_current_choose_pkg(self):
         return self.pkgComboBox.currentText()
 
@@ -207,12 +172,20 @@ class DeviceInfoDetail(QWidget):
             class_Path = "{0}/{1}".format(currentPkgName, self.activityClassPath.text())
             self.parent.adbTools.start_app_page(self.current_ip, class_Path, self._onInvokeActionEnd)
 
-    def invokeCommonAction(self, action, isShell=False):
+    def execAdbAction(self, action, isShell=False, needTarget=False):
+        """
+        执行adb行为命令
+        :param action:
+        :param isShell:
+        :return:
+        """
         if not self.parent.is_current_device_connect():
             return
         currentPkgName = self.get_current_choose_pkg()
         if currentPkgName:
-            self.parent.adbTools.do_common_action(self.current_ip, currentPkgName, action, self._onInvokeActionEnd, isShell)
+            self.parent.adbTools.exec_cmd(self.current_ip, currentPkgName, action, self._onInvokeActionEnd, isShell)
+
+
 
     @pyqtSlot(list)
     def _onInvokeActionEnd(self, result):
@@ -365,6 +338,6 @@ class DeviceInfoDetail(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mainWin = DeviceInfoDetail(None)
+    mainWin = CenterLayout(None)
     mainWin.show()
     sys.exit(app.exec_())

@@ -3,7 +3,6 @@
 
 from PyQt5.QtCore import QThread, pyqtSignal, QTimer
 
-from logcat.log import z_logger
 from subprocess import Popen, PIPE
 
 
@@ -12,7 +11,7 @@ class CmdExecutor(QThread):
     CMD命令执行的子线程
     """
     # 线程结束信号,信号包含内容都是一个list
-    finishSignal = pyqtSignal(list)
+    finishSignal = pyqtSignal(str)
 
     def __init__(self, parent=None):
         super(CmdExecutor, self).__init__(parent)
@@ -37,7 +36,7 @@ class CmdExecutor(QThread):
         if self._intConnectTime >= 20:  # 超过20s
             self.requestInterruption()  # 请求终止线程
             self.timer.stop()
-            self.finishSignal.emit(['cmdExectuedTimeout'])  # 发送超时信号
+            self.finishSignal.emit('cmdExectuedTimeout')  # 发送超时信号
         else:
             self._intConnectTime = self._intConnectTime + 1
 
@@ -60,10 +59,11 @@ class CmdExecutor(QThread):
         stdout_data, stderr_data = _process.communicate(input=None, timeout=None)
         if stderr_data is not None:
             # print("CmdExecutor stderr_data = " + stderr_data)
-            self.result = stderr_data.strip().split('\n')
+            self.result = stderr_data.strip()
         if stdout_data is not None:
             # print("CmdExecutor stdout_data = " + stdout_data)
-            self.result = stdout_data.strip().split('\n')
+            self.result = stdout_data.strip()
+            # self.result = stdout_data.strip().split('\n')
         # for line in iter(_process.stdout.readline, b''):
         #     l.append(line.decode('utf-8'))
         #     # print("aaaaaaaaaaaaaa : "+line.decode('utf-8'))

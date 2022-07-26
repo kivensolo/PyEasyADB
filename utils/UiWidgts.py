@@ -3,6 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
+from ui.style import StyleSheetConfig
 from utils.Tools import getKTFontStyle
 
 
@@ -19,11 +20,11 @@ class AppPushButton(QPushButton):
     App公共的PushButton
     https://blog.csdn.net/sazass/article/details/117018947
     """
-    def __init__(self, parent: QWidget, slotFun):
-        super().__init__()
+    def __init__(self, text, slotFun):
+        super().__init__(text, objectName="ToolButton")
         self.font = QFont()
-        self.font.setFamily("黑体")
-        self.font.setBold(1)        # 设置为粗体
+        # self.font.setFamily("黑体")
+        # self.font.setBold(1)        # 设置为粗体
         self.font.setPixelSize(24)  # 字体大小
 
         # self.setStyleSheet(
@@ -32,9 +33,8 @@ class AppPushButton(QPushButton):
         # )
         # self.setFixedHeight(20)
         # self.setFixedWidth(40)
-        self.setParent(parent)
-        self.setFont(self.font)
         self.setCheckable(True)
+        self.setStyleSheet(StyleSheetConfig.PushButton)
         self.clicked.connect(slotFun)
 
 
