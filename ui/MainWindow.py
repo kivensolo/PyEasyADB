@@ -1,23 +1,20 @@
 import xml.dom.minidom
 
-from PyQt5.QtCore import QSize, QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QTimer, pyqtSignal
+from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QIcon, QFont, QPixmap, QColor, QStandardItemModel, QStandardItem, QCursor
-from PyQt5.QtWidgets import QMessageBox, QApplication, QPushButton, QComboBox, QLabel, QMenuBar, QMenu, QAction, \
-    QStatusBar, QToolTip, qApp, QTextEdit, QLineEdit, QVBoxLayout, QGroupBox, QGridLayout, QHBoxLayout, QMainWindow, \
-    QToolBar, QSplitter, QTreeView, QAbstractItemView, QWidget, QTreeWidgetItem, QListWidgetItem, QStyleFactory
+from PyQt5.QtGui import QIcon, QFont, QStandardItemModel, QStandardItem, QCursor
+from PyQt5.QtWidgets import QApplication, QMenu, QAction, \
+    QStatusBar, QToolTip, qApp, QVBoxLayout, QSplitter, QTreeView, QAbstractItemView, QWidget, QStyleFactory
 
 from logcat.log import z_logger
 from ui import TreeItemType
-from ui.CenterLayout import CenterLayout
+from ui.component.CenterLayout import CenterContentWidget
 from ui.component.ToolBarView import AppToolBar
 from ui.sql import DBManager
-from ui.style import StyleSheetConfig
-from ui.widget.ButtomConsoleWindow import ButtomWindow
+from ui.component.ButtomWindow import ButtomTabWidget
 from utils.ADBTools import ADBTools
 from utils.CmdExecutor import CmdExecutor
 from utils.UITools import IconTool
-from utils.UiWidgts import AppPushButton
 from utils.Utils import Utils
 
 from ui.BaseWindow import BaseWindow
@@ -90,11 +87,11 @@ class MainWindow(BaseWindow):
         self.current_device_addr = ""
 
         # 主窗口分割器
-        self.main_splitter = None
+        self.main_splitter = QSplitter(Qt.Vertical)
         # 内容显示的分割器
-        self.content_splitter = None
+        self.content_splitter = QSplitter(Qt.Horizontal)
         # 底部控制台窗口
-        self.bottom_console_window = None
+        self.bottom_tab_widget = ButtomTabWidget()
         # 左侧面板相关变量
         self.left_panel = None
         self.tree_view = None
@@ -114,8 +111,6 @@ class MainWindow(BaseWindow):
         self.init_menu_bar()
         self.toolbar = AppToolBar(self)
         self.addToolBar(self.toolbar)
-        # 初始化功能区
-        # self.init_test_func_group()
 
         self.init_left_panel()
         self.init_center_panel()
@@ -124,21 +119,16 @@ class MainWindow(BaseWindow):
         # 初始化底部状态栏
         self.init_status_bar()
 
-        # 初始化底部控件
-        self.bottom_console_window = ButtomWindow()
-
         # 将各组件组合
-        self.content_splitter = QSplitter(Qt.Horizontal)
         self.content_splitter.setHandleWidth(0)  # thing to grab the splitter
         self.content_splitter.addWidget(self.left_panel)
         self.content_splitter.addWidget(self.center_panel)
         self.content_splitter.setStretchFactor(0, 3)
         self.content_splitter.setStretchFactor(1, 5)
         self.content_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
-        self.main_splitter = QSplitter(Qt.Vertical)
         self.main_splitter.setHandleWidth(0)
         self.main_splitter.addWidget(self.content_splitter)
-        self.main_splitter.addWidget(self.bottom_console_window)
+        self.main_splitter.addWidget(self.bottom_tab_widget)
         self.main_splitter.setStretchFactor(0, 5)
         self.main_splitter.setStretchFactor(1, 4)
         self.main_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
@@ -170,9 +160,12 @@ class MainWindow(BaseWindow):
         self.stacked_device_info = QtWidgets.QStackedWidget(self)  # QStackedWidget表示多分页的窗口
         self.stacked_device_info.setObjectName("stackedWidget_param")
         self.stacked_device_info.setGeometry(221, 70, 500, 400)
+        self.stacked_device_info.setStyleSheet("""
+            background-color:rgb(255,255,255);
+            """)
         # self.stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
         # 创建分页对象，并载入分页
-        self.centerArea = CenterLayout(self)
+        self.centerArea = CenterContentWidget(self)
         self.stacked_device_info.addWidget(self.centerArea)
         self.stacked_device_info.setCurrentIndex(0)  # 切换至选中页
 
@@ -200,7 +193,7 @@ class MainWindow(BaseWindow):
     def init_status_bar(self):
         statusbar = QStatusBar(self)
         statusbar.setObjectName("statusbar")
-        statusbar.setStyleSheet("background-color:rgb(229,229,229)")
+        statusbar.setStyleSheet("background-color:rgb(242,242,242)")
         self.setStatusBar(statusbar)
 
     def init_menu_bar(self):
@@ -439,6 +432,12 @@ class MainWindow(BaseWindow):
             z_logger.debug("已储存新设备至数据库")
             self.local_ip_List.append(ip)
 
+    @pyqtSlot()
+    def add_new_package(self, packageName):
+        result = self.bottom_tab_widget.get_fun_widget().on_package_add(packageName)
+        # TODO 隐藏
+
+
     @pyqtSlot(QModelIndex)
     def on_tree_item_double_clicked(self, index):
         """
@@ -498,7 +497,7 @@ class MainWindow(BaseWindow):
                 return
             self.current_device_addr = item.addr
             isconencted = item.addr in self.active_ip_list
-            self.toolbar.update_device_info(self.current_device_addr, isconencted)
+            self.bottom_tab_widget.updateCurrentDeviceInfo(self.current_device_addr, isconencted)
 
     def update_current_treeitem(self, isconnect: True):
         """

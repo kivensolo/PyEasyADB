@@ -8,9 +8,9 @@ from logcat.log import z_logger
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
 
 
-class CenterLayout(QWidget):
+class CenterContentWidget(QWidget):
     """
-    工具的中间主要布局
+    中间内容的主要布局
     """
     resImages = {'Device': '././res/img/device.png'}
 
@@ -20,15 +20,11 @@ class CenterLayout(QWidget):
 
         self.setAttribute(Qt.WA_StyledBackground)
         # self.setStyleSheet("background-color:#FFAAFF");
-        self.setStyleSheet('''''')
         self.root_layout = QVBoxLayout()
         self.setLayout(self.root_layout)
 
-        # 设备名称等信息
-        self._init_package_add_layout()
         self._init_class_path_layout()
 
-        self.root_layout.addLayout(self.package_edit_layout)
         self.root_layout.addLayout(self.activity_class_layout)
         self.root_layout.addStretch()
 
@@ -52,41 +48,6 @@ class CenterLayout(QWidget):
         self.activity_class_layout.addWidget(self.action_start)
         self.activity_class_layout.addWidget(self.activityClassPath)
         self.activity_class_layout.addStretch()
-
-    def _init_package_add_layout(self):
-        """
-        新增包名的layout
-        :return:
-        """
-        self.package_edit_layout = QHBoxLayout(self)
-        # self.package_edit_layout.alignment()
-        self.btnAddNewPkg = QPushButton(self)
-        self.btnAddNewPkg.setText("包名添加")
-        # self.btnAddNewPkg.setStyleSheet("""
-        #    QPushButton{
-        #         background-color: #A0A0A0 ;
-        #     }
-        #
-        #     QPushButton:hover {
-        #         border: 1px solid #C0C0C0;
-        #         background-color: yellow;
-        #         border-style: inset;
-        #         border-radius:2px;
-        #         background-color:#C0C0C0;
-        #         border-style: solid;
-        #     }
-        # """)
-        # self.btnAddNewPkg.setGeometry(QtCore.QRect(10, 100, 101, 31))
-        self.btnAddNewPkg.setObjectName("btn_addNewPkg")
-        self.btnAddNewPkg.setFont(getKTFontStyle())
-        self.btnAddNewPkg.clicked.connect(lambda: self.on_package_add())
-        self.pkg_inputEditText = QLineEdit(self)
-        self.pkg_inputEditText.setGeometry(QtCore.QRect(0, 0, 261, 31))
-        self.pkg_inputEditText.setObjectName("package_add")
-        self.pkg_inputEditText.setFont(getWRYHFontStyle(12))
-        self.package_edit_layout.addWidget(self.btnAddNewPkg)
-        self.package_edit_layout.addWidget(self.pkg_inputEditText)
-        self.package_edit_layout.addStretch()  # 添加可拉伸弹簧
 
     def invokePkgAction(self):
         if not self.parent.is_current_device_connect():
@@ -113,6 +74,6 @@ class CenterLayout(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mainWin = CenterLayout(None)
+    mainWin = CenterContentWidget(None)
     mainWin.show()
     sys.exit(app.exec_())

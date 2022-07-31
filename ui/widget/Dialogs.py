@@ -1,9 +1,10 @@
 import sys
 
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton
+from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout
 
 from logcat.log import z_logger
+from ui.sql import DBManager
 from ui.widget.BaseDialog import BaseDialog
 from utils import Tools
 from utils.UITools import IconTool
@@ -70,9 +71,47 @@ class NewConnectDialog(BaseDialog):
             z_logger.error(msg)
 
 
+class AddPackageDialog(BaseDialog):
+    """
+    添加新包名的Dialog
+    """
+    def __init__(self, window = None, block = None):
+        # super(NewConnectDialog, self).__init__()
+        super().__init__("添加新应用")
+        self.dbManager = DBManager()
+
+        self.window = window
+        self.block = block
+        self.btnAddNewPkg = QPushButton(self)
+        self.pkg_inputEditText = QLineEdit(self)
+
+        self.initWindow()
+
+    def initWindow(self):
+        super().initWindow()
+        # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        self.setFixedSize(550, 100)
+
+        layout = QHBoxLayout(self)
+        self.setLayout(layout)
+
+        # self.pkg_inputEditText.move(50)
+        self.pkg_inputEditText.setPlaceholderText("Input package name")
+        # self.pkg_inputEditText.resize(290, )
+
+        self.btnAddNewPkg.setText('Add')
+        self.btnAddNewPkg.clicked.connect(lambda: self.on_package_clicked())
+        layout.addWidget(self.pkg_inputEditText)
+        layout.addWidget(self.btnAddNewPkg)
+
+    def on_package_clicked(self):
+        self.block(self.pkg_inputEditText.text())
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    dialog = NewConnectDialog()
+    dialog = AddPackageDialog()
     # 设置窗口的属性为ApplicationModal模态，用户只有关闭弹窗后，才能关闭主界面
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.show()
