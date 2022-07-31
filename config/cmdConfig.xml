@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CMD>
-    <group name="Packages">
-        <item name="Clear" isShell="true" target="true">pm clear</item>
-        <item name="Stop" isShell="true" target="true">am force-stop</item>
-        <item name="Uinstall" isShell="false" target="true">adb uninstall</item>
+    <group name="App">
+        <item name="Start" isShell="true" target="true">am start {0}</item>
+        <item name="Clear" isShell="true" target="true">pm clear {0}</item>
+        <item name="Stop" isShell="true" target="true">am force-stop {0}</item>
+        <item name="Uinstall" isShell="false" target="true">adb uninstall {0}</item>
+        <item name="Versions" isShell="true" target="true">dumpsys package {0} |grep version</item>
+        <item name="CurrentFocus" isShell="true">dumpsys window |grep mCurrentFocus</item>
     </group>
     <group name="Memory">
         <item name="Dump" isShell="true">dumpsys</item>
-        <item name="Top" isShell="true">top</item>
+        <item name="Top" isShell="true">top -n 1</item>
     </group>
     <group name="Display">
         <sub_group name="Prop">
