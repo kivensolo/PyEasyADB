@@ -1,7 +1,4 @@
-import subprocess
-
 from logcat.log import z_logger
-from utils import Tools
 from utils.CmdExecutor import CmdExecutor
 
 
@@ -25,11 +22,11 @@ class ADBTools:
         self.executor.setFinishCallback(block)
         self.executor.exec(cmd)
 
-    def exec_cmd(self, ip, action="", package="", isShell=False, block=None):
+    def exec_cmd(self, ip, cmd="", isShell=False, block=None):
         if isShell:
-            adb_cmd = "adb -s {0} shell {1} {2}".format(ip, action, package)
+            adb_cmd = "adb -s {0} shell {1}".format(ip, cmd)
         else:
-            adb_cmd = "adb -s {0} {1} {2}".format(ip, action, package)
+            adb_cmd = "adb -s {0} {1}".format(ip, cmd)
         self._exec_cmd(adb_cmd, block)
 
     def start_app_page(self, ip, class_path, block):
@@ -55,6 +52,7 @@ class ADBTools:
         cmd = "adb disconnect %s" % device_ip
         self._exec_cmd(cmd, block)
 
+    # TODO 优化，统一记录ip
     def get_device_info(self, ip, block):
         cmd = "adb -s {0} shell getprop".format(ip)
         self._exec_cmd(cmd, block)

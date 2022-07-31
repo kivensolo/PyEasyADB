@@ -52,7 +52,7 @@ class CenterContentWidget(QWidget):
     def invokePkgAction(self):
         if not self.parent.is_current_device_connect():
             return
-        currentPkgName = self.get_current_choose_pkg()
+        currentPkgName = ""
         if currentPkgName:
             class_Path = "{0}/{1}".format(currentPkgName, self.activityClassPath.text())
             self.parent.adbTools.start_app_page(self.current_ip, class_Path, self._onInvokeActionEnd)

@@ -9,7 +9,6 @@ from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QApplication
 
 from config.settings import APP_VERSION, PATH_LOGO_ICON
-from utils.UITools import IconTool
 from utils.Utils import Utils
 
 

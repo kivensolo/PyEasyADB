@@ -17,7 +17,7 @@ class AppToolBar(QToolBar):
     """
     def __init__(self, context):
         super().__init__()
-        self.mainWindowContext = context
+        self.mainWindow = context
         self.root_layout = QHBoxLayout()
         self.setLayout(self.root_layout)
 
@@ -46,13 +46,13 @@ class AppToolBar(QToolBar):
 
     @pyqtSlot()
     def show_new_device_dialog(self):
-        new_connect_dialog = NewConnectDialog(self, self.mainWindowContext.add_device)
+        new_connect_dialog = NewConnectDialog(self.mainWindow, self.mainWindow.add_device)
         new_connect_dialog.setWindowModality(Qt.ApplicationModal)
         new_connect_dialog.exec()
 
     @pyqtSlot()
     def show_add_package_dialog(self):
-        dialog = AddPackageDialog(self, self.mainWindowContext.add_new_package)
+        dialog = AddPackageDialog(self.mainWindow, self.mainWindow.add_new_package)
         dialog.setWindowModality(Qt.ApplicationModal)
         dialog.exec()
 

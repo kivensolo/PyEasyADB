@@ -14,6 +14,7 @@ from ui.sql import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
 from utils.ADBTools import ADBTools
 from utils.CmdExecutor import CmdExecutor
+from utils.PackageManager import PackageManager
 from utils.UITools import IconTool
 from utils.Utils import Utils
 
@@ -84,6 +85,7 @@ class MainWindow(BaseWindow):
 
         # 初始化数据库帮助类
         self.dbManager = DBManager()
+        self.pkgManager = PackageManager()
         self.current_device_addr = ""
 
         # 主窗口分割器
@@ -470,17 +472,12 @@ class MainWindow(BaseWindow):
         else:
             pkgName = ""
             if item.needTarget == "true":
-                pkgName = self.toolbar.get_current_choose_pkg()
+                pkgName = self.pkgManager.getCurrentSelectedPackage()
                 if pkgName is None:
                     z_logger.error("请先选择目标应用")
                     return
-            self.adbTools.exec_cmd(
-                self.current_device_addr,
-                item.cmd,
-                pkgName,
-                item.isShell,
-                self.on_adb_cmd_exectued
-            )
+            formatCmd = item.cmd.format(pkgName)
+            self.adbTools.exec_cmd(self.current_device_addr, formatCmd, item.isShell, self.on_adb_cmd_exectued)
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):
@@ -497,7 +494,7 @@ class MainWindow(BaseWindow):
                 return
             self.current_device_addr = item.addr
             isconencted = item.addr in self.active_ip_list
-            self.bottom_tab_widget.updateCurrentDeviceInfo(self.current_device_addr, isconencted)
+            self.bottom_tab_widget.updateSelectDeviceInfo(self.current_device_addr, isconencted)
 
     def update_current_treeitem(self, isconnect: True):
         """

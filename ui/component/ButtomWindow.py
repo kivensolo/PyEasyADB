@@ -11,6 +11,9 @@ from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWid
 
 from logcat.log import z_logger
 from ui.sql import DBManager
+
+from utils.ADBTools import ADBTools
+from utils.PackageManager import PackageManager
 from utils.Tools import getWRYHFontStyle
 from utils.UITools import IconTool
 from utils.UiWidgts import AppDeviceLabel
@@ -28,7 +31,6 @@ class ButtomTabWidget(QTabWidget):
         z_logger.add_gui_log_handler(self.consoleView)
         self.tabBar = QTabBar()
 
-        self.dbManager = DBManager()
         self.pkgComboBox = None
         self.device_info_name = None
         self.total_pkgs = []
@@ -67,7 +69,7 @@ class ButtomTabWidget(QTabWidget):
                 self.consoleView.setVisible(True)
                 self.setMaximumHeight(Utils.getWindowHeight())
 
-    def updateCurrentDeviceInfo(self, ip, isconnect):
+    def updateSelectDeviceInfo(self, ip, isconnect):
         self.consoleView.updateSelectDeviceInfo(ip, isconnect)
 
     def get_fun_widget(self):
@@ -222,10 +224,11 @@ class InfoBarWidget(QWidget):
     """
     def __init__(self):
         super().__init__()
-        self.dbManager = DBManager()
-        self.pkgComboBox = None
+        self.pkgManger = PackageManager()
+        self.pkgComboBox = QComboBox()
         self.device_info_name = None
         self.total_pkgs = []
+        self.adbTools = ADBTools()
 
         self.setAutoFillBackground(True)
         self.setStyleSheet(
@@ -264,7 +267,7 @@ class InfoBarWidget(QWidget):
         self.layout.addWidget(self.device_info_name)
 
     def addPackageChoose(self):
-        comboBox = QComboBox(self)
+        comboBox = QComboBox()
         # TODO 控件宽度改变
         # 设置下拉显示固定个数，超过个数，滚动显示
         comboBox.setMaxVisibleItems(7)
@@ -280,16 +283,20 @@ class InfoBarWidget(QWidget):
             "QComboBox QAbstractItemView::item:selected{background-color: #25ACFF;}"
             "QComboBox QAbstractItemView::item:hover{background-color: #75CAFF;}"
         )
+        comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
         self.pkgComboBox = comboBox
         self.layout.addWidget(self.pkgComboBox)
         self.initPkgData()
+
+    def onPackageSelectedChanged(self):
+        self.pkgManger.setSelectedPackage(self.pkgComboBox.currentText())
 
     def initPkgData(self):
         """
         从数据库初始化包名数据信息
         :return:
         """
-        if not self.dbManager:
+        if not self.pkgManger.isDbReady():
             z_logger.error('数据库连接异常，请重启应用.')
             return
         self.updatePkgComBox()
@@ -299,10 +306,10 @@ class InfoBarWidget(QWidget):
         更新PkgComBox数据显示
         :return:
         """
-        if not self.dbManager:
+        if not self.pkgManger.isDbReady():
             return
-        packages = self.dbManager.queryData(column=self.dbManager.COLUMN_NAME,
-                                            table_name=self.dbManager.TABLE_PACKAGE)
+        packages = self.pkgManger.query(column=DBManager.COLUMN_NAME,
+                                            table_name=DBManager.TABLE_PACKAGE)
         self.pkgComboBox.clear()
         for item in packages:
             if item:
@@ -317,7 +324,8 @@ class InfoBarWidget(QWidget):
                 # # 将自定义item_view设置为在给定项目中显示
                 # self.package_list_widget.setItemWidget(listwitem, item_view)
                 # 新模式存在的问题，pkgComboBox内容选择没更新到pkgComboBox中。
-        self.selected_pkg = self.pkgComboBox.currentText()
+        self.pkgManger.setSelectedPackage(self.pkgComboBox.currentText())
+
         # self.selected_pkg = self.total_pkgs[0]
 
     def choose(self, data):
@@ -341,9 +349,9 @@ class InfoBarWidget(QWidget):
         # TODO 对包名进行有效性判断
         # check is exist  TODO 优化，可以直接查 pkgComboBox
         sql = "SELECT NAME FROM PACKAGE WHERE NAME=\'{0}\'".format(pkgName)
-        result = self.dbManager.exec_sql(sql)
+        result = self.pkgManger.exec(sql)
         if len(result) == 0:
-            self.dbManager.insertPackageRow(pkgName)
+            self.pkgManger.insert(pkgName)
             self.updatePkgComBox()
             z_logger.info("包名添加成功:" + pkgName)
             return True
@@ -359,8 +367,8 @@ class InfoBarWidget(QWidget):
         :return: None
         """
         self.current_ip = ip
-        z_logger.debug("Update device info! isConenct? =" + str(isconnect))
-        result, value_tuple = self.dbManager.get_device_prop_info(ip)
+        z_logger.debug("Update selected device info! conenct =" + str(isconnect))
+        result, value_tuple = self.pkgManger.queryDeviceInfo(ip)
         if result and len(value_tuple) != 0:
             # 从数据库查询到数据
             if value_tuple[0] == '':
@@ -368,7 +376,7 @@ class InfoBarWidget(QWidget):
                     self.device_info_name.setText("请先连接此设备")
                 else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
                     z_logger.debug("[Update_Device] Current device is connected, but no device info!")
-                    self.parent.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
+                    self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
             else:
                 z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
                 self.device_info_name.setText(value_tuple[0])
@@ -376,17 +384,18 @@ class InfoBarWidget(QWidget):
             # 从数据库查询不到数据，通常是手动添加的未连接设备
             if isconnect:
                 z_logger.debug("No this device prop cache, get with adb!")
-                self.parent.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
+                self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
             else:
                 self.device_info_name.setText("请先连接此设备")
 
-    def on_device_prop_get_by_adb(self, result_list):
+    def on_device_prop_get_by_adb(self, result):
         """
         从ADB获取到设备属性数据
-        :param result_list:
+        :param result: adb返回的字符串
         :return:
         """
         # z_logger.debug("result_list="+str(result_list))
+        result_list = result.split('\n')
         manufacturer = ''
         model = ''
         sys_version = ''
@@ -408,7 +417,7 @@ class InfoBarWidget(QWidget):
                 result = "{0} {1} Android {2},API {3}".format(manufacturer, model, sys_version, api_level)
                 z_logger.debug("result="+result)
                 self.device_info_name.setText(result)
-                self.parent.dbManager.update_device_prop(result, self.current_ip.split(":")[0])
+                self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
         else:
             self.device_info_name.setText("Unknow Device")
 
@@ -418,10 +427,6 @@ class InfoBarWidget(QWidget):
         if len(strArr) == 2:
             return strArr[1].replace("[", "").replace("]", "").strip()
         return ''
-
-    def get_current_choose_pkg(self):
-        return self.pkgComboBox.currentText()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

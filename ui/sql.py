@@ -5,11 +5,12 @@ from sqlite3 import Cursor
 from config.settings import DB_NAME
 from logcat.log import z_logger
 
-"""
-python数据库操作文章
-https://www.zhihu.com/question/391210389/answer/2305057909
-"""
+
 class DBManager:
+    """
+    python数据库操作文章
+    https://www.zhihu.com/question/391210389/answer/2305057909
+    """
     """
     应用程序数据库管理类
     """
