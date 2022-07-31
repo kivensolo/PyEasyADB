@@ -414,7 +414,7 @@ class InfoBarWidget(QWidget):
                         sys_version = self.get_prop_value(line)
                     if 'ro.build.version.sdk' in line:
                         api_level = self.get_prop_value(line)
-                result = "{0} {1} Android {2},API {3}".format(manufacturer, model, sys_version, api_level)
+                result = "{0} {1}({2}),API {3}".format(manufacturer, model, sys_version, api_level)
                 z_logger.debug("result="+result)
                 self.device_info_name.setText(result)
                 self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
