@@ -49,12 +49,13 @@ class ButtomTabWidget(QTabWidget):
         self.setTabPosition(QTabWidget.South)
         self.setStyleSheet(
             "QTabBar::tab {"
-            "border: none; height: " + str(Utils.getItemHeight()) + "px; width:100px;"
-            "color:black;"
+                "border: none; height: " + str(Utils.getItemHeight()) +
+                "px; width:100px;"
+                "color:black;"
             "} "
             "QTabBar::tab:selected { "
-            "border: none;"
-            "background: lightgray; "
+                "border: none;"
+                "background: lightgray; "
             "} "
         )
 
@@ -85,7 +86,7 @@ class ConsoleWindow(QMainWindow):
     def __init__(self, parent=None):
         super(ConsoleWindow, self).__init__(parent)
         self.leftWiget = QWidget()
-        self.functionTabWiget = None
+        self.functionTabWiget = InfoBarWidget()
 
         self.isConUrl = False
         self.setStyleSheet('''
@@ -101,7 +102,6 @@ class ConsoleWindow(QMainWindow):
                 border-style: solid;
             }
             ''')
-        self.functionTabWiget = InfoBarWidget()
 
         # self.combo = QComboBox(self)
         # self.combo.insertItem(0, 'Error')
@@ -132,6 +132,7 @@ class ConsoleWindow(QMainWindow):
         self.mainSplitter = QSplitter(Qt.Vertical)
         self.mainSplitter.addWidget(self.functionTabWiget)
         self.mainSplitter.addWidget(self.lineTowSplitter)
+        self.mainSplitter.setChildrenCollapsible(0)
         self.setCentralWidget(self.mainSplitter)
 
         # 重定向输出
@@ -222,6 +223,7 @@ class InfoBarWidget(QWidget):
     """
     设备信息和包名选择的组合控件
     """
+
     def __init__(self):
         super().__init__()
         self.pkgManger = PackageManager()
@@ -237,7 +239,7 @@ class InfoBarWidget(QWidget):
             """)
         self.layout = QHBoxLayout()
         self.layout.setAlignment(Qt.AlignLeft)
-        self.layout.setSpacing(10)
+        self.layout.setSpacing(5)
         self.setLayout(self.layout)
 
         self.addDeviceInfo()
@@ -274,7 +276,7 @@ class InfoBarWidget(QWidget):
         # 宽度调整策略，按照内容最大宽度
         # comboBox.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         # comboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
-        comboBox.setMinimumSize(QSize(250,31))
+        comboBox.setMinimumSize(QSize(250, 31))
         comboBox.setObjectName("pkgComboBoxView")
         comboBox.setFont(getWRYHFontStyle())
         comboBox.setStyleSheet(
@@ -309,7 +311,7 @@ class InfoBarWidget(QWidget):
         if not self.pkgManger.isDbReady():
             return
         packages = self.pkgManger.query(column=DBManager.COLUMN_NAME,
-                                            table_name=DBManager.TABLE_PACKAGE)
+                                        table_name=DBManager.TABLE_PACKAGE)
         self.pkgComboBox.clear()
         for item in packages:
             if item:
@@ -415,7 +417,7 @@ class InfoBarWidget(QWidget):
                     if 'ro.build.version.sdk' in line:
                         api_level = self.get_prop_value(line)
                 result = "{0} {1}({2}),API {3}".format(manufacturer, model, sys_version, api_level)
-                z_logger.debug("result="+result)
+                z_logger.debug("result=" + result)
                 self.device_info_name.setText(result)
                 self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
         else:
@@ -427,6 +429,7 @@ class InfoBarWidget(QWidget):
         if len(strArr) == 2:
             return strArr[1].replace("[", "").replace("]", "").strip()
         return ''
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
