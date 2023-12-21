@@ -1,0 +1,744 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ConvenientArea</class>
+ <widget class="QWidget" name="ConvenientArea">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>286</width>
+    <height>332</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true"/>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QScrollArea" name="scrollArea">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
+     <property name="widgetResizable">
+      <bool>true</bool>
+     </property>
+     <widget class="QWidget" name="scrollAreaWidgetContents">
+      <property name="geometry">
+       <rect>
+        <x>0</x>
+        <y>0</y>
+        <width>272</width>
+        <height>318</height>
+       </rect>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <item>
+        <widget class="QGroupBox" name="g1">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>快捷功能1</string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="1" column="0">
+           <layout class="QVBoxLayout" name="verticalLayout_5">
+            <item>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap>../icons/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>13</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="1">
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <spacer name="verticalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_2">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap>../icons/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_2">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="2">
+           <layout class="QVBoxLayout" name="verticalLayout_8">
+            <item>
+             <spacer name="verticalSpacer_5">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_11">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap>../icons/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_11">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="2" column="1">
+           <layout class="QVBoxLayout" name="verticalLayout_11">
+            <item>
+             <spacer name="verticalSpacer_11">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_14">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap>../icons/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_14">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_12">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="2" column="2">
+           <layout class="QVBoxLayout" name="verticalLayout_14">
+            <item>
+             <spacer name="verticalSpacer_13">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_17">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap>../icons/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_17">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_14">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="2" column="0">
+           <layout class="QVBoxLayout" name="verticalLayout_10">
+            <item>
+             <spacer name="verticalSpacer_9">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_13">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap>../icons/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_13">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_10">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="3">
+           <layout class="QVBoxLayout" name="verticalLayout_9">
+            <item>
+             <spacer name="verticalSpacer_7">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_12">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap>../icons/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_12">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_8">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>10</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="g2">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="title">
+          <string>快捷功能2</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="0" column="0">
+           <layout class="QVBoxLayout" name="verticalLayout_13">
+            <item>
+             <widget class="QLabel" name="uninstal_app_16">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap resource="../icons/icons.qrc">:/icons_1/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_16">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="0" column="1">
+           <layout class="QVBoxLayout" name="verticalLayout_12">
+            <item>
+             <widget class="QLabel" name="uninstal_app_15">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap resource="../icons/icons.qrc">:/icons_1/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_15">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="0" column="2">
+           <layout class="QVBoxLayout" name="verticalLayout_7">
+            <item>
+             <widget class="QLabel" name="uninstal_app_10">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap resource="../icons/icons.qrc">:/icons_1/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_10">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="0" column="3">
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QLabel" name="uninstal_app_9">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="pixmap">
+               <pixmap resource="../icons/icons.qrc">:/icons_1/icon_app_install_32x32.png</pixmap>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="uninstal_app_name_9">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>1</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>卸载应用</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_15">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>200</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../icons/icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>

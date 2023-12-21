@@ -12,7 +12,7 @@ from utils.UiWidgts import AppPushButton
 class AppToolBar(QToolBar):
     selected_pkg = ''
     """
-    App快捷工具栏(菜单栏西面)
+    App快捷工具栏(菜单栏下面)
     """
     def __init__(self, context):
         super().__init__()

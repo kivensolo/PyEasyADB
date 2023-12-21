@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox
 from PyQt5.uic.uiparser import QtWidgets
 
 from logcat.log import z_logger
-from ui.component.functions import Ui_Form
+from ui.component.ConvenientOperateWidget import Ui_ConvenientArea
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
 
 
@@ -24,7 +24,7 @@ class CommonFunctionalWidget(QWidget):
         self.setStyleSheet("background-color:#fafafa")
 
         # TODO 通过配置动态布局
-        Ui_Form().setupUi(self)
+        Ui_ConvenientArea().setupUi(self)
 
         # self.root_layout = QVBoxLayout()
         # self.setLayout(self.root_layout)
