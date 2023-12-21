@@ -372,7 +372,7 @@ class InfoBarWidget(QWidget):
         :return: None
         """
         self.current_ip = ip
-        z_logger.debug("Update selected device info! conenct =" + str(isconnect))
+        z_logger.debug("Update selected device info! conenct: " + str(isconnect))
         result, value_tuple = self.pkgManger.queryDeviceInfo(ip)
         if result and len(value_tuple) != 0:
             # 从数据库查询到数据
