@@ -2,14 +2,14 @@ import xml.dom.minidom
 
 from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QIcon, QFont, QStandardItemModel, QStandardItem, QCursor
-from PyQt5.QtWidgets import QApplication, QMenu, QAction, \
-    QStatusBar, QToolTip, qApp, QVBoxLayout, QSplitter, QTreeView, QAbstractItemView, QWidget, QStyleFactory
+from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
+from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, QAbstractItemView, QWidget, QStyleFactory
 
 from config.settings import APP_SCREEN_RQTIO
 from logcat.log import z_logger
 from ui import TreeItemType
 from ui.component.CenterLayout import CommonFunctionalWidget
+from ui.MenuBar import Controller
 from ui.component.ToolBarView import AppToolBar
 from ui.sql import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
@@ -205,59 +205,7 @@ class MainWindow(BaseWindow):
         new_connect_dialog.exec()
 
     def init_menu_bar(self):
-        """
-        通过QAction进行顶部菜单及菜单行为初始化
-        QAction可以操作菜单栏,工具栏,或自定义键盘快捷键
-        :return:
-        """
-        menubar = self.menuBar()
-        menubar.setGeometry(QtCore.QRect(0, 0, 705, 23))
-        menubar.setObjectName("menubar")
-        _translate = QtCore.QCoreApplication.translate
-
-        z_logger.debug('initMenuBar :: actions')
-
-        # 新建连接
-        new_connect = QAction(QIcon('./res/icons/add_new.png'), '&NewConnect', self)
-        new_connect.setObjectName("new_connect")
-        new_connect.setShortcut('Ctrl+N')  # 自定义快捷键
-        new_connect.setText(_translate("MainWindow", "连接新设备"))
-        new_connect.triggered.connect(self.show_new_device_dialog)
-
-        act_close = QAction(QIcon('./res/icons/close.png'), '&close',self)
-        act_close.setObjectName("act_close")
-        act_close.setText(_translate("MainWindow", "Close"))
-
-        act_exit = QAction(QIcon('./res/icons/app_quit.png'), '&Exit', self)
-        act_exit.setObjectName("exit_app")
-        act_exit.setShortcut('Ctrl+Q')  # 自定义快捷键
-        act_exit.setStatusTip('Exit application')  # 自定义提示
-        act_exit.triggered.connect(qApp.quit)  # 建立信号连接槽
-        act_exit.setText(_translate("MainWindow", "退出"))
-        # act_close.setText("退出")
-
-        # menu_actions = [act_close, act_exit]
-        menus = [
-            _translate("MainWindow", "菜单"),
-            _translate("MainWindow", "编辑")
-        ]
-        actions = {
-            # 菜单1对应的action
-            menus[0]: [new_connect, act_close, act_exit],
-            # 菜单2对应的action
-            menus[1]: [act_exit]
-        }
-
-        z_logger.debug('initMenuBars')
-        # 初始化菜单项
-        for menu in menus:
-            menu_item = menubar.addMenu(menu)
-            acts = actions[menu]
-            for action in acts:
-                menu_item.addAction(action)
-            menubar.addAction(menu_item.menuAction())
-        # 将menu添加到menubar上
-        self.setMenuBar(menubar)
+        Controller().setupUi(self)
 
     def initWindow(self):
         self.resize(
@@ -380,8 +328,14 @@ class MainWindow(BaseWindow):
                 qItem = QStandardItem(name)
                 qItem.type = TreeItemType.TYPE_ADB_CMD
                 qItem.name = name
-                qItem.needTarget = item.getAttribute("target")
-                qItem.isShell = item.getAttribute("isShell")
+                qItem.needDstPkg = item.getAttribute("dst_pkg")
+                if len(qItem.needDstPkg) == 0:
+                    qItem.needDstPkg = True # 默认需要目标应用
+
+                qItem.isShell = item.getAttribute("shell")
+                if len(qItem.isShell) == 0:
+                    qItem.isShell = True  # 默认命令为shell模式
+
                 qItem.cmd = cmd
                 currentFolder.appendRow(qItem)
             if level == 1:
@@ -490,7 +444,7 @@ class MainWindow(BaseWindow):
             z_logger.error("请先连接设备")
         else:
             pkgName = ""
-            if item.needTarget == "true":
+            if item.needDstPkg:
                 pkgName = self.pkgManager.getCurrentSelectedPackage()
                 if pkgName is None:
                     z_logger.error("请先选择目标应用")
@@ -605,7 +559,7 @@ class MainWindow(BaseWindow):
             self.parse_devices_states(resultList)
         else:
             if len(result) != 0:
-                z_logger.info("Result=" + result)
+                z_logger.info(result)
 
     def parse_devices_states(self, result):
         """

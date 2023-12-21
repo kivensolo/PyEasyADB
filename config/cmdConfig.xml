@@ -1,36 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CMD>
     <group name="App">
-        <item name="Start" isShell="true" target="true">am start {0}</item>
-        <item name="Clear" isShell="true" target="true">pm clear {0}</item>
-        <item name="Stop" isShell="true" target="true">am force-stop {0}</item>
-        <item name="Uinstall" isShell="false" target="true">adb uninstall {0}</item>
-        <item name="Versions" isShell="true" target="true">dumpsys package {0} |grep version</item>
-        <item name="CurrentFocus" isShell="true">dumpsys window |grep mCurrentFocus</item>
+        <item name="Start">am start {0}</item>
+        <item name="Clear Data">pm clear {0}</item>
+        <item name="Stop">am force-stop {0}</item>
+        <item name="Uinstall" shell="false">adb uninstall {0}</item>
+        <item name="Versions">dumpsys package {0} |grep version</item>
+        <item name="CurrentFocus">dumpsys window |grep mCurrentFocus</item>
+        <item name="Install Path" dst_pkg="true">pm path {0}</item>
     </group>
     <group name="Memory">
-        <item name="Dump" isShell="true">dumpsys</item>
-        <item name="Top" isShell="true">top -n 1</item>
+        <item name="Dump">dumpsys</item>
+        <item name="Top">top -n 1</item>
     </group>
     <group name="Display">
-        <sub_group name="Prop">
-            <citem name="Get prop">44444</citem>
-            <citem name="Set prop">44444444</citem>
-        </sub_group>
-        <item name="Screenshot">123123</item>
-        <item name="Screenrecord">2222</item>
-        <item name="Density">3333333</item>
+        <item name="Screenshot">【抱歉，暂未实现】</item>
+        <item name="Screenrecord">【抱歉，暂未实现】</item>
+        <item name="Density">wm density</item>
     </group>
     <group name="System">
-        <sub_group name="Prop2">
-            <citem name="Get prop">44444</citem>
-            <citem name="Set prop">44444444</citem>
+        <sub_group name="NET">
+            <citem name="IPInfo">ipconfig</citem>
+            <citem name="MAC">cat /sys/class/net/eth0/address</citem>
         </sub_group>
-        <item name="Memory">4444444444444444</item>
+        <item name="Memory" dst_pkg="true">dumpsys meminfo {0}</item>
     </group>
     <group name="Packages">
-        <item name="All packages">adb shell pm list packages</item>
-        <item name="Set prop"/>
+        <item name="All packages">pm list packages</item>
         <item name="Install and uninstall"/>
     </group>
     <group name="About">
