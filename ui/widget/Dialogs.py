@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout
 
 from logcat.log import z_logger
-from ui.sql import DBManager
+from ui.DataBase import DBManager
 from ui.widget.BaseDialog import BaseDialog
 from utils import Tools
 from utils.UITools import IconTool

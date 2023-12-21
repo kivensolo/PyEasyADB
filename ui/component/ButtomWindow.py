@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWid
     QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel
 
 from logcat.log import z_logger
-from ui.sql import DBManager
+from ui.DataBase import DBManager
 
 from utils.ADBTools import ADBTools
 from utils.PackageManager import PackageManager

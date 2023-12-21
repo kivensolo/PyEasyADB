@@ -11,7 +11,7 @@ from ui import TreeItemType
 from ui.component.CenterLayout import CommonFunctionalWidget
 from ui.MenuBar import Controller
 from ui.component.ToolBarView import AppToolBar
-from ui.sql import DBManager
+from ui.DataBase import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
 from ui.widget.Dialogs import NewConnectDialog
 from utils.ADBTools import ADBTools

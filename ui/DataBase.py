@@ -2,7 +2,7 @@ import re
 import sqlite3
 from sqlite3 import Cursor
 
-from config.settings import DB_NAME
+from config.settings import APP_DB_FILE
 from logcat.log import z_logger
 
 
@@ -20,7 +20,7 @@ class DBManager:
 
     def __init__(self):
         try:
-            conn = sqlite3.connect(DB_NAME)
+            conn = sqlite3.connect(APP_DB_FILE)
             cursor = conn.cursor()
             cursor.execute(
                 'CREATE TABLE IF NOT EXISTS {0} '
@@ -67,7 +67,7 @@ class DBManager:
 
     def exec_sql(self, sql):
         try:
-            conn = sqlite3.connect(DB_NAME)
+            conn = sqlite3.connect(APP_DB_FILE)
             cursor: Cursor = conn.cursor()
             cursor.execute(sql)
             conn.commit()
@@ -121,7 +121,7 @@ class DBManager:
             _port = ip_group[1]
         # 处理ip格式
         try:
-            conn = sqlite3.connect(DB_NAME)
+            conn = sqlite3.connect(APP_DB_FILE)
             cursor = conn.cursor()
             # 同一ip有多条端口数据  优化，改为一条数据
             sql_cmd = 'SELECT * FROM device WHERE ip =\'{0}\''.format(host)
@@ -157,7 +157,7 @@ class DBManager:
     @staticmethod
     def _query_data(sql):
         try:
-            conn = sqlite3.connect(DB_NAME)
+            conn = sqlite3.connect(APP_DB_FILE)
             cursor = conn.cursor()
             cursor.execute(sql)
             result_list = cursor.fetchall()
@@ -180,7 +180,7 @@ class DBManager:
             _port = ip_group[1]
 
         try:
-            conn = sqlite3.connect(DB_NAME)
+            conn = sqlite3.connect(APP_DB_FILE)
             cursor = conn.cursor()
             # 删除设备的
             sql_cmd = 'DELETE FROM device WHERE ip =\'{0}\''.format(host)
@@ -204,7 +204,7 @@ class DBManager:
         :return:
         """
         try:
-            conn = sqlite3.connect(DB_NAME)
+            conn = sqlite3.connect(APP_DB_FILE)
             cursor = conn.cursor()
             # 更新指定设备active字段
             sql_cmd = "UPDATE device SET active={0} WHERE ip={1}" .format(isConnected, ip)
@@ -219,8 +219,6 @@ class DBManager:
         finally:
             cursor.close()
             conn.close()
-
-
 
     def __commint(self):
         self.conn.commit()

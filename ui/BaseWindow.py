@@ -5,10 +5,10 @@
 author: KingZ
 last edited: 2022.03.19
 """
-from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QApplication
 
-from config.settings import APP_VERSION, PATH_LOGO_ICON
+from config.settings import APP_VERSION
+from utils.UITools import IconTool
 from utils.Utils import Utils
 
 
@@ -23,7 +23,7 @@ class BaseWindow(QMainWindow):
         self.setObjectName("MainWindow")
         self.setToolTip('This is a <b>QMainWindow</b> widget')
         self.setWindowTitle(self.title)
-        self.setWindowIcon(QIcon(PATH_LOGO_ICON))
+        self.setWindowIcon(IconTool.buildQIcon("logo.png"))
 
         # 设置主界面背景色
         # self.window.setStyleSheet("background-color:rgb(255,255,255)")

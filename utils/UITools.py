@@ -7,6 +7,7 @@ class IconTool:
     def __init__(self):
         super().__init__()
 
+    @staticmethod
     def buildQIcon(iconName, dir="img"):
         path = os.path.join(".", "res", dir, iconName)
         return QIcon(path)

@@ -7,10 +7,11 @@ import time
 # 应用窗口屏占比
 APP_SCREEN_RQTIO = 0.75
 
+# 根目录
 BASE_PATH = os.getcwd()
 
 # 日志配置
-LOGS_PATH = "%s\\logs" % BASE_PATH
+LOGS_PATH = "%s\\data\\logs" % BASE_PATH
 
 LOG_CMD_OUT = "pro_{0}.log".format(time.strftime("%Y-%m-%d"))
 LOG_CMD_ERROR = "pro_{0}.err".format(time.strftime("%Y-%m-%d"))
@@ -19,13 +20,9 @@ _Log_NAME = "log_{0}.log".format(time.strftime("%Y-%m-%d"))
 LOG_APP_FILE = os.path.join(LOGS_PATH, _Log_NAME)
 
 # 应用数据库名
-DB_NAME = "easyADB.db"
+APP_DB_FILE = "%s\\data\\easyADB.db" % BASE_PATH
 
 APP_VERSION = '1.0'
-
-# 资源文件
-PATH_LOGO_ICON = 'res/img/logo.png'
-
 
 DEBUG_PRINT = True
 
