@@ -118,7 +118,7 @@ class MainWindow(BaseWindow):
 
         self.init_left_panel()
         self.init_center_panel()
-        self.set_treeview_default_index(self.tree_view)
+        self.set_treeview_default_index()
 
         # 初始化底部状态栏
         self.init_status_bar()
@@ -200,7 +200,8 @@ class MainWindow(BaseWindow):
 
     @pyqtSlot()
     def show_new_device_dialog(self):
-        new_connect_dialog = NewConnectDialog(self, self.add_device)
+        z_logger.debug("Show new connect dialog.")
+        new_connect_dialog = NewConnectDialog(self, self.onNewDeviceAdded)
         new_connect_dialog.setWindowModality(Qt.ApplicationModal)
         new_connect_dialog.exec()
 
@@ -341,18 +342,19 @@ class MainWindow(BaseWindow):
             if level == 1:
                 self.tree_data_list.append(prentQItem)
 
-    def set_treeview_default_index(self, treeView):
+    def set_treeview_default_index(self):
         """
         设置treeview默认选中项
-        :param treeView:
+        优先选择第一个已连接的设备，如果没有已连接，则默认选中第一个设备
         :return:
         """
+        z_logger.debug("Find defalut selected device ip....")
         root = self.treeModel.invisibleRootItem()
         if root.hasChildren():
             child = root.child(0, 0).child(0, 0)
             if child:
                 index = self.treeModel.indexFromItem(child)
-                treeView.setCurrentIndex(index)
+                self.tree_view.setCurrentIndex(index)
                 self.on_tree_item_clicked(index)
 
     def get_current_item_model(self):
@@ -389,10 +391,19 @@ class MainWindow(BaseWindow):
             self.local_ip_List.remove(item_model.addr)
 
     @pyqtSlot()
-    def add_device(self, ip):
-        z_logger.info("设备添加成功:" + ip)
-        item = QStandardItem(self.icon_disconnect, ip)
-        item.addr = ip
+    def onNewDeviceAdded(self, _addr):
+        if ":" not in _addr:
+            _addr = _addr + ":" + "5555"
+        """
+        设备成功加入时的回调函数
+        成功加入的设备，可以是手动输入的已连接|未连接设备;
+        也可以是自动检测到的已连接但没加入进来的设备。
+        :param _addr: 设备 ip+prot 信息
+        :return:
+        """
+        z_logger.info("已添加新设备:" + _addr)
+        item = QStandardItem(self.icon_disconnect, _addr)
+        item.addr = _addr
         item.type = TreeItemType.TYPE_DEVICE
         # FIXME 优化，此方法可能None异常
         item_model = self.get_current_item_model()
@@ -401,11 +412,9 @@ class MainWindow(BaseWindow):
         elif is_device_root_node(item_model):
             item_model.appendRow(item)
         else:
+            # TODO 有种场景会场生 这个异常怎么处理？
             z_logger.error('添加设备时，数据获取异常')
-        result, msg = self.dbManager.add_device_to_db(ip)
-        if result:
-            z_logger.debug("已储存新设备至数据库")
-            self.local_ip_List.append(ip)
+        self.local_ip_List.append(_addr)
 
     @pyqtSlot()
     def add_new_package(self, packageName):
@@ -488,13 +497,20 @@ class MainWindow(BaseWindow):
 
     def refresh_treeview_by_data(self):
         """
-        更新treeView现有数据的样式（目前只是连接状态样式）
+        更新treeView现有数据的样式
+        若为第一次刷新数据(has_device_selected为false),则尝试模式选中第一个已连接设备。
+        若没有已连接设备，则默认选择第一个设备。
         :return:
         """
+        if len(self.current_device_addr) == 0:
+            has_device_selected = False
+        else:
+            has_device_selected = True
+
         rowCount = self.treeModel.rowCount()
         z_logger.debug("Refresh treeview with active_ip_list.")
-        for index in range(rowCount):
-            item: QStandardItem = self.treeModel.item(index)
+        for row_index in range(rowCount):
+            item: QStandardItem = self.treeModel.item(row_index)
             if not is_device_root_node(item):
                 continue
             device_ips = item.rowCount()
@@ -502,8 +518,19 @@ class MainWindow(BaseWindow):
                 child = item.child(child_index)
                 if child.addr in self.active_ip_list:
                     child.setIcon(self.icon_connect)
+                    # # 没有选中设备时，选择第一个已连接设备
+                    # if not has_device_selected:
+                    #     has_device_selected = True
+                    #     model_index: QModelIndex = self.treeModel.indexFromItem(child)
+                    #     self.tree_view.setCurrentIndex(model_index)
+                    #     self.on_tree_item_clicked(model_index)
                 else:
                     child.setIcon(self.icon_disconnect)
+
+            # if not has_device_selected:
+            #     # 若没有一个设备已连接，则默认选中第一个设备
+            #     self.set_treeview_default_index()
+
 
 # ----------------------------------左侧TreeView End-----------------------------------------------
 
@@ -582,29 +609,35 @@ class MainWindow(BaseWindow):
             dev_line = line.split("\t")
             if len(dev_line) < 2:
                 continue
-            device_name = dev_line[0]
+            device_ip_info = dev_line[0]
             device_state = dev_line[1]
-            if is_device_active(device_state):
-                # 正常连接的设备
+            if is_device_active(device_state): # 对已连接的设备做处理
                 z_logger.debug("[Parse States] active devices:" + line)
-                if device_name not in self.active_ip_list:
-                    self.active_ip_list.append(device_name)
-                    # 若发现新设备,自动添加设备
-                    if device_name not in self.local_ip_List:
-                        z_logger.debug("[Parse States] This Device is not in local, add new：%s}" % device_name)
-                        self.add_device(device_name)
-                else:
-                    z_logger.debug("[Parse States] Already in local.(%s)" % line)
+
+                # 本地已连接列表中，没有此设备的话，同步数据至内存和数据库;
+                if device_ip_info not in self.active_ip_list:
+                    z_logger.info("上线设备:" + device_ip_info)
+                    self.active_ip_list.append(device_ip_info)
+                    exist, msg = self.dbManager.get_device_prop_info(device_ip_info)
+                    # 若发现新的已连接设备,自动同步该设备
+                    if not exist:
+                        z_logger.debug("[Parse States] This Device is not in db, add new：%s}" % device_ip_info)
+                        state, msg = self.dbManager.add_device_to_db(ip=device_ip_info)
+                        if state:
+                            self.onNewDeviceAdded(device_ip_info)
+                            self.close()
+                    else:
+                        z_logger.debug("[Parse States] Already in database.(%s)" % line)
             else:
                 # 离线设备 device_state == 'offline' 或 'unknow'
-                self.dbManager.change_device_state(device_name,False)
+                self.dbManager.change_device_state(device_ip_info, False)
                 self.update_current_treeitem(False)
 
-        if len(self.active_ip_list) > 0 and self.current_device_addr is None:
-            # FIXME 手机端设备是名称
-            self.current_device_addr = self.active_ip_list[0]
-            # TODO 同步数据库中的设备状态
-            z_logger.info("当前选中设备：" + self.current_device_addr)
+        # if len(self.active_ip_list) > 0 and self.current_device_addr is None:
+        #     # FIXME 手机端设备是名称
+        #     self.current_device_addr = self.active_ip_list[0]
+        #     # TODO 同步数据库中的设备状态
+        #     z_logger.info("当前选中设备：" + self.current_device_addr)
 
         z_logger.debug("当前已连接设备列表：" + str(self.active_ip_list))
         self.refresh_treeview_by_data()

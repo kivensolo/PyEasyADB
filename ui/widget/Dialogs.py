@@ -63,7 +63,7 @@ class NewConnectDialog(BaseDialog):
         if not match:
             self.setStatusTip('无效参数！请检查格式！')
             return
-        state, msg = self.window.dbManager.add_device_to_db(new_ip)
+        state, msg = self.window.dbManager.add_device_to_db(ip=new_ip)
         if state:
             self.block(new_ip)
             self.close()

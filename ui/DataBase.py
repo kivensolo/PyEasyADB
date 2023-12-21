@@ -133,13 +133,13 @@ class DBManager:
             # cursor.execute("delete from device where ip = \'" + ip + "\'")
             cursor.execute('INSERT INTO device VALUES (\'{0}\',{1}, \'{2}\',{3})'.format(host, _port, "", active))
             conn.commit()
-            return True, '设备已入库'
+            return True, host + ":" + _port
         except Exception as e:
             z_logger.error('设备入库失败, 请检查Sql语句:' + str(e))
+            return False, "设备入库失败, 请检查Sql语句"
         finally:
             cursor.close()
             conn.close()
-            # return False, '设备入库失败, 请检查Sql语句'
 
     @staticmethod
     def get_device_prop_info(addr):

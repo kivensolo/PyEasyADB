@@ -45,7 +45,7 @@ class AppToolBar(QToolBar):
 
     @pyqtSlot()
     def show_new_device_dialog(self):
-        new_connect_dialog = NewConnectDialog(self.mainWindow, self.mainWindow.add_device)
+        new_connect_dialog = NewConnectDialog(self.mainWindow, self.mainWindow.onNewDeviceAdded)
         new_connect_dialog.setWindowModality(Qt.ApplicationModal)
         new_connect_dialog.exec()
 
