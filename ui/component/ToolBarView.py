@@ -11,9 +11,8 @@ from utils.UiWidgts import AppPushButton
 
 class AppToolBar(QToolBar):
     selected_pkg = ''
-
     """
-    App工具栏
+    App快捷工具栏(菜单栏西面)
     """
     def __init__(self, context):
         super().__init__()
@@ -27,7 +26,7 @@ class AppToolBar(QToolBar):
         self.initAddNewPackageBtn()
 
     def initNewConnectBtn(self):
-        icon = IconTool.buildQIcon("new_connect.png")
+        icon = IconTool.buildQIcon("add_new.png", "icons")
         tool_item_add_new = AppPushButton("", self.show_new_device_dialog)
         tool_item_add_new.setIcon(icon)
         tool_item_add_new.setIconSize(QSize(30, 30))

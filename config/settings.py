@@ -4,6 +4,9 @@ import os
 # BASE_PATH = sys.argv[0]   xxxx/PyQt5Demo/App.py
 import time
 
+# 应用窗口屏占比
+APP_SCREEN_RQTIO = 0.75
+
 BASE_PATH = os.getcwd()
 
 # 日志配置

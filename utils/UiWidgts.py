@@ -6,15 +6,6 @@ from PyQt5.QtWidgets import *
 from ui.style import StyleSheetConfig
 from utils.Tools import getKTFontStyle
 
-
-class AppDeviceLabel(QLabel):
-    def __init__(self):
-        super().__init__()
-        self.setFont(getKTFontStyle())
-        self.setTextFormat(QtCore.Qt.AutoText)
-        self.setScaledContents(True)
-
-
 class AppPushButton(QPushButton):
     """
     App公共的PushButton

@@ -6,12 +6,14 @@ from PyQt5.QtGui import QIcon, QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QAction, \
     QStatusBar, QToolTip, qApp, QVBoxLayout, QSplitter, QTreeView, QAbstractItemView, QWidget, QStyleFactory
 
+from config.settings import APP_SCREEN_RQTIO
 from logcat.log import z_logger
 from ui import TreeItemType
-from ui.component.CenterLayout import CenterContentWidget
+from ui.component.CenterLayout import CommonFunctionalWidget
 from ui.component.ToolBarView import AppToolBar
 from ui.sql import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
+from ui.widget.Dialogs import NewConnectDialog
 from utils.ADBTools import ADBTools
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
@@ -89,9 +91,9 @@ class MainWindow(BaseWindow):
         self.current_device_addr = ""
 
         # 主窗口分割器
-        self.main_splitter = QSplitter(Qt.Vertical)
+        self.horizontal_splitter = QSplitter(Qt.Vertical)
         # 内容显示的分割器
-        self.content_splitter = QSplitter(Qt.Horizontal)
+        self.vertical_splitter = QSplitter(Qt.Horizontal)
         # 底部控制台窗口
         self.bottom_tab_widget = ButtomTabWidget()
         # 左侧面板相关变量
@@ -122,19 +124,17 @@ class MainWindow(BaseWindow):
         self.init_status_bar()
 
         # 将各组件组合
-        self.content_splitter.setHandleWidth(0)  # thing to grab the splitter
-        self.content_splitter.addWidget(self.left_panel)
-        self.content_splitter.addWidget(self.center_panel)
-        self.content_splitter.setStretchFactor(0, 3)
-        self.content_splitter.setStretchFactor(1, 5)
-        self.content_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
-        self.main_splitter.setHandleWidth(0)
-        self.main_splitter.addWidget(self.content_splitter)
-        self.main_splitter.addWidget(self.bottom_tab_widget)
-        self.main_splitter.setStretchFactor(0, 5)
-        self.main_splitter.setStretchFactor(1, 4)
-        self.main_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
-        self.setCentralWidget(self.main_splitter)
+        self.vertical_splitter.setHandleWidth(0)  # thing to grab the splitter
+        self.vertical_splitter.addWidget(self.left_panel)
+        self.vertical_splitter.addWidget(self.center_panel)
+        self.vertical_splitter.setStretchFactor(1, 5)
+        self.vertical_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
+        self.horizontal_splitter.setHandleWidth(0)
+        self.horizontal_splitter.addWidget(self.vertical_splitter)
+        self.horizontal_splitter.addWidget(self.bottom_tab_widget)
+        self.horizontal_splitter.setStretchFactor(1, 4)
+        self.horizontal_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
+        self.setCentralWidget(self.horizontal_splitter)
 
         initBtnTips()
         # 连接信号槽 Signals & slots. PyQt5的事件机制 http://code.py40.com/2004.html
@@ -167,7 +167,7 @@ class MainWindow(BaseWindow):
             """)
         # self.stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
         # 创建分页对象，并载入分页
-        self.centerArea = CenterContentWidget(self)
+        self.centerArea = CommonFunctionalWidget(self)
         self.stacked_device_info.addWidget(self.centerArea)
         self.stacked_device_info.setCurrentIndex(0)  # 切换至选中页
 
@@ -198,9 +198,16 @@ class MainWindow(BaseWindow):
         statusbar.setStyleSheet("background-color:rgb(242,242,242)")
         self.setStatusBar(statusbar)
 
+    @pyqtSlot()
+    def show_new_device_dialog(self):
+        new_connect_dialog = NewConnectDialog(self, self.add_device)
+        new_connect_dialog.setWindowModality(Qt.ApplicationModal)
+        new_connect_dialog.exec()
+
     def init_menu_bar(self):
         """
-        进行顶部菜单及菜单行为初始化
+        通过QAction进行顶部菜单及菜单行为初始化
+        QAction可以操作菜单栏,工具栏,或自定义键盘快捷键
         :return:
         """
         menubar = self.menuBar()
@@ -209,12 +216,19 @@ class MainWindow(BaseWindow):
         _translate = QtCore.QCoreApplication.translate
 
         z_logger.debug('initMenuBar :: actions')
-        # QAction可以操作菜单栏,工具栏,或自定义键盘快捷键
-        act_close = QAction(self)
+
+        # 新建连接
+        new_connect = QAction(QIcon('./res/icons/add_new.png'), '&NewConnect', self)
+        new_connect.setObjectName("new_connect")
+        new_connect.setShortcut('Ctrl+N')  # 自定义快捷键
+        new_connect.setText(_translate("MainWindow", "连接新设备"))
+        new_connect.triggered.connect(self.show_new_device_dialog)
+
+        act_close = QAction(QIcon('./res/icons/close.png'), '&close',self)
         act_close.setObjectName("act_close")
         act_close.setText(_translate("MainWindow", "Close"))
 
-        act_exit = QAction(QIcon('./res/img/logo.png'), '&Exit', self)
+        act_exit = QAction(QIcon('./res/icons/app_quit.png'), '&Exit', self)
         act_exit.setObjectName("exit_app")
         act_exit.setShortcut('Ctrl+Q')  # 自定义快捷键
         act_exit.setStatusTip('Exit application')  # 自定义提示
@@ -228,8 +242,10 @@ class MainWindow(BaseWindow):
             _translate("MainWindow", "编辑")
         ]
         actions = {
-            menus[0]: [act_close, act_exit],  # 菜单1对应的action
-            menus[1]: [act_exit]              # 菜单2对应的action
+            # 菜单1对应的action
+            menus[0]: [new_connect, act_close, act_exit],
+            # 菜单2对应的action
+            menus[1]: [act_exit]
         }
 
         z_logger.debug('initMenuBars')
@@ -244,7 +260,10 @@ class MainWindow(BaseWindow):
         self.setMenuBar(menubar)
 
     def initWindow(self):
-        self.resize(int(Utils.getWindowWidth()*0.618), int(Utils.getWindowHeight()*0.618))
+        self.resize(
+            int(Utils.getWindowWidth() * APP_SCREEN_RQTIO),
+            int(Utils.getWindowHeight() * APP_SCREEN_RQTIO)
+        )
         self.statusBar().showMessage('ready')
         super(MainWindow, self).initWindow()
 
@@ -339,7 +358,7 @@ class MainWindow(BaseWindow):
         for group in groupElements:
             # ELEMENT_NODE
             _attrName = group.getAttribute("name")
-            print("\t\t|发现分组：" + _attrName)
+            print("\t|====分组：" + _attrName)
             currentFolder = QStandardItem(_attrName)
             if level == 1 or prentQItem is not None:
                 prentQItem.appendRow(currentFolder)

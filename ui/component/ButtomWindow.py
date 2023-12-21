@@ -5,7 +5,7 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QTextCursor, QIcon
+from PyQt5.QtGui import QTextCursor, QIcon, QFont
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
     QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel
 
@@ -14,9 +14,8 @@ from ui.sql import DBManager
 
 from utils.ADBTools import ADBTools
 from utils.PackageManager import PackageManager
-from utils.Tools import getWRYHFontStyle
+from utils.Tools import getWRYHFontStyle, getKTFontStyle
 from utils.UITools import IconTool
-from utils.UiWidgts import AppDeviceLabel
 from utils.Utils import Utils
 
 
@@ -228,7 +227,9 @@ class InfoBarWidget(QWidget):
         super().__init__()
         self.pkgManger = PackageManager()
         self.pkgComboBox = QComboBox()
-        self.device_info_name = None
+        # 设备名称
+        self.device_info_desc = None
+        # 目标应用包名  TODO 改为所选设备的运行时进程
         self.total_pkgs = []
         self.adbTools = ADBTools()
 
@@ -242,31 +243,33 @@ class InfoBarWidget(QWidget):
         self.layout.setSpacing(5)
         self.setLayout(self.layout)
 
-        self.addDeviceInfo()
+        self.initDeviceInfo()
         self.addPackageChoose()
 
-    def addDeviceInfo(self):
+    def initDeviceInfo(self):
         """
         设备名称&版本等信息展示
         :return:
         """
         deviceImageView = QLabel(self)
         deviceImageView.setPixmap(IconTool.buildQPixmap("device.png"))
-        deviceImageView.setAlignment(Qt.AlignLeft)
-        _deviceInfoName = AppDeviceLabel()
-        # _deviceInfoName.setText('测试数据模拟效果')
-        _deviceInfoName.setObjectName("device_prop")
-        _deviceInfoName.setStyleSheet("""
-            background-color: #FFFFFF ;
-            border-width: 1px;
-            border-style: solid;
-            border-color: #ADADAD;
-            min-width: 400px;
-            max-width: 400px;
-        """)
-        self.device_info_name = _deviceInfoName
+        deviceImageView.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(deviceImageView)
-        self.layout.addWidget(self.device_info_name)
+
+        self.device_info_desc = QLabel()
+        self.device_info_desc.setFont(getKTFontStyle(font=QFont.Normal))
+        self.device_info_desc.setTextFormat(QtCore.Qt.AutoText)
+        self.device_info_desc.setWordWrap(False)
+        self.device_info_desc.setMinimumWidth(200)
+        self.device_info_desc.setMaximumWidth(500)
+        self.device_info_desc.setScaledContents(True)
+        self.device_info_desc.setObjectName("device_prop")
+        self.device_info_desc.setStyleSheet("""
+                background-color: #FFFFFF ;
+                border-width: 1px;
+                margin: 0px,0px,10px,0px;
+            """)
+        self.layout.addWidget(self.device_info_desc)
 
     def addPackageChoose(self):
         comboBox = QComboBox()
@@ -375,20 +378,20 @@ class InfoBarWidget(QWidget):
             # 从数据库查询到数据
             if value_tuple[0] == '':
                 if not isconnect:  # 未连接设备的情况下
-                    self.device_info_name.setText("请先连接此设备")
+                    self.device_info_desc.setText("请先连接此设备")
                 else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
                     z_logger.debug("[Update_Device] Current device is connected, but no device info!")
                     self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
             else:
                 z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
-                self.device_info_name.setText(value_tuple[0])
+                self.device_info_desc.setText(value_tuple[0])
         else:
             # 从数据库查询不到数据，通常是手动添加的未连接设备
             if isconnect:
                 z_logger.debug("No this device prop cache, get with adb!")
                 self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
             else:
-                self.device_info_name.setText("请先连接此设备")
+                self.device_info_desc.setText("请先连接此设备")
 
     def on_device_prop_get_by_adb(self, result):
         """
@@ -404,7 +407,7 @@ class InfoBarWidget(QWidget):
         api_level = ''
         if len(result_list):
             if len(result_list) < 4:
-                self.device_info_name.setText("Unknow Device")
+                self.device_info_desc.setText("Unknow Device")
             else:
                 # 会存在['']的情况
                 for line in result_list:
@@ -418,10 +421,10 @@ class InfoBarWidget(QWidget):
                         api_level = self.get_prop_value(line)
                 result = "{0} {1}({2}),API {3}".format(manufacturer, model, sys_version, api_level)
                 z_logger.debug("result=" + result)
-                self.device_info_name.setText(result)
+                self.device_info_desc.setText(result)
                 self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
         else:
-            self.device_info_name.setText("Unknow Device")
+            self.device_info_desc.setText("Unknow Device")
 
     @staticmethod
     def get_prop_value(content):
