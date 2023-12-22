@@ -17,7 +17,7 @@ class ADBTools:
         :param block:  回调函数
         :return:  list
         """
-        z_logger.info(cmd)
+        z_logger.info("[CMD]: " + cmd)
         self.current_cmd = cmd
         self.executor.setFinishCallback(block)
         self.executor.exec(cmd)
