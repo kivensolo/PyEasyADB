@@ -100,8 +100,7 @@ class AppLogger:
         :param view: 自定义的日志输出View
         :return: None
         """
-        gui_handler = GuiLoggerHandler()
-        gui_handler.editView = view
+        gui_handler = GuiLoggerHandler(view)
         # 使用logging的format
         # gui_handler.setFormatter(logging.Formatter(log_format))
         gui_handler.setLevel(logging.INFO)
@@ -134,11 +133,15 @@ class AppLogger:
 
 
 class GuiLoggerHandler(logging.Handler):
+    def __init__(self, logview):
+        super().__init__(0)
+        self.logView = logview
+
     """
     为UI控件提供的日志处理器, 此处相当于对系统日志做了一个代理层，将满足级别的日志，添加到编辑框中
     """
     def emit(self, record):
-        self.editView.append_log(record.levelno, self.format(record))
+        self.logView.append_log(record.levelno, self.format(record))
 
 
 class WindowLogController:
