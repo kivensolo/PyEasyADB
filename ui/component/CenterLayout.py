@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QVBoxLayout, QLabel, QComboBox
 from PyQt5.uic.uiparser import QtWidgets
 
 from logcat.log import z_logger
+from ui import MainWindow
 from ui.component.ConvenientOperateWidget import Ui_ConvenientArea
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
 
@@ -16,21 +17,30 @@ class CommonFunctionalWidget(QWidget):
     中间内容的主要布局
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent: MainWindow):
         super().__init__()
         self.parent = parent
 
         self.setAttribute(Qt.WA_StyledBackground)
         self.setStyleSheet("background-color:#fafafa")
 
-        # TODO 通过配置动态布局
-        Ui_ConvenientArea().setupUi(self)
+        self._init_convenient_area()
 
         # self.root_layout = QVBoxLayout()
         # self.setLayout(self.root_layout)
         #
         # self._init_class_path_layout()
         # self.root_layout.addStretch()
+
+    def _init_convenient_area(self):
+        # TODO 通过配置动态布局
+        convenient_area = Ui_ConvenientArea()
+        convenient_area.setupUi(self)
+        # TODO 点击行为测试
+        # convenient_area.stop_app_v2.clicked.connect(self.testFun())
+
+    def testFun(self):
+        self.parent.doAdbActrion("force-stop {0}")
 
     def _init_class_path_layout(self):
         """
