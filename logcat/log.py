@@ -135,10 +135,10 @@ class AppLogger:
 
 class GuiLoggerHandler(logging.Handler):
     """
-    为UI控件提供的日志处理器
+    为UI控件提供的日志处理器, 此处相当于对系统日志做了一个代理层，将满足级别的日志，添加到编辑框中
     """
     def emit(self, record):
-        self.editView.append_line(record.levelno, self.format(record))
+        self.editView.append_log(record.levelno, self.format(record))
 
 
 class WindowLogController:

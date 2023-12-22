@@ -10,6 +10,9 @@ class ADBTools:
         self.executor = CmdExecutor()
         self.current_cmd = ''
 
+    def isGettingDeviceList(self):
+        return self.current_cmd == 'adb devices'
+
     def _exec_cmd(self, cmd, block):
         """
         执行ADB命令

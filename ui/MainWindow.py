@@ -559,6 +559,10 @@ class MainWindow(BaseWindow):
         :param result: List for result.
         :return:
         """
+        # 特殊情况需要将输出的换行符给去除
+        if self.adbTools.isGettingDeviceList():
+            result = result.strip()
+
         resultList = result.split('\n')
         z_logger.debug('On adb cmd result:' + str(result))
         if "cmdExectuedTimeout" in resultList:
@@ -584,7 +588,7 @@ class MainWindow(BaseWindow):
             z_logger.info("设备断开成功!")
             self.active_ip_list.remove(self.temp_disconnect_ip)
             self.update_current_treeitem(False)
-        elif self.adbTools.current_cmd == 'adb devices':
+        elif self.adbTools.isGettingDeviceList():
             self.parse_devices_states(resultList)
         else:
             if len(result) != 0:

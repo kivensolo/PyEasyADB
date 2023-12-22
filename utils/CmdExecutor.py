@@ -61,8 +61,8 @@ class CmdExecutor(QThread):
             # print("CmdExecutor stderr_data = " + stderr_data)
             self.result = stderr_data.strip()
         if stdout_data is not None:
-            # print("CmdExecutor stdout_data = " + stdout_data)
-            self.result = stdout_data.strip()
+            # 正常输出的结果不进行strip操作
+            self.result = stdout_data
             # self.result = stdout_data.strip().split('\n')
         # for line in iter(_process.stdout.readline, b''):
         #     l.append(line.decode('utf-8'))

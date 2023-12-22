@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import logging
+import os
 import sys
 
 from PyQt5 import QtCore
@@ -101,14 +102,6 @@ class ConsoleWindow(QMainWindow):
                 border-style: solid;
             }
             ''')
-
-        # self.combo = QComboBox(self)
-        # self.combo.insertItem(0, 'Error')
-        # self.combo.insertItem(1, 'Debug')
-        # self.combo.insertItem(2, 'Verbose')
-        # self.combo.insertItem(3, 'Warning')
-        # self.combo.setCurrentIndex(0)
-
         self.initLeftFunctionWidget()
 
         # 右
@@ -176,15 +169,29 @@ class ConsoleWindow(QMainWindow):
         aboutAction = QAction(IconTool.buildQIcon('setting.png'), 'About', self)
         helpMenu.addAction(aboutAction)
 
-    def append_line(self, level, msg):
-        self.textEdit.moveCursor(QTextCursor.End)
+    def append_log(self, level, msg):
+        # 先清除log中结尾的换行符，因为后续会自己加
+        msg = msg.rstrip("\n")
+
+        if "\n" in str(msg):
+            # 检查内容有换行时(一般是输出内容)，则在最前面增加一个换行符，保证输出的缩进一致;
+            msg = "\n{0}".format(msg)
+
         content = self.check_link_addr(msg)
-        log = "{0}: {1} <br />".format(self._buildStandardTime(), content)
+        log = "{0}: {1}".format(self._buildStandardTime(), content)
         if level >= logging.ERROR:
             log = "<font color=\"red\">{0}</font>".format(log)
         elif level == logging.WARNING:
             log = "<font color=\"yellow\">{0}</font>".format(log)
+
+        # 解决该控件插入Html时，不支持\n的问题
+        log = str(log).replace("\n", "<br>")
+        # 文字后加换行符，准备下一次输出(注意必须要有一个空格，否则不生效)
+        log = log + "<br />"
         self.textEdit.insertHtml(log)
+
+        # 光标移动, 将输出内容全部顶出来
+        self.textEdit.moveCursor(QTextCursor.End)
 
     def _clear(self):
         self.textEdit.clear()
@@ -244,7 +251,7 @@ class InfoBarWidget(QWidget):
         self.setLayout(self.layout)
 
         self.initDeviceInfo()
-        self.addPackageChoose()
+        self.initProcessComboBox()
 
     def initDeviceInfo(self):
         """
@@ -271,7 +278,11 @@ class InfoBarWidget(QWidget):
             """)
         self.layout.addWidget(self.device_info_desc)
 
-    def addPackageChoose(self):
+    def initProcessComboBox(self):
+        """
+        初始化进程列表展示Box
+        :return:
+        """
         comboBox = QComboBox()
         # TODO 控件宽度改变
         # 设置下拉显示固定个数，超过个数，滚动显示

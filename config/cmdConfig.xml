@@ -8,10 +8,7 @@
         <item name="Versions">dumpsys package {0} |grep version</item>
         <item name="CurrentFocus">dumpsys window |grep mCurrentFocus</item>
         <item name="Install Path" dst_pkg="true">pm path {0}</item>
-    </group>
-    <group name="Memory">
-        <item name="Dump">dumpsys</item>
-        <item name="Top">top -n 1</item>
+        <item name="Get app Memory" dst_pkg="true">dumpsys meminfo {0}</item>
     </group>
     <group name="Display">
         <item name="Screenshot">【抱歉，暂未实现】</item>
@@ -19,11 +16,15 @@
         <item name="Density">wm density</item>
     </group>
     <group name="System">
+        <sub_group name="Memory">
+            <item name="Dump">dumpsys</item>
+            <item name="Top">top -n 1</item>
+        </sub_group>
         <sub_group name="NET">
             <citem name="IPInfo">ipconfig</citem>
             <citem name="MAC">cat /sys/class/net/eth0/address</citem>
         </sub_group>
-        <item name="Memory" dst_pkg="true">dumpsys meminfo {0}</item>
+        <item name="Get CPU Info">cat /proc/cpuinfo</item>
     </group>
     <group name="Packages">
         <item name="All packages">pm list packages</item>
