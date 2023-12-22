@@ -1,23 +1,23 @@
 PushButton = """
-/*这里是通用设置，所有按钮都有效，不过后面的可以覆盖这个*/
-QPushButton {
-    border: none; /*去掉边框*/
-}
+# /*这里是通用设置，所有按钮都有效，不过后面的可以覆盖这个*/
+# QPushButton {
+#     border: none; /*去掉边框*/
+# }
 
-/*
-QPushButton#xxx
-或者
-#xx
-都表示通过设置的objectName来指定
-*/
+# /*
+# QPushButton#xxx
+# 或者
+# #xx
+# 都表示通过设置的objectName来指定
+# */
 QPushButton#ToolButton {
-    background-color: #c3c3c3; /*背景颜色*/
-    border:1px solid #303030;
+    background-color: #00c3c3c3; /*背景颜色*/
+    # border:1px solid #303030;
 }
-#ToolButton:hover {
-    background-color: #e57373; /*鼠标悬停时背景颜色*/
+ToolButton:hover {
+    background-color: #ff0909; /*鼠标悬停时背景颜色*/
 }
-/*注意pressed一定要放在hover的后面，否则没有效果*/
+# /*注意pressed一定要放在hover的后面，否则没有效果*/
 #ToolButton:pressed {
     background-color: #ffcdd2; /*鼠标按下不放时背景颜色*/
 }
@@ -37,9 +37,7 @@ QPushButton#ToolButton {
     border-bottom-left-radius: 20px; /*左下角圆角*/
 }
 
-QPushButton:disabled {
-  /*设置禁用时按钮的样式*/
-}
+#QPushButton:disabled { /*设置禁用时按钮的样式*/ }
 
 /*根据文字内容来区分按钮,同理还可以根据其它属性来区分*/
 QPushButton[text="purple button"] {

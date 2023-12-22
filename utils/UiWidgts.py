@@ -18,13 +18,10 @@ class AppPushButton(QPushButton):
         # self.font.setBold(1)        # 设置为粗体
         self.font.setPixelSize(24)  # 字体大小
 
-        # self.setStyleSheet(
-        #     "QPushButton{color:white;background-color:rgb(51,204,255);font-family:黑体;}"
-        #     "QPushButton:pressed{background-color:rgb(51,129,172)}"
-        # )
         # self.setFixedHeight(20)
         # self.setFixedWidth(40)
-        self.setCheckable(True)
+        # self.setCheckable(True)
+        # TODO 按钮css美化
         self.setStyleSheet(StyleSheetConfig.PushButton)
         self.clicked.connect(slotFun)
 

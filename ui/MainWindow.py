@@ -10,10 +10,9 @@ from logcat.log import z_logger
 from ui import TreeItemType
 from ui.component.CenterLayout import CommonFunctionalWidget
 from ui.MenuBar import Controller
-from ui.component.ToolBarView import AppToolBar
 from ui.DataBase import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
-from ui.component.ToolBarViewV2 import Ui_ToolBar
+from ui.component.ToolBar import Ui_ToolBar
 from ui.widget.Dialogs import NewConnectDialog
 from utils.ADBTools import ADBTools
 from utils.CmdExecutor import CmdExecutor
@@ -114,7 +113,7 @@ class MainWindow(BaseWindow):
     def init_all_ui(self):
         # 初始化菜单栏
         self.init_menu_bar()
-        self.toolbar = AppToolBar(self)
+        self.toolbar = Ui_ToolBar(self)
         self.addToolBar(self.toolbar)
 
         self.init_left_panel()
@@ -437,11 +436,14 @@ class MainWindow(BaseWindow):
                 self.connect_device(item.addr)
             else:
                 z_logger.debug("Already in active device list.")
-        elif is_device_root_node(item):
-            # z_logger.debug('刷新设备状态')
-            self.check_device_status()
+        # elif is_device_root_node(item):
+        #     # z_logger.debug('刷新设备状态')
+        #     self.check_device_status()
         elif item.type == TreeItemType.TYPE_ADB_CMD:
             self._dealWithADB(item)
+
+    def doAdbActrion(self, cmd):
+        self._dealWithADB(cmd)
 
     def _dealWithADB(self, item):
         """
