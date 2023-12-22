@@ -20,20 +20,24 @@
             <item name="Dump">dumpsys</item>
             <item name="Top">top -n 1</item>
         </sub_group>
-        <sub_group name="NET">
-            <citem name="IPInfo">ipconfig</citem>
-            <citem name="MAC">cat /sys/class/net/eth0/address</citem>
-        </sub_group>
-        <item name="Get CPU Info">cat /proc/cpuinfo</item>
+        <item name="Features" desc="列出设备硬件信息">pm list features | cut -c9- | sort -u</item>
+        <item name="CPU Info">cat /proc/cpuinfo</item>
+    </group>
+    <group name="NET">
+        <citem name="Hosts">cat /etc/hosts</citem>
+        <citem name="Network Info">ipconfig</citem>
+        <citem name="MAC">cat /sys/class/net/eth0/address</citem>
+        <citem name="iftop">cat /sys/class/net/eth0/address</citem>
     </group>
     <group name="Packages">
-        <item name="All packages">pm list packages</item>
+        <item name="All packages">pm list packages -f</item>
+        <item name="Libraries">pm list libraries</item>
         <item name="Install and uninstall"/>
     </group>
     <group name="About">
-        <sub_group name="About">
-            <item name="Help"/>
-            <item name="Version"/>
+        <sub_group name="ADB">
+            <item name="Help" shell="false">help</item>
+            <item name="Version" shell="false">version</item>
         </sub_group>
     </group>
 

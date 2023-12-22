@@ -32,6 +32,7 @@ class CommonFunctionalWidget(QWidget):
         # self._init_class_path_layout()
         # self.root_layout.addStretch()
 
+    # 新版布局逻辑
     def _init_convenient_area(self):
         # TODO 通过配置动态布局
         convenient_area = Ui_ConvenientArea()

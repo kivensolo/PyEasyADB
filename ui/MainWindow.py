@@ -315,10 +315,8 @@ class MainWindow(BaseWindow):
             _groupChildrens = group.getElementsByTagName("sub_group")
             if _groupChildrens.length > 0:
                 self.parseNode(currentFolder, _groupChildrens, level+1)
-            if level == 1:
-                cmdChildrens = group.getElementsByTagName("item")
-            else:
-                cmdChildrens = group.getElementsByTagName("citem")
+
+            cmdChildrens = group.getElementsByTagName("item")
             for item in cmdChildrens:
                 name = item.getAttribute("name")
                 cmd = None
