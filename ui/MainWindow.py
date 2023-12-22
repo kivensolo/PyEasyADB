@@ -13,6 +13,7 @@ from ui.MenuBar import Controller
 from ui.component.ToolBarView import AppToolBar
 from ui.DataBase import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
+from ui.component.ToolBarViewV2 import Ui_ToolBar
 from ui.widget.Dialogs import NewConnectDialog
 from utils.ADBTools import ADBTools
 from utils.CmdExecutor import CmdExecutor
@@ -118,7 +119,6 @@ class MainWindow(BaseWindow):
 
         self.init_left_panel()
         self.init_center_panel()
-        self.set_treeview_default_index()
 
         # 初始化底部状态栏
         self.init_status_bar()
@@ -518,18 +518,18 @@ class MainWindow(BaseWindow):
                 child = item.child(child_index)
                 if child.addr in self.active_ip_list:
                     child.setIcon(self.icon_connect)
-                    # # 没有选中设备时，选择第一个已连接设备
-                    # if not has_device_selected:
-                    #     has_device_selected = True
-                    #     model_index: QModelIndex = self.treeModel.indexFromItem(child)
-                    #     self.tree_view.setCurrentIndex(model_index)
-                    #     self.on_tree_item_clicked(model_index)
+                    # 没有选中设备时，选择第一个已连接设备
+                    if not has_device_selected:
+                        has_device_selected = True
+                        model_index: QModelIndex = self.treeModel.indexFromItem(child)
+                        self.tree_view.setCurrentIndex(model_index)
+                        self.on_tree_item_clicked(model_index)
                 else:
                     child.setIcon(self.icon_disconnect)
 
-            # if not has_device_selected:
-            #     # 若没有一个设备已连接，则默认选中第一个设备
-            #     self.set_treeview_default_index()
+            if not has_device_selected:
+                # 若没有一个设备已连接，则默认选中第一个设备
+                self.set_treeview_default_index()
 
 
 # ----------------------------------左侧TreeView End-----------------------------------------------
@@ -616,7 +616,7 @@ class MainWindow(BaseWindow):
 
                 # 本地已连接列表中，没有此设备的话，同步数据至内存和数据库;
                 if device_ip_info not in self.active_ip_list:
-                    z_logger.info("上线设备:" + device_ip_info)
+                    z_logger.info("在线设备:" + device_ip_info)
                     self.active_ip_list.append(device_ip_info)
                     exist, msg = self.dbManager.get_device_prop_info(device_ip_info)
                     # 若发现新的已连接设备,自动同步该设备
