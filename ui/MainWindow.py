@@ -8,10 +8,10 @@ from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayo
 from config.settings import APP_SCREEN_RQTIO
 from logcat.log import z_logger
 from ui import TreeItemType
-from ui.component.CenterLayout import CommonFunctionalWidget
 from ui.MenuBar import Controller
 from ui.DataBase import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
+from ui.component.CenterWindow import CommonFunctionalWidget
 from ui.component.ToolBar import Ui_ToolBar
 from ui.widget.Dialogs import NewConnectDialog
 from utils.ADBTools import ADBTools
