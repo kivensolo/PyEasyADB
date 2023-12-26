@@ -34,9 +34,8 @@ class CommonFunctionalWidget(QWidget):
 
     # 新版布局逻辑
     def _init_convenient_area(self):
-        # TODO 通过配置动态布局
         convenient_area = Ui_ConvenientArea()
-        convenient_area.setupUi(self)
+        convenient_area.setUpUiDynamic(self)
         # TODO 点击行为测试
         # convenient_area.stop_app_v2.clicked.connect(self.testFun())
 

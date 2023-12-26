@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<templates>
+    <template name="常用应用操作">
+        <item>
+            <attr name="icon">./res/icons/icon_app_install_32x32.png</attr>
+            <attr name="desc">安装应用</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_uninstall.png</attr>
+            <attr name="desc">卸载应用</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_stop.png</attr>
+            <attr name="desc">停止应用</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_started.png</attr>
+            <attr name="desc">启动应用</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_started.png</attr>
+            <attr name="desc">重启应用</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+    </template>
+    <template name="快捷功能2">
+        <item>
+            <attr name="icon">./res/icons/app_started.png</attr>
+            <attr name="desc">重启应用</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_started.png</attr>
+            <attr name="desc">重启应用2</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_started.png</attr>
+            <attr name="desc">重启应用3</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+    </template>
+
+</templates>
