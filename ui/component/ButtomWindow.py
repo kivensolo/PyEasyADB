@@ -6,9 +6,10 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QTextCursor, QIcon, QFont
+from PyQt5.QtGui import QTextCursor, QIcon, QFont, QPixmap
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
     QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel
+from qtpy import QtWidgets
 
 from logcat.log import z_logger
 from ui.DataBase import DBManager
@@ -85,8 +86,7 @@ class ConsoleWindow(QMainWindow):
 
     def __init__(self, parent=None):
         super(ConsoleWindow, self).__init__(parent)
-        self.leftWiget = QWidget()
-        self.functionTabWiget = InfoBarWidget()
+        self.infoBarWidget = InfoBarWidget()
 
         self.isConUrl = False
         self.setStyleSheet('''
@@ -102,9 +102,10 @@ class ConsoleWindow(QMainWindow):
                 border-style: solid;
             }
             ''')
+
+        self.leftWiget = QWidget()
         self.initLeftFunctionWidget()
 
-        # 右
         # 日志窗口控件初始化
         self.textEdit = QTextBrowser()
         self.textEdit.setOpenLinks(True)
@@ -116,16 +117,17 @@ class ConsoleWindow(QMainWindow):
         self.rightWiget.setAutoFillBackground(True)
         self.rightWiget.setFixedWidth(15)
 
-        self.lineTowSplitter = QSplitter(Qt.Horizontal)
-        self.lineTowSplitter.addWidget(self.leftWiget)
-        self.lineTowSplitter.addWidget(self.textEdit)
-        self.lineTowSplitter.addWidget(self.rightWiget)
+        # 左侧工具栏+中间文本展示+右侧工具栏的分割器
+        self.bodySplitter = QSplitter(Qt.Horizontal)
+        self.bodySplitter.addWidget(self.leftWiget)
+        self.bodySplitter.addWidget(self.textEdit)
+        self.bodySplitter.addWidget(self.rightWiget)
 
-        self.mainSplitter = QSplitter(Qt.Vertical)
-        self.mainSplitter.addWidget(self.functionTabWiget)
-        self.mainSplitter.addWidget(self.lineTowSplitter)
-        self.mainSplitter.setChildrenCollapsible(0)
-        self.setCentralWidget(self.mainSplitter)
+        self.verticalSplitter = QSplitter(Qt.Vertical)
+        self.verticalSplitter.addWidget(self.infoBarWidget)
+        self.verticalSplitter.addWidget(self.bodySplitter)
+        self.verticalSplitter.setChildrenCollapsible(0)
+        self.setCentralWidget(self.verticalSplitter)
 
         # 重定向输出
         # sys.stdout = ConsoleEmittor(textWritten=self.normalOutputWritten)
@@ -218,11 +220,11 @@ class ConsoleWindow(QMainWindow):
         return text
 
     def updateSelectDeviceInfo(self, ip, isconnect):
-        self.functionTabWiget.update_device_info(ip, isconnect)
+        self.infoBarWidget.update_device_info(ip, isconnect)
 
     def get_fun_widget(self):
         # FIXME 如何直接找到子view
-        return self.functionTabWiget
+        return self.infoBarWidget
 
 
 class InfoBarWidget(QWidget):
@@ -240,18 +242,25 @@ class InfoBarWidget(QWidget):
         self.total_pkgs = []
         self.adbTools = ADBTools()
 
-        self.setAutoFillBackground(True)
-        self.setStyleSheet(
-            """
-            background-color:rgb(244,244,244);
-            """)
-        self.layout = QHBoxLayout()
-        self.layout.setAlignment(Qt.AlignLeft)
-        self.layout.setSpacing(5)
-        self.setLayout(self.layout)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        self.setSizePolicy(sizePolicy)
+        self.setMaximumSize(QtCore.QSize(16777215, 55))
+
+        self.qh_layout = QHBoxLayout(self)
+        self.qh_layout.setContentsMargins(0, -1, -1, -1)
+        self.qh_layout.setObjectName("info_bar_horizontalLayout")
 
         self.initDeviceInfo()
         self.initProcessComboBox()
+        # 右侧添加补位弹簧
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.qh_layout.addItem(spacerItem)
+        self.qh_layout.setStretch(1, 1)
+        self.qh_layout.setStretch(2, 1)
+        self.qh_layout.setStretch(3, 1)
 
     def initDeviceInfo(self):
         """
@@ -259,24 +268,31 @@ class InfoBarWidget(QWidget):
         :return:
         """
         deviceImageView = QLabel(self)
+        # deviceImageView.setPixmap(QPixmap("../../res/img/device.png"))
         deviceImageView.setPixmap(IconTool.buildQPixmap("device.png"))
         deviceImageView.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(deviceImageView)
+        self.qh_layout.addWidget(deviceImageView)
 
         self.device_info_desc = QLabel()
+        # self.device_info_desc.setText("B869Ajiojioajiojdq2165465461654")
         self.device_info_desc.setFont(getKTFontStyle(font=QFont.Normal))
         self.device_info_desc.setTextFormat(QtCore.Qt.AutoText)
-        self.device_info_desc.setWordWrap(False)
-        self.device_info_desc.setMinimumWidth(200)
-        self.device_info_desc.setMaximumWidth(500)
-        self.device_info_desc.setScaledContents(True)
         self.device_info_desc.setObjectName("device_prop")
+        self.device_info_desc.setToolTip("设备名称信息")
+        self.device_info_desc.setMinimumSize(QtCore.QSize(200, 30))
+        self.device_info_desc.setMaximumSize(QtCore.QSize(500, 40))
         self.device_info_desc.setStyleSheet("""
-                background-color: #FFFFFF ;
-                border-width: 1px;
-                margin: 0px,0px,10px,0px;
+                background-color: #f0f0f0 ;
+                border: 1px solid #C0C0C0;
+                padding: 2px,2px,2px,2px;
+                margin: 0px,0px,20px,0px;
             """)
-        self.layout.addWidget(self.device_info_desc)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.device_info_desc.sizePolicy().hasHeightForWidth())
+        self.device_info_desc.setSizePolicy(sizePolicy)
+        self.qh_layout.addWidget(self.device_info_desc)
 
     def initProcessComboBox(self):
         """
@@ -284,13 +300,13 @@ class InfoBarWidget(QWidget):
         :return:
         """
         comboBox = QComboBox()
-        # TODO 控件宽度改变
         # 设置下拉显示固定个数，超过个数，滚动显示
         comboBox.setMaxVisibleItems(7)
         # 宽度调整策略，按照内容最大宽度
         # comboBox.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         # comboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
         comboBox.setMinimumSize(QSize(250, 31))
+        comboBox.setMaximumSize(QtCore.QSize(500, 40))
         comboBox.setObjectName("pkgComboBoxView")
         comboBox.setFont(getWRYHFontStyle())
         comboBox.setStyleSheet(
@@ -301,7 +317,7 @@ class InfoBarWidget(QWidget):
         )
         comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
         self.pkgComboBox = comboBox
-        self.layout.addWidget(self.pkgComboBox)
+        self.qh_layout.addWidget(self.pkgComboBox)
         self.initPkgData()
 
     def onPackageSelectedChanged(self):
