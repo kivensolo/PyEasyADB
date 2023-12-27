@@ -4,12 +4,12 @@
         <item>
             <attr name="icon">./res/icons/app_uninstall_256x256.png</attr>
             <attr name="text">卸载应用</attr>
-            <attr name="cmd">am uninstall {0}</attr>
+            <attr name="cmd" shell="false">uninstall {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_install_256x256.png</attr>
             <attr name="text">安装应用</attr>
-            <attr name="cmd">am start {0}</attr>
+            <attr name="cmd" shell="false">install -r {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_stop_256x256.png</attr>

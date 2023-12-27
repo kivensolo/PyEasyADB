@@ -4,7 +4,7 @@
         <item name="Start">am start {0}</item>
         <item name="Clear Data">pm clear {0}</item>
         <item name="Stop">am force-stop {0}</item>
-        <item name="Uinstall" shell="false">adb uninstall {0}</item>
+        <item name="Uinstall" shell="false">uninstall {0}</item>
         <item name="Versions">dumpsys package {0} |grep version</item>
         <item name="CurrentFocus">dumpsys window |grep mCurrentFocus</item>
         <item name="Install Path" dst_pkg="true">pm path {0}</item>

@@ -1,5 +1,30 @@
+import string
+
 from logcat.log import z_logger
 from utils.CmdExecutor import CmdExecutor
+
+
+class ADBCmdParams:
+    def __init__(self):
+        self.isShellMode = True
+        self.cmd_with_format = ""
+        self.target_device_ip = ""
+        self.target_app = ""
+
+    # def __init__(self, is_shell, format_cmd: string, ip="", app=""):
+    #     self.isShellMode = is_shell
+    #     self.cmd_with_format = format_cmd
+    #     self.target_device_ip = ip
+    #     self.target_app = app
+
+    def toCMD(self):
+        _cmd = self.cmd_with_format.format(self.target_app)
+        _full_cmd = ''
+        if self.isShellMode:
+            _full_cmd = "adb -s {0} shell {1}".format(self.target_device_ip, _cmd)
+        else:
+            _full_cmd = "adb -s {0} {1}".format(self.target_device_ip, _cmd)
+        return _full_cmd
 
 
 class ADBTools:
@@ -25,8 +50,20 @@ class ADBTools:
         self.executor.setFinishCallback(block)
         self.executor.exec(cmd)
 
-    def exec_cmd(self, ip, cmd="", isShell=False, block=None):
-        if isShell:
+    def exec_adb_cmd(self, cmd, block):
+        """
+        执行ADB命令
+        :param cmd: ADB执行命令
+        :param block:  回调函数
+        :return:  list
+        """
+        z_logger.info("[CMD]: " + cmd)
+        self.current_cmd = cmd
+        self.executor.setFinishCallback(block)
+        self.executor.exec(cmd)
+
+    def exec_cmd(self, ip, cmd="", is_shell=False, block=None):
+        if is_shell:
             adb_cmd = "adb -s {0} shell {1}".format(ip, cmd)
         else:
             adb_cmd = "adb -s {0} {1}".format(ip, cmd)

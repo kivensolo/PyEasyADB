@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QWidget, QHBoxLayout, QApplication, QPushButton, QLi
 
 from logcat.log import z_logger
 from ui import MainWindow
+from utils.ADBTools import ADBCmdParams
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
 
 
@@ -33,13 +34,8 @@ class CommonFunctionalWidget(QWidget):
 
     # 新版布局逻辑
     def _init_convenient_area(self):
-        convenient_area = Ui_ConvenientArea()
+        convenient_area = Ui_ConvenientArea(self.parent)
         convenient_area.setUpUiDynamic(self)
-        # TODO 点击行为测试
-        # convenient_area.stop_app_v2.clicked.connect(self.testFun())
-
-    def testFun(self):
-        self.parent.doAdbActrion("force-stop {0}")
 
     def _init_class_path_layout(self):
         """
@@ -101,7 +97,11 @@ template_ui_config_file_path = "./config/function_templates.xml"
 # 每个ui模板一行的元素个数
 every_row_size = 5
 
+
 class Ui_ConvenientArea(object):
+    def __init__(self, mainWidow):
+        self.mainWindow = mainWidow
+
     def setUpUiDynamic(self, ConvenientArea):
         ConvenientArea.setObjectName("ConvenientArea")
         # ConvenientArea.setStyleSheet("border:2px solid green")
@@ -165,6 +165,7 @@ class Ui_ConvenientArea(object):
                 sizePolicy.setVerticalStretch(0)
                 item_tool_button.setSizePolicy(sizePolicy)
                 attrs = item.getElementsByTagName("attr")
+                cmdParams = ADBCmdParams()
                 for attr in attrs:
                     _key = attr.getAttribute('name')
                     _value = attr.firstChild.nodeValue
@@ -178,7 +179,12 @@ class Ui_ConvenientArea(object):
                         item_tool_button.setIconSize(QSize(56, 56))
                         item_tool_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
                     elif _key == "cmd":
-                        item_tool_button.setProperty("cmd",_value)
+                        shellValue = attr.getAttribute("shell")
+                        if shellValue.lower() == "false":
+                            cmdParams.isShellMode = False
+                        cmdParams.cmd_with_format = _value
+                # https://blog.csdn.net/PixelNovaO/article/details/132727483
+                item_tool_button.clicked.connect(lambda: self.mainWindow.runADBCmd(cmdParams))
                 gridLayout.addWidget(item_tool_button, rowIndex, columnIndex, 1, 1)
 
             # 若第一行未满，则进行填充, 使UI按照网格对齐

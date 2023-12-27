@@ -14,7 +14,7 @@ from ui.component.ButtomWindow import ButtomTabWidget
 from ui.component.CenterWindow import CommonFunctionalWidget
 from ui.component.ToolBar import Ui_ToolBar
 from ui.widget.Dialogs import NewConnectDialog
-from utils.ADBTools import ADBTools
+from utils.ADBTools import ADBTools, ADBCmdParams
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
 from utils.UITools import IconTool
@@ -438,10 +438,21 @@ class MainWindow(BaseWindow):
         #     # z_logger.debug('刷新设备状态')
         #     self.check_device_status()
         elif item.type == TreeItemType.TYPE_ADB_CMD:
+            # TODO 进行传参类型变更
             self._dealWithADB(item)
 
-    def doAdbActrion(self, cmd):
-        self._dealWithADB(cmd)
+    def runADBCmd(self, cmdParams: ADBCmdParams):
+        if len(self.active_ip_list) == 0:
+            z_logger.error("请先连接设备")
+        else:
+            pkgName = self.pkgManager.getCurrentSelectedPackage()
+            if pkgName is None:
+                z_logger.error("请先选择目标应用")
+                return
+            # 每次重新赋值
+            cmdParams.target_device_ip = self.current_device_addr
+            cmdParams.target_app = pkgName
+            self.adbTools.exec_adb_cmd(cmdParams.toCMD(), self.on_adb_cmd_exectued)
 
     def _dealWithADB(self, item):
         """
