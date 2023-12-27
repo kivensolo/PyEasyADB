@@ -113,7 +113,7 @@ class AddPackageDialog(BaseDialog):
 
 class installApkDialog(BaseDialog):
     def __init__(self,  window = None):
-        super().__init__("安装新应用")
+        super().__init__("应用安装")
         self.window = window
         self.initWindow()
 

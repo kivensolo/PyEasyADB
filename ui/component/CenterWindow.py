@@ -187,9 +187,12 @@ class Ui_ConvenientArea(object):
                         if shellValue.lower() == "false":
                             actionParams.isShellMode = False
                         actionParams.action = _value
-                item_tool_button.setProperty("actionInfo", actionParams)
-                # https://blog.csdn.net/PixelNovaO/article/details/132727483
-                item_tool_button.clicked.connect(lambda: self.onDoAction(item_tool_button))
+                """
+                https://blog.csdn.net/PixelNovaO/article/details/132727483
+                每次迭代时创建一个新的闭包，以便为每个按钮创建一个独立的事件处理器。并将自定义对象作为参数传递。
+                使用了lambda 函数来创建一个新的闭包，以捕获当前的按钮对象和自定义对象。这样，每个按钮的事件处理器都会独立地处理各自的对象。
+                """
+                item_tool_button.clicked.connect(lambda checked, params=actionParams: self.onDoAction(params))
 
                 gridLayout.addWidget(item_tool_button, rowIndex, columnIndex, 1, 1)
 
@@ -217,8 +220,7 @@ class Ui_ConvenientArea(object):
         self.ui_root_vlayout.addWidget(self.scrollArea)
 
     @pyqtSlot()
-    def onDoAction(self, item_tool_button):
-        actionParams = item_tool_button.property("actionInfo")
+    def onDoAction(self, actionParams):
         if actionParams.action == "m_show_install_app_dialog":
             install_apk_dialog = installApkDialog(self)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
