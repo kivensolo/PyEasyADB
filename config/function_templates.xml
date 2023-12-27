@@ -27,7 +27,7 @@
             <attr name="cmd">am start {0}</attr>
         </item>
     </template>
-    <template name="快捷功能2">
+    <template name="动态布局-测试数据">
         <item>
             <attr name="icon">./res/icons/app_clear_data_256x256.png</attr>
             <attr name="text">清除数据</attr>
@@ -44,5 +44,36 @@
             <attr name="cmd">am start {0}</attr>
         </item>
     </template>
-
+    <template name="动态布局-测试数据2">
+        <item>
+            <attr name="icon">./res/icons/app_uninstall_256x256.png</attr>
+            <attr name="text">卸载应用</attr>
+            <attr name="cmd" shell="false">uninstall {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_install_256x256.png</attr>
+            <attr name="text">安装应用</attr>
+            <attr name="cmd" shell="false">install -r {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_stop_256x256.png</attr>
+            <attr name="text">停止应用</attr>
+            <attr name="cmd">am force-stop {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_start_256x256.png</attr>
+            <attr name="text">启动应用</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="text">重启应用</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="text">重启应用2</attr>
+            <attr name="cmd">am start {0}</attr>
+        </item>
+    </template>
 </templates>
