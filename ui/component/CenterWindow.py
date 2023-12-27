@@ -2,7 +2,7 @@ import sys
 import xml.dom.minidom
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, QSize
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QApplication, QPushButton, QLineEdit
 
@@ -125,6 +125,9 @@ class Ui_ConvenientArea(object):
         self.vlayout_of_scrollarea = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.vlayout_of_scrollarea.setObjectName("scroll_area_layout")
 
+        # if __name__ == "__main__":
+        #     template_ui_config_file_path = "../../config/function_templates.xml"
+
         # 动态设置groupView
         dom = xml.dom.minidom.parse(template_ui_config_file_path)
         root = dom.documentElement
@@ -153,51 +156,30 @@ class Ui_ConvenientArea(object):
                 item = item_list[index]
                 rowIndex = int(index / every_row_size)
                 columnIndex = index % every_row_size
-                # 每个行为控件创建布局
-                v_lyout = QtWidgets.QVBoxLayout()
-                v_lyout.setObjectName("vlayout_%s_%s".format(rowIndex, columnIndex))
-                spacerItem = QtWidgets.QSpacerItem(20, 10, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-                v_lyout.addItem(spacerItem)
 
+                # 初始化每一个tool按钮
+                item_tool_button = QtWidgets.QToolButton(_groupBox)
+                item_tool_button.setAutoRaise(True)
+                sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+                sizePolicy.setHorizontalStretch(0)
+                sizePolicy.setVerticalStretch(0)
+                item_tool_button.setSizePolicy(sizePolicy)
                 attrs = item.getElementsByTagName("attr")
-
-                item_desc_view = None
-                item_icon_view = None
                 for attr in attrs:
-                    attr_name = attr.getAttribute('name')
-                    attr_value = attr.firstChild.nodeValue
-                    if attr_name == "desc":
-                        item_desc_view = QtWidgets.QLabel(_groupBox)
-                        item_desc_view.setEnabled(True)
-                        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-                        sizePolicy.setHorizontalStretch(0)
-                        sizePolicy.setVerticalStretch(1)
-                        sizePolicy.setHeightForWidth(item_desc_view.sizePolicy().hasHeightForWidth())
-                        item_desc_view.setSizePolicy(sizePolicy)
-                        item_desc_view.setText(attr_value)
-                        item_desc_view.setAlignment(QtCore.Qt.AlignCenter)
-                        item_desc_view.setObjectName("item_label_" + str(index))
-                        v_lyout.addWidget(item_desc_view)
-                    elif attr_name == "icon":
-                        item_icon_view = QtWidgets.QLabel(_groupBox)
-                        item_icon_view.setEnabled(True)
-                        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-                        sizePolicy.setHorizontalStretch(0)
-                        sizePolicy.setVerticalStretch(1)
-                        sizePolicy.setHeightForWidth(item_icon_view.sizePolicy().hasHeightForWidth())
-                        item_icon_view.setSizePolicy(sizePolicy)
-                        item_icon_view.setText("")
-                        if len(attr_value) > 0:
-                            item_icon_view.setPixmap(QtGui.QPixmap(attr_value))
-                        else:
-                            print(attr_name + "未配置图标！！！")
-                        item_icon_view.setAlignment(QtCore.Qt.AlignCenter)
-                        item_icon_view.setObjectName("item_icon_" + str(index))
-                        v_lyout.addWidget(item_icon_view)
-
-                    elif attr_name == "cmd":
-                        item_icon_view.setStatusTip(attr_value)
-                gridLayout.addLayout(v_lyout, rowIndex, columnIndex, 1, 1)
+                    _key = attr.getAttribute('name')
+                    _value = attr.firstChild.nodeValue
+                    if _key == "text":
+                        font = QtGui.QFont()
+                        font.setPointSize(10)
+                        item_tool_button.setText(_value)
+                        item_tool_button.setFont(font)
+                    elif _key == "icon":
+                        item_tool_button.setIcon(QtGui.QIcon(_value))
+                        item_tool_button.setIconSize(QSize(56, 56))
+                        item_tool_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+                    elif _key == "cmd":
+                        item_tool_button.setProperty("cmd",_value)
+                gridLayout.addWidget(item_tool_button, rowIndex, columnIndex, 1, 1)
 
             # 若第一行未满，则进行填充, 使UI按照网格对齐
             if current_template_item_counts < every_row_size and \
