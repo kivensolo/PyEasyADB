@@ -153,7 +153,7 @@ class MainWindow(BaseWindow):
         self.center_panel = QWidget()
         layout = QVBoxLayout()
         # left, top, right, bottom
-        layout.setContentsMargins(5, 5, 5, 5)
+        layout.setContentsMargins(2, 2, 2, 2)
         # centralwidget = QWidget(self)
         # centralwidget.setGeometry(QtCore.QRect(221, 70, 500, 400))
 

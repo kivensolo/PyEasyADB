@@ -22,7 +22,7 @@ class CommonFunctionalWidget(QWidget):
         self.parent = parent
 
         self.setAttribute(Qt.WA_StyledBackground)
-        self.setStyleSheet("background-color:#fafafa")
+        # self.setStyleSheet("background-color:white")
 
         self._init_convenient_area()
 
@@ -104,7 +104,6 @@ class Ui_ConvenientArea(object):
 
     def setUpUiDynamic(self, ConvenientArea):
         ConvenientArea.setObjectName("ConvenientArea")
-        # ConvenientArea.setStyleSheet("border:2px solid green")
 
         # 此UI区域的根布局
         self.ui_root_vlayout = QtWidgets.QVBoxLayout(ConvenientArea)
@@ -115,7 +114,11 @@ class Ui_ConvenientArea(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.scrollArea.sizePolicy().hasHeightForWidth())
         self.scrollArea.setSizePolicy(sizePolicy)
-        self.scrollArea.setStyleSheet("")
+        self.scrollArea.setStyleSheet("""
+            QScrollArea{
+                border: 0px solid red;
+            };
+        """)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
