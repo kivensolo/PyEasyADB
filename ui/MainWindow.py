@@ -13,8 +13,8 @@ from ui.DataBase import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
 from ui.component.CenterWindow import CommonFunctionalWidget
 from ui.component.ToolBar import Ui_ToolBar
-from ui.widget.Dialogs import NewConnectDialog
-from utils.ADBTools import ADBTools, ADBCmdParams
+from ui.widget.Dialogs import NewConnectDialog, installApkDialog
+from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
 from utils.UITools import IconTool
@@ -441,7 +441,15 @@ class MainWindow(BaseWindow):
             # TODO 进行传参类型变更
             self._dealWithADB(item)
 
-    def runADBCmd(self, cmdParams: ADBCmdParams):
+    # def onDoAction(self, actionParams):
+    #     if actionParams.action == "m_show_install_app_dialog":
+    #         install_apk_dialog = installApkDialog(self)
+    #         install_apk_dialog.setWindowModality(Qt.ApplicationModal)
+    #         install_apk_dialog.exec()
+    #     else:
+    #         self.runAdbCMD(actionParams)
+
+    def runAdbCMD(self, cmdParams: ActionCmdParams):
         if len(self.active_ip_list) == 0:
             z_logger.error("请先连接设备")
         else:
@@ -452,7 +460,7 @@ class MainWindow(BaseWindow):
             # 每次重新赋值
             cmdParams.target_device_ip = self.current_device_addr
             cmdParams.target_app = pkgName
-            self.adbTools.exec_adb_cmd(cmdParams.toCMD(), self.on_adb_cmd_exectued)
+            self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
 
     def _dealWithADB(self, item):
         """

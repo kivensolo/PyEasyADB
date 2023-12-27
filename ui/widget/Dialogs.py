@@ -1,11 +1,13 @@
 import sys
 
 from PyQt5.QtCore import Qt, pyqtSlot
-from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout
+from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
+from qtpy import QtWidgets, QtCore
 
 from logcat.log import z_logger
 from ui.DataBase import DBManager
 from ui.widget.BaseDialog import BaseDialog
+from ui.widget.CustomWidgets import DraggableLineEdit
 from utils import Tools
 from utils.UITools import IconTool
 
@@ -109,9 +111,94 @@ class AddPackageDialog(BaseDialog):
         self.block(self.pkg_inputEditText.text())
 
 
+class installApkDialog(BaseDialog):
+    def __init__(self,  window = None):
+        super().__init__("安装新应用")
+        self.window = window
+        self.initWindow()
+
+    def initWindow(self):
+        super().initWindow()
+        # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        self.setFixedSize(800, 150)
+
+        self.root_layout = QtWidgets.QVBoxLayout(self)
+        self.root_layout.setObjectName("root_layout")
+        self.install_groupBox = QtWidgets.QGroupBox(self)
+        self.install_groupBox.setObjectName("install_groupBox")
+        self.verticalLayout = QtWidgets.QVBoxLayout(self.install_groupBox)
+        self.verticalLayout.setObjectName("verticalLayout")
+
+        # 文件选择区域
+        self.file_choose_area = QtWidgets.QHBoxLayout()
+        self.file_choose_area.setSpacing(5)
+        self.file_choose_area.setObjectName("file_choose_area")
+
+        self.file_path_edit_text = DraggableLineEdit(self.install_groupBox)
+        self.file_path_edit_text.setObjectName("file_path_edit_text")
+        self.file_path_edit_text.setPlaceholderText("可将apk文件直接拖入")
+        self.file_choose_area.addWidget(self.file_path_edit_text)
+
+        self.btn_choose_apk_file = QtWidgets.QPushButton(self.install_groupBox)
+        self.btn_choose_apk_file.setObjectName("btn_choose_apk_file")
+        self.btn_choose_apk_file.setObjectName("btn_choose_apk_file")
+        self.btn_choose_apk_file.clicked.connect(self.onApkFileSelected)
+        self.file_choose_area.addWidget(self.btn_choose_apk_file)
+
+        self.btn_install_apk = QtWidgets.QPushButton(self.install_groupBox)
+        self.btn_install_apk.setObjectName("btn_install_apk")
+        self.file_choose_area.addWidget(self.btn_install_apk)
+        self.file_choose_area.setStretch(0, 8)
+        self.file_choose_area.setStretch(1, 1)
+        self.file_choose_area.setStretch(2, 1)
+        self.verticalLayout.addLayout(self.file_choose_area)
+
+        # 安装模式区域
+        self.install_mode_options_layout = QtWidgets.QHBoxLayout()
+        self.install_mode_options_layout.setObjectName("horizontalLayout_2")
+        self.rb_mode_replace = QtWidgets.QCheckBox(self)
+        self.rb_mode_replace.setObjectName("rb_mode_replace")
+        self.install_mode_options_layout.addWidget(self.rb_mode_replace)
+        self.rb_test_app = QtWidgets.QCheckBox(self)
+        self.rb_test_app.setObjectName("rb_test_app")
+        self.install_mode_options_layout.addWidget(self.rb_test_app)
+        self.rb_downground = QtWidgets.QCheckBox(self)
+        self.rb_downground.setObjectName("rb_downground")
+        self.install_mode_options_layout.addWidget(self.rb_downground)
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.install_mode_options_layout.addItem(spacerItem)
+        self.install_mode_options_layout.setStretch(0, 1)
+        self.install_mode_options_layout.setStretch(1, 1)
+        self.install_mode_options_layout.setStretch(2, 1)
+        self.verticalLayout.addLayout(self.install_mode_options_layout)
+
+        # 垂直方向上添加一个安装的groupBox
+        self.root_layout.addWidget(self.install_groupBox)
+
+        self.retranslateUi(self)
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        self.install_groupBox.setTitle(_translate("install_groupBox", "安装应用"))
+        self.btn_choose_apk_file.setText(_translate("btn_choose_apk_file", "浏览"))
+        self.btn_install_apk.setText(_translate("btn_install_apk", "安装"))
+        self.rb_mode_replace.setText(_translate("rb_mode_replace", "替换安装"))
+        self.rb_test_app.setText(_translate("rb_test_app", "Test包"))
+        self.rb_downground.setText(_translate("rb_downground", "降级安装"))
+
+    def onApkFileSelected(self):
+        # 打开文件选择对话框
+        fname = QFileDialog.getOpenFileName(self, '选择文件', '.', 'APK File (*.apk)')
+        if fname[0]:  # 如果用户选择了文件
+            # 将文件路径写入 QLineEdit 控件中
+            self.file_path_edit_text.setText(fname[0])
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    dialog = AddPackageDialog()
+    dialog = installApkDialog()
     # 设置窗口的属性为ApplicationModal模态，用户只有关闭弹窗后，才能关闭主界面
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.show()

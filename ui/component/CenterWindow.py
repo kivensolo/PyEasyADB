@@ -6,9 +6,10 @@ from PyQt5.QtCore import Qt, pyqtSlot, QSize
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QApplication, QPushButton, QLineEdit
 
+from ui.widget.Dialogs import installApkDialog
 from logcat.log import z_logger
 from ui import MainWindow
-from utils.ADBTools import ADBCmdParams
+from utils.ADBTools import ActionCmdParams
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
 
 
@@ -130,7 +131,6 @@ class Ui_ConvenientArea(object):
 
         # if __name__ == "__main__":
         #     template_ui_config_file_path = "../../config/function_templates.xml"
-
         # 动态设置groupView
         dom = xml.dom.minidom.parse(template_ui_config_file_path)
         root = dom.documentElement
@@ -162,13 +162,14 @@ class Ui_ConvenientArea(object):
 
                 # 初始化每一个tool按钮
                 item_tool_button = QtWidgets.QToolButton(_groupBox)
+                item_tool_button.setObjectName("{0}_item_{1}{2}".format(template_name, rowIndex,columnIndex))
                 item_tool_button.setAutoRaise(True)
                 sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
                 sizePolicy.setHorizontalStretch(0)
                 sizePolicy.setVerticalStretch(0)
                 item_tool_button.setSizePolicy(sizePolicy)
                 attrs = item.getElementsByTagName("attr")
-                cmdParams = ADBCmdParams()
+                actionParams = ActionCmdParams()
                 for attr in attrs:
                     _key = attr.getAttribute('name')
                     _value = attr.firstChild.nodeValue
@@ -181,13 +182,15 @@ class Ui_ConvenientArea(object):
                         item_tool_button.setIcon(QtGui.QIcon(_value))
                         item_tool_button.setIconSize(QSize(56, 56))
                         item_tool_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-                    elif _key == "cmd":
+                    elif _key == "action":
                         shellValue = attr.getAttribute("shell")
                         if shellValue.lower() == "false":
-                            cmdParams.isShellMode = False
-                        cmdParams.cmd_with_format = _value
+                            actionParams.isShellMode = False
+                        actionParams.action = _value
+                item_tool_button.setProperty("actionInfo", actionParams)
                 # https://blog.csdn.net/PixelNovaO/article/details/132727483
-                item_tool_button.clicked.connect(lambda: self.mainWindow.runADBCmd(cmdParams))
+                item_tool_button.clicked.connect(lambda: self.onDoAction(item_tool_button))
+
                 gridLayout.addWidget(item_tool_button, rowIndex, columnIndex, 1, 1)
 
             # 若第一行未满，则进行填充, 使UI按照网格对齐
@@ -212,6 +215,16 @@ class Ui_ConvenientArea(object):
         # 给滚动区域设置Qwidgets
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
         self.ui_root_vlayout.addWidget(self.scrollArea)
+
+    @pyqtSlot()
+    def onDoAction(self, item_tool_button):
+        actionParams = item_tool_button.property("actionInfo")
+        if actionParams.action == "m_show_install_app_dialog":
+            install_apk_dialog = installApkDialog(self)
+            install_apk_dialog.setWindowModality(Qt.ApplicationModal)
+            install_apk_dialog.exec()
+        else:
+            self.mainWindow.runAdbCMD(actionParams)
 
 
 if __name__ == "__main__":

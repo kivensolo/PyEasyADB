@@ -4,10 +4,11 @@ from logcat.log import z_logger
 from utils.CmdExecutor import CmdExecutor
 
 
-class ADBCmdParams:
+class ActionCmdParams:
     def __init__(self):
         self.isShellMode = True
-        self.cmd_with_format = ""
+        # 行为命令id, 包含自定义行为，也可能直接是ADB行为命令
+        self.action = ""
         self.target_device_ip = ""
         self.target_app = ""
 
@@ -17,8 +18,8 @@ class ADBCmdParams:
     #     self.target_device_ip = ip
     #     self.target_app = app
 
-    def toCMD(self):
-        _cmd = self.cmd_with_format.format(self.target_app)
+    def getAdbCMD(self):
+        _cmd = self.action.format(self.target_app)
         _full_cmd = ''
         if self.isShellMode:
             _full_cmd = "adb -s {0} shell {1}".format(self.target_device_ip, _cmd)
