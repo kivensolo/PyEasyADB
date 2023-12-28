@@ -58,7 +58,7 @@ action为元素的点击事件类型;
             <attr name="action" shell="true">input keyevent 4</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_stop_256x256.png</attr>
+            <attr name="icon">./res/icons/arrow_up.png</attr>
             <attr name="text">上键</attr>
             <attr name="action" shell="true">input keyevent 19</attr>
         </item>
@@ -78,17 +78,17 @@ action为元素的点击事件类型;
             <attr name="action" shell="true">input keyevent 82</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="icon">./res/icons/arrow_left.png</attr>
             <attr name="text">左键</attr>
             <attr name="action" shell="true">input keyevent 21</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="icon">./res/icons/arrow_down.png</attr>
             <attr name="text">下键</attr>
             <attr name="action" shell="true">input keyevent 20</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="icon">./res/icons/arrow_right.png</attr>
             <attr name="text">右键</attr>
             <attr name="action" shell="true">input keyevent 22</attr>
         </item>
