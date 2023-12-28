@@ -1,4 +1,5 @@
 import string
+import subprocess
 
 from logcat.log import z_logger
 from utils.CmdExecutor import CmdExecutor
@@ -97,3 +98,14 @@ class ADBTools:
     def get_device_info(self, ip, block):
         cmd = "adb -s {0} shell getprop".format(ip)
         self._exec_cmd(cmd, block)
+
+    def get_screen_shoot(self, device_ip, save_path):
+        # 执行adb exec-out screencap命令，并将输出重定向到文件
+        cmd = 'adb -s {0} exec-out screencap -p > {1}'.format(device_ip, save_path)
+        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
+        process.communicate()
+        return_code = process.returncode
+        if return_code == 0:
+            z_logger.info(f"Screenshot captured successfully! > {save_path}")
+        else:
+            z_logger.error("Failed to capture screenshot.")

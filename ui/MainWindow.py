@@ -449,7 +449,7 @@ class MainWindow(BaseWindow):
     #     else:
     #         self.runAdbCMD(actionParams)
 
-    def runAdbCMD(self, cmdParams: ActionCmdParams):
+    def runAdbCMD(self, cmdParams: ActionCmdParams, customCallBackFun: None):
         if len(self.active_ip_list) == 0:
             z_logger.error("请先连接设备")
         else:
@@ -460,7 +460,10 @@ class MainWindow(BaseWindow):
             # 每次重新赋值
             cmdParams.target_device_ip = self.current_device_addr
             cmdParams.target_app = pkgName
-            self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
+            if customCallBackFun is None:
+                self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
+            else:
+                self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), customCallBackFun)
 
     def _dealWithADB(self, item):
         """
@@ -582,14 +585,16 @@ class MainWindow(BaseWindow):
 
         resultList = result.split('\n')
         z_logger.debug('On adb cmd result:' + str(result))
+
+        _execed_cmd = self.adbTools.current_cmd
         if "cmdExectuedTimeout" in resultList:
-            if self.adbTools.current_cmd.startswith('adb connect'):
+            if _execed_cmd.startswith('adb connect'):
                 z_logger.error('很遗憾, 设备连接超时！')
             else:
                 z_logger.error("命令执行超时!")
             return
 
-        if self.adbTools.current_cmd.startswith('adb connect'):
+        if _execed_cmd.startswith('adb connect'):
             result_info = resultList[0]
             if 'already connected to' in result_info:
                 # ['already connected to xxxxxx']
@@ -601,7 +606,7 @@ class MainWindow(BaseWindow):
                 # 可能会存在空的情况
                 z_logger.info("设备连接成功!")
                 self.check_device_status()
-        elif self.adbTools.current_cmd.startswith('adb disconnect'):
+        elif _execed_cmd.startswith('adb disconnect'):
             z_logger.info("设备断开成功!")
             self.active_ip_list.remove(self.temp_disconnect_ip)
             self.update_current_treeitem(False)

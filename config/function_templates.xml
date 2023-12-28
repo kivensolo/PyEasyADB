@@ -1,79 +1,86 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+template为每个模板区域，item为模板元素
+icon为元素的图标数据属性;
+text为元素的文字属性;
+action为元素的点击事件类型;
+
+-->
 <templates>
     <template name="常用应用操作">
         <item>
             <attr name="icon">./res/icons/app_uninstall_256x256.png</attr>
             <attr name="text">卸载应用</attr>
-            <attr name="cmd" shell="false">uninstall {0}</attr>
+            <attr name="action" shell="false">uninstall {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_install_256x256.png</attr>
             <attr name="text">安装应用</attr>
-            <attr name="cmd" shell="false">install -r {0}</attr>
+            <attr name="action">m_show_install_app_dialog</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_stop_256x256.png</attr>
             <attr name="text">停止应用</attr>
-            <attr name="cmd">am force-stop {0}</attr>
+            <attr name="action">am force-stop {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_start_256x256.png</attr>
             <attr name="text">启动应用</attr>
-            <attr name="cmd">am start {0}</attr>
+            <attr name="action">am start {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_restart_256x256.png</attr>
             <attr name="text">重启应用</attr>
-            <attr name="cmd">am start {0}</attr>
+            <attr name="action">am start2222 {0}</attr>
         </item>
-    </template>
-    <template name="动态布局-测试数据">
         <item>
             <attr name="icon">./res/icons/app_clear_data_256x256.png</attr>
             <attr name="text">清除数据</attr>
-            <attr name="cmd">pm clear {0}</attr>
+            <attr name="action">pm clear {0}</attr>
         </item>
+    </template>
+    <template name="数据获取">
         <item>
             <attr name="icon">./res/icons/screen_capture_256x256.png</attr>
             <attr name="text">截图并保存</attr>
-            <attr name="cmd">am start {0}</attr>
+            <attr name="action">m_screenshot</attr>
         </item>
-        <item>
+        <item state="disable">
             <attr name="icon">./res/icons/app_start_256x256.png</attr>
-            <attr name="text">重启应用3</attr>
-            <attr name="cmd">am start {0}</attr>
+            <attr name="text">获取录制视频</attr>
+            <attr name="action">m_screen_recording</attr>
         </item>
     </template>
     <template name="动态布局-测试数据2">
         <item>
             <attr name="icon">./res/icons/app_uninstall_256x256.png</attr>
             <attr name="text">卸载应用</attr>
-            <attr name="cmd" shell="false">uninstall {0}</attr>
+            <attr name="action" shell="false">uninstall {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_install_256x256.png</attr>
             <attr name="text">安装应用</attr>
-            <attr name="cmd" shell="false">install -r {0}</attr>
+            <attr name="action" shell="false">install -r {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_stop_256x256.png</attr>
             <attr name="text">停止应用</attr>
-            <attr name="cmd">am force-stop {0}</attr>
+            <attr name="action">am force-stop {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_start_256x256.png</attr>
             <attr name="text">启动应用</attr>
-            <attr name="cmd">am start {0}</attr>
+            <attr name="action">am start {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_restart_256x256.png</attr>
             <attr name="text">重启应用</attr>
-            <attr name="cmd">am start {0}</attr>
+            <attr name="action">am start {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/icons/app_restart_256x256.png</attr>
             <attr name="text">重启应用2</attr>
-            <attr name="cmd">am start {0}</attr>
+            <attr name="action">am start3433 {0}</attr>
         </item>
     </template>
 </templates>

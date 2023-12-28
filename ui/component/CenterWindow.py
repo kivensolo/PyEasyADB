@@ -1,10 +1,11 @@
+import subprocess
 import sys
 import xml.dom.minidom
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, pyqtSlot, QSize
+from PyQt5.QtCore import Qt, pyqtSlot, QSize, QProcess, QDateTime
 from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QApplication, QPushButton, QLineEdit
+from PyQt5.QtWidgets import QWidget, QHBoxLayout, QApplication, QPushButton, QLineEdit, QFileDialog
 
 from ui.widget.Dialogs import installApkDialog
 from logcat.log import z_logger
@@ -164,6 +165,12 @@ class Ui_ConvenientArea(object):
                 item_tool_button = QtWidgets.QToolButton(_groupBox)
                 item_tool_button.setObjectName("{0}_item_{1}{2}".format(template_name, rowIndex,columnIndex))
                 item_tool_button.setAutoRaise(True)
+
+                item_state = item.getAttribute("state")
+                if item_state == "disable":  # 未开发功能设置为disable
+                    item_tool_button.setEnabled(False)
+                    item_tool_button.setToolTip("该功能未开发，敬请期待")
+
                 sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
                 sizePolicy.setHorizontalStretch(0)
                 sizePolicy.setVerticalStretch(0)
@@ -220,13 +227,38 @@ class Ui_ConvenientArea(object):
         self.ui_root_vlayout.addWidget(self.scrollArea)
 
     @pyqtSlot()
-    def onDoAction(self, actionParams):
-        if actionParams.action == "m_show_install_app_dialog":
+    def onDoAction(self, actionParams: ActionCmdParams):
+        _action = actionParams.action
+        if _action == "m_show_install_app_dialog":
             install_apk_dialog = installApkDialog(self)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
             install_apk_dialog.exec()
+        elif _action == "m_screenshot":
+            self.action_save_screen_shoot()
         else:
             self.mainWindow.runAdbCMD(actionParams)
+
+    def action_save_screen_shoot(self):
+        """
+        执行屏幕截图，并保存至本地
+        :return:
+        """
+        if len(self.mainWindow.active_ip_list) == 0:
+            z_logger.error("请先连接设备!!!")
+            return
+        z_logger.info("Screenshot saving..........")
+        chooseDialog = QFileDialog
+        default_file_name = QDateTime.currentDateTime().toString("yyyyMMdd_hhmmss")
+        savePath = chooseDialog.getSaveFileName(
+            self.mainWindow, "保存截图", f"screenshot_{default_file_name}.png",
+            "Image Files (*.png)")[0]
+        if savePath:
+            self.mainWindow.adbTools.get_screen_shoot(
+                self.mainWindow.current_device_addr,
+                savePath
+            )
+        else:
+            z_logger.info("Cancle screenshot.")
 
 
 if __name__ == "__main__":
