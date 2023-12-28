@@ -60,13 +60,16 @@ class AppPushButton(QPushButton):
     """
     def __init__(self, text="", slotFun=None):
         super().__init__(text, objectName="ToolButton")
+
+        self.font = QFont()
+        self.font.setPixelSize(24)  # 字体大小
+
         self.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
                 border: none;
                 padding:5px,5px,5px,5px;
                 margin:5px,3px,5px,3px;
-                font-size:18px;
             }
             QPushButton:hover {
                 background-color: #b3d7f3;
@@ -77,6 +80,7 @@ class AppPushButton(QPushButton):
                 border: 1px solid #2d8fdc;
             }
         """)
+        # FIXME 如果用QSS设置font-size:18px; 在不同分辨率上字体会变化。
 
         self.clicked.connect(slotFun)
 
