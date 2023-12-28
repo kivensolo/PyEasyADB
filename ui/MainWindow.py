@@ -324,14 +324,10 @@ class MainWindow(BaseWindow):
                 qItem = QStandardItem(name)
                 qItem.type = TreeItemType.TYPE_ADB_CMD
                 qItem.name = name
-                qItem.needDstPkg = item.getAttribute("dst_pkg")
-                if len(qItem.needDstPkg) == 0:
-                    qItem.needDstPkg = True # 默认需要目标应用
-
-                qItem.isShell = item.getAttribute("shell")
-                if len(qItem.isShell) == 0:
-                    qItem.isShell = True  # 默认命令为shell模式
-
+                # 默认不需要指定应用包名
+                qItem.needDstPkg = item.getAttribute("dst_pkg") == "true"
+                # 默认为shell模式
+                qItem.isShell = item.getAttribute("shell") != "false"
                 qItem.cmd = cmd
                 currentFolder.appendRow(qItem)
             if level == 1:
@@ -436,8 +432,11 @@ class MainWindow(BaseWindow):
         #     # z_logger.debug('刷新设备状态')
         #     self.check_device_status()
         elif item.type == TreeItemType.TYPE_ADB_CMD:
-            # TODO 进行传参类型变更
-            self._dealWithADB(item)
+            params:ActionCmdParams = ActionCmdParams()
+            params.isShellMode = item.isShell
+            params.needDstPkg = item.needDstPkg
+            params.action = item.cmd
+            self.runAdbCMD(params)
 
     # def onDoAction(self, actionParams):
     #     if actionParams.action == "m_show_install_app_dialog":
@@ -447,39 +446,38 @@ class MainWindow(BaseWindow):
     #     else:
     #         self.runAdbCMD(actionParams)
 
-    def runAdbCMD(self, cmdParams: ActionCmdParams, customCallBackFun: None):
-        if len(self.active_ip_list) == 0:
-            z_logger.error("请先连接设备")
-        else:
-            pkgName = self.pkgManager.getCurrentSelectedPackage()
-            if pkgName is None:
-                z_logger.error("请先选择目标应用")
-                return
-            # 每次重新赋值
-            cmdParams.target_device_ip = self.current_device_addr
-            cmdParams.target_app = pkgName
-            if customCallBackFun is None:
-                self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
-            else:
-                self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), customCallBackFun)
-
-    def _dealWithADB(self, item):
-        """
-        处理ADB命令
-        :param item:
-        :return:
-        """
+    def runAdbCMD(self, cmdParams: ActionCmdParams):
         if len(self.active_ip_list) == 0:
             z_logger.error("请先连接设备")
         else:
             pkgName = ""
-            if item.needDstPkg:
+            if cmdParams.needDstPkg:
                 pkgName = self.pkgManager.getCurrentSelectedPackage()
                 if pkgName is None:
                     z_logger.error("请先选择目标应用")
                     return
-            formatCmd = item.cmd.format(pkgName)
-            self.adbTools.exec_cmd(self.current_device_addr, formatCmd, item.isShell, self.on_adb_cmd_exectued)
+            # 每次重新赋值
+            cmdParams.target_device_ip = self.current_device_addr
+            cmdParams.target_app = pkgName
+            self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
+    #
+    # def _dealWithADB(self, item):
+    #     """
+    #     处理ADB命令
+    #     :param item:
+    #     :return:
+    #     """
+    #     if len(self.active_ip_list) == 0:
+    #         z_logger.error("请先连接设备")
+    #     else:
+    #         pkgName = ""
+    #         if item.needDstPkg:
+    #             pkgName = self.pkgManager.getCurrentSelectedPackage()
+    #             if pkgName is None:
+    #                 z_logger.error("请先选择目标应用")
+    #                 return
+    #         formatCmd = item.cmd.format(pkgName)
+    #         self.adbTools.exec_cmd(self.current_device_addr, formatCmd, item.isShell, self.on_adb_cmd_exectued)
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):
@@ -522,11 +520,7 @@ class MainWindow(BaseWindow):
         若没有已连接设备，则默认选择第一个设备。
         :return:
         """
-        if len(self.current_device_addr) == 0:
-            has_device_selected = False
-        else:
-            has_device_selected = True
-
+        has_device_selected = len(self.current_device_addr) != 0
         rowCount = self.treeModel.rowCount()
         z_logger.debug("Refresh treeview with active_ip_list.")
         for row_index in range(rowCount):

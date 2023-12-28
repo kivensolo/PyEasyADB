@@ -24,10 +24,10 @@
         <item name="CPU Info">cat /proc/cpuinfo</item>
     </group>
     <group name="NET">
-        <citem name="Hosts">cat /etc/hosts</citem>
-        <citem name="Network Info">ipconfig</citem>
-        <citem name="MAC">cat /sys/class/net/eth0/address</citem>
-        <citem name="iftop">cat /sys/class/net/eth0/address</citem>
+        <item name="Hosts">cat /etc/hosts</item>
+        <item name="Network Info">ifconfig</item>
+        <item name="MAC">cat /sys/class/net/eth0/address</item>
+        <item name="iftop">cat /sys/class/net/eth0/address</item>
     </group>
     <group name="Packages">
         <item name="All packages">pm list packages -f</item>

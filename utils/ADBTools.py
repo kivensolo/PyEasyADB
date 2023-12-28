@@ -11,6 +11,7 @@ class ActionCmdParams:
         # 行为命令id, 包含自定义行为，也可能直接是ADB行为命令
         self.action = ""
         self.target_device_ip = ""
+        self.needDstPkg = True
         self.target_app = ""
 
     # def __init__(self, is_shell, format_cmd: string, ip="", app=""):
