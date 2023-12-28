@@ -24,7 +24,7 @@
         <action></action>
     </menu>
     <menu name="帮助">
-        <action name="查看日志" state="disable">
+        <action name="查看日志">
             <attr name="action">m_open_log_page</attr>
         </action>
         <action name="关于">

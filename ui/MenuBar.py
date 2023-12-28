@@ -1,5 +1,6 @@
 from PyQt5 import QtCore
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import QDir, QUrl
+from PyQt5.QtGui import QIcon, QDesktopServices
 from PyQt5.QtWidgets import QAction, qApp, QMenu
 
 from logcat.log import z_logger
@@ -9,7 +10,7 @@ import xml.dom.minidom
 menus_ui_config_file_path = "./config/menus_ui.xml"
 
 
-class Controller(object):
+class MenuActions(object):
     def __init__(self):
         self.mainWindow = None
 
@@ -61,5 +62,14 @@ class Controller(object):
             self.mainWindow.show_new_device_dialog()
         elif cmd == "m_close_app":
             qApp.quit()
+        elif cmd == "m_open_log_page":
+            self.open_log_folder()
         else:
             z_logger.error(f"该命令还未实现:{cmd}")
+
+    @staticmethod
+    def open_log_folder():
+        # 获取当前工作目录
+        current_dir = QDir.currentPath()
+        # 使用系统资源管理器打开文件夹
+        QDesktopServices.openUrl(QUrl.fromLocalFile(f"{current_dir}/data/logs"))

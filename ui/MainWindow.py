@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayo
 from config.settings import APP_SCREEN_RQTIO
 from logcat.log import z_logger
 from ui import TreeItemType
-from ui.MenuBar import Controller
+from ui.MenuBar import MenuActions
 from ui.DataBase import DBManager
 from ui.component.ButtomWindow import ButtomTabWidget
 from ui.component.CenterWindow import CommonFunctionalWidget
@@ -112,7 +112,8 @@ class MainWindow(BaseWindow):
 
     def init_all_ui(self):
         # 初始化菜单栏
-        self.init_menu_bar()
+        MenuActions().setupUi(self)
+
         self.toolbar = Ui_ToolBar(self)
         self.addToolBar(self.toolbar)
 
@@ -203,9 +204,6 @@ class MainWindow(BaseWindow):
         new_connect_dialog = NewConnectDialog(self, self.onNewDeviceAdded)
         new_connect_dialog.setWindowModality(Qt.ApplicationModal)
         new_connect_dialog.exec()
-
-    def init_menu_bar(self):
-        Controller().setupUi(self)
 
     def initWindow(self):
         self.resize(
