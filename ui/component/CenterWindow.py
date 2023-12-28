@@ -231,7 +231,7 @@ class Ui_ConvenientArea(object):
     def onDoAction(self, actionParams: ActionCmdParams):
         _action = actionParams.action
         if _action == "m_show_install_app_dialog":
-            install_apk_dialog = installApkDialog(self)
+            install_apk_dialog = installApkDialog(self.mainWindow)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
             install_apk_dialog.exec()
         elif _action == "m_screenshot":

@@ -11,9 +11,6 @@ class App:
 
 
 if __name__ == '__main__':
-
-    # 每一pyqt5应用程序必须创建一个应用程序对象。
-    # sys.argv参数是一个列表，从命令行输入参数。
     app = QApplication(sys.argv)
     ex = MainWindow()
     # 使程序进入主循环(应用程序的消息循环队列),主循环会获取并分发事件。

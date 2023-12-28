@@ -114,7 +114,14 @@ class AddPackageDialog(BaseDialog):
 class installApkDialog(BaseDialog):
     def __init__(self,  window = None):
         super().__init__("应用安装")
-        self.window = window
+        self.mainWindow = window
+
+        self.install_mode_options_layout = QtWidgets.QHBoxLayout()
+        self.rb_downground = QtWidgets.QCheckBox(self)
+        self.rb_test_app = QtWidgets.QCheckBox(self)
+        self.rb_mode_replace = QtWidgets.QCheckBox(self)
+        self.rb_mode_replace.setChecked(True)
+
         self.initWindow()
 
     def initWindow(self):
@@ -138,6 +145,7 @@ class installApkDialog(BaseDialog):
         self.file_path_edit_text = DraggableLineEdit(self.install_groupBox)
         self.file_path_edit_text.setObjectName("file_path_edit_text")
         self.file_path_edit_text.setPlaceholderText("可将apk文件直接拖入")
+        self.file_path_edit_text.setDropEventListerner(lambda apk_path: self.btn_install_apk.setEnabled(True))
         self.file_choose_area.addWidget(self.file_path_edit_text)
 
         self.btn_choose_apk_file = QtWidgets.QPushButton(self.install_groupBox)
@@ -148,6 +156,8 @@ class installApkDialog(BaseDialog):
 
         self.btn_install_apk = QtWidgets.QPushButton(self.install_groupBox)
         self.btn_install_apk.setObjectName("btn_install_apk")
+        self.btn_install_apk.setEnabled(False)
+        self.btn_install_apk.clicked.connect(self.doInstallApk)
         self.file_choose_area.addWidget(self.btn_install_apk)
         self.file_choose_area.setStretch(0, 8)
         self.file_choose_area.setStretch(1, 1)
@@ -155,15 +165,11 @@ class installApkDialog(BaseDialog):
         self.verticalLayout.addLayout(self.file_choose_area)
 
         # 安装模式区域
-        self.install_mode_options_layout = QtWidgets.QHBoxLayout()
         self.install_mode_options_layout.setObjectName("horizontalLayout_2")
-        self.rb_mode_replace = QtWidgets.QCheckBox(self)
         self.rb_mode_replace.setObjectName("rb_mode_replace")
         self.install_mode_options_layout.addWidget(self.rb_mode_replace)
-        self.rb_test_app = QtWidgets.QCheckBox(self)
         self.rb_test_app.setObjectName("rb_test_app")
         self.install_mode_options_layout.addWidget(self.rb_test_app)
-        self.rb_downground = QtWidgets.QCheckBox(self)
         self.rb_downground.setObjectName("rb_downground")
         self.install_mode_options_layout.addWidget(self.rb_downground)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -194,6 +200,20 @@ class installApkDialog(BaseDialog):
         if fname[0]:  # 如果用户选择了文件
             # 将文件路径写入 QLineEdit 控件中
             self.file_path_edit_text.setText(fname[0])
+            self.btn_install_apk.setEnabled(True)
+
+    def doInstallApk(self):
+        _cmd = "adb install "
+        # 进行APK文件安装
+        apkPath = self.file_path_edit_text.text()
+        if self.rb_mode_replace.isChecked():  # -r
+            _cmd += "-r "
+        if self.rb_test_app.isChecked():      # -t
+            _cmd += "-t "
+        if self.rb_downground.isChecked():    # -d
+            _cmd += "-d "
+        _cmd += apkPath
+        self.mainWindow.adbTools.exec_adb_cmd(_cmd, lambda : self.close())
 
 
 if __name__ == "__main__":
