@@ -20,30 +20,31 @@ class Ui_ToolBar(QToolBar):
     def __init__(self, context):
         super().__init__()
         self.mainWindow = context
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.btn_adddevice = AppPushButton("", self.mainWindow.show_new_device_dialog)
+        self.btn_refresh = AppPushButton("", self.mainWindow.check_device_status)
         self.setupUi()
 
     """
     App快捷工具栏(菜单栏下面)
     """
     def setupUi(self):
-        self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.setLayout(self.horizontalLayout)
         self.setContentsMargins(5,0, 0, 0)
 
-        self.pb_adddevice = AppPushButton("", self.mainWindow.show_new_device_dialog)
         iconAdd = IconTool.buildQIcon("add_new.png", "icons")
-        self.pb_adddevice.setIcon(iconAdd)
-        self.pb_adddevice.setIconSize(QtCore.QSize(18, 18))
-        self.pb_adddevice.setObjectName("add_devices")
-        self.addWidget(self.pb_adddevice)
+        self.btn_adddevice.setIcon(iconAdd)
+        self.btn_adddevice.setIconSize(QtCore.QSize(18, 18))
+        self.btn_adddevice.setObjectName("add_devices")
+        self.btn_adddevice.setMouseTracking(True) # 确保鼠标悬停和点击效果仍然有效
+        self.addWidget(self.btn_adddevice)
 
         iconRefresh = IconTool.buildQIcon("refresh.png", "icons")
-        self.pb_refresh = AppPushButton("", self.mainWindow.check_device_status)
-        self.pb_refresh.setIcon(iconRefresh)
-        self.pb_refresh.setIconSize(QtCore.QSize(18, 18))
-        self.pb_refresh.setObjectName("refresh_devices")
-        self.addWidget(self.pb_refresh)
+        self.btn_refresh.setIcon(iconRefresh)
+        self.btn_refresh.setIconSize(QtCore.QSize(18, 18))
+        self.btn_refresh.setObjectName("refresh_devices")
+        self.addWidget(self.btn_refresh)
 
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
@@ -52,9 +53,9 @@ class Ui_ToolBar(QToolBar):
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        self.pb_adddevice.setText(_translate("add_devices", "添加设备"))
-        self.pb_refresh.setToolTip(_translate("refresh_devices", "刷新设备列表"))
-        self.pb_refresh.setText(_translate("refresh_devices", "刷新设备"))
+        self.btn_adddevice.setText(_translate("add_devices", "添加设备"))
+        self.btn_refresh.setToolTip(_translate("refresh_devices", "刷新设备列表"))
+        self.btn_refresh.setText(_translate("refresh_devices", "刷新设备"))
 
 
 if __name__ == "__main__":
