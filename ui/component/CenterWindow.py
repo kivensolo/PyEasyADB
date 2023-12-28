@@ -177,6 +177,8 @@ class Ui_ConvenientArea(object):
                 attrs = item.getElementsByTagName("attr")
                 actionParams = ActionCmdParams()
                 for attr in attrs:
+                    if attr.firstChild is None:
+                        continue
                     _key = attr.getAttribute('name')
                     _value = attr.firstChild.nodeValue
                     if _key == "text":

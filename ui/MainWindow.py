@@ -407,11 +407,6 @@ class MainWindow(BaseWindow):
             z_logger.error('添加设备时，数据获取异常')
         self.local_ip_List.append(_addr)
 
-    @pyqtSlot()
-    def add_new_package(self, packageName):
-        result = self.bottom_tab_widget.get_fun_widget().on_package_add(packageName)
-        # TODO 隐藏
-
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_double_clicked(self, index):
@@ -460,24 +455,6 @@ class MainWindow(BaseWindow):
             cmdParams.target_device_ip = self.current_device_addr
             cmdParams.target_app = pkgName
             self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
-    #
-    # def _dealWithADB(self, item):
-    #     """
-    #     处理ADB命令
-    #     :param item:
-    #     :return:
-    #     """
-    #     if len(self.active_ip_list) == 0:
-    #         z_logger.error("请先连接设备")
-    #     else:
-    #         pkgName = ""
-    #         if item.needDstPkg:
-    #             pkgName = self.pkgManager.getCurrentSelectedPackage()
-    #             if pkgName is None:
-    #                 z_logger.error("请先选择目标应用")
-    #                 return
-    #         formatCmd = item.cmd.format(pkgName)
-    #         self.adbTools.exec_cmd(self.current_device_addr, formatCmd, item.isShell, self.on_adb_cmd_exectued)
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):
@@ -607,6 +584,7 @@ class MainWindow(BaseWindow):
         else:
             if len(result) != 0:
                 z_logger.info(result)
+
 
     def parse_devices_states(self, result):
         """

@@ -36,8 +36,9 @@ def get_filter_processes():
     ['USER', 'PID', 'PPID', 'VSZ', 'RSS', 'WCHAN', 'ADDR', 'S', 'NAME']
     :return:
     """
-    output = subprocess.check_output("adb shell ps", shell=True).decode("utf-8")
     processes = []
+    # TODO  try catch
+    output = subprocess.check_output("adb shell ps", shell=True).decode("utf-8")
     for line in output.splitlines()[1:]:
         columns = line.split()
         user = columns[0]
@@ -140,9 +141,10 @@ class ADBTools:
         else:
             z_logger.error("Failed to capture screenshot.")
 
-    def get_running_process(self):
+    def get_running_process(self, blcok):
         filtered_processes = get_filter_processes()
         # 按照A-Z顺序对进程名称进行排序
         sorted_processes = sorted(filtered_processes, key=lambda x: x[2])
-        for user, pid, p_name in sorted_processes:
-            print(f"Process Name: {p_name}, PID: {pid}")
+        blcok(sorted_processes)
+        # for user, pid, p_name in sorted_processes:
+        #     print(f"Process Name: {p_name}, PID: {pid}")

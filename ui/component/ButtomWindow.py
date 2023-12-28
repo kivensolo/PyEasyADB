@@ -20,6 +20,8 @@ from utils.Tools import getWRYHFontStyle, getKTFontStyle
 from utils.UITools import IconTool
 from utils.Utils import Utils
 
+adb_tool = ADBTools()
+
 
 class ButtomTabWidget(QTabWidget):
     """
@@ -234,6 +236,7 @@ class InfoBarWidget(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.current_ip = ""
         self.pkgManger = PackageManager()
         self.pkgComboBox = QComboBox()
         # 设备名称
@@ -318,82 +321,60 @@ class InfoBarWidget(QWidget):
         comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
         self.pkgComboBox = comboBox
         self.qh_layout.addWidget(self.pkgComboBox)
-        self.initPkgData()
+        self.init_process_info()
 
     def onPackageSelectedChanged(self):
         self.pkgManger.setSelectedPackage(self.pkgComboBox.currentText())
 
-    def initPkgData(self):
-        """
-        从数据库初始化包名数据信息
-        :return:
-        """
-        if not self.pkgManger.isDbReady():
-            z_logger.error('数据库连接异常，请重启应用.')
+    def init_process_info(self):
+        if len(self.current_ip) == 0:
+            z_logger.error('未选择设备')
             return
-        self.updatePkgComBox()
+        self.update_process_com_box()
 
-    def updatePkgComBox(self):
+    def update_process_com_box(self):
         """
         更新PkgComBox数据显示
         :return:
         """
-        if not self.pkgManger.isDbReady():
+        if len(self.current_ip) == 0:
             return
-        packages = self.pkgManger.query(column=DBManager.COLUMN_NAME,
-                                        table_name=DBManager.TABLE_PACKAGE)
+        adb_tool.get_running_process(self._onProcessFiltered)
+
+    def _onProcessFiltered(self, sorted_processes):
+        """
+        针对已选设备查询到的满足条件的进程数据
+        """
         self.pkgComboBox.clear()
-        for item in packages:
-            if item:
-                # 原始数据添加模式 默认情况下，QStandardItemModel存储项目，QListView子类显示弹出列表。
-                self.pkgComboBox.addItem(item[0])
-                # self.total_pkgs.append(item[0])
-                # # 设置新的模型和视图
-                # item_view = ComboBoxItem(item[0])
-                # item_view.closeSignal.connect(self.delete_pkg)
-                # item_view.chooseSignal.connect(self.choose)
-                # listwitem = QListWidgetItem(self.package_list_widget)
-                # # 将自定义item_view设置为在给定项目中显示
-                # self.package_list_widget.setItemWidget(listwitem, item_view)
-                # 新模式存在的问题，pkgComboBox内容选择没更新到pkgComboBox中。
-        self.pkgManger.setSelectedPackage(self.pkgComboBox.currentText())
+        for user, pid, p_name in sorted_processes:
+            self.pkgComboBox.addItem(f"{p_name}({pid})")
+        # 第一条数据的p_name字段
+        self.pkgManger.setSelectedPackage(sorted_processes[0][2])
 
-        # self.selected_pkg = self.total_pkgs[0]
-
-    def choose(self, data):
-        self.pkgComboBox.setEditText(data)
-
-    def delete_pkg(self, data):
-        # 删除事件回调
-        index = self.total_pkgs.index(data)
-        self.package_list_widget.takeItem(index)
-        # self.total_pkgs.remove(data)
-        del self.total_pkgs[index]
-
-    def on_package_add(self, pkgName):
-        """
-        点击包名添加按钮
-        :return:
-        """
-        if not pkgName:
-            z_logger.error("请先添加有效包名 !!!")
-            return False
-        # TODO 对包名进行有效性判断
-        # check is exist  TODO 优化，可以直接查 pkgComboBox
-        sql = "SELECT NAME FROM PACKAGE WHERE NAME=\'{0}\'".format(pkgName)
-        result = self.pkgManger.exec(sql)
-        if len(result) == 0:
-            self.pkgManger.insert(pkgName)
-            self.updatePkgComBox()
-            z_logger.info("包名添加成功:" + pkgName)
-            return True
-        else:
-            z_logger.info("此包名已存在，您无需再次添加!")
-            return False
+    # def on_package_add(self, pkgName):
+    #     """
+    #     点击包名添加按钮
+    #     :return:
+    #     """
+    #     if not pkgName:
+    #         z_logger.error("请先添加有效包名 !!!")
+    #         return False
+    #     # TODO 对包名进行有效性判断
+    #     # check is exist  TODO 优化，可以直接查 pkgComboBox
+    #     sql = "SELECT NAME FROM PACKAGE WHERE NAME=\'{0}\'".format(pkgName)
+    #     result = self.pkgManger.exec(sql)
+    #     if len(result) == 0:
+    #         self.pkgManger.insert(pkgName)
+    #         self.update_process_com_box()
+    #         z_logger.info("包名添加成功:" + pkgName)
+    #         return True
+    #     else:
+    #         z_logger.info("此包名已存在，您无需再次添加!")
+    #         return False
 
     def update_device_info(self, ip, isconnect):
         """
-        更新设备信息
+        更新设备信息及进程数据
         :param ip: 设备ip
         :param isconnect: 当前设备是否已连接
         :return: None
@@ -412,6 +393,9 @@ class InfoBarWidget(QWidget):
             else:
                 z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
                 self.device_info_desc.setText(value_tuple[0])
+                if isconnect:
+                    self.update_process_com_box()
+                    # 更新设备后，立刻查询此设备的ps进程信息（TODO 做定时缓存）
         else:
             # 从数据库查询不到数据，通常是手动添加的未连接设备
             if isconnect:

@@ -19,9 +19,10 @@ class PackageManager:
         self.dbManager = DBManager()
         self.adbTools = ADBTools()
 
-    def setSelectedPackage(self, pkgName):
-        z_logger.debug("Set selected package:" + pkgName)
-        self.currentSelectedPkg = pkgName
+    def setSelectedPackage(self, process_info):
+        z_logger.debug("Set selected process:" + process_info)
+        segments = str(process_info).split("(")
+        self.currentSelectedPkg = segments[0]
 
     def getCurrentSelectedPackage(self):
         return self.currentSelectedPkg

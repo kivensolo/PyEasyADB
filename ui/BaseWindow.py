@@ -15,7 +15,7 @@ from utils.Utils import Utils
 class BaseWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.title = "Easy ADB(v {0}) ---- Edit by ZeKeWong".format(APP_VERSION )
+        self.title = "Easy ADB"
         self._init_windows_size()
 
     def initWindow(self):
