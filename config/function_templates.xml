@@ -48,7 +48,7 @@ action为元素的点击事件类型;
         <item state="disable">
             <attr name="icon">./res/icons/app_start_256x256.png</attr>
             <attr name="text">获取录制视频</attr>
-            <attr name="action">m_screen_recording</attr>
+            <attr name="action">m_screen_record</attr>
         </item>
     </template>
     <template name="按键模拟">

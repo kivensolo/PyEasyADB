@@ -1,38 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <CMD>
-    <group name="App">
-        <item name="Start">am start {0}</item>
-        <item name="Clear Data">pm clear {0}</item>
-        <item name="Stop">am force-stop {0}</item>
-        <item name="Uinstall" shell="false">uninstall {0}</item>
-        <item name="Versions">dumpsys package {0} |grep version</item>
-        <item name="CurrentFocus">dumpsys window |grep mCurrentFocus</item>
-        <item name="Install Path" dst_pkg="true">pm path {0}</item>
-        <item name="Get app Memory" dst_pkg="true">dumpsys meminfo {0}</item>
+    <group name="Packages">
+        <item name="All Packages">pm list packages -f</item>
+        <item name="Libraries" desc="系统支持的库文件">pm list libraries</item>
+        <item name="Features" desc="硬件相关信息">pm list features | cut -c9- | sort -u</item>
+        <item name="Install and uninstall"/>
+        <item name="Path of app" dst_pkg="true">pm path {0}</item>
+        <item name="Version of app" dst_pkg="true">dumpsys package {0} |grep version</item>
     </group>
     <group name="Display">
-        <item name="Screenshot">【抱歉，暂未实现】</item>
-        <item name="Screenrecord">【抱歉，暂未实现】</item>
+        <item name="Screen Shot">m_screenshot</item>
+        <item name="Screen Record">m_screen_record</item>
         <item name="Density">wm density</item>
+        <item name="CurrentFocus">dumpsys window |grep mCurrentFocus</item>
     </group>
-    <group name="System">
-        <sub_group name="Memory">
-            <item name="Dump">dumpsys</item>
-            <item name="Top">top -n 1</item>
+    <group name="System，">
+        <sub_group name="Prop">
+            <item name="Get">getprop</item>
+            <item name="Set">TODO</item>
         </sub_group>
-        <item name="Features" desc="列出设备硬件信息">pm list features | cut -c9- | sort -u</item>
-        <item name="CPU Info">cat /proc/cpuinfo</item>
+        <sub_group name="Disk">
+            <item name="Disk Stats">dumpsys diskstats</item>
+            <item name="Disk Free">df -h</item>
+        </sub_group>
+        <sub_group name="Memory">
+            <item name="All Meminfo">dumpsys meminfo</item>
+            <item name="App Meminfo" dst_pkg="true">dumpsys meminfo {0}</item>
+            <item name="Top 1">top -n 1</item>
+        </sub_group>
+        <item name="Process">ps</item>
+        <item name="CPU Processor">cat /proc/cpuinfo</item>
+        <item name="CPU Info">dumpsys cpuinfo</item>
+        <item name="uptime">uptime</item>
     </group>
-    <group name="NET">
-        <item name="Hosts">cat /etc/hosts</item>
-        <item name="Network Info">ifconfig</item>
+    <group name="NetwWork">
+        <item name="IP">ifconfig</item>
         <item name="MAC">cat /sys/class/net/eth0/address</item>
-        <item name="iftop">cat /sys/class/net/eth0/address</item>
-    </group>
-    <group name="Packages">
-        <item name="All packages">pm list packages -f</item>
-        <item name="Libraries">pm list libraries</item>
-        <item name="Install and uninstall"/>
+        <item name="Hosts">cat /etc/hosts</item>
     </group>
     <group name="About">
         <sub_group name="ADB">
