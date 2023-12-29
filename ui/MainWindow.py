@@ -556,6 +556,8 @@ class MainWindow(BaseWindow):
         z_logger.debug('On adb cmd result:' + str(result))
 
         _execed_cmd = self.adbTools.current_cmd
+
+        # 结果数据特殊处理
         if "cmdExectuedTimeout" in resultList:
             if _execed_cmd.startswith('adb connect'):
                 z_logger.error('很遗憾, 设备连接超时！')
@@ -584,7 +586,6 @@ class MainWindow(BaseWindow):
         else:
             if len(result) != 0:
                 z_logger.info(result)
-
 
     def parse_devices_states(self, result):
         """

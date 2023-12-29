@@ -1,19 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import logging
-import os
 import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QTextCursor, QIcon, QFont, QPixmap
+from PyQt5.QtGui import QTextCursor, QIcon, QFont
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
     QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel
 from qtpy import QtWidgets
 
 from logcat.log import z_logger
-from ui.DataBase import DBManager
-
 from utils.ADBTools import ADBTools
 from utils.PackageManager import PackageManager
 from utils.Tools import getWRYHFontStyle, getKTFontStyle
@@ -80,11 +77,45 @@ class ButtomTabWidget(QTabWidget):
         return self.consoleView.get_fun_widget()
 
 
+def changeLogColor(level, log):
+    _color_log = log
+    if level >= logging.ERROR:
+        _color_log = "<font color=\"red\">{0}</font>".format(log)
+    elif level == logging.WARNING:
+        _color_log = "<font color=\"yellow\">{0}</font>".format(log)
+    else:
+        if "adb " in log:
+            _color_log = "<font color=\"#005ac7\" >{0}</font>".format(log)
+    return _color_log
+
+
+def _build_time_stamp():
+    import time
+    ct = time.time()
+    local_time = time.localtime(ct)
+    data_head = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
+    data_secs = (ct - int(ct)) * 1000
+    time_stamp = "%s.%03d" % (data_head, data_secs)
+    return time_stamp + ": "
+
+
+def check_link_addr(text):
+    if isinstance(text, str):
+        import re
+        regexUrl = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*,]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
+                              re.IGNORECASE)
+        urls = regexUrl.findall(text)
+        for url in urls:
+            preS = "<a href=\"" + url + "\">" + url + "</a>"
+            text = text.replace(url, preS)
+    return text
+
+
 class ConsoleWindow(QMainWindow):
     """
     Desc: 底部应用日志输出窗口
     """
-    global textEdit
+    global terminalTextBrowser
 
     def __init__(self, parent=None):
         super(ConsoleWindow, self).__init__(parent)
@@ -109,11 +140,11 @@ class ConsoleWindow(QMainWindow):
         self.initLeftFunctionWidget()
 
         # 日志窗口控件初始化
-        self.textEdit = QTextBrowser()
-        self.textEdit.setOpenLinks(True)
-        self.textEdit.setOpenExternalLinks(True)
-        self.textEdit.setReadOnly(True)
-        self.textEdit.unsetCursor()
+        self.terminalTextBrowser = QTextBrowser()
+        self.terminalTextBrowser.setOpenLinks(True)
+        self.terminalTextBrowser.setOpenExternalLinks(True)
+        self.terminalTextBrowser.setReadOnly(True)
+        self.terminalTextBrowser.unsetCursor()
 
         self.rightWiget = QWidget()
         self.rightWiget.setAutoFillBackground(True)
@@ -122,7 +153,7 @@ class ConsoleWindow(QMainWindow):
         # 左侧工具栏+中间文本展示+右侧工具栏的分割器
         self.bodySplitter = QSplitter(Qt.Horizontal)
         self.bodySplitter.addWidget(self.leftWiget)
-        self.bodySplitter.addWidget(self.textEdit)
+        self.bodySplitter.addWidget(self.terminalTextBrowser)
         self.bodySplitter.addWidget(self.rightWiget)
 
         self.verticalSplitter = QSplitter(Qt.Vertical)
@@ -157,11 +188,11 @@ class ConsoleWindow(QMainWindow):
         self.leftWiget.setFixedWidth(22)
 
     def normalOutputWritten(self, text):
-        cursor = self.textEdit.textCursor()
+        cursor = self.terminalTextBrowser.textCursor()
         cursor.movePosition(QTextCursor.End)
         cursor.insertHtml(text)
-        self.textEdit.setTextCursor(cursor)
-        self.textEdit.ensureCursorVisible()
+        self.terminalTextBrowser.setTextCursor(cursor)
+        self.terminalTextBrowser.ensureCursorVisible()
 
     def initMenuBar(self):
         menuBar = self.menuBar()
@@ -173,53 +204,38 @@ class ConsoleWindow(QMainWindow):
         aboutAction = QAction(IconTool.buildQIcon('setting.png'), 'About', self)
         helpMenu.addAction(aboutAction)
 
-    def append_log(self, level, msg):
+    def append_log(self, logMsg, record: logging.LogRecord):
+        level = record.levelno
+        _funcName = record.funcName     # 执行log打印的函数名
+
         # 先清除log中结尾的换行符，因为后续会自己加
-        msg = msg.rstrip("\n")
+        logMsg = logMsg.rstrip("\n")
+        # if "\n" in str(msg):
+        #     # 检查内容有换行时(一般是输出内容)，则在最前面增加一个换行符，保证输出的缩进一致;
+        #     msg = "\n{0}".format(msg)
 
-        if "\n" in str(msg):
-            # 检查内容有换行时(一般是输出内容)，则在最前面增加一个换行符，保证输出的缩进一致;
-            msg = "\n{0}".format(msg)
-
-        content = self.check_link_addr(msg)
-        log = "{0}: {1}".format(self._buildStandardTime(), content)
-        if level >= logging.ERROR:
-            log = "<font color=\"red\">{0}</font>".format(log)
-        elif level == logging.WARNING:
-            log = "<font color=\"yellow\">{0}</font>".format(log)
+        content = check_link_addr(logMsg)
+        ui_log = changeLogColor(level, content)
+        if _funcName != "on_adb_cmd_exectued":
+            # 不是命令行执行的日志输出，都加上时间前缀
+            ui_log = "{0}{1}".format(_build_time_stamp(), ui_log)
+        self.terminalTextBrowser.append(ui_log)
 
         # 解决该控件插入Html时，不支持\n的问题
-        log = str(log).replace("\n", "<br>")
+        # log = str(log).replace("\n", "<br>")
         # 文字后加换行符，准备下一次输出(注意必须要有一个空格，否则不生效)
-        log = log + "<br />"
-        self.textEdit.insertHtml(log)
-
+        # log = log + "<br />"
+        # self.textEdit.insertHtml(log)
         # 光标移动, 将输出内容全部顶出来
-        self.textEdit.moveCursor(QTextCursor.End)
+        # self.textEdit.moveCursor(QTextCursor.End)
 
     def _clear(self):
-        self.textEdit.clear()
+        self.terminalTextBrowser.clear()
         return
 
-    def _buildStandardTime(self):
-        import time
-        ct = time.time()
-        local_time = time.localtime(ct)
-        data_head = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
-        data_secs = (ct - int(ct)) * 1000
-        time_stamp = "%s.%03d" % (data_head, data_secs)
-        return time_stamp
-
-    def check_link_addr(self, text):
-        if isinstance(text, str):
-            import re
-            regexUrl = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*,]|(?:%[0-9a-fA-F][0-9a-fA-F]))+",
-                                  re.IGNORECASE)
-            urls = regexUrl.findall(text)
-            for url in urls:
-                preS = "<a href=\"" + url + "\">" + url + "</a>"
-                text = text.replace(url, preS)
-        return text
+    def _scrollToBottom(self):
+        current_pos = self.terminalTextBrowser.scrollToAnchor()
+        return
 
     def updateSelectDeviceInfo(self, ip, isconnect):
         self.infoBarWidget.update_device_info(ip, isconnect)
@@ -350,27 +366,6 @@ class InfoBarWidget(QWidget):
             self.pkgComboBox.addItem(f"{p_name}({pid})")
         # 第一条数据的p_name字段
         self.pkgManger.setSelectedPackage(sorted_processes[0][2])
-
-    # def on_package_add(self, pkgName):
-    #     """
-    #     点击包名添加按钮
-    #     :return:
-    #     """
-    #     if not pkgName:
-    #         z_logger.error("请先添加有效包名 !!!")
-    #         return False
-    #     # TODO 对包名进行有效性判断
-    #     # check is exist  TODO 优化，可以直接查 pkgComboBox
-    #     sql = "SELECT NAME FROM PACKAGE WHERE NAME=\'{0}\'".format(pkgName)
-    #     result = self.pkgManger.exec(sql)
-    #     if len(result) == 0:
-    #         self.pkgManger.insert(pkgName)
-    #         self.update_process_com_box()
-    #         z_logger.info("包名添加成功:" + pkgName)
-    #         return True
-    #     else:
-    #         z_logger.info("此包名已存在，您无需再次添加!")
-    #         return False
 
     def update_device_info(self, ip, isconnect):
         """
