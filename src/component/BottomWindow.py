@@ -402,7 +402,7 @@ class InfoBarWidget(QWidget):
 
     def on_device_prop_get_by_adb(self, result):
         """
-        从ADB获取到设备属性数据
+        从ADB获取到设备属性数据(只有新增设备时，才会去查属性)
         :param result: adb返回的字符串
         :return:
         """
@@ -427,9 +427,12 @@ class InfoBarWidget(QWidget):
                     if 'ro.build.version.sdk' in line:
                         api_level = self.get_prop_value(line)
                 result = "{0} {1}({2}),API {3}".format(manufacturer, model, sys_version, api_level)
-                z_logger.debug("result=" + result)
+                z_logger.info("设备概况信息:" + result)
                 self.device_info_desc.setText(result)
                 self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
+                z_logger.debug("Get running processes...")
+                self.update_process_com_box()
+
         else:
             self.device_info_desc.setText("Unknow Device")
 

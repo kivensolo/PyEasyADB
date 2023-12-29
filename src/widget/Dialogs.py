@@ -65,12 +65,10 @@ class NewConnectDialog(BaseDialog):
         if not match:
             self.setStatusTip('无效参数！请检查格式！')
             return
-        state, msg = self.window.dbManager.add_device_to_db(ip=new_ip)
-        if state:
-            self.block(new_ip)
-            self.close()
-        else:
-            z_logger.error(msg)
+        if ":" not in new_ip:
+            new_ip += "5555"
+        self.block(new_ip)
+        self.close()
 
 
 class AddPackageDialog(BaseDialog):

@@ -36,7 +36,6 @@ def get_filter_processes():
     :return:
     """
     processes = []
-    # TODO  try catch
     try:
         output = subprocess.check_output("adb shell ps", shell=True).decode("utf-8")
     except:
@@ -58,10 +57,9 @@ def get_filter_processes():
             continue
 
         name = str(columns[-1])     # 获取最后一列 Name名称
-        if name.startswith("["):    # 过滤[aml_pwrsave_wq] 这种进程
-            continue
-        elif name.startswith("android.") or name.startswith("com.android"):
-            # 过滤系统应用
+        # 使用列表解析+any()函数, 过滤[aml_pwrsave_wq]、系统应用等无需展示的进程
+        filterPrefixes = ["[", "android.", "/system", "com.android"]
+        if any(name.startswith(prefix) for prefix in filterPrefixes):
             continue
         processes.append((user, pid, name))
     return processes

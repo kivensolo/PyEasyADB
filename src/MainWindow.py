@@ -69,8 +69,6 @@ def is_device_active(state):
 
 class MainWindow(BaseWindow):
     treeModel = None
-    # 本地缓存ip数据
-    local_ip_List = []
     tree_data_list = []
 
     """
@@ -201,7 +199,7 @@ class MainWindow(BaseWindow):
     @pyqtSlot()
     def show_new_device_dialog(self):
         z_logger.debug("Show new connect dialog.")
-        new_connect_dialog = NewConnectDialog(self, self.onNewDeviceAdded)
+        new_connect_dialog = NewConnectDialog(self, self.connect_device)
         new_connect_dialog.setWindowModality(Qt.ApplicationModal)
         new_connect_dialog.exec()
 
@@ -232,7 +230,6 @@ class MainWindow(BaseWindow):
         """
         self.load_adb_cmds()
 
-        self.local_ip_List.clear()
         # 获取所有本地缓存ip数据
         all_device = self.dbManager.get_all_device()
 
@@ -250,9 +247,10 @@ class MainWindow(BaseWindow):
             #     qicon = self.icon_disconnect
             item = QStandardItem(addr)
             item.addr = addr
+            item.desc = device[2]
             item.type = TreeItemType.TYPE_DEVICE
             device_item.appendRow(item)
-            self.local_ip_List.append(addr)
+
         # 设备数据插入到第一条中
         self.tree_data_list.insert(0, device_item)
 
@@ -348,7 +346,7 @@ class MainWindow(BaseWindow):
                 self.tree_view.setCurrentIndex(index)
                 self.on_tree_item_clicked(index)
 
-    def get_current_item_model(self):
+    def get_current_standard_item(self):
         # 得到当前选中项的 QModelIndex
         item_child_index = self.tree_view.currentIndex()
         # 获取取到QStandardItem
@@ -356,7 +354,7 @@ class MainWindow(BaseWindow):
         return item_model
 
     def on_ip_menu_show(self):
-        item_model = self.get_current_item_model()
+        item_model = self.get_current_standard_item()
         if is_device_node(item_model):
             if item_model.addr in self.active_ip_list:
                 self.action_remove_device.setDisabled(True)
@@ -379,7 +377,6 @@ class MainWindow(BaseWindow):
         result, msg = self.dbManager.remove_device_from_db(item_model.addr)
         if result:
             z_logger.info('删除设备(%s)成功!' % str(item_model.addr))
-            self.local_ip_List.remove(item_model.addr)
 
     @pyqtSlot()
     def onNewDeviceAdded(self, _addr):
@@ -396,18 +393,19 @@ class MainWindow(BaseWindow):
         item = QStandardItem(self.icon_disconnect, _addr)
         item.addr = _addr
         item.type = TreeItemType.TYPE_DEVICE
-        # FIXME 优化，此方法可能None异常
-        item_model = self.get_current_item_model()
+        item_model = self.get_current_standard_item()
         if is_device_node(item_model):
             item_model.parent().appendRow(item)
         elif is_device_root_node(item_model):
             item_model.appendRow(item)
         else:
-            # TODO 初次使用时，若已经有链接设备，则会走到这里来。这个异常怎么处理？
-            # FIXME BUGS: 先不连接设备，然后启动，再连接。就没法刷新设备信息。
-            z_logger.error('添加设备时，数据获取异常')
-        self.local_ip_List.append(_addr)
-
+            # 首次启动添加新设备
+            device_group_item: QStandardItem = self.tree_data_list[0]
+            deviceItem: QStandardItem = QStandardItem(_addr)
+            deviceItem.addr = _addr
+            deviceItem.type = TreeItemType.TYPE_DEVICE
+            device_group_item.appendRow(deviceItem)
+            self.set_treeview_default_index()
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_double_clicked(self, index):
@@ -424,23 +422,12 @@ class MainWindow(BaseWindow):
                 self.connect_device(item.addr)
             else:
                 z_logger.debug("Already in active device list.")
-        # elif is_device_root_node(item):
-        #     # z_logger.debug('刷新设备状态')
-        #     self.check_device_status()
         elif item.type == TreeItemType.TYPE_ADB_CMD:
             params:ActionCmdParams = ActionCmdParams()
             params.isShellMode = item.isShell
             params.needDstPkg = item.needDstPkg
             params.action = item.cmd
             self.runAdbCMD(params)
-
-    # def onDoAction(self, actionParams):
-    #     if actionParams.action == "m_show_install_app_dialog":
-    #         install_apk_dialog = installApkDialog(self)
-    #         install_apk_dialog.setWindowModality(Qt.ApplicationModal)
-    #         install_apk_dialog.exec()
-    #     else:
-    #         self.runAdbCMD(actionParams)
 
     def runAdbCMD(self, cmdParams: ActionCmdParams):
         if len(self.active_ip_list) == 0:
@@ -468,19 +455,19 @@ class MainWindow(BaseWindow):
         item = self.treeModel.itemFromIndex(index)
         if is_device_node(item):
             z_logger.debug('on_tree_item_clicked:' + item.addr)
-            if self.current_device_addr == item.addr:
+            isconencted = item.addr in self.active_ip_list
+            if self.current_device_addr == item.addr and isconencted:
                 return
             self.current_device_addr = item.addr
-            isconencted = item.addr in self.active_ip_list
             self.bottom_tab_widget.updateSelectDeviceInfo(self.current_device_addr, isconencted)
 
-    def update_current_treeitem(self, isconnect: True):
+    def update_current_tree_item(self, isconnect: True):
         """
         更新tree的子节点
         :param isconnect: 是否为连接状态
         :return:
         """
-        item_model = self.get_current_item_model()
+        item_model = self.get_current_standard_item()
         if is_device_node(item_model):
             if isconnect:
                 item_model.setIcon(self.icon_connect)
@@ -529,12 +516,13 @@ class MainWindow(BaseWindow):
 # ----------------------------------ADB 操作 START-----------------------------------------------
     @pyqtSlot()
     def disconnect_device(self):
-        item_model = self.get_current_item_model()
+        item_model = self.get_current_standard_item()
         if is_device_node(item_model):
             self.temp_disconnect_ip = item_model.addr
             self.adbTools.disconnect_device(item_model.addr, self.on_adb_cmd_exectued)
-
+    @pyqtSlot()
     def connect_device(self, addr):
+        z_logger.debug("Start to connect " + addr)
         self.adbTools.connect_device(addr, self.on_adb_cmd_exectued)
 
     @pyqtSlot()
@@ -576,12 +564,12 @@ class MainWindow(BaseWindow):
                 z_logger.error(result_info)
             else:
                 # 可能会存在空的情况
-                z_logger.info("设备连接成功!")
+                z_logger.info("设备连接无异常,检查设备状态....")
                 self.check_device_status()
         elif _execed_cmd.startswith('adb disconnect'):
             z_logger.info("设备断开成功!")
             self.active_ip_list.remove(self.temp_disconnect_ip)
-            self.update_current_treeitem(False)
+            self.update_current_tree_item(False)
         elif self.adbTools.isGettingDeviceList():
             self.parse_devices_states(resultList)
         else:
@@ -621,23 +609,18 @@ class MainWindow(BaseWindow):
                     exist, msg = self.dbManager.get_device_prop_info(device_ip_info)
                     # 若发现新的已连接设备,自动同步该设备
                     if not exist:
-                        z_logger.debug("[Parse States] This Device is not in db, add new：%s}" % device_ip_info)
+                        z_logger.debug("This Device is not in db, add new：%s}" % device_ip_info)
                         state, msg = self.dbManager.add_device_to_db(ip=device_ip_info)
                         if state:
                             self.onNewDeviceAdded(device_ip_info)
-                            self.close()
+                            # self.close()
                     else:
-                        z_logger.debug("[Parse States] Already in database.(%s)" % line)
+                        z_logger.debug("This device already in local.")
+
             else:
                 # 离线设备 device_state == 'offline' 或 'unknow'
                 self.dbManager.change_device_state(device_ip_info, False)
-                self.update_current_treeitem(False)
-
-        # if len(self.active_ip_list) > 0 and self.current_device_addr is None:
-        #     # FIXME 手机端设备是名称
-        #     self.current_device_addr = self.active_ip_list[0]
-        #     # TODO 同步数据库中的设备状态
-        #     z_logger.info("当前选中设备：" + self.current_device_addr)
+                self.update_current_tree_item(False)
 
         z_logger.debug("当前已连接设备列表：" + str(self.active_ip_list))
         self.refresh_treeview_by_data()
