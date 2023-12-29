@@ -2,15 +2,13 @@ import sys
 import xml.dom.minidom
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, pyqtSlot, QSize, QProcess, QDateTime
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QWidget, QHBoxLayout, QApplication, QPushButton, QLineEdit, QFileDialog
+from PyQt5.QtCore import Qt, pyqtSlot, QSize, QDateTime
+from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 
-from ui.widget.Dialogs import installApkDialog
 from logcat.log import z_logger
 from ui import MainWindow
+from ui.widget.Dialogs import installApkDialog
 from utils.ADBTools import ActionCmdParams
-from utils.Tools import getWRYHFontStyle, getKTFontStyle
 
 
 class CommonFunctionalWidget(QWidget):
@@ -21,49 +19,13 @@ class CommonFunctionalWidget(QWidget):
     def __init__(self, parent: MainWindow):
         super().__init__()
         self.parent = parent
-
         self.setAttribute(Qt.WA_StyledBackground)
-        # self.setStyleSheet("background-color:white")
-
         self._init_convenient_area()
-
-        # self.root_layout = QVBoxLayout()
-        # self.setLayout(self.root_layout)
-        #
-        # self._init_class_path_layout()
-        # self.root_layout.addStretch()
 
     # 新版布局逻辑
     def _init_convenient_area(self):
         convenient_area = Ui_ConvenientArea(self.parent)
         convenient_area.setUpUiDynamic(self)
-
-    def _init_class_path_layout(self):
-        """
-         Activity类路径
-        :return:
-        """
-        self.setStyleSheet("border: 1px solid #00ff00")
-
-
-        self.action_start = QPushButton(self)
-        self.action_start.setText("Start")
-        self.action_start.setGeometry(QtCore.QRect(0, 0, 81, 31))
-        self.action_start.setObjectName("act_start")
-        self.action_start.setFont(getWRYHFontStyle())
-        self.action_start.clicked.connect(lambda: self.invokePkgAction())
-        self.activity_class_layout = QHBoxLayout(self)
-        self.activityClassPath = QLineEdit(self)
-        self.activityClassPath.setPlaceholderText("input activity class path")
-        self.activityClassPath.setGeometry(QtCore.QRect(0, 0, 291, 40))
-        self.activityClassPath.setObjectName("class_path")
-        self.activityClassPath.setFont(getKTFontStyle(size=12, font=QFont.System))
-
-        self.activity_class_layout.addWidget(self.action_start)
-        self.activity_class_layout.addWidget(self.activityClassPath)
-
-        self.activity_class_layout.addStretch()
-        self.root_layout.addLayout(self.activity_class_layout)
 
     def invokePkgAction(self):
         if not self.parent.is_current_device_connect():

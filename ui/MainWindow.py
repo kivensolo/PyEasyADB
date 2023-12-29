@@ -10,7 +10,7 @@ from logcat.log import z_logger
 from ui import TreeItemType
 from ui.MenuBar import MenuActions
 from ui.DataBase import DBManager
-from ui.component.ButtomWindow import ButtomTabWidget
+from ui.component.BottomWindow import BottomTabWidget
 from ui.component.CenterWindow import CommonFunctionalWidget
 from ui.component.ToolBar import Ui_ToolBar
 from ui.widget.Dialogs import NewConnectDialog, installApkDialog
@@ -95,7 +95,7 @@ class MainWindow(BaseWindow):
         # 内容显示的分割器
         self.vertical_splitter = QSplitter(Qt.Horizontal)
         # 底部控制台窗口
-        self.bottom_tab_widget = ButtomTabWidget()
+        self.bottom_tab_widget = BottomTabWidget()
         # 左侧面板相关变量
         self.left_panel = None
         self.tree_view = None

@@ -20,12 +20,12 @@ from utils.Utils import Utils
 adb_tool = ADBTools()
 
 
-class ButtomTabWidget(QTabWidget):
+class BottomTabWidget(QTabWidget):
     """
     底部TabWidget控件
     """
     def __init__(self, parent=None):
-        super(ButtomTabWidget, self).__init__(parent)
+        super(BottomTabWidget, self).__init__(parent)
         # 日志组件
         self.consoleView = ConsoleWindow()
         z_logger.add_gui_log_handler(self.consoleView)
@@ -443,7 +443,7 @@ class InfoBarWidget(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mainWin = ButtomTabWidget()
+    mainWin = BottomTabWidget()
     mainWin.show()
     # mainWin = ConsoleWindow()
     # mainWin.show()

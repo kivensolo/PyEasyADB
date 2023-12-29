@@ -117,7 +117,7 @@ class installApkDialog(BaseDialog):
         self.mainWindow = window
 
         self.install_mode_options_layout = QtWidgets.QHBoxLayout()
-        self.rb_downground = QtWidgets.QCheckBox(self)
+        self.rb_downgrade = QtWidgets.QCheckBox(self)
         self.rb_test_app = QtWidgets.QCheckBox(self)
         self.rb_mode_replace = QtWidgets.QCheckBox(self)
         self.rb_mode_replace.setChecked(True)
@@ -170,13 +170,10 @@ class installApkDialog(BaseDialog):
         self.install_mode_options_layout.addWidget(self.rb_mode_replace)
         self.rb_test_app.setObjectName("rb_test_app")
         self.install_mode_options_layout.addWidget(self.rb_test_app)
-        self.rb_downground.setObjectName("rb_downground")
-        self.install_mode_options_layout.addWidget(self.rb_downground)
+        self.rb_downgrade.setObjectName("rb_downgrade")
+        self.install_mode_options_layout.addWidget(self.rb_downgrade)
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.install_mode_options_layout.addItem(spacerItem)
-        self.install_mode_options_layout.setStretch(0, 1)
-        self.install_mode_options_layout.setStretch(1, 1)
-        self.install_mode_options_layout.setStretch(2, 1)
         self.verticalLayout.addLayout(self.install_mode_options_layout)
 
         # 垂直方向上添加一个安装的groupBox
@@ -192,7 +189,7 @@ class installApkDialog(BaseDialog):
         self.btn_install_apk.setText(_translate("btn_install_apk", "安装"))
         self.rb_mode_replace.setText(_translate("rb_mode_replace", "替换安装"))
         self.rb_test_app.setText(_translate("rb_test_app", "Test包"))
-        self.rb_downground.setText(_translate("rb_downground", "降级安装"))
+        self.rb_downgrade.setText(_translate("rb_downground", "降级安装"))
 
     def onApkFileSelected(self):
         # 打开文件选择对话框
@@ -210,7 +207,7 @@ class installApkDialog(BaseDialog):
             _cmd += "-r "
         if self.rb_test_app.isChecked():      # -t
             _cmd += "-t "
-        if self.rb_downground.isChecked():    # -d
+        if self.rb_downgrade.isChecked():    # -d
             _cmd += "-d "
         _cmd += apkPath
         self.mainWindow.adbTools.exec_adb_cmd(_cmd, lambda : self.close())
