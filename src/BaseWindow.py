@@ -7,7 +7,6 @@ last edited: 2022.03.19
 """
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QApplication
 
-from config.settings import APP_VERSION
 from utils.UITools import IconTool
 from utils.Utils import Utils
 

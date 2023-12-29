@@ -3,7 +3,7 @@ from PyQt5.QtCore import QDir, QUrl
 from PyQt5.QtGui import QIcon, QDesktopServices
 from PyQt5.QtWidgets import QAction, qApp, QMenu
 
-from logcat.log import z_logger
+from src.logcat.log import z_logger
 import xml.dom.minidom
 
 # UI模板配置文件路径

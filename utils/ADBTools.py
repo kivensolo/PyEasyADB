@@ -1,7 +1,6 @@
-import re
 import subprocess
 
-from logcat.log import z_logger
+from src.logcat.log import z_logger
 from utils.CmdExecutor import CmdExecutor
 
 
@@ -38,7 +37,12 @@ def get_filter_processes():
     """
     processes = []
     # TODO  try catch
-    output = subprocess.check_output("adb shell ps", shell=True).decode("utf-8")
+    try:
+        output = subprocess.check_output("adb shell ps", shell=True).decode("utf-8")
+    except:
+        z_logger.error("获取进程信息失败")
+        return processes
+
     for line in output.splitlines()[1:]:
         columns = line.split()
         user = columns[0]
@@ -48,13 +52,16 @@ def get_filter_processes():
             continue
         # if columns[1] == "PID": # 可能是列表头
         #     continue
-        pid = int(columns[1])   # 获取pid值
-        if pid <= 1000:
-            # 过滤系统进程
+
+        pid = int(columns[1])       # 获取pid值
+        if pid <= 1000:             # 过滤系统进程
             continue
-        name = columns[-1]      # 获取最后一列 Name名称
-        if str(name).startswith("["):
-            # 过滤[aml_pwrsave_wq] 这种进程
+
+        name = str(columns[-1])     # 获取最后一列 Name名称
+        if name.startswith("["):    # 过滤[aml_pwrsave_wq] 这种进程
+            continue
+        elif name.startswith("android.") or name.startswith("com.android"):
+            # 过滤系统应用
             continue
         processes.append((user, pid, name))
     return processes

@@ -1,26 +1,26 @@
 import xml.dom.minidom
 
-from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex
 from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
-from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, QAbstractItemView, QWidget, QStyleFactory
+from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
+    QAbstractItemView, QWidget, QStyleFactory
 
-from config.settings import APP_SCREEN_RQTIO
-from logcat.log import z_logger
-from ui import TreeItemType
-from ui.MenuBar import MenuActions
-from ui.DataBase import DBManager
-from ui.component.BottomWindow import BottomTabWidget
-from ui.component.CenterWindow import CommonFunctionalWidget
-from ui.component.ToolBar import Ui_ToolBar
-from ui.widget.Dialogs import NewConnectDialog, installApkDialog
+from src.logcat.log import z_logger
+from src.settings import APP_SCREEN_RQTIO
+from src import TreeItemType
+from src.BaseWindow import BaseWindow
+from src.DataBase import DBManager
+from src.MenuBar import MenuActions
+from src.component.BottomWindow import BottomTabWidget
+from src.component.CenterWindow import CommonFunctionalWidget
+from src.component.ToolBar import Ui_ToolBar
+from src.widget.Dialogs import NewConnectDialog
 from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
 from utils.UITools import IconTool
 from utils.Utils import Utils
-
-from ui.BaseWindow import BaseWindow
 
 
 def initBtnTips():
@@ -403,7 +403,8 @@ class MainWindow(BaseWindow):
         elif is_device_root_node(item_model):
             item_model.appendRow(item)
         else:
-            # TODO 有种场景会场生 这个异常怎么处理？
+            # TODO 初次使用时，若已经有链接设备，则会走到这里来。这个异常怎么处理？
+            # FIXME BUGS: 先不连接设备，然后启动，再连接。就没法刷新设备信息。
             z_logger.error('添加设备时，数据获取异常')
         self.local_ip_List.append(_addr)
 

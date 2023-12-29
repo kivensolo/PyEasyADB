@@ -1,7 +1,7 @@
 from PyQt5.QtCore import pyqtSignal, QEvent
 from PyQt5.QtWidgets import QWidget, QLabel, QToolButton, QHBoxLayout
 
-from logcat.log import z_logger
+from src.logcat.log import z_logger
 from utils.UITools import IconTool
 
 

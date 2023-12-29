@@ -1,10 +1,10 @@
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QPixmap, QColor
-from PyQt5.QtWidgets import QPushButton, QLineEdit, QLabel, QComboBox, QTextEdit, QGridLayout, \
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QPushButton, QLineEdit, QLabel, QComboBox, QGridLayout, \
     QHBoxLayout,  QVBoxLayout
 
-from logcat import log
+from src.logcat import log
 from utils import Tools
 from utils.Tools import getWRYHFontStyle
 

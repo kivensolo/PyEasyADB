@@ -2,8 +2,8 @@ import re
 import sqlite3
 from sqlite3 import Cursor
 
-from config.settings import APP_DB_FILE
-from logcat.log import z_logger
+from src.settings import APP_DB_FILE
+from src.logcat.log import z_logger
 
 
 class DBManager:

@@ -7,7 +7,7 @@ import logging.handlers
 import os
 
 # 创建对应文件夹
-from config.settings import LOGS_PATH, DEBUG_PRINT, LOG_APP_FILE
+from src.settings import LOGS_PATH, DEBUG_PRINT, LOG_APP_FILE
 
 if not os.path.exists(LOGS_PATH):
     os.makedirs(LOGS_PATH)

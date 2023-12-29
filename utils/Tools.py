@@ -6,8 +6,8 @@ from pathlib import Path
 
 from PyQt5.QtGui import QFont
 
-from config.settings import LOG_CMD_OUT, LOG_CMD_ERROR, LOGS_PATH
-from logcat import log
+from src.settings import LOG_CMD_OUT, LOG_CMD_ERROR, LOGS_PATH
+from src.logcat import log
 
 
 def getWRYHFontStyle(size=10):
@@ -59,7 +59,7 @@ def isIpMatches(ip):
 
 # TODO 查询命令的时候会卡主线程  因为用的是_process.wait
 def exec_cmd(cmd, logger=None):
-    log.d("exec cmd: "+cmd)
+    log.d("exec cmd: " + cmd)
     """
     执行命令行，并返回输出
     :param cmd:  执行的命令行

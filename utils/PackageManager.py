@@ -1,5 +1,5 @@
-from logcat.log import z_logger
-from ui.DataBase import DBManager
+from src.logcat.log import z_logger
+from src.DataBase import DBManager
 from utils.ADBTools import ADBTools
 
 

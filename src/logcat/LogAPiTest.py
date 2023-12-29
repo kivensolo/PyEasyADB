@@ -1,4 +1,4 @@
-from logcat import log
+from src.logcat import log
 
 log.w("这是一个warning信息", "你可以在后面加任意类型，任意数量的信息", {"1": "mke", "rytu": "chaili"}, (1, 2, 3, 4))
 

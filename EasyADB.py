@@ -2,7 +2,7 @@ import sys
 
 # 基本控件位于pyqt5.qtwidgets模块中
 from PyQt5.QtWidgets import QApplication
-from ui.MainWindow import MainWindow
+from src.MainWindow import MainWindow
 
 
 class App:

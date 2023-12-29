@@ -4,10 +4,10 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
 from qtpy import QtWidgets, QtCore
 
-from logcat.log import z_logger
-from ui.DataBase import DBManager
-from ui.widget.BaseDialog import BaseDialog
-from ui.widget.CustomWidgets import DraggableLineEdit
+from src.logcat.log import z_logger
+from src.DataBase import DBManager
+from src.widget.BaseDialog import BaseDialog
+from src.widget.CustomWidgets import DraggableLineEdit
 from utils import Tools
 from utils.UITools import IconTool
 

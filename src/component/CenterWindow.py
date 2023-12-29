@@ -5,9 +5,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSlot, QSize, QDateTime
 from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 
-from logcat.log import z_logger
-from ui import MainWindow
-from ui.widget.Dialogs import installApkDialog
+from src.logcat.log import z_logger
+from src import MainWindow
+from src.widget.Dialogs import installApkDialog
 from utils.ADBTools import ActionCmdParams
 
 

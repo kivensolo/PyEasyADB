@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWid
     QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView
 from qtpy import QtWidgets
 
-from logcat.log import z_logger
+from src.logcat.log import z_logger
 from utils.ADBTools import ADBTools
 from utils.PackageManager import PackageManager
 from utils.Tools import getSongFontStyle
