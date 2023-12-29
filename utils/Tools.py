@@ -19,8 +19,8 @@ def globalEditTextFontStyle():
     return QFont('Helvetica', 13)
 
 
-def getKTFontStyle(size=11, font=QFont.Bold):
-    return QFont("楷体", size, font)
+def getSongFontStyle(size=11, font=QFont.Normal):
+    return QFont("宋体", size, font)
 
 
 def isIpMatches(ip):

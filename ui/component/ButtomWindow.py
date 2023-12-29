@@ -5,15 +5,15 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QTextCursor, QIcon, QFont
+from PyQt5.QtGui import QTextCursor, QIcon
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
-    QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel
+    QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView
 from qtpy import QtWidgets
 
 from logcat.log import z_logger
 from utils.ADBTools import ADBTools
 from utils.PackageManager import PackageManager
-from utils.Tools import getWRYHFontStyle, getKTFontStyle
+from utils.Tools import getSongFontStyle
 from utils.UITools import IconTool
 from utils.Utils import Utils
 
@@ -294,7 +294,7 @@ class InfoBarWidget(QWidget):
 
         self.device_info_desc = QLabel()
         # self.device_info_desc.setText("B869Ajiojioajiojdq2165465461654")
-        self.device_info_desc.setFont(getKTFontStyle(font=QFont.Normal))
+        self.device_info_desc.setFont(getSongFontStyle())
         self.device_info_desc.setTextFormat(QtCore.Qt.AutoText)
         self.device_info_desc.setObjectName("device_prop")
         self.device_info_desc.setToolTip("设备名称信息")
@@ -320,20 +320,20 @@ class InfoBarWidget(QWidget):
         """
         comboBox = QComboBox()
         # 设置下拉显示固定个数，超过个数，滚动显示
-        comboBox.setMaxVisibleItems(7)
+        comboBox.setMaxVisibleItems(8)
         # 宽度调整策略，按照内容最大宽度
         # comboBox.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         # comboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
         comboBox.setMinimumSize(QSize(250, 31))
         comboBox.setMaximumSize(QtCore.QSize(500, 40))
         comboBox.setObjectName("pkgComboBoxView")
-        comboBox.setFont(getWRYHFontStyle())
+        comboBox.setFont(getSongFontStyle())
         comboBox.setStyleSheet(
-            "QComboBox QAbstractItemView::item { min-height: 60px; min-width: 60px;"
-            "outline:0px;}"
-            "QComboBox QAbstractItemView::item:selected{background-color: #25ACFF;}"
-            "QComboBox QAbstractItemView::item:hover{background-color: #75CAFF;}"
+            "QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}"
+            "QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}"
         )
+        # Sets the view to be used in the combobox popup to the given itemView.
+        comboBox.setView(QListView())
         comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
         self.pkgComboBox = comboBox
         self.qh_layout.addWidget(self.pkgComboBox)
@@ -364,6 +364,7 @@ class InfoBarWidget(QWidget):
         self.pkgComboBox.clear()
         for user, pid, p_name in sorted_processes:
             self.pkgComboBox.addItem(f"{p_name}({pid})")
+
         # 第一条数据的p_name字段
         self.pkgManger.setSelectedPackage(sorted_processes[0][2])
 
