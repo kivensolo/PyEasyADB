@@ -66,7 +66,7 @@ class NewConnectDialog(BaseDialog):
             self.setStatusTip('无效参数！请检查格式！')
             return
         if ":" not in new_ip:
-            new_ip += "5555"
+            new_ip += ":5555"
         self.block(new_ip)
         self.close()
 
