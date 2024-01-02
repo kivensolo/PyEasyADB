@@ -4,7 +4,7 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
 from qtpy import QtWidgets, QtCore, QtGui
 
-from src.logcat.log import z_logger
+from src.widget.ScreenRecord import Record_Dialog
 from src.DataBase import DBManager
 from src.widget.BaseDialog import BaseDialog
 from src.widget.CustomWidgets import DraggableLineEdit
@@ -211,6 +211,125 @@ class installApkDialog(BaseDialog):
         self.mainWindow.adbTools.exec_adb_cmd(_cmd, lambda : self.close())
 
 
+class screen_record_dialog(BaseDialog):
+    def __init__(self,  window = None):
+        super().__init__("屏幕录制")
+        self.mainWindow = window
+        self.record_dialog = Record_Dialog()
+        self.initWindow()
+
+    def initWindow(self):
+        super().initWindow()
+        self.record_dialog.setupUi(self, self.mainWindow)
+
+        # self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        # self.verticalLayout.setObjectName("verticalLayout")
+        #
+        # # 分辨率设置
+        # self.groupBoxResolution = QtWidgets.QGroupBox(self)
+        # self.groupBoxResolution.setFlat(False)
+        # self.groupBoxResolution.setCheckable(False)
+        # self.groupBoxResolution.setObjectName("groupBox")
+        # self.verticalLayout = QtWidgets.QVBoxLayout(self.groupBoxResolution)
+        # self.verticalLayout.setObjectName("verticalLayout")
+        # self.is_custom_resolution = QtWidgets.QCheckBox(self.groupBoxResolution)
+        # self.is_custom_resolution.setObjectName("is_custom_resolution")
+        # self.verticalLayout.addWidget(self.is_custom_resolution)
+        # self.resolution_value = QtWidgets.QLineEdit(self.groupBoxResolution)
+        # self.resolution_value.setEnabled(False)
+        # self.resolution_value.setObjectName("resolution_value")
+        # self.verticalLayout.addWidget(self.resolution_value)
+        # self.verticalLayout.setStretch(0, 1)
+        # self.verticalLayout.setStretch(1, 1)
+        #
+        # # 比特率设置
+        # self.groupBox_bit = QtWidgets.QGroupBox(self)
+        # self.groupBox_bit.setObjectName("groupBox_bit")
+        # self.vl_rate = QtWidgets.QVBoxLayout(self.groupBox_bit)
+        # self.vl_rate.setObjectName("verticalLayout_4")
+        # self.bitrate_tips = QtWidgets.QLabel(self.groupBox_bit)
+        # self.bitrate_tips.setObjectName("bitrate_tips")
+        # self.vl_rate.addWidget(self.bitrate_tips)
+        # self.bitrates = QtWidgets.QLineEdit(self.groupBox_bit)
+        # self.bitrates.setObjectName("bitrates")
+        # self.vl_rate.addWidget(self.bitrates)
+        #
+        # self.h_layout_1 = QtWidgets.QHBoxLayout()
+        # self.h_layout_1.setObjectName("horizontalLayout")
+        # self.h_layout_1.addWidget(self.groupBoxResolution)
+        # self.h_layout_1.addWidget(self.groupBox_bit)
+        # self.h_layout_1.setStretch(0, 2)
+        # self.h_layout_1.setStretch(1, 1)
+        # self.verticalLayout.addLayout(self.h_layout_1)
+        # self.groupBox_2 = QtWidgets.QGroupBox(self)
+        # self.groupBox_2.setObjectName("groupBox_2")
+        # self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.groupBox_2)
+        # self.verticalLayout_3.setObjectName("verticalLayout_3")
+        #
+        # # 录制时间
+        # self.recode_time_label = QtWidgets.QLabel(self.groupBox_2)
+        # self.recode_time_label.setObjectName("recode_time_progress")
+        # self.verticalLayout_3.addWidget(self.recode_time_label)
+        # self.limit_time_slider = QtWidgets.QSlider(self.groupBox_2)
+        # self.limit_time_slider.setMinimum(5)
+        # self.limit_time_slider.setMaximum(180)
+        # self.limit_time_slider.setSingleStep(5)
+        # self.limit_time_slider.setProperty("value", 90)
+        # self.limit_time_slider.setOrientation(QtCore.Qt.Horizontal)
+        # self.limit_time_slider.setObjectName("limit_time_slider")
+        # self.limit_time_slider.valueChanged.connect(self.on_limit_time_changed)
+        # self.verticalLayout_3.addWidget(self.limit_time_slider)
+        #
+        # # 输出旋转
+        # self.verticalLayout.addWidget(self.groupBox_2)
+        # self.groupBox_4 = QtWidgets.QGroupBox(self)
+        # self.groupBox_4.setObjectName("groupBox_4")
+        # self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.groupBox_4)
+        # self.verticalLayout_2.setObjectName("verticalLayout_2")
+        # self.is_rotate_box = QtWidgets.QCheckBox(self.groupBox_4)
+        # self.is_rotate_box.setObjectName("is_rotate_box")
+        # self.verticalLayout_2.addWidget(self.is_rotate_box)
+        # self.verticalLayout.addWidget(self.groupBox_4)
+        #
+        # # 行为按钮
+        # self.h_layout_2 = QtWidgets.QHBoxLayout()
+        # self.h_layout_2.setObjectName("h_layout_2")
+        # self.btn_start = QtWidgets.QPushButton(self)
+        # self.btn_start.setObjectName("btn_start")
+        # self.h_layout_2.addWidget(self.btn_start)
+        # self.btn_abort = QtWidgets.QPushButton(self)
+        # self.btn_abort.setObjectName("btn_abort")
+        # self.h_layout_2.addWidget(self.btn_abort)
+        # self.btn_pull_record_file = QtWidgets.QPushButton(self)
+        # self.btn_pull_record_file.setObjectName("btn_pull_record_file")
+        # self.h_layout_2.addWidget(self.btn_pull_record_file)
+        # self.verticalLayout.addLayout(self.h_layout_2)
+        #
+        # self.retranslateUi(self)
+        # QtCore.QMetaObject.connectSlotsByName(self)
+
+    # def retranslateUi(self, Dialog):
+    #     _translate = QtCore.QCoreApplication.translate
+    #     Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+    #     self.groupBoxResolution.setTitle(_translate("Dialog", "分辨率"))
+    #     self.is_custom_resolution.setText(_translate("Dialog", "自定义"))
+    #     self.resolution_value.setText(_translate("Dialog", "1920x1080"))
+    #     self.groupBox_bit.setTitle(_translate("Dialog", "比特率"))
+    #     self.bitrate_tips.setText(_translate("Dialog", "比特率（单位:字节）"))
+    #     self.bitrates.setText(_translate("Dialog", "4000000"))
+    #     self.groupBox_2.setTitle(_translate("Dialog", "时间限制"))
+    #     self.recode_time_label.setText(_translate("Dialog", "录制时间(秒):90"))
+    #     self.groupBox_4.setTitle(_translate("Dialog", "旋转"))
+    #     self.is_rotate_box.setText(_translate("Dialog", "输出视频旋转90度"))
+    #     self.btn_start.setText(_translate("Dialog", "开始"))
+    #     self.btn_abort.setText(_translate("Dialog", "停止"))
+    #     self.btn_pull_record_file.setText(_translate("Dialog", "拉取"))
+
+    # def on_limit_time_changed(self):
+    #     slider_value = self.limit_time_slider.value()
+    #     self.time_limit_value = slider_value
+    #     self.recode_time_label.setText("录制时间(秒):%s" % self.time_limit_value)
+
 class AboutDialog(BaseDialog):
     def __init__(self,  window = None):
         super().__init__("关于")
@@ -245,7 +364,7 @@ class AboutDialog(BaseDialog):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    dialog = AboutDialog()
+    dialog = screen_record_dialog()
     # 设置窗口的属性为ApplicationModal模态，用户只有关闭弹窗后，才能关闭主界面
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.show()

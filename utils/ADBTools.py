@@ -1,4 +1,8 @@
+import os
+import signal
 import subprocess
+
+from PyQt5.QtCore import QThread, pyqtSignal
 
 from src.logcat.log import z_logger
 from utils.CmdExecutor import CmdExecutor
@@ -52,11 +56,11 @@ def get_filter_processes():
         # if columns[1] == "PID": # 可能是列表头
         #     continue
 
-        pid = int(columns[1])       # 获取pid值
-        if pid <= 1000:             # 过滤系统进程
+        pid = int(columns[1])  # 获取pid值
+        if pid <= 1000:  # 过滤系统进程
             continue
 
-        name = str(columns[-1])     # 获取最后一列 Name名称
+        name = str(columns[-1])  # 获取最后一列 Name名称
         # 使用列表解析+any()函数, 过滤[aml_pwrsave_wq]、系统应用等无需展示的进程
         filterPrefixes = ["[", "android.", "/system", "com.android"]
         if any(name.startswith(prefix) for prefix in filterPrefixes):
@@ -65,11 +69,49 @@ def get_filter_processes():
     return processes
 
 
+class AsyncAdbThread(QThread):
+    output_received = pyqtSignal(str)
+
+    def __init__(self):
+        super().__init__()
+        self.cmds = ""
+        self.process = None
+        self.isStoped = False
+
+    def run(self):
+        self.isStoped = False
+        print("ADB子线程运行")
+        for _cmd in self.cmds:
+            if self.isStoped:
+                # 手动终止，不执行任何命令
+                break
+            self.output_received.emit(_cmd)
+            self.process = subprocess.Popen(_cmd, stdout=subprocess.PIPE)
+            while True:
+                output = self.process.stdout.readline().decode('utf-8').strip()
+                if output:
+                    self.output_received.emit(output)  # 在主线程中更新UI
+                else:
+                    break   # 输出结束，中断循环并退出线程
+            # process.kill()  # Optionally kill the adb process if it's still running (not strictly necessary)
+            # process.communicate()  # 等待命令完成
+        # self.quit()
+        # self.terminate()
+        self.exit()  # 返回状态(不是严格必要的)
+
+    def stop(self):
+        self.output_received.emit("录屏已终止")
+        self.isStoped = True
+        os.kill(self.process.pid, signal.SIGINT)
+
+
 class ADBTools:
 
     def __init__(self):
         super(ADBTools, self).__init__()
         # 不能把executor放入exec_adb_cmd中，出栈的时候会被回收
+        self.thread = AsyncAdbThread()
+        self.thread.output_received.connect(self.on_screen_record_emit_sigle)
         self.executor = CmdExecutor()
         self.current_cmd = ''
 
@@ -123,6 +165,7 @@ class ADBTools:
         cmd = "adb -s {0} shell getprop".format(ip)
         self.exec_adb_cmd(cmd, block)
 
+    # FIXME 卡主线程的
     def get_screen_shoot(self, device_ip, save_path):
         # 执行adb exec-out screencap命令，并将输出重定向到文件
         cmd = 'adb -s {0} exec-out screencap -p > {1}'.format(device_ip, save_path)
@@ -141,3 +184,32 @@ class ADBTools:
         blcok(sorted_processes)
         # for user, pid, p_name in sorted_processes:
         #     print(f"Process Name: {p_name}, PID: {pid}")
+
+    def start_screen_record(self, device_ip, record_cmd, tmp_path, pull_path):
+        """
+        获取屏幕录制数据
+        :param device_ip:   设备ip端口地址
+        :param record_cmd:  录制的命令
+        :param tmp_path:    设备的临时目录
+        :param pull_path:   电脑本机储存目录
+        :return:
+        """
+        cmd_1 = f'adb -s {device_ip} exec-out {record_cmd}'
+        cmd_2 = f"adb -s {device_ip} shell sleep 5"  # 等待5s,等数据写入mp4文件
+        cmd_3 = f"adb pull {tmp_path} {pull_path}"
+        cmd_4 = f"adb shell rm {tmp_path}"
+        cmds = [cmd_1, cmd_2, cmd_3, cmd_4]
+        z_logger.info("Start screen record.")
+        try:
+            self.thread.cmds = cmds
+            self.thread.start()  # Start the thread to read adb output in a separate thread
+        except Exception as e:
+            print(e)
+
+    def stop_screen_record(self):
+        if self.thread.isRunning():
+            self.thread.stop()
+
+    def on_screen_record_emit_sigle(self, data):
+        # 当屏幕录制中发送信号
+        z_logger.info(data)

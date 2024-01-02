@@ -45,9 +45,9 @@ action为元素的点击事件类型;
             <attr name="text">截图并保存</attr>
             <attr name="action">m_screenshot</attr>
         </item>
-        <item state="disable">
+        <item>
             <attr name="icon">./res/icons/app_start_256x256.png</attr>
-            <attr name="text">获取录制视频</attr>
+            <attr name="text">录制视频</attr>
             <attr name="action">m_screen_record</attr>
         </item>
     </template>

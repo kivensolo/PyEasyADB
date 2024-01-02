@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 
 from src.logcat.log import z_logger
 from src import MainWindow
-from src.widget.Dialogs import installApkDialog
+from src.widget.Dialogs import installApkDialog, screen_record_dialog
 from utils.ADBTools import ActionCmdParams
 
 
@@ -198,6 +198,10 @@ class Ui_ConvenientArea(object):
             install_apk_dialog.exec()
         elif _action == "m_screenshot":
             self.action_save_screen_shoot()
+        elif _action == "m_screen_record":
+            _record_dialog = screen_record_dialog(self.mainWindow)
+            _record_dialog.setWindowModality(Qt.ApplicationModal)
+            _record_dialog.exec()
         else:
             self.mainWindow.runAdbCMD(actionParams)
 
