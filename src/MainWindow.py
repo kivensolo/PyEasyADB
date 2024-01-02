@@ -15,7 +15,7 @@ from src.MenuBar import MenuActions
 from src.component.BottomWindow import BottomTabWidget
 from src.component.CenterWindow import CommonFunctionalWidget
 from src.component.ToolBar import Ui_ToolBar
-from src.widget.Dialogs import NewConnectDialog
+from src.widget.Dialogs import NewConnectDialog, AboutDialog
 from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
@@ -202,6 +202,12 @@ class MainWindow(BaseWindow):
         new_connect_dialog = NewConnectDialog(self, self.connect_device)
         new_connect_dialog.setWindowModality(Qt.ApplicationModal)
         new_connect_dialog.exec()
+
+    @pyqtSlot()
+    def show_about_dialog(self):
+        aboutDialog = AboutDialog(self)
+        aboutDialog.setWindowModality(Qt.ApplicationModal)
+        aboutDialog.exec()
 
     def initWindow(self):
         self.resize(

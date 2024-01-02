@@ -2,7 +2,7 @@ import sys
 
 from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
-from qtpy import QtWidgets, QtCore
+from qtpy import QtWidgets, QtCore, QtGui
 
 from src.logcat.log import z_logger
 from src.DataBase import DBManager
@@ -211,9 +211,41 @@ class installApkDialog(BaseDialog):
         self.mainWindow.adbTools.exec_adb_cmd(_cmd, lambda : self.close())
 
 
+class AboutDialog(BaseDialog):
+    def __init__(self,  window = None):
+        super().__init__("关于")
+        self.mainWindow = window
+        self.initWindow()
+
+    def initWindow(self):
+        super().initWindow()
+        # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        self.setFixedSize(300, 100)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
+        self.label = QtWidgets.QLabel(self)
+        font = QtGui.QFont()
+        font.setPointSize(22)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label.setFont(font)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setObjectName("label")
+        self.verticalLayout_2.addWidget(self.label)
+
+        self.retranslateUi(self)
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "关于"))
+        self.label.setText(_translate("Dialog", "EasyABD"))
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    dialog = installApkDialog()
+    dialog = AboutDialog()
     # 设置窗口的属性为ApplicationModal模态，用户只有关闭弹窗后，才能关闭主界面
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.show()

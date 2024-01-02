@@ -1,10 +1,12 @@
-from PyQt5 import QtCore
+from PyQt5 import QtCore, Qt
 from PyQt5.QtCore import QDir, QUrl
 from PyQt5.QtGui import QIcon, QDesktopServices
 from PyQt5.QtWidgets import QAction, qApp, QMenu
 
 from src.logcat.log import z_logger
 import xml.dom.minidom
+
+from src.widget.Dialogs import AboutDialog
 
 # UI模板配置文件路径
 menus_ui_config_file_path = "./config/menus_ui.xml"
@@ -64,6 +66,8 @@ class MenuActions(object):
             qApp.quit()
         elif cmd == "m_open_log_page":
             self.open_log_folder()
+        elif cmd == "m_open_about_page":
+            self.mainWindow.show_about_dialog()
         else:
             z_logger.error(f"该命令还未实现:{cmd}")
 
