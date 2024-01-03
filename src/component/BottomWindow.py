@@ -216,7 +216,10 @@ class ConsoleWindow(QMainWindow):
 
         content = check_link_addr(logMsg)
         ui_log = changeLogColor(level, content)
-        if _funcName != "on_adb_cmd_exectued":
+        if "adb" in ui_log:
+            ui_log = "{0}{1}".format(_build_time_stamp(), ui_log)
+        elif _funcName != "on_adb_cmd_exectued" and \
+                _funcName != "on_screen_record_emit_sigle":
             # 不是命令行执行的日志输出，都加上时间前缀
             ui_log = "{0}{1}".format(_build_time_stamp(), ui_log)
         self.terminalTextBrowser.append(ui_log)

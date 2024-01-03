@@ -25,8 +25,8 @@ class Record_Dialog(object):
         self.h_layout_1 = None
         self.dialog_root_vlayout = None
         self.timer = None
-        self.time_limit_value = 5
-        self.bit_rate_bytes = 4000000
+        self.time_limit_value = 90
+        self.bit_rate_bytes = 8000000  # 8Mbps
 
     def setupUi(self, Dialog, window):
         self.mainWindow = window
@@ -60,11 +60,16 @@ class Record_Dialog(object):
         self.groupBox_3.setObjectName("groupBox_3")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout(self.groupBox_3)
         self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.bitrate_tips = QtWidgets.QLabel(self.groupBox_3)
-        self.bitrate_tips.setObjectName("bitrate_tips")
-        self.verticalLayout_4.addWidget(self.bitrate_tips)
+        self.bitrate_check_box = QtWidgets.QCheckBox(self.groupBox_3)
+        self.bitrate_check_box.setObjectName("bitrate_box")
+        self.bitrate_check_box.setChecked(False)
+        self.bitrate_check_box.setToolTip("“8000000”相当于“8M”。默认20Mbps。\n值越小视频画质越差。")
+        self.bitrate_check_box.toggled.connect(
+            lambda: self.on_check_box_toggled(self.bitrate_check_box))
+        self.verticalLayout_4.addWidget(self.bitrate_check_box)
         self.bitrates = QtWidgets.QLineEdit(self.groupBox_3)
         self.bitrates.setObjectName("bitrates")
+        self.bitrates.setEnabled(False)
         self.verticalLayout_4.addWidget(self.bitrates)
         self.h_layout_1.addWidget(self.groupBox_3)
         self.h_layout_1.setStretch(0, 2)
@@ -125,13 +130,14 @@ class Record_Dialog(object):
         self.groupBox.setTitle(_translate("Dialog", "分辨率"))
         self.checkBox_custom_resolution.setText(_translate("Dialog", "自定义"))
         self.display_resolution_edit.setText(_translate("Dialog", "1920x1080"))
-        self.groupBox_3.setTitle(_translate("Dialog", "视频比特率"))
-        self.bitrate_tips.setText(_translate("Dialog", "比特率（单位:字节）"))
-        self.bitrates.setText(_translate("Dialog", "4000000"))
+        self.groupBox_3.setTitle(_translate("Dialog", "比特率"))
+
+        self.bitrate_check_box.setText(_translate("Dialog", "自定义（字节）"))
+        self.bitrates.setText(_translate("Dialog", str(self.bit_rate_bytes)))
         self.groupBox_limit.setTitle(_translate("Dialog", "时间限制"))
-        self.recode_time_progress.setText(_translate("Dialog", "录制时间(秒):5"))
+        self.recode_time_progress.setText(_translate("Dialog", "录制时间(秒):90"))
         self.groupBox__rotate.setTitle(_translate("Dialog", "旋转"))
-        self.is_rotate_box.setText(_translate("Dialog", "输出视频旋转90度"))
+        self.is_rotate_box.setText(_translate("Dialog", "输出视频旋转90度(实验性)"))
         self.btn_start.setText(_translate("Dialog", "开始"))
         self.btn_abort.setText(_translate("Dialog", "终止"))
         self.btn_pull_record_file.setText(_translate("Dialog", "拉取"))
@@ -141,7 +147,10 @@ class Record_Dialog(object):
             if not check_box.isChecked():
                 self.display_resolution_edit.setText(resolution_default)
             self.display_resolution_edit.setEnabled(check_box.isChecked())
-        # if self.is_rotate_box == check_box:
+        if self.bitrate_check_box == check_box:
+            if not check_box.isChecked():
+                self.bitrates.setText(str(self.bit_rate_bytes))
+            self.bitrates.setEnabled(check_box.isChecked())
 
     def on_limit_time_changed(self, value):
         slider_value = value.value()
@@ -193,8 +202,11 @@ class Record_Dialog(object):
             z_logger.info("Cancle screen record.")
 
     def get_record_cmd(self):
-        cmd = f"screenrecord --verbose --bit-rate {self.bit_rate_bytes}"
+        cmd = f"screenrecord --verbose"
         cmd += f" --time-limit {self.time_limit_value}"
+        if self.bitrate_check_box.isChecked():
+            self.bit_rate_bytes = self.bitrates.text()
+            cmd += f" --bit-rate {self.bit_rate_bytes}"
         if self.display_resolution_edit.isEnabled():
             cmd += f" --size {self.display_resolution_edit.text()}"
         if self.is_rotate_box.isChecked():

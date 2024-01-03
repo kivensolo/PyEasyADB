@@ -324,7 +324,7 @@ class MainWindow(BaseWindow):
                 cmd = None
                 if item.firstChild is not None:
                     cmd = item.firstChild.data
-                print("\t\t|Add cmd:" + name + "=" + str(cmd))
+                print("\t\t|" + name + ":" + str(cmd))
                 qItem = QStandardItem(name)
                 qItem.type = TreeItemType.TYPE_ADB_CMD
                 qItem.name = name
