@@ -75,6 +75,10 @@ class CmdExecutor(QThread):
 
     def setFinishCallback(self, get_slot):
         if self._lastCallback is not None:
+            # 断开上一次的回调信号槽
             self.finishSignal.disconnect(self._lastCallback)
-        self.finishSignal.connect(get_slot)  # 连接信号与槽
-        self._lastCallback = get_slot
+            self._lastCallback = None
+        if get_slot is not None:
+            # 连接新的信号槽
+            self.finishSignal.connect(get_slot)
+            self._lastCallback = get_slot

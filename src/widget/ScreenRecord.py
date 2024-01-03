@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 
 # Form implementation generated from reading ui file 'screen_record.ui'
 #
@@ -20,6 +21,7 @@ resolution_default = "1920x1080"
 
 class Record_Dialog(object):
     def __init__(self):
+        self.record_file_save_path = None
         self.recordThread = None
         self.record_remaining_seconds = None
         self.h_layout_1 = None
@@ -159,11 +161,13 @@ class Record_Dialog(object):
 
     def on_record_pull_btn_clicked(self):
         """
-        TODO 拉取录屏文件行为
+        拉取录屏文件行为
         :return:
         """
-        self.timer.stop()
-        self.btn_start.setText('开始')
+        if not self.record_file_save_path:
+            _name = QDateTime.currentDateTime().toString("yyyyMMdd_hhmmss")
+            self.record_file_save_path = f"{os.getcwd()}{os.path.sep}{_name}.mp4"
+        self.mainWindow.adbTools.exec_adb_cmd(f"adb -s {self.mainWindow.current_device_addr} pull {record_file_path} {self.record_file_save_path}")
 
     def on_record_abort_btn_clicked(self):
         """
@@ -186,10 +190,10 @@ class Record_Dialog(object):
             return
         chooseDialog = QFileDialog
         default_file_name = QDateTime.currentDateTime().toString("yyyyMMdd_hhmmss")
-        savePath = chooseDialog.getSaveFileName(
+        self.record_file_save_path = chooseDialog.getSaveFileName(
             self.mainWindow, "保存视频", f"screenshot_{default_file_name}.mp4",
             "Video Files (*.mp4)")[0]
-        if savePath:
+        if self.record_file_save_path:
             self.btn_start.setEnabled(False)
             self.btn_abort.setEnabled(True)
             self.timer = QTimer(self.mainWindow)

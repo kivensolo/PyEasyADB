@@ -118,7 +118,7 @@ class ADBTools:
     def isGettingDeviceList(self):
         return self.current_cmd == 'adb devices'
 
-    def exec_adb_cmd(self, cmd, block):
+    def exec_adb_cmd(self, cmd, block=None):
         """
         执行ADB命令
         :param cmd: ADB执行命令
@@ -130,7 +130,8 @@ class ADBTools:
         self.executor.setFinishCallback(block)
         self.executor.exec(cmd)
 
-    def exec_cmd(self, ip, cmd="", is_shell=False, block=None):
+    @DeprecationWarning
+    def _exec_cmd(self, ip, cmd="", is_shell=False, block=None):
         if is_shell:
             adb_cmd = "adb -s {0} shell {1}".format(ip, cmd)
         else:
