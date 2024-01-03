@@ -58,9 +58,7 @@ def get_filter_processes(device_name):
             z_logger.error("process line info error.")
             continue
         user = columns[0]
-        if not str(user).startswith("u0_") \
-                and user != "system" and user != "bluetooth":
-            # 如果不是用户\蓝牙\系统进程,则过滤掉，比如root、wifi、shell等用户
+        if process_user_name_check(user):
             continue
         # if columns[1] == "PID": # 可能是列表头
         #     continue
@@ -70,12 +68,25 @@ def get_filter_processes(device_name):
             continue
 
         name = str(columns[-1])  # 获取最后一列 Name名称
+        # 针对部分设备 sh、ping是用户目录的情况做过滤
+        filterName = ["sh", "ping"]
+        for _name in filterName:
+            if name == _name:
+                continue
+
         # 使用列表解析+any()函数, 过滤[aml_pwrsave_wq]、系统应用等无需展示的进程
-        filterPrefixes = ["[", "android.", "/system", "com.android"]
+        filterPrefixes = ["[", "android.", "/system", "com.android", "sysyem_server", "libcpu", "/data/"]
         if any(name.startswith(prefix) for prefix in filterPrefixes):
             continue
         processes.append((user, pid, name))
     return processes
+
+
+def process_user_name_check(user):
+    # 如果不是用户\蓝牙\系统进程,则过滤掉，比如root、wifi、shell、dhcp等用户
+    return not str(user).startswith("u0_") \
+        and user != "system" \
+        and user != "bluetooth"
 
 
 class AsyncAdbThread(QThread):
