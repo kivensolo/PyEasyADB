@@ -6,19 +6,11 @@
             <attr name="icon">./res/icons/add_new.png</attr>
             <attr name="action">m_connect_new_device</attr>
         </action>
-        <action name="Close">
-            <attr name="shortcut">Ctrl+N</attr>
-            <attr name="icon">./res/icons/close.png</attr>
-            <attr name="action">m_close_app</attr>
-        </action>
         <action name="退出">
             <attr name="shortcut">Ctrl+Q</attr>
             <attr name="icon">./res/icons/app_quit.png</attr>
             <attr name="action">m_close_app</attr>
         </action>
-    </menu>
-    <menu name="窗口">
-        <action></action>
     </menu>
     <menu name="工具">
         <action></action>

@@ -80,9 +80,9 @@ class AppPushButton(QPushButton):
                 border: 1px solid #2d8fdc;
             }
         """)
-        # FIXME 如果用QSS设置font-size:18px; 在不同分辨率上字体会变化。
-
-        self.clicked.connect(slotFun)
+        # 如果用QSS设置font-size:18px; 在不同分辨率上字体会变化。
+        if slotFun is not None:
+            self.clicked.connect(slotFun)
 
 
 class SwitchBtn(QWidget):

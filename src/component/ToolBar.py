@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
+import os
+import subprocess
 import sys
 
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtWidgets import QToolBar, QApplication
 
+from utils.ADBTools import ActionCmdParams
 from utils.UITools import IconTool
 from utils.UiWidgts import AppPushButton
 
@@ -23,28 +27,54 @@ class Ui_ToolBar(QToolBar):
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.btn_adddevice = AppPushButton("", self.mainWindow.show_new_device_dialog)
         self.btn_refresh = AppPushButton("", self.mainWindow.check_device_status)
+        self.btn_openshell = AppPushButton("Open Shell", self.openShell)
+        self.btn_root = AppPushButton("")
+        self.btn_root.clicked.connect(lambda: self.adb_cmd_clicked("root"))
+
+        self.btn_unroot = AppPushButton("")
+        self.btn_unroot.clicked.connect(lambda: self.adb_cmd_clicked("unroot"))
+
         self.setupUi()
 
     """
     App快捷工具栏(菜单栏下面)
     """
+
     def setupUi(self):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.setLayout(self.horizontalLayout)
-        self.setContentsMargins(5,0, 0, 0)
+        self.setContentsMargins(5, 0, 0, 0)
 
-        iconAdd = IconTool.buildQIcon("add_new.png", "icons")
+        iconAdd = IconTool.buildQIcon("add_new_32x32.png", "icons")
         self.btn_adddevice.setIcon(iconAdd)
-        self.btn_adddevice.setIconSize(QtCore.QSize(18, 18))
+        self.btn_adddevice.setIconSize(QtCore.QSize(22, 22))
         self.btn_adddevice.setObjectName("add_devices")
-        self.btn_adddevice.setMouseTracking(True) # 确保鼠标悬停和点击效果仍然有效
+        self.btn_adddevice.setMouseTracking(True)  # 确保鼠标悬停和点击效果仍然有效
         self.addWidget(self.btn_adddevice)
 
-        iconRefresh = IconTool.buildQIcon("refresh.png", "icons")
+        iconRefresh = IconTool.buildQIcon("refresh_32x32.png", "icons")
         self.btn_refresh.setIcon(iconRefresh)
-        self.btn_refresh.setIconSize(QtCore.QSize(18, 18))
+        self.btn_refresh.setIconSize(QtCore.QSize(22, 22))
         self.btn_refresh.setObjectName("refresh_devices")
         self.addWidget(self.btn_refresh)
+
+        iconOpenShell = IconTool.buildQIcon("open_shell_32x32.png", "icons")
+        self.btn_openshell.setIcon(iconOpenShell)
+        self.btn_openshell.setIconSize(QtCore.QSize(28, 28))
+        self.btn_openshell.setObjectName("open_shell")
+        self.addWidget(self.btn_openshell)
+
+        iconRoot = IconTool.buildQIcon("root_32x32.png", "icons")
+        self.btn_root.setIcon(iconRoot)
+        self.btn_root.setIconSize(QtCore.QSize(22, 22))
+        self.btn_root.setObjectName("root")
+        self.addWidget(self.btn_root)
+
+        iconunRoot = IconTool.buildQIcon("unroot_32x32.png", "icons")
+        self.btn_unroot.setIcon(iconunRoot)
+        self.btn_unroot.setIconSize(QtCore.QSize(22, 22))
+        self.btn_unroot.setObjectName("unroot")
+        self.addWidget(self.btn_unroot)
 
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
@@ -56,6 +86,26 @@ class Ui_ToolBar(QToolBar):
         self.btn_adddevice.setText(_translate("add_devices", "添加设备"))
         self.btn_refresh.setToolTip(_translate("refresh_devices", "刷新设备列表"))
         self.btn_refresh.setText(_translate("refresh_devices", "刷新设备"))
+        self.btn_root.setText(_translate("root_adb", "ADB Root"))
+        self.btn_unroot.setText(_translate("unroot_adb", "ADB Unroot"))
+
+    @pyqtSlot()
+    def adb_cmd_clicked(self, action):
+        rootParams = ActionCmdParams()
+        rootParams.isShellMode = False
+        rootParams.needDstPkg = False
+        rootParams.action = action
+        self.mainWindow.runAdbCMD(rootParams)
+
+    @pyqtSlot()
+    def openShell(self):
+        local_app_data = os.getenv('LOCALAPPDATA')
+        wt_path = f"{local_app_data}\Microsoft\WindowsApps\wt.exe"
+        if os.path.exists(wt_path):
+            shell_path = wt_path
+        else:
+            shell_path = "C:\Windows\System32\cmd.exe"
+        os.startfile(shell_path)
 
 
 if __name__ == "__main__":
