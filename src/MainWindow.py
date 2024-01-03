@@ -386,15 +386,20 @@ class MainWindow(BaseWindow):
 
     @pyqtSlot()
     def onNewDeviceAdded(self, _addr):
-        if ":" not in _addr:
-            _addr = _addr + ":" + "5555"
         """
         设备成功加入时的回调函数
         成功加入的设备，可以是手动输入的已连接|未连接设备;
         也可以是自动检测到的已连接但没加入进来的设备。
         :param _addr: 设备 ip+prot 信息
+        模拟器或者真机可能是名称+端口，比如: emulator-5554
         :return:
         """
+        if any(char.isalpha() for char in _addr):
+            # 检查是否包含任意字母字符
+            z_logger.debug("设备信息包含名称,保持设备名称")
+        elif ":" not in _addr:
+            _addr = _addr + ":" + "5555"
+
         z_logger.info("已添加新设备:" + _addr)
         item = QStandardItem(self.icon_disconnect, _addr)
         item.addr = _addr
@@ -477,8 +482,8 @@ class MainWindow(BaseWindow):
         # self.stackedWidget_param.setCurrentIndex(index)
         item = self.treeModel.itemFromIndex(index)
         if is_device_node(item):
-            z_logger.debug('on_tree_item_clicked:' + item.addr)
             isconencted = item.addr in self.active_ip_list
+            z_logger.debug(f'on_tree_item_clicked:{item.addr}  isConnected:{isconencted}')
             if self.current_device_addr == item.addr and isconencted:
                 return
             self.current_device_addr = item.addr
@@ -632,13 +637,13 @@ class MainWindow(BaseWindow):
                     exist, msg = self.dbManager.get_device_prop_info(device_ip_info)
                     # 若发现新的已连接设备,自动同步该设备
                     if not exist:
-                        z_logger.debug("This Device is not in db, add new：%s}" % device_ip_info)
+                        z_logger.debug("[Parse States] This Device is not in db, add new：%s}" % device_ip_info)
                         state, msg = self.dbManager.add_device_to_db(ip=device_ip_info)
                         if state:
                             self.onNewDeviceAdded(device_ip_info)
                             # self.close()
                     else:
-                        z_logger.debug("This device already in local.")
+                        z_logger.debug("[Parse States] This device already in local.")
 
             else:
                 # 离线设备 device_state == 'offline' 或 'unknow'
