@@ -216,7 +216,7 @@ class ConsoleWindow(QMainWindow):
 
         content = check_link_addr(logMsg)
         ui_log = changeLogColor(level, content)
-        if "adb" in ui_log:
+        if "adb " in ui_log:
             ui_log = "{0}{1}".format(_build_time_stamp(), ui_log)
         elif _funcName != "on_adb_cmd_exectued" and \
                 _funcName != "on_screen_record_emit_sigle":
@@ -358,12 +358,15 @@ class InfoBarWidget(QWidget):
         """
         if len(self.current_ip) == 0:
             return
-        adb_tool.get_running_process(self._onProcessFiltered)
+        adb_tool.get_running_process(self.current_ip, self._onProcessFiltered)
 
     def _onProcessFiltered(self, sorted_processes):
         """
         针对已选设备查询到的满足条件的进程数据
         """
+        if len(sorted_processes) == 0:
+            z_logger.error("获取设备进程异常！")
+            return
         self.pkgComboBox.clear()
         for user, pid, p_name in sorted_processes:
             self.pkgComboBox.addItem(f"{p_name}({pid})")

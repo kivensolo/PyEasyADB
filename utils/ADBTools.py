@@ -33,21 +33,30 @@ class ActionCmdParams:
         return _full_cmd
 
 
-def get_filter_processes():
+def get_filter_processes(device_name):
     """
     获取进程信息
     ['USER', 'PID', 'PPID', 'VSZ', 'RSS', 'WCHAN', 'ADDR', 'S', 'NAME']
+    ['USER', 'PID', 'PPID', 'VSIZE', 'RSS', 'WCHAN', 'PC', 'NAME']
     :return:
     """
     processes = []
     try:
-        output = subprocess.check_output("adb shell ps", shell=True).decode("utf-8")
-    except:
-        z_logger.error("获取进程信息失败")
-        return processes
+        _cmd = f"adb -s {device_name} shell ps"
+        output = subprocess.check_output(_cmd, shell=True).decode("utf-8")
+    except Exception as e:
+        z_logger.error("获取进程信息失败:" + e)
+        return []
 
+    # 从第二行开始 分割每一行
     for line in output.splitlines()[1:]:
+        if len(line) == 0:  # blank content
+            continue
+        z_logger.debug("process line info:\n" + line)
         columns = line.split()
+        if len(columns) == 0:
+            z_logger.error("process line info error.")
+            continue
         user = columns[0]
         if not str(user).startswith("u0_") \
                 and user != "system" and user != "bluetooth":
@@ -198,8 +207,8 @@ class ADBTools:
         else:
             z_logger.error("Failed to capture screenshot.")
 
-    def get_running_process(self, blcok):
-        filtered_processes = get_filter_processes()
+    def get_running_process(self, device_name, blcok):
+        filtered_processes = get_filter_processes(device_name)
         # 按照A-Z顺序对进程名称进行排序
         sorted_processes = sorted(filtered_processes, key=lambda x: x[2])
         blcok(sorted_processes)

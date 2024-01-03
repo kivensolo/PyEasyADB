@@ -58,15 +58,15 @@ class CmdExecutor(QThread):
         _process = Popen(self.cmd, stdout=PIPE,stderr=PIPE, bufsize=-1, encoding='utf-8')
         stdout_data, stderr_data = _process.communicate(input=None, timeout=None)
         if stdout_data is not None:
+            # 把多行换行符换成一行
+            stdout_data = stdout_data.replace("\n\n", "\n")
             # 正常输出的结果不进行strip操作
-            self.result = stdout_data
+            self.result = stdout_data.strip()
         if stderr_data is not None:
             # print("CmdExecutor stderr_data = " + stderr_data)
-            self.result = self.result + stderr_data.strip()
+            self.result = self.result + "\n" + stderr_data.strip()
             # self.result = stdout_data.strip().split('\n')
-        # for line in iter(_process.stdout.readline, b''):
-        #     l.append(line.decode('utf-8'))
-        #     # print("aaaaaaaaaaaaaa : "+line.decode('utf-8'))
+
         _process.stdout.close()   # close触发finish?
         # _process.wait()
         if self.isInterruptionRequested():  # 判断是否请求终止线程
