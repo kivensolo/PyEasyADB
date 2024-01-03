@@ -201,7 +201,7 @@ class Record_Dialog(object):
             self.timer.start(1000)
             self.record_remaining_seconds = int(self.time_limit_value)
             self.mainWindow.adbTools.start_screen_record(self.mainWindow.current_device_addr, self.get_record_cmd(),
-                                                         record_file_path, savePath)
+                                                         record_file_path, self.record_file_save_path)
         else:
             z_logger.info("Cancle screen record.")
 

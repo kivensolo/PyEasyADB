@@ -27,9 +27,9 @@ class ActionCmdParams:
         _cmd = self.action.format(self.target_app)
         _full_cmd = ''
         if self.isShellMode:
-            _full_cmd = "adb -s {0} shell {1}".format(self.target_device_ip, _cmd)
+            _full_cmd = f"adb -s {self.target_device_ip} shell {_cmd}"
         else:
-            _full_cmd = "adb -s {0} {1}".format(self.target_device_ip, _cmd)
+            _full_cmd = f"adb -s {self.target_device_ip} {_cmd}"
         return _full_cmd
 
 
@@ -71,9 +71,11 @@ def get_filter_processes():
 
 class AsyncAdbThread(QThread):
     output_received = pyqtSignal(str)
+    name = "Async_adb_thread"
 
     def __init__(self):
         super().__init__()
+
         self.cmds = ""
         self.process = None
         self.isStoped = False
@@ -85,18 +87,24 @@ class AsyncAdbThread(QThread):
             if self.isStoped:
                 # 手动终止，不执行任何命令
                 break
+            if isinstance(_cmd,ActionCmdParams):
+                _cmd = _cmd.getAdbCMD()
             self.output_received.emit(_cmd)
-            self.process = subprocess.Popen(_cmd, stdout=subprocess.PIPE)
+            self.process = subprocess.Popen(
+                _cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8'
+            )
             while True:
-                output = self.process.stdout.readline().decode('utf-8').strip()
-                if output:
-                    self.output_received.emit(output)  # 在主线程中更新UI
+                stdout = self.process.stdout.readline()
+                if stdout:
+                    self.output_received.emit(stdout)
                 else:
                     break   # 输出结束，中断循环并退出线程
-            # process.kill()  # Optionally kill the adb process if it's still running (not strictly necessary)
+
+            # 会阻塞，所以没法和stdout放在一些读取
+            stderr = self.process.stderr.read()
+            if stderr:
+                self.output_received.emit(stderr)
             # process.communicate()  # 等待命令完成
-        # self.quit()
-        # self.terminate()
         self.exit()  # 返回状态(不是严格必要的)
 
     def stop(self):
@@ -129,6 +137,18 @@ class ADBTools:
         self.current_cmd = cmd
         self.executor.setFinishCallback(block)
         self.executor.exec(cmd)
+
+    def async_exec_adb_cmd(self, cmds):
+        """
+        异步执行adb命令，支持多批次命令
+        :param cmds:
+        :return:
+        """
+        try:
+            self.thread.cmds = cmds
+            self.thread.start()
+        except Exception as e:
+            print(e)
 
     @DeprecationWarning
     def _exec_cmd(self, ip, cmd="", is_shell=False, block=None):
@@ -201,11 +221,7 @@ class ADBTools:
         cmd_4 = f"adb shell rm {tmp_path}"
         cmds = [cmd_1, cmd_2, cmd_3, cmd_4]
         z_logger.info("Start screen record.")
-        try:
-            self.thread.cmds = cmds
-            self.thread.start()  # Start the thread to read adb output in a separate thread
-        except Exception as e:
-            print(e)
+        self.async_exec_adb_cmd(cmds)
 
     def stop_screen_record(self):
         if self.thread.isRunning():

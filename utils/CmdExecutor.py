@@ -55,14 +55,14 @@ class CmdExecutor(QThread):
 
     def run(self):
         # 日志输出文件初始化 --- Start
-        _process = Popen(self.cmd, stdout=PIPE, bufsize=-1, encoding='utf-8')
+        _process = Popen(self.cmd, stdout=PIPE,stderr=PIPE, bufsize=-1, encoding='utf-8')
         stdout_data, stderr_data = _process.communicate(input=None, timeout=None)
-        if stderr_data is not None:
-            # print("CmdExecutor stderr_data = " + stderr_data)
-            self.result = stderr_data.strip()
         if stdout_data is not None:
             # 正常输出的结果不进行strip操作
             self.result = stdout_data
+        if stderr_data is not None:
+            # print("CmdExecutor stderr_data = " + stderr_data)
+            self.result = self.result + stderr_data.strip()
             # self.result = stdout_data.strip().split('\n')
         # for line in iter(_process.stdout.readline, b''):
         #     l.append(line.decode('utf-8'))

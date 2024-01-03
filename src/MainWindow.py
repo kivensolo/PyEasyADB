@@ -450,6 +450,23 @@ class MainWindow(BaseWindow):
             cmdParams.target_app = pkgName
             self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
 
+    def runAdbCMD_V2(self, cmdParams:list):
+        if len(self.active_ip_list) == 0:
+            z_logger.error("请先连接设备")
+        else:
+            for _cmd in cmdParams:
+                pkgName = ""
+                if _cmd.needDstPkg:
+                    pkgName = self.pkgManager.getCurrentSelectedPackage()
+                    if pkgName is None:
+                        z_logger.error("请先选择目标应用")
+                        return
+                # 每次重新赋值
+                _cmd.target_device_ip = self.current_device_addr
+                _cmd.target_app = pkgName
+                self.adbTools.exec_adb_cmd(_cmd.getAdbCMD(), self.on_adb_cmd_exectued)
+                # async_exec_adb_cmd
+
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):
         """

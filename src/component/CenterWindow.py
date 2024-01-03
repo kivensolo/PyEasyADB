@@ -191,6 +191,11 @@ class Ui_ConvenientArea(object):
 
     @pyqtSlot()
     def onDoAction(self, actionParams: ActionCmdParams):
+        """
+        执行快捷命令
+        :param actionParams:
+        :return:
+        """
         _action = actionParams.action
         if _action == "m_show_install_app_dialog":
             install_apk_dialog = installApkDialog(self.mainWindow)
@@ -202,8 +207,33 @@ class Ui_ConvenientArea(object):
             _record_dialog = screen_record_dialog(self.mainWindow)
             _record_dialog.setWindowModality(Qt.ApplicationModal)
             _record_dialog.exec()
+        elif _action == "m_restart_app":
+            self.restart_app()
+        elif _action == "m_input_text":
+            self.restart_app()
         else:
             self.mainWindow.runAdbCMD(actionParams)
+
+    def restart_app(self):
+        cmd_1 = ActionCmdParams()
+        cmd_1.target_device_ip = self.mainWindow.current_device_addr
+        cmd_1.needDstPkg = True
+        cmd_1.target_app = self.mainWindow.pkgManager.getCurrentSelectedPackage()
+        cmd_1.action = "am force-stop {0}"
+
+        cmd_2 = ActionCmdParams()
+        cmd_2.target_device_ip = self.mainWindow.current_device_addr
+        cmd_2.needDstPkg = False
+        cmd_2.action = "sleep 1"
+
+        cmd_3 = ActionCmdParams()
+        cmd_3.target_device_ip = self.mainWindow.current_device_addr
+        cmd_3.needDstPkg = True
+        cmd_3.target_app = self.mainWindow.pkgManager.getCurrentSelectedPackage()
+        cmd_3.action = "am start {0}"
+        cmds = [cmd_1, cmd_2, cmd_3]
+
+        self.mainWindow.adbTools.async_exec_adb_cmd(cmds)
 
     def action_save_screen_shoot(self):
         """
