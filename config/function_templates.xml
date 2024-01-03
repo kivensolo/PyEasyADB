@@ -9,101 +9,101 @@ action为元素的点击事件类型;
 <templates>
     <template name="常用应用操作">
         <item>
-            <attr name="icon">./res/icons/app_uninstall_256x256.png</attr>
+            <attr name="icon">./res/img/app_uninstall_256x256.png</attr>
             <attr name="text">卸载应用</attr>
             <attr name="action" shell="false">uninstall {0}</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_install_256x256.png</attr>
+            <attr name="icon">./res/img/app_install_256x256.png</attr>
             <attr name="text">安装应用</attr>
             <attr name="action">m_show_install_app_dialog</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_stop_256x256.png</attr>
+            <attr name="icon">./res/img/app_stop_256x256.png</attr>
             <attr name="text">停止应用</attr>
             <attr name="action">am force-stop {0}</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_start_256x256.png</attr>
+            <attr name="icon">./res/img/app_start_256x256.png</attr>
             <attr name="text">启动应用</attr>
             <attr name="action">am start {0}</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="icon">./res/img/app_restart_256x256.png</attr>
             <attr name="text">重启应用</attr>
             <attr name="action">am start2222 {0}</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_clear_data_256x256.png</attr>
+            <attr name="icon">./res/img/app_clear_data_256x256.png</attr>
             <attr name="text">清除数据</attr>
             <attr name="action">pm clear {0}</attr>
         </item>
     </template>
     <template name="数据获取">
         <item>
-            <attr name="icon">./res/icons/screen_capture_256x256.png</attr>
-            <attr name="text">截图并保存</attr>
+            <attr name="icon">./res/img/screen_capture_256x256.png</attr>
+            <attr name="text">屏幕截图</attr>
             <attr name="action">m_screenshot</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_start_256x256.png</attr>
-            <attr name="text">录制视频</attr>
+            <attr name="icon">./res/img/screen_record_256x256.png</attr>
+            <attr name="text">视频录制</attr>
             <attr name="action">m_screen_record</attr>
         </item>
     </template>
     <template name="按键模拟">
         <item>
-            <attr name="icon">./res/icons/app_uninstall_256x256.png</attr>
+            <attr name="icon">./res/img/back_256x256.png</attr>
             <attr name="text">返回键</attr>
             <attr name="action" shell="true">input keyevent 4</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/arrow_up.png</attr>
+            <attr name="icon">./res/img/arrow_up.png</attr>
             <attr name="text">上键</attr>
             <attr name="action" shell="true">input keyevent 19</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_start_256x256.png</attr>
+            <attr name="icon">./res/img/ok_256x256.png</attr>
             <attr name="text">确认键</attr>
             <attr name="action" shell="true">input keyevent 23</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_start_256x256.png</attr>
+            <attr name="icon">./res/img/volume_up_256x256.png</attr>
             <attr name="text">音量加</attr>
             <attr name="action" shell="true">input keyevent 24</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="icon">./res/img/menu_256x256.png</attr>
             <attr name="text">菜单键</attr>
             <attr name="action" shell="true">input keyevent 82</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/arrow_left.png</attr>
+            <attr name="icon">./res/img/arrow_left.png</attr>
             <attr name="text">左键</attr>
             <attr name="action" shell="true">input keyevent 21</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/arrow_down.png</attr>
+            <attr name="icon">./res/img/arrow_down.png</attr>
             <attr name="text">下键</attr>
             <attr name="action" shell="true">input keyevent 20</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/arrow_right.png</attr>
+            <attr name="icon">./res/img/arrow_right.png</attr>
             <attr name="text">右键</attr>
             <attr name="action" shell="true">input keyevent 22</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="icon">./res/img/volume_down_256x256.png</attr>
             <attr name="text">音量减</attr>
             <attr name="action">input keyevent 25</attr>
         </item>
         <item>
-            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="icon">./res/img/power_256x256.png</attr>
             <attr name="text">电源键</attr>
             <attr name="action" shell="true">input keyevent 26</attr>
         </item>
         <item state="disable">
-            <attr name="icon">./res/icons/app_restart_256x256.png</attr>
+            <attr name="icon">./res/img/app_restart_256x256.png</attr>
             <attr name="text">遥控器模式</attr>
             <attr name="action" shell="true"></attr>
         </item>

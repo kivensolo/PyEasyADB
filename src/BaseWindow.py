@@ -20,7 +20,7 @@ class BaseWindow(QMainWindow):
     def initWindow(self):
         # 窗口初始化
         self.setObjectName("MainWindow")
-        self.setToolTip('This is a <b>QMainWindow</b> widget')
+        # self.setToolTip('This is a <b>QMainWindow</b> widget')
         self.setWindowTitle(self.title)
         self.setWindowIcon(IconTool.buildQIcon("logo.png"))
 
