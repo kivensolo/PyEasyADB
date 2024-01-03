@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 
 from src.logcat.log import z_logger
 from src import MainWindow
-from src.widget.Dialogs import installApkDialog, screen_record_dialog
+from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
 from utils.ADBTools import ActionCmdParams
 
 
@@ -210,7 +210,9 @@ class Ui_ConvenientArea(object):
         elif _action == "m_restart_app":
             self.restart_app()
         elif _action == "m_input_text":
-            self.restart_app()
+            _text_input_dialog = TextInputDialog(self.mainWindow)
+            _text_input_dialog.setWindowModality(Qt.ApplicationModal)
+            _text_input_dialog.exec()
         else:
             self.mainWindow.runAdbCMD(actionParams)
 

@@ -450,7 +450,7 @@ class MainWindow(BaseWindow):
             cmdParams.target_app = pkgName
             self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
 
-    def runAdbCMD_V2(self, cmdParams:list):
+    def runAdbCMD_V2(self, cmdParams: list):
         if len(self.active_ip_list) == 0:
             z_logger.error("请先连接设备")
         else:

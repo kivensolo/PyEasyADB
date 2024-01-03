@@ -31,12 +31,17 @@ action为元素的点击事件类型;
         <item>
             <attr name="icon">./res/img/app_restart_256x256.png</attr>
             <attr name="text">重启应用</attr>
-            <attr name="action">am start2222 {0}</attr>
+            <attr name="action">m_restart_app</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_clear_data_256x256.png</attr>
             <attr name="text">清除数据</attr>
             <attr name="action">pm clear {0}</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/text_input_256x256.png</attr>
+            <attr name="text">文本输入</attr>
+            <attr name="action">m_input_text</attr>
         </item>
     </template>
     <template name="数据获取">
