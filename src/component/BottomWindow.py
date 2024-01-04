@@ -78,15 +78,14 @@ class BottomTabWidget(QTabWidget):
         return self.consoleView.get_fun_widget()
 
 
-def changeLogColor(level, log):
+def changeLogColor(appen_prefix, level, log):
     _color_log = log
     if level >= logging.ERROR:
         _color_log = "<font color=\"red\">{0}</font>".format(log)
     elif level == logging.WARNING:
         _color_log = "<font color=\"yellow\">{0}</font>".format(log)
-    else:
-        if "adb " in log:
-            _color_log = "<font color=\"#005ac7\" >{0}</font>".format(log)
+    elif appen_prefix:
+        _color_log = "<font color=\"#005ac7\" >{0}</font>".format(log)
     return _color_log
 
 
@@ -228,7 +227,7 @@ class ConsoleWindow(QMainWindow):
         # url检测
         content = check_link_addr(logMsg)
         # 颜色检测
-        ui_log = changeLogColor(level, content)
+        ui_log = changeLogColor(is_need_appen_prefix, level, content)
 
         if is_need_appen_prefix:
             ui_log = f"{_build_time_stamp()}{ui_log}"
