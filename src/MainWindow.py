@@ -1,7 +1,7 @@
 import xml.dom.minidom
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex
+from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSize
 from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
     QAbstractItemView, QWidget, QStyleFactory
@@ -82,6 +82,7 @@ class MainWindow(BaseWindow):
 
         self.icon_connect = IconTool.buildQIcon("state_connect.png")
         self.icon_disconnect = IconTool.buildQIcon("state_disconnect.png")
+        self.icon_warning = IconTool.buildQIcon("warning.png")
 
         # 初始化数据库帮助类
         self.dbManager = DBManager()
@@ -287,7 +288,7 @@ class MainWindow(BaseWindow):
         # self.actionC.setDisabled(True)
         self.action_disconnect = treeView.contextMenu.addAction(self.icon_disconnect, '| 断开连接')
         self.action_disconnect.triggered.connect(self.disconnect_device)
-        self.action_remove_device = treeView.contextMenu.addAction(self.icon_disconnect, '| 删除设备')
+        self.action_remove_device = treeView.contextMenu.addAction(self.icon_warning, '| 删除设备')
         self.action_remove_device.triggered.connect(self.del_device)
 
     def load_adb_cmds(self):
@@ -309,31 +310,33 @@ class MainWindow(BaseWindow):
             # ELEMENT_NODE
             _attrName = group.getAttribute("name")
             print("\t|====分组：" + _attrName)
-            currentFolder = QStandardItem(_attrName)
-            if level == 1 or prentQItem is not None:
-                prentQItem.appendRow(currentFolder)
+            current_item = QStandardItem(_attrName)
+            if prentQItem is not None:
+                prentQItem.appendRow(current_item)
 
             # load child group element
             _groupChildrens = group.getElementsByTagName("sub_group")
-            if _groupChildrens.length > 0:
-                self.parseNode(currentFolder, _groupChildrens, level+1)
+            if _groupChildrens.length > 0:  # 子分组
+                self.parseNode(current_item, _groupChildrens, level+1)
 
-            cmdChildrens = group.getElementsByTagName("item")
-            for item in cmdChildrens:
-                name = item.getAttribute("name")
-                cmd = None
-                if item.firstChild is not None:
-                    cmd = item.firstChild.data
-                print("\t\t|" + name + ":" + str(cmd))
-                qItem = QStandardItem(name)
-                qItem.type = TreeItemType.TYPE_ADB_CMD
-                qItem.name = name
-                # 默认不需要指定应用包名
-                qItem.needDstPkg = item.getAttribute("dst_pkg") == "true"
-                # 默认为shell模式
-                qItem.isShell = item.getAttribute("shell") != "false"
-                qItem.cmd = cmd
-                currentFolder.appendRow(qItem)
+            _childrens = group.childNodes
+            for childNode in _childrens:
+                if childNode.nodeName == 'item':
+                    # 获取item节点的name和文本内容
+                    name = childNode.getAttribute("name")
+                    cmd = None
+                    if childNode.firstChild is not None:
+                        cmd = childNode.firstChild.data
+                    print("\t\t|" + name + ":" + str(cmd))
+                    qItem = QStandardItem(name)
+                    qItem.type = TreeItemType.TYPE_ADB_CMD
+                    qItem.name = name
+                    # 默认不需要指定应用包名
+                    qItem.needDstPkg = childNode.getAttribute("dst_pkg") == "true"
+                    # 默认为shell模式
+                    qItem.isShell = childNode.getAttribute("shell") != "false"
+                    qItem.cmd = cmd
+                    current_item.appendRow(qItem)
             if level == 1:
                 self.tree_data_list.append(prentQItem)
 
@@ -501,6 +504,7 @@ class MainWindow(BaseWindow):
                 item_model.setIcon(self.icon_connect)
             else:
                 item_model.setIcon(self.icon_disconnect)
+            # item_model.setIconSize(QSize(128, 128))
         elif is_device_root_node(item_model):
             z_logger.debug("更新设备列表")
         else:
