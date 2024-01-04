@@ -99,6 +99,7 @@ class Ui_ConvenientArea(object):
         template_list = root.getElementsByTagName("template")
         for template in template_list:
             template_name = template.getAttribute('name')
+            template_layout = template.getAttribute('layout')
             # 模板区域数量检查，创建分组的GroupBox
             _groupBox = QtWidgets.QGroupBox(self.scrollAreaWidgetContents)
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
@@ -111,60 +112,62 @@ class Ui_ConvenientArea(object):
             _groupBox.setTitle(template_name)
 
             item_list = template.getElementsByTagName("item")
-            # 模板布局
-            gridLayout = QtWidgets.QGridLayout(_groupBox)
-            gridLayout.setObjectName("template_" + template_name)
 
-            # 每个模板区域有几个行为控件
-            current_template_item_counts = len(item_list)
-            for index in range(current_template_item_counts):
-                item = item_list[index]
-                rowIndex = int(index / every_row_size)
-                columnIndex = index % every_row_size
+            if template_layout == "grid":
+                # grid模式的模板布局
+                gridLayout = QtWidgets.QGridLayout(_groupBox)
+                gridLayout.setObjectName("template_" + template_name)
 
-                # 初始化每一个tool按钮
-                item_tool_button = QtWidgets.QToolButton(_groupBox)
-                item_tool_button.setObjectName("{0}_item_{1}{2}".format(template_name, rowIndex,columnIndex))
-                item_tool_button.setAutoRaise(True)
+                # 每个模板区域有几个行为控件
+                current_template_item_counts = len(item_list)
+                for index in range(current_template_item_counts):
+                    item = item_list[index]
+                    rowIndex = int(index / every_row_size)
+                    columnIndex = index % every_row_size
 
-                item_state = item.getAttribute("state")
-                if item_state == "disable":  # 未开发功能设置为disable
-                    item_tool_button.setEnabled(False)
-                    item_tool_button.setToolTip("该功能未开发，敬请期待")
+                    # 初始化每一个tool按钮
+                    item_tool_button = QtWidgets.QToolButton(_groupBox)
+                    item_tool_button.setObjectName("{0}_item_{1}{2}".format(template_name, rowIndex,columnIndex))
+                    item_tool_button.setAutoRaise(True)
 
-                sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-                sizePolicy.setHorizontalStretch(0)
-                sizePolicy.setVerticalStretch(0)
-                item_tool_button.setSizePolicy(sizePolicy)
-                attrs = item.getElementsByTagName("attr")
-                actionParams = ActionCmdParams()
-                for attr in attrs:
-                    if attr.firstChild is None:
-                        continue
-                    _key = attr.getAttribute('name')
-                    _value = attr.firstChild.nodeValue
-                    if _key == "text":
-                        font = QtGui.QFont()
-                        font.setPointSize(10)
-                        item_tool_button.setText(_value)
-                        item_tool_button.setFont(font)
-                    elif _key == "icon":
-                        item_tool_button.setIcon(QtGui.QIcon(_value))
-                        item_tool_button.setIconSize(QSize(56, 56))
-                        item_tool_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-                    elif _key == "action":
-                        shellValue = attr.getAttribute("shell")
-                        if shellValue.lower() == "false":
-                            actionParams.isShellMode = False
-                        actionParams.action = _value
-                """
-                https://blog.csdn.net/PixelNovaO/article/details/132727483
-                每次迭代时创建一个新的闭包，以便为每个按钮创建一个独立的事件处理器。并将自定义对象作为参数传递。
-                使用了lambda 函数来创建一个新的闭包，以捕获当前的按钮对象和自定义对象。这样，每个按钮的事件处理器都会独立地处理各自的对象。
-                """
-                item_tool_button.clicked.connect(lambda checked, params=actionParams: self.onDoAction(params))
+                    item_state = item.getAttribute("state")
+                    if item_state == "disable":  # 未开发功能设置为disable
+                        item_tool_button.setEnabled(False)
+                        item_tool_button.setToolTip("该功能未开发，敬请期待")
 
-                gridLayout.addWidget(item_tool_button, rowIndex, columnIndex, 1, 1)
+                    sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+                    sizePolicy.setHorizontalStretch(0)
+                    sizePolicy.setVerticalStretch(0)
+                    item_tool_button.setSizePolicy(sizePolicy)
+                    attrs = item.getElementsByTagName("attr")
+                    actionParams = ActionCmdParams()
+                    for attr in attrs:
+                        if attr.firstChild is None:
+                            continue
+                        _key = attr.getAttribute('name')
+                        _value = attr.firstChild.nodeValue
+                        if _key == "text":
+                            font = QtGui.QFont()
+                            font.setPointSize(10)
+                            item_tool_button.setText(_value)
+                            item_tool_button.setFont(font)
+                        elif _key == "icon":
+                            item_tool_button.setIcon(QtGui.QIcon(_value))
+                            item_tool_button.setIconSize(QSize(56, 56))
+                            item_tool_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
+                        elif _key == "action":
+                            shellValue = attr.getAttribute("shell")
+                            if shellValue.lower() == "false":
+                                actionParams.isShellMode = False
+                            actionParams.action = _value
+                    """
+                    https://blog.csdn.net/PixelNovaO/article/details/132727483
+                    每次迭代时创建一个新的闭包，以便为每个按钮创建一个独立的事件处理器。并将自定义对象作为参数传递。
+                    使用了lambda 函数来创建一个新的闭包，以捕获当前的按钮对象和自定义对象。这样，每个按钮的事件处理器都会独立地处理各自的对象。
+                    """
+                    item_tool_button.clicked.connect(lambda checked, params=actionParams: self.onDoAction(params))
+
+                    gridLayout.addWidget(item_tool_button, rowIndex, columnIndex, 1, 1)
 
             # 若第一行未满，则进行填充, 使UI按照网格对齐
             if current_template_item_counts < every_row_size and \
@@ -198,6 +201,9 @@ class Ui_ConvenientArea(object):
         """
         _action = actionParams.action
         if _action == "m_show_install_app_dialog":
+            if len(self.mainWindow.active_ip_list) == 0:
+                z_logger.error("请先连接设备!!!")
+                return
             install_apk_dialog = installApkDialog(self.mainWindow)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
             install_apk_dialog.exec()

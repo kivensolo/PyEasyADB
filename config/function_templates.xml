@@ -7,7 +7,7 @@ action为元素的点击事件类型;
 
 -->
 <templates>
-    <template name="常用应用操作">
+    <template name="常用应用操作" layout="grid">
         <item>
             <attr name="icon">./res/img/app_uninstall_256x256.png</attr>
             <attr name="text">卸载应用</attr>
@@ -44,7 +44,7 @@ action为元素的点击事件类型;
             <attr name="action">m_input_text</attr>
         </item>
     </template>
-    <template name="数据获取">
+    <template name="数据获取" layout="grid">
         <item>
             <attr name="icon">./res/img/screen_capture_256x256.png</attr>
             <attr name="text">屏幕截图</attr>
@@ -56,7 +56,7 @@ action为元素的点击事件类型;
             <attr name="action">m_screen_record</attr>
         </item>
     </template>
-    <template name="按键模拟">
+    <template name="按键模拟" layout="grid">
         <item>
             <attr name="icon">./res/img/back_256x256.png</attr>
             <attr name="text">返回键</attr>
