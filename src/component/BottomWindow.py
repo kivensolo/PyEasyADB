@@ -173,20 +173,30 @@ class ConsoleWindow(QMainWindow):
         :return:
         """
         clearButton = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("clear.png"))
+        icon = QIcon(IconTool.buildQIcon("ic_clear.png", "icons"))
         clearButton.setIcon(icon)
-        clearButton.setFixedWidth(18)
-        clearButton.setFixedHeight(20)
+        clearButton.setFixedWidth(24)
+        clearButton.setFixedHeight(28)
         clearButton.clicked.connect(self._clear)
         clearButton.setToolTip("Clear the logcat")
+
+        scrollBtn = QPushButton(self)
+        icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
+        scrollBtn.setIcon(icon)
+        scrollBtn.setFixedWidth(24)
+        scrollBtn.setFixedHeight(28)
+        scrollBtn.clicked.connect(self._scrollToBottom)
+        scrollBtn.setToolTip("Scroll to bottom")
+
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
-        layout.setSpacing(1)
+        layout.setSpacing(5)
         layout.addWidget(clearButton)
+        layout.addWidget(scrollBtn)
         layout.setContentsMargins(4, 0, 0, 0)
         self.leftWiget.setAutoFillBackground(True)
         self.leftWiget.setLayout(layout)
-        self.leftWiget.setFixedWidth(22)
+        self.leftWiget.setFixedWidth(27)
 
     def normalOutputWritten(self, text):
         cursor = self.terminalTextBrowser.textCursor()
@@ -237,8 +247,8 @@ class ConsoleWindow(QMainWindow):
         return
 
     def _scrollToBottom(self):
-        current_pos = self.terminalTextBrowser.scrollToAnchor()
-        return
+        self.terminalTextBrowser.moveCursor(QTextCursor.End)
+        self.terminalTextBrowser.ensureCursorVisible()
 
     def updateSelectDeviceInfo(self, ip, isconnect):
         self.infoBarWidget.update_device_info(ip, isconnect)
