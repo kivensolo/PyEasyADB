@@ -87,6 +87,7 @@ class MainWindow(BaseWindow):
         # 初始化数据库帮助类
         self.dbManager = DBManager()
         self.pkgManager = PackageManager()
+        # 当前选择的设备地址信息
         self.current_device_addr = ""
 
         # 主窗口分割器

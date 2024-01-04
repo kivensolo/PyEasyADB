@@ -90,7 +90,7 @@ def process_user_name_check(user):
 
 
 class AsyncAdbThread(QThread):
-    output_received = pyqtSignal(str)
+    output_received = pyqtSignal(list)
     name = "Async_adb_thread"
 
     def __init__(self):

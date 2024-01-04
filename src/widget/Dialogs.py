@@ -199,7 +199,7 @@ class installApkDialog(BaseDialog):
             self.btn_install_apk.setEnabled(True)
 
     def doInstallApk(self):
-        _cmd = "adb install "
+        _cmd = f"adb -s {self.mainWindow.current_device_addr} install "
         # 进行APK文件安装
         apkPath = self.file_path_edit_text.text()
         if self.rb_mode_replace.isChecked():  # -r
@@ -210,6 +210,7 @@ class installApkDialog(BaseDialog):
             _cmd += "-d "
         _cmd += apkPath
         self.mainWindow.adbTools.async_exec_adb_cmd([_cmd])
+        z_logger.info("Installing........")
 
 
 class screen_record_dialog(BaseDialog):
