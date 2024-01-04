@@ -81,15 +81,14 @@ class DBManager:
         return result
 
     def insertPackageRow(self, package):
-        self.exec_sql('INSERT INTO {0} VALUES (\'{1}\')'.format(DBManager.TABLE_PACKAGE, package))
+        self.exec_sql(f"INSERT INTO {DBManager.TABLE_PACKAGE} VALUES (\'{package}\')")
 
     def update_ip_data(self, newIp, idx=0):
-        sql = 'UPDATE {0} SET ip={1} WHERE id={2}'.\
-            format(DBManager.TABLE_DEVICE, newIp, idx)
+        sql = f"UPDATE {DBManager.TABLE_DEVICE} SET ip={newIp} WHERE id={idx}"
         self.exec_sql(sql)
 
     def update_device_prop(self, info, ip):
-        sql = 'UPDATE {0} SET device_info=\'{1}\' WHERE ip=\'{2}\''.format(DBManager.TABLE_DEVICE, info, ip)
+        sql = f"UPDATE {DBManager.TABLE_DEVICE} SET device_info=\'{info}\' WHERE ip=\'{ip}\'"
         self.exec_sql(sql)
 
     def update_device_alias(self, ip, alias):
@@ -97,7 +96,7 @@ class DBManager:
         self.exec_sql(sql)
 
     def queryData(self, column='*', table_name='default'):
-        sql = 'SELECT {0} FROM {1}'.format(column, table_name)
+        sql = f"SELECT {column} FROM {table_name}"
         return self.exec_sql(sql)
 
     def get_all_device(self):
@@ -105,7 +104,7 @@ class DBManager:
         从数据库中获取所有设备信息
         :return: 数据List集合
         """
-        sql = 'select * from %s' % DBManager.TABLE_DEVICE
+        sql = f"select * from {DBManager.TABLE_DEVICE}"
         return self.exec_sql(sql)
 
     def add_device_to_db(self, ip="", port="5555", active=0):
@@ -129,7 +128,7 @@ class DBManager:
             conn = sqlite3.connect(APP_DB_FILE)
             cursor = conn.cursor()
             # 同一ip有多条端口数据  优化，改为一条数据
-            sql_cmd = 'SELECT * FROM device WHERE ip =\'{0}\''.format(host)
+            sql_cmd = f"SELECT * FROM device WHERE ip =\'{host}\'"
             result = cursor.execute(sql_cmd)
             for item in result:
                 if item and item[1] == _port:
@@ -152,7 +151,7 @@ class DBManager:
         host = addr
         if len(ip_group) == 2:
             host = ip_group[0]
-        sql_cmd = 'SELECT device_info FROM device WHERE ip =\'{0}\''.format(host)
+        sql_cmd = f"SELECT device_info FROM device WHERE ip =\'{host}\'"
         result, result = DBManager._query_data(sql_cmd)
         if result:
             return True, result[0]
