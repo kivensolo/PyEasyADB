@@ -107,28 +107,28 @@ class AsyncAdbThread(QThread):
             if self.isStoped:
                 # 手动终止，不执行任何命令
                 break
-            if isinstance(_cmd,ActionCmdParams):
+            if isinstance(_cmd, ActionCmdParams):
                 _cmd = _cmd.getAdbCMD()
-            self.output_received.emit(_cmd)
+            self.output_received.emit(["input", _cmd])
             self.process = subprocess.Popen(
                 _cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8'
             )
             while True:
                 stdout = self.process.stdout.readline()
                 if stdout:
-                    self.output_received.emit(stdout)
+                    self.output_received.emit(["output", stdout])
                 else:
                     break   # 输出结束，中断循环并退出线程
 
             # 会阻塞，所以没法和stdout放在一些读取
             stderr = self.process.stderr.read()
             if stderr:
-                self.output_received.emit(stderr)
+                self.output_received.emit(["output", stderr])
             # process.communicate()  # 等待命令完成
         self.exit()  # 返回状态(不是严格必要的)
 
     def stop(self):
-        self.output_received.emit("录屏已终止")
+        self.output_received.emit(["output", "录屏已终止"])
         self.isStoped = True
         os.kill(self.process.pid, signal.SIGINT)
 
@@ -139,7 +139,7 @@ class ADBTools:
         super(ADBTools, self).__init__()
         # 不能把executor放入exec_adb_cmd中，出栈的时候会被回收
         self.thread = AsyncAdbThread()
-        self.thread.output_received.connect(self.on_screen_record_emit_sigle)
+        self.thread.output_received.connect(self.on_async_single_recevied)
         self.executor = CmdExecutor()
         self.current_cmd = ''
 
@@ -153,7 +153,7 @@ class ADBTools:
         :param block:  回调函数
         :return:  list
         """
-        z_logger.info(cmd)
+        z_logger.info_with_stamp(cmd)
         self.current_cmd = cmd
         self.executor.setFinishCallback(block)
         self.executor.exec(cmd)
@@ -240,13 +240,20 @@ class ADBTools:
         cmd_3 = f"adb pull {tmp_path} {pull_path}"
         cmd_4 = f"adb shell rm {tmp_path}"
         cmds = [cmd_1, cmd_2, cmd_3, cmd_4]
-        z_logger.info("Start screen record.")
+        z_logger.info_with_stamp("Start screen record.")
         self.async_exec_adb_cmd(cmds)
 
     def stop_screen_record(self):
         if self.thread.isRunning():
             self.thread.stop()
 
-    def on_screen_record_emit_sigle(self, data):
-        # 当屏幕录制中发送信号
-        z_logger.info(data)
+    def on_async_single_recevied(self, content):
+        """
+        异步执行cmd命令的输出回调
+        :param content:
+        :return:
+        """
+        if content[0] == "output":
+            z_logger.info(content[1])
+        else:
+            z_logger.info_with_stamp(content[1])

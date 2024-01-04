@@ -400,7 +400,7 @@ class MainWindow(BaseWindow):
         elif ":" not in _addr:
             _addr = _addr + ":" + "5555"
 
-        z_logger.info("已添加新设备:" + _addr)
+        z_logger.info_with_stamp("已添加新设备:" + _addr)
         item = QStandardItem(self.icon_disconnect, _addr)
         item.addr = _addr
         item.type = TreeItemType.TYPE_DEVICE
@@ -429,7 +429,7 @@ class MainWindow(BaseWindow):
         if is_device_node(item):
             z_logger.debug("On tree item double clicked %s" % item.addr)
             if item.addr not in self.active_ip_list:
-                z_logger.info("连接设备中......(%s)" % item.addr)
+                z_logger.info_with_stamp("连接设备中......(%s)" % item.addr)
                 self.connect_device(item.addr)
             else:
                 z_logger.debug("Already in active device list.")
@@ -586,7 +586,7 @@ class MainWindow(BaseWindow):
             result_info = resultList[0]
             if 'already connected to' in result_info:
                 # ['already connected to xxxxxx']
-                z_logger.info("Already connected!")
+                z_logger.info_with_stamp("Already connected!")
             elif 'cannot connect to' in result_info:
                 # ['cannot connect to xxxx: 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。 (10060)']
                 z_logger.error(result_info)

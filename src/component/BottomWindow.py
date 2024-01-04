@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWid
     QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView
 from qtpy import QtWidgets
 
+from src.logcat import log
 from src.logcat.log import z_logger
 from utils.ADBTools import ADBTools
 from utils.PackageManager import PackageManager
@@ -206,22 +207,21 @@ class ConsoleWindow(QMainWindow):
 
     def append_log(self, logMsg, record: logging.LogRecord):
         level = record.levelno
-        _funcName = record.funcName     # 执行log打印的函数名
+        # _funcName = record.funcName     # 执行log打印的函数名
 
         # 先清除log中结尾的换行符，因为后续会自己加
         logMsg = logMsg.rstrip("\n")
-        # if "\n" in str(msg):
-        #     # 检查内容有换行时(一般是输出内容)，则在最前面增加一个换行符，保证输出的缩进一致;
-        #     msg = "\n{0}".format(msg)
+        is_need_appen_prefix = logMsg.startswith(log.TIME_STAMP_PREFIX)
+        if is_need_appen_prefix:
+            logMsg = logMsg[7:]  # 切片操作，去除前缀
 
+        # url检测
         content = check_link_addr(logMsg)
+        # 颜色检测
         ui_log = changeLogColor(level, content)
-        if "adb " in ui_log:
-            ui_log = "{0}{1}".format(_build_time_stamp(), ui_log)
-        elif _funcName != "on_adb_cmd_exectued" and \
-                _funcName != "on_screen_record_emit_sigle":
-            # 不是命令行执行的日志输出，都加上时间前缀
-            ui_log = "{0}{1}".format(_build_time_stamp(), ui_log)
+
+        if is_need_appen_prefix:
+            ui_log = f"{_build_time_stamp()}{ui_log}"
         self.terminalTextBrowser.append(ui_log)
 
         # 解决该控件插入Html时，不支持\n的问题
@@ -433,7 +433,7 @@ class InfoBarWidget(QWidget):
                     if 'ro.build.version.sdk' in line:
                         api_level = self.get_prop_value(line)
                 result = "{0} {1}({2}),API {3}".format(manufacturer, model, sys_version, api_level)
-                z_logger.info("设备概况信息:" + result)
+                z_logger.info_with_stamp("设备概况信息:" + result)
                 self.device_info_desc.setText(result)
                 self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
                 z_logger.debug("Get running processes...")

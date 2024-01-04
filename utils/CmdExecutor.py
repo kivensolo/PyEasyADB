@@ -16,6 +16,7 @@ class CmdExecutor(QThread):
     def __init__(self, parent=None):
         super(CmdExecutor, self).__init__(parent)
         # 执行命令
+        self.result = ""
         self.cmd = None
         # 连接计数器
         self._intConnectTime = 0
@@ -58,16 +59,14 @@ class CmdExecutor(QThread):
         _process = Popen(self.cmd, stdout=PIPE,stderr=PIPE, bufsize=-1, encoding='utf-8')
         stdout_data, stderr_data = _process.communicate(input=None, timeout=None)
         if stdout_data is not None:
-            # 把多行换行符换成一行
+            # 把多行换行符换成一行(ps命令会有多行)
             stdout_data = stdout_data.replace("\n\n", "\n")
             # 正常输出的结果不进行strip操作
             self.result = stdout_data.strip()
-        if stderr_data is not None:
-            # print("CmdExecutor stderr_data = " + stderr_data)
+        if stderr_data is not None and stderr_data != "":
             self.result = self.result + "\n" + stderr_data.strip()
-            # self.result = stdout_data.strip().split('\n')
 
-        _process.stdout.close()   # close触发finish?
+        _process.stdout.close()   # close触发finishSignal
         # _process.wait()
         if self.isInterruptionRequested():  # 判断是否请求终止线程
             return

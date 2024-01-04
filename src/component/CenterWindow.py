@@ -245,7 +245,7 @@ class Ui_ConvenientArea(object):
         if len(self.mainWindow.active_ip_list) == 0:
             z_logger.error("请先连接设备!!!")
             return
-        z_logger.info("Screenshot saving..........")
+        z_logger.info_with_stamp("Screenshot saving..........")
         chooseDialog = QFileDialog
         default_file_name = QDateTime.currentDateTime().toString("yyyyMMdd_hhmmss")
         savePath = chooseDialog.getSaveFileName(
@@ -257,7 +257,7 @@ class Ui_ConvenientArea(object):
                 savePath
             )
         else:
-            z_logger.info("Cancle screenshot.")
+            z_logger.info_with_stamp("Cancle screenshot.")
 
 
 if __name__ == "__main__":

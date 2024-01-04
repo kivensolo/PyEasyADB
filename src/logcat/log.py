@@ -9,6 +9,8 @@ import os
 # 创建对应文件夹
 from src.settings import LOGS_PATH, DEBUG_PRINT, LOG_APP_FILE
 
+TIME_STAMP_PREFIX = "[STAMP]"
+
 if not os.path.exists(LOGS_PATH):
     os.makedirs(LOGS_PATH)
 
@@ -90,6 +92,15 @@ class AppLogger:
         self.warn = self._logger.warning
         self.error = self._logger.error
         self.critical = self._logger.critical
+
+    def info_with_stamp(self, content):
+        """
+        添加前缀标识，用于日志打印的时候输出时间戳
+        :param content: 输出日志
+        :return:
+        """
+        log = f"{TIME_STAMP_PREFIX}{content}"
+        self.info(log)
 
     def remove(self):
         AppLogger.logger_map.pop(self.name)

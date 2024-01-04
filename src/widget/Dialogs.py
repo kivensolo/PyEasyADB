@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt, pyqtSlot
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
 from qtpy import QtWidgets, QtCore, QtGui
 
+from src.logcat.log import z_logger
 from src.widget.ScreenRecord import Record_Dialog
 from src.DataBase import DBManager
 from src.widget.BaseDialog import BaseDialog
@@ -208,7 +209,7 @@ class installApkDialog(BaseDialog):
         if self.rb_downgrade.isChecked():    # -d
             _cmd += "-d "
         _cmd += apkPath
-        self.mainWindow.adbTools.exec_adb_cmd(_cmd, lambda : self.close())
+        self.mainWindow.adbTools.async_exec_adb_cmd([_cmd])
 
 
 class screen_record_dialog(BaseDialog):
