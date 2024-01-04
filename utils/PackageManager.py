@@ -45,4 +45,7 @@ class PackageManager:
     def updateDeviceInfo(self, info, ip):
         return self.dbManager.update_device_prop(info, ip)
 
+    def updateDeviceAlias(self, ip, alias):
+        return self.dbManager.update_device_alias(ip, alias)
+
 

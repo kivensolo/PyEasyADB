@@ -1,6 +1,6 @@
 import sys
 
-from PyQt5.QtCore import Qt, pyqtSlot
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
 from qtpy import QtWidgets, QtCore, QtGui
 
@@ -224,6 +224,64 @@ class screen_record_dialog(BaseDialog):
         super().initWindow()
         self.record_dialog.setupUi(self, self.mainWindow)
 
+
+class device_alis_edit_dialog(BaseDialog):
+    on_alias_update_signal = pyqtSignal(str)
+    """
+    设备别名编辑对话框
+    """
+    def __init__(self,  window = None):
+        super().__init__("备注修改")
+        self.mainWindow = window
+        self.initWindow()
+
+    def initWindow(self):
+        super().initWindow()
+        self.setObjectName("text_input")
+        self.resize(374, 65)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        self.setSizePolicy(sizePolicy)
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.tips_label = QtWidgets.QLabel(self)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tips_label.sizePolicy().hasHeightForWidth())
+        self.tips_label.setSizePolicy(sizePolicy)
+        self.tips_label.setObjectName("tips_label")
+        self.verticalLayout.addWidget(self.tips_label)
+        self.lineedit_text = QtWidgets.QLineEdit(self)
+        self.lineedit_text.setObjectName("lineedit_text")
+        self.verticalLayout.addWidget(self.lineedit_text)
+        self.btn_input_text = QtWidgets.QPushButton(self)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.btn_input_text.sizePolicy().hasHeightForWidth())
+        self.btn_input_text.setSizePolicy(sizePolicy)
+        self.btn_input_text.setToolTipDuration(0)
+        self.btn_input_text.setObjectName("btn_input_text")
+        self.btn_input_text.clicked.connect(self._on_name_update)
+        self.verticalLayout.addWidget(self.btn_input_text)
+
+        self.retranslateUi(self)
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+    def retranslateUi(self, text_input):
+        _translate = QtCore.QCoreApplication.translate
+        text_input.setWindowTitle(_translate("text_input", "备注修改"))
+        self.tips_label.setText(_translate("text_input", "请输入设备别名，便于识别:"))
+        self.btn_input_text.setText(_translate("text_input", "更新备注名称"))
+
+    def _on_name_update(self):
+        alis_name = self.lineedit_text.text()
+        if len(str(alis_name)) > 0:
+            self.mainWindow.pkgManager.updateDeviceAlias(self.mainWindow.current_device_addr.split(":")[0], alis_name)
+            self.on_alias_update_signal.emit(alis_name)
 
 class AboutDialog(BaseDialog):
     def __init__(self,  window = None):

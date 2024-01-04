@@ -26,6 +26,7 @@ class DBManager:
                 'CREATE TABLE IF NOT EXISTS {0} '
                 '(ip VARCHAR(20) PRIMARY KEY,'
                 'port VARCHAR(10) DEFAULT 0,'
+                'alias VARCHAR(50) NOT NULL DEFAULT \'\','
                 'device_info VARCHAR(50) NOT NULL DEFAULT \'10086\','
                 'active binary(1) DEFAULT 0)'.format(DBManager.TABLE_DEVICE))
             cursor.execute('CREATE TABLE IF NOT EXISTS {0} (name varchar(50) primary key)'.format(DBManager.TABLE_PACKAGE))
@@ -91,6 +92,10 @@ class DBManager:
         sql = 'UPDATE {0} SET device_info=\'{1}\' WHERE ip=\'{2}\''.format(DBManager.TABLE_DEVICE, info, ip)
         self.exec_sql(sql)
 
+    def update_device_alias(self, ip, alias):
+        sql = f"UPDATE {DBManager.TABLE_DEVICE} SET alias=\'{alias}\' WHERE ip=\'{ip}\'"
+        self.exec_sql(sql)
+
     def queryData(self, column='*', table_name='default'):
         sql = 'SELECT {0} FROM {1}'.format(column, table_name)
         return self.exec_sql(sql)
@@ -131,7 +136,7 @@ class DBManager:
                     return False, "此设备已有记录,无需再次添加！"
 
             # cursor.execute("delete from device where ip = \'" + ip + "\'")
-            cursor.execute('INSERT INTO device VALUES (\'{0}\',{1}, \'{2}\',{3})'.format(host, _port, "", active))
+            cursor.execute(f"INSERT INTO device VALUES (\'{host}\',{_port}, \'\', \'\', {active})")
             conn.commit()
             return True, host + ":" + _port
         except Exception as e:

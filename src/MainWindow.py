@@ -15,7 +15,7 @@ from src.MenuBar import MenuActions
 from src.component.BottomWindow import BottomTabWidget
 from src.component.CenterWindow import CommonFunctionalWidget
 from src.component.ToolBar import Ui_ToolBar
-from src.widget.Dialogs import NewConnectDialog, AboutDialog
+from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog
 from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
@@ -77,12 +77,16 @@ class MainWindow(BaseWindow):
     """
     def __init__(self):
         super().__init__()
+        self.device_menu_action_remove_device = None
+        self.device_menu_action_disconnect = None
+        self.device_menu_action_edit_name = None
         self.toolbar = None
         self.initWindow()
 
         self.icon_connect = IconTool.buildQIcon("state_connect.png")
         self.icon_disconnect = IconTool.buildQIcon("state_disconnect.png")
         self.icon_warning = IconTool.buildQIcon("warning.png")
+        self.icon_edit = IconTool.buildQIcon("edit.png")
 
         # 初始化数据库帮助类
         self.dbManager = DBManager()
@@ -219,10 +223,6 @@ class MainWindow(BaseWindow):
         self.statusBar().showMessage('ready')
         super(MainWindow, self).initWindow()
 
-    def setupUi(self):
-        """ 初始化View  """
-        # 基础Qt Widget
-
     def is_current_device_connect(self):
         return self.current_device_addr in self.active_ip_list
 
@@ -248,14 +248,16 @@ class MainWindow(BaseWindow):
         # TODO 自定义排序规则
         all_device.sort()
         for device in all_device:
-            addr = device[0] + ":" + device[1]  # ip:port
-            # if addr in self.active_ip_list:
-            #     qicon = self.icon_connect
-            # else:
-            #     qicon = self.icon_disconnect
-            item = QStandardItem(addr)
+            # 填充每一个设备信息  Format: ip:port(alias)
+            addr = device[0] + ":" + device[1]  #
+            alias = device[2]
+            show_name = addr
+            if len(alias) != 0:
+                show_name = f"{addr}({alias})"
+            item = QStandardItem(show_name)
             item.addr = addr
-            item.desc = device[2]
+            item.alias = alias
+            item.desc = device[3]
             item.type = TreeItemType.TYPE_DEVICE
             device_item.appendRow(item)
 
@@ -287,10 +289,13 @@ class MainWindow(BaseWindow):
         # 右键菜单键设置
         treeView.contextMenu = QMenu()
         # self.actionC.setDisabled(True)
-        self.action_disconnect = treeView.contextMenu.addAction(self.icon_disconnect, '| 断开连接')
-        self.action_disconnect.triggered.connect(self.disconnect_device)
-        self.action_remove_device = treeView.contextMenu.addAction(self.icon_warning, '| 删除设备')
-        self.action_remove_device.triggered.connect(self.del_device)
+        self.device_menu_action_edit_name = treeView.contextMenu.addAction(self.icon_edit, '| 备注设置')
+        self.device_menu_action_edit_name.triggered.connect(self.show_device_alias_edit_dialog)
+        self.device_menu_action_disconnect = treeView.contextMenu.addAction(self.icon_disconnect, '| 断开连接')
+        self.device_menu_action_disconnect.triggered.connect(self.disconnect_device)
+        self.device_menu_action_remove_device = treeView.contextMenu.addAction(self.icon_warning, '| 删除设备')
+        self.device_menu_action_remove_device.triggered.connect(self.del_device)
+
 
     def load_adb_cmds(self):
         root_adb_node = QStandardItem("命令列表")
@@ -367,11 +372,11 @@ class MainWindow(BaseWindow):
         item_model = self.get_current_standard_item()
         if is_device_node(item_model):
             if item_model.addr in self.active_ip_list:
-                self.action_remove_device.setDisabled(True)
-                self.action_disconnect.setDisabled(False)
+                self.device_menu_action_remove_device.setDisabled(True)
+                self.device_menu_action_disconnect.setDisabled(False)
             else:
-                self.action_remove_device.setDisabled(False)
-                self.action_disconnect.setDisabled(True)
+                self.device_menu_action_remove_device.setDisabled(False)
+                self.device_menu_action_disconnect.setDisabled(True)
             self.tree_view.contextMenu.move(QCursor.pos())  # 移动到鼠标点击位置
             self.tree_view.contextMenu.show()
 
@@ -387,6 +392,24 @@ class MainWindow(BaseWindow):
         result, msg = self.dbManager.remove_device_from_db(item_model.addr)
         if result:
             z_logger.info('删除设备(%s)成功!' % str(item_model.addr))
+
+    @pyqtSlot()
+    def show_device_alias_edit_dialog(self):
+        """
+        弹出编辑设备别名的弹窗
+        :return:
+        """
+        _device_alis_dialog = device_alis_edit_dialog(self)
+        _device_alis_dialog.on_alias_update_signal.connect(self.on_device_alias_update)
+        _device_alis_dialog.setWindowModality(Qt.ApplicationModal)
+        _device_alis_dialog.exec()
+
+    @pyqtSlot(str)
+    def on_device_alias_update(self, result):
+        current_index = self.tree_view.currentIndex()
+        item: QStandardItem = self.treeModel.itemFromIndex(current_index)
+        item.alias = result
+        item.setText(f"{item.addr}({result})")
 
     @pyqtSlot()
     def onNewDeviceAdded(self, _addr):
