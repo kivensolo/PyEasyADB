@@ -167,7 +167,7 @@ class MainWindow(BaseWindow):
         self.stacked_device_info.setObjectName("stackedWidget_param")
         self.stacked_device_info.setGeometry(221, 70, 500, 400)
         self.stacked_device_info.setStyleSheet("""
-            background-color:rgb(255,255,255);
+            QStackedWidget {background-color:rgb(255,255,255);}
             """)
         # self.stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
         # 创建分页对象，并载入分页
@@ -419,10 +419,12 @@ class MainWindow(BaseWindow):
         也可以是自动检测到的已连接但没加入进来的设备。
         :param _addr: 设备 ip+prot 信息
         模拟器或者真机可能是名称+端口，比如: emulator-5554
+        还有可能设备的名称为纯数字，比如小米音响, 名称为: 0184059035100000170
         :return:
         """
         if any(char.isalpha() for char in _addr):
             # 检查是否包含任意字母字符
+            # FIXME 改为判断是否是IP格式，只要不是IP格式，都认为是设备名称
             z_logger.debug("设备信息包含名称,保持设备名称")
         elif ":" not in _addr:
             _addr = _addr + ":" + "5555"

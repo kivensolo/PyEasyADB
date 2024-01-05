@@ -3,12 +3,15 @@ import xml.dom.minidom
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt, pyqtSlot, QSize, QDateTime
-from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog, QListWidget, QComboBox, QListWidgetItem, QPushButton
 
 from src.logcat.log import z_logger
 from src import MainWindow
 from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
 from utils.ADBTools import ActionCmdParams
+from utils.Tools import getWRYHFontStyle
+from utils.UITools import IconTool
 
 
 class CommonFunctionalWidget(QWidget):
@@ -19,6 +22,7 @@ class CommonFunctionalWidget(QWidget):
     def __init__(self, parent: MainWindow):
         super().__init__()
         self.parent = parent
+        self.currentChooseApp = ""
         self.setAttribute(Qt.WA_StyledBackground)
         self._init_convenient_area()
 
@@ -65,6 +69,160 @@ class Ui_ConvenientArea(object):
     def __init__(self, mainWidow):
         self.mainWindow = mainWidow
 
+    def _initCustomAppActionArea(self, parentLayout):
+        """
+        初始化自定义行为区域(不是动态布局)
+        :param parentLayout: QVBoxLayout of scrollArea
+        :return:
+        """
+        self.groupBox = QtWidgets.QGroupBox(self.scrollAreaWidgetContents)
+        self.groupBox.setObjectName("app_custom_action_group")
+        self.group_vertical_layout = QtWidgets.QVBoxLayout(self.groupBox)
+        self.group_vertical_layout.setObjectName("group_vertical_layout")
+        self.groupBox.setTitle("自定义应用操作")
+        self.groupBox.setStyleSheet("QGroupBox { background-color:rgb(255,255,255);"
+                                    "font-weight: bold; } ")
+        # ==== 第一行区域
+        self.h1_layout = QtWidgets.QHBoxLayout()
+        self.h1_layout.setObjectName("btns_layout")
+        # 应用启动按钮
+        self.startBtn = QtWidgets.QPushButton(self.groupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.startBtn.sizePolicy().hasHeightForWidth())
+        self.startBtn.setSizePolicy(sizePolicy)
+        self.startBtn.setObjectName("start")
+        self.startBtn.setText("启动")
+        self.h1_layout.addWidget(self.startBtn)
+        # 应用停止按钮
+        self.stop = QtWidgets.QPushButton(self.groupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.stop.sizePolicy().hasHeightForWidth())
+        self.stop.setSizePolicy(sizePolicy)
+        self.stop.setObjectName("stop")
+        self.stop.setText("停止")
+        # 应用卸载按钮
+        self.h1_layout.addWidget(self.stop)
+        self.uninstall = QtWidgets.QPushButton(self.groupBox)
+        self.uninstall.setObjectName("uninstall")
+        self.uninstall.setText("卸载")
+        self.h1_layout.addWidget(self.uninstall)
+        # 有侧占位控件
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.h1_layout.addItem(spacerItem)
+        self.group_vertical_layout.addLayout(self.h1_layout)
+
+        # ==== 第二行区域
+        self.h2_layout = QtWidgets.QHBoxLayout()
+        self.h2_layout.setObjectName("h2_layout")
+        self.label_app = QtWidgets.QLabel(self.groupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_app.sizePolicy().hasHeightForWidth())
+        self.label_app.setSizePolicy(sizePolicy)
+        self.label_app.setObjectName("label_app")
+        self.label_app.setText("目标应用:")
+        self.h2_layout.addWidget(self.label_app)
+        # 自定义QComboBox
+        self.packagesCombobox = QtWidgets.QComboBox()
+        self.packagesCombobox.setEditable(True)
+        self.packagesCombobox.lineEdit().returnPressed.connect(self.onComBoxInsertPackage)
+        self.packagesCombobox.currentIndexChanged.connect(self.onComBoxIndexChanged)
+        self.packagesCombobox.setMaxVisibleItems(5)
+        self.packagesCombobox.setFont(getWRYHFontStyle())
+        self.packagesCombobox.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.packagesCombobox.sizePolicy().hasHeightForWidth())
+        self.packagesCombobox.setSizePolicy(sizePolicy)
+        self.packagesCombobox.setInsertPolicy(QComboBox.InsertAtTop)
+        self.packagesCombobox.setObjectName("custom_packages")
+        # 使用QListWidget作为View，用它的model作为model
+        ipListWidget = QListWidget()
+        self.packagesCombobox.setView(ipListWidget)
+        self.packagesCombobox.setModel(ipListWidget.model())
+        pkg_local_data = self.mainWindow.pkgManager.query(table_name="package")
+        for pos, device in enumerate(pkg_local_data):
+            item_widget: QWidget = self.ComboBoxItem(pos, device[0])
+            item_wrap = QListWidgetItem(ipListWidget)
+            item_wrap.setFont(getWRYHFontStyle())
+            item_wrap.setText(device[0])
+            ipListWidget.setItemWidget(item_wrap, item_widget)
+        # for pos, device in enumerate(pkg_local_data):
+        #     self.packagesCombobox.setItemText(pos, device[0])
+        self.h2_layout.addWidget(self.packagesCombobox)
+
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.h2_layout.addItem(spacerItem1)
+        self.h2_layout.setStretch(0, 1)
+        self.h2_layout.setStretch(1, 3)
+        self.h2_layout.setStretch(2, 2)
+        self.group_vertical_layout.addLayout(self.h2_layout)
+
+        # ==== 第二行区域
+        self.h3_layout = QtWidgets.QHBoxLayout()
+        self.h3_layout.setObjectName("h3_layout")
+        self.label_extends = QtWidgets.QLabel(self.groupBox)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_extends.sizePolicy().hasHeightForWidth())
+        self.label_extends.setSizePolicy(sizePolicy)
+        self.label_extends.setObjectName("label_extends")
+        self.label_extends.setText("扩展参数:")
+        self.h3_layout.addWidget(self.label_extends)
+
+        self.extend_params = QtWidgets.QTextEdit(self.groupBox)
+        self.extend_params.setObjectName("extend_params")
+        self.h3_layout.addWidget(self.extend_params)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        self.h3_layout.addItem(spacerItem1)
+        self.h3_layout.setStretch(0, 1)
+        self.h3_layout.setStretch(1, 3)
+        self.h3_layout.setStretch(2, 2)
+        self.group_vertical_layout.addLayout(self.h3_layout)
+
+        parentLayout.addWidget(self.groupBox)
+
+    def ComboBoxItem(self, pos, package_name):
+        qWidget = QWidget()
+        deledeButton = QPushButton()
+        deledeButton.setStyleSheet("background:transparent;")
+        deledeButton.setIcon(QIcon(IconTool.buildQIcon('close.png', dir="icons")))
+        deledeButton.clicked.connect(lambda: self.onDeleteComBoxItem(pos, package_name))
+        boxLayout = QtWidgets.QHBoxLayout()
+        boxLayout.addStretch()
+        boxLayout.addWidget(deledeButton)
+        boxLayout.setContentsMargins(0, 0, 0, 0)
+        boxLayout.setSpacing(5)
+        qWidget.setLayout(boxLayout)
+        return qWidget
+
+    def onDeleteComBoxItem(self, pos, text):
+        result = self.mainWindow.pkgManager.exec(f"delete from package where name = \'{text}\'")
+        self.packagesCombobox.removeItem(pos)
+        z_logger.info("删除成功")
+
+    def onComBoxInsertPackage(self):
+        text = self.packagesCombobox.lineEdit().text()
+        if text == "":
+            return
+        isExist = self.mainWindow.pkgManager.isPackageExist(text)
+        if isExist:
+            z_logger.error("应用已存在,无需重复添加!")
+        else:
+            self.mainWindow.pkgManager.addPackage(text)
+            z_logger.info("添加成功")
+
+    def onComBoxIndexChanged(self):
+        self.currentChooseApp = self.packagesCombobox.currentText()
+        z_logger.info("切换目标应用为:" + self.currentChooseApp)
+
     def setUpUiDynamic(self, ConvenientArea):
         ConvenientArea.setObjectName("ConvenientArea")
 
@@ -79,18 +237,31 @@ class Ui_ConvenientArea(object):
         self.scrollArea.setSizePolicy(sizePolicy)
         self.scrollArea.setStyleSheet("""
             QScrollArea{
-                border: 0px solid red;
+                background:transparent;
+                border: 1px solid black;
             };
         """)
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setObjectName("scrollArea")
+        # 这个widget是滚动view的第一个Child
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
         self.scrollAreaWidgetContents.setGeometry(QtCore.QRect(0, 0, 272, 318))
         self.scrollAreaWidgetContents.setObjectName("scrollAreaWidgetContents")
+        self.scrollAreaWidgetContents.setStyleSheet("""
+            QWidget#scrollAreaWidgetContents{
+                background:transparent;
+            }
+        """)
         # 滚动区域为垂直layout
         self.vlayout_of_scrollarea = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents)
         self.vlayout_of_scrollarea.setObjectName("scroll_area_layout")
+        # self.vlayout_of_scrollarea.setSpacing(0)
 
+        # 【自定义区域---Start】将groupBox加入垂直滚动布局中
+        self._initCustomAppActionArea(self.vlayout_of_scrollarea)
+        # 【自定义区域---End】将groupBox加入垂直滚动布局中
+
+        # 【setUpUiDynamic】
         # if __name__ == "__main__":
         #     template_ui_config_file_path = "../../config/function_templates.xml"
         # 动态设置groupView
@@ -102,6 +273,7 @@ class Ui_ConvenientArea(object):
             template_layout = template.getAttribute('layout')
             # 模板区域数量检查，创建分组的GroupBox
             _groupBox = QtWidgets.QGroupBox(self.scrollAreaWidgetContents)
+            _groupBox.setStyleSheet("QGroupBox { font-weight: bold; } ")
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)

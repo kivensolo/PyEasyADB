@@ -29,7 +29,7 @@ class DBManager:
                 'alias VARCHAR(50) NOT NULL DEFAULT \'\','
                 'device_info VARCHAR(50) NOT NULL DEFAULT \'10086\','
                 'active binary(1) DEFAULT 0)'.format(DBManager.TABLE_DEVICE))
-            cursor.execute('CREATE TABLE IF NOT EXISTS {0} (name varchar(50) primary key)'.format(DBManager.TABLE_PACKAGE))
+            cursor.execute(f"CREATE TABLE IF NOT EXISTS {DBManager.TABLE_PACKAGE} (name varchar(50) primary key)")
             # cursor.execute('create table if not exists '+DBManager.TABLE_HISTORY+
             #                '(id integer primary key autoincrement, '
             #                'name nvarchar(50) null,'
@@ -80,8 +80,11 @@ class DBManager:
             conn.close()
         return result
 
-    def insertPackageRow(self, package):
-        self.exec_sql(f"INSERT INTO {DBManager.TABLE_PACKAGE} VALUES (\'{package}\')")
+    def addPackageToDB(self, package):
+        self.exec_sql(f"INSERT INTO {DBManager.TABLE_PACKAGE} (name) VALUES (\'{package}\')")
+
+    def getAppPackageByName(self, pkg_name):
+        return self.exec_sql(f"SELECT * FROM {DBManager.TABLE_PACKAGE} WHERE name=\'{pkg_name}\'")
 
     def update_ip_data(self, newIp, idx=0):
         sql = f"UPDATE {DBManager.TABLE_DEVICE} SET ip={newIp} WHERE id={idx}"
@@ -96,6 +99,12 @@ class DBManager:
         self.exec_sql(sql)
 
     def queryData(self, column='*', table_name='default'):
+        """
+        通用数据查询的API
+        :param column:  列名称，默认选择所有
+        :param table_name:  表名,默认default
+        :return:
+        """
         sql = f"SELECT {column} FROM {table_name}"
         return self.exec_sql(sql)
 

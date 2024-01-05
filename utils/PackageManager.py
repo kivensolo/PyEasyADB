@@ -5,7 +5,7 @@ from utils.ADBTools import ADBTools
 
 class PackageManager:
     """
-    全局信息管理的单例类
+    便捷的包信息管理器
     """
     __instance = None
 
@@ -36,8 +36,12 @@ class PackageManager:
     def query(self, column='*', table_name='default'):
         return self.dbManager.queryData(column, table_name)
 
-    def insert(self, pkgName):
-        return self.dbManager.insertPackageRow(pkgName)
+    def addPackage(self, pkgName):
+        return self.dbManager.addPackageToDB(pkgName)
+
+    def isPackageExist(self, pkgName):
+        package_info = self.dbManager.getAppPackageByName(pkgName)
+        return len(package_info) != 0
 
     def queryDeviceInfo(self, ip):
         return self.dbManager.get_device_prop_info(ip)
