@@ -72,16 +72,21 @@ class DBManager:
             cursor: Cursor = conn.cursor()
             cursor.execute(sql)
             conn.commit()
-            result = cursor.fetchall()
-        except Exception:
-            return []
+            if ("insert" in sql.lower()) or ("delete" in sql.lower()):
+                # 使用cursor.rowcount属性获取受影响的行数。如果大于0，则表示插入成功
+                result = (cursor.rowcount > 0)
+            else:
+                # 使用cursor.fetchall()方法获取查询结果。如果返回的结果不为空，则表示查询成功。
+                result = cursor.fetchall()
+        except Exception as e:
+            return [False, str(e)]
         finally:
             cursor.close()
             conn.close()
-        return result
+        return [True, result]
 
     def addPackageToDB(self, package):
-        self.exec_sql(f"INSERT INTO {DBManager.TABLE_PACKAGE} (name) VALUES (\'{package}\')")
+        return self.exec_sql(f"INSERT INTO {DBManager.TABLE_PACKAGE} (name) VALUES (\'{package}\')")
 
     def getAppPackageByName(self, pkg_name):
         return self.exec_sql(f"SELECT * FROM {DBManager.TABLE_PACKAGE} WHERE name=\'{pkg_name}\'")
@@ -106,7 +111,7 @@ class DBManager:
         :return:
         """
         sql = f"SELECT {column} FROM {table_name}"
-        return self.exec_sql(sql)
+        return self.exec_sql(sql)[1]
 
     def get_all_device(self):
         """
@@ -114,7 +119,7 @@ class DBManager:
         :return: 数据List集合
         """
         sql = f"select * from {DBManager.TABLE_DEVICE}"
-        return self.exec_sql(sql)
+        return self.exec_sql(sql)[1]
 
     def add_device_to_db(self, ip="", port="5555", active=0):
         """

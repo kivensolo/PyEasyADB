@@ -475,7 +475,7 @@ class MainWindow(BaseWindow):
         else:
             pkgName = ""
             if cmdParams.needDstPkg:
-                pkgName = self.pkgManager.getCurrentSelectedPackage()
+                pkgName = self.pkgManager.getSelectedRunningProcessName()
                 if pkgName is None:
                     z_logger.error("请先选择目标应用")
                     return
@@ -491,7 +491,7 @@ class MainWindow(BaseWindow):
             for _cmd in cmdParams:
                 pkgName = ""
                 if _cmd.needDstPkg:
-                    pkgName = self.pkgManager.getCurrentSelectedPackage()
+                    pkgName = self.pkgManager.getSelectedRunningProcessName()
                     if pkgName is None:
                         z_logger.error("请先选择目标应用")
                         return

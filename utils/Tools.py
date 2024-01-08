@@ -5,9 +5,22 @@ import subprocess
 from pathlib import Path
 
 from PyQt5.QtGui import QFont
+from qtpy import QtWidgets
 
 from src.settings import LOG_CMD_OUT, LOG_CMD_ERROR, LOGS_PATH
 from src.logcat import log
+
+
+def newFixedPushButton(objName="", text="", parent=""):
+    btn = QtWidgets.QPushButton(parent)
+    sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+    sizePolicy.setHorizontalStretch(0)
+    sizePolicy.setVerticalStretch(0)
+    sizePolicy.setHeightForWidth(btn.sizePolicy().hasHeightForWidth())
+    btn.setSizePolicy(sizePolicy)
+    btn.setObjectName(objName)
+    btn.setText(text)
+    return btn
 
 
 def getWRYHFontStyle(size=10):

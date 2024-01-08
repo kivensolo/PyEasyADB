@@ -8,10 +8,10 @@ from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog, QListWidget, QCo
 
 from src.logcat.log import z_logger
 from src import MainWindow
+from src.widget.CustomWidgets import DeleteableComboBox
 from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
+from utils import Tools
 from utils.ADBTools import ActionCmdParams
-from utils.Tools import getWRYHFontStyle
-from utils.UITools import IconTool
 
 
 class CommonFunctionalWidget(QWidget):
@@ -22,7 +22,6 @@ class CommonFunctionalWidget(QWidget):
     def __init__(self, parent: MainWindow):
         super().__init__()
         self.parent = parent
-        self.currentChooseApp = ""
         self.setAttribute(Qt.WA_StyledBackground)
         self._init_convenient_area()
 
@@ -86,26 +85,12 @@ class Ui_ConvenientArea(object):
         self.h1_layout = QtWidgets.QHBoxLayout()
         self.h1_layout.setObjectName("btns_layout")
         # 应用启动按钮
-        self.startBtn = QtWidgets.QPushButton(self.groupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.startBtn.sizePolicy().hasHeightForWidth())
-        self.startBtn.setSizePolicy(sizePolicy)
-        self.startBtn.setObjectName("start")
-        self.startBtn.setText("启动")
+        self.startBtn = Tools.newFixedPushButton("start","启动",self.groupBox)
         self.h1_layout.addWidget(self.startBtn)
         # 应用停止按钮
-        self.stop = QtWidgets.QPushButton(self.groupBox)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.stop.sizePolicy().hasHeightForWidth())
-        self.stop.setSizePolicy(sizePolicy)
-        self.stop.setObjectName("stop")
-        self.stop.setText("停止")
-        # 应用卸载按钮
+        self.stop = Tools.newFixedPushButton("stop","停止",self.groupBox)
         self.h1_layout.addWidget(self.stop)
+        # 应用卸载按钮
         self.uninstall = QtWidgets.QPushButton(self.groupBox)
         self.uninstall.setObjectName("uninstall")
         self.uninstall.setText("卸载")
@@ -128,33 +113,11 @@ class Ui_ConvenientArea(object):
         self.label_app.setText("目标应用:")
         self.h2_layout.addWidget(self.label_app)
         # 自定义QComboBox
-        self.packagesCombobox = QtWidgets.QComboBox()
-        self.packagesCombobox.setEditable(True)
-        self.packagesCombobox.lineEdit().returnPressed.connect(self.onComBoxInsertPackage)
-        self.packagesCombobox.currentIndexChanged.connect(self.onComBoxIndexChanged)
-        self.packagesCombobox.setMaxVisibleItems(5)
-        self.packagesCombobox.setFont(getWRYHFontStyle())
-        self.packagesCombobox.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.packagesCombobox.sizePolicy().hasHeightForWidth())
-        self.packagesCombobox.setSizePolicy(sizePolicy)
-        self.packagesCombobox.setInsertPolicy(QComboBox.InsertAtTop)
+        self.packagesCombobox = DeleteableComboBox()
+        self.packagesCombobox.setMainWinodw(self.mainWindow)
         self.packagesCombobox.setObjectName("custom_packages")
-        # 使用QListWidget作为View，用它的model作为model
-        ipListWidget = QListWidget()
-        self.packagesCombobox.setView(ipListWidget)
-        self.packagesCombobox.setModel(ipListWidget.model())
         pkg_local_data = self.mainWindow.pkgManager.query(table_name="package")
-        for pos, device in enumerate(pkg_local_data):
-            item_widget: QWidget = self.ComboBoxItem(pos, device[0])
-            item_wrap = QListWidgetItem(ipListWidget)
-            item_wrap.setFont(getWRYHFontStyle())
-            item_wrap.setText(device[0])
-            ipListWidget.setItemWidget(item_wrap, item_widget)
-        # for pos, device in enumerate(pkg_local_data):
-        #     self.packagesCombobox.setItemText(pos, device[0])
+        self.packagesCombobox.addItemsWithData(pkg_local_data)
         self.h2_layout.addWidget(self.packagesCombobox)
 
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -188,40 +151,6 @@ class Ui_ConvenientArea(object):
         self.group_vertical_layout.addLayout(self.h3_layout)
 
         parentLayout.addWidget(self.groupBox)
-
-    def ComboBoxItem(self, pos, package_name):
-        qWidget = QWidget()
-        deledeButton = QPushButton()
-        deledeButton.setStyleSheet("background:transparent;")
-        deledeButton.setIcon(QIcon(IconTool.buildQIcon('close.png', dir="icons")))
-        deledeButton.clicked.connect(lambda: self.onDeleteComBoxItem(pos, package_name))
-        boxLayout = QtWidgets.QHBoxLayout()
-        boxLayout.addStretch()
-        boxLayout.addWidget(deledeButton)
-        boxLayout.setContentsMargins(0, 0, 0, 0)
-        boxLayout.setSpacing(5)
-        qWidget.setLayout(boxLayout)
-        return qWidget
-
-    def onDeleteComBoxItem(self, pos, text):
-        result = self.mainWindow.pkgManager.exec(f"delete from package where name = \'{text}\'")
-        self.packagesCombobox.removeItem(pos)
-        z_logger.info("删除成功")
-
-    def onComBoxInsertPackage(self):
-        text = self.packagesCombobox.lineEdit().text()
-        if text == "":
-            return
-        isExist = self.mainWindow.pkgManager.isPackageExist(text)
-        if isExist:
-            z_logger.error("应用已存在,无需重复添加!")
-        else:
-            self.mainWindow.pkgManager.addPackage(text)
-            z_logger.info("添加成功")
-
-    def onComBoxIndexChanged(self):
-        self.currentChooseApp = self.packagesCombobox.currentText()
-        z_logger.info("切换目标应用为:" + self.currentChooseApp)
 
     def setUpUiDynamic(self, ConvenientArea):
         ConvenientArea.setObjectName("ConvenientArea")
@@ -398,7 +327,7 @@ class Ui_ConvenientArea(object):
         cmd_1 = ActionCmdParams()
         cmd_1.target_device_ip = self.mainWindow.current_device_addr
         cmd_1.needDstPkg = True
-        cmd_1.target_app = self.mainWindow.pkgManager.getCurrentSelectedPackage()
+        cmd_1.target_app = self.mainWindow.pkgManager.getSelectedRunningProcessName()
         cmd_1.action = "am force-stop {0}"
 
         cmd_2 = ActionCmdParams()
@@ -409,7 +338,7 @@ class Ui_ConvenientArea(object):
         cmd_3 = ActionCmdParams()
         cmd_3.target_device_ip = self.mainWindow.current_device_addr
         cmd_3.needDstPkg = True
-        cmd_3.target_app = self.mainWindow.pkgManager.getCurrentSelectedPackage()
+        cmd_3.target_app = self.mainWindow.pkgManager.getSelectedRunningProcessName()
         cmd_3.action = "am start {0}"
         cmds = [cmd_1, cmd_2, cmd_3]
 
