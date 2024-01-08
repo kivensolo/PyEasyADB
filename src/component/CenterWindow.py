@@ -12,6 +12,7 @@ from src.widget.CustomWidgets import DeleteableComboBox
 from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
 from utils import Tools
 from utils.ADBTools import ActionCmdParams
+from utils.Tools import getWRYHFontStyle
 
 
 class CommonFunctionalWidget(QWidget):
@@ -78,31 +79,12 @@ class Ui_ConvenientArea(object):
         self.groupBox.setObjectName("app_custom_action_group")
         self.group_vertical_layout = QtWidgets.QVBoxLayout(self.groupBox)
         self.group_vertical_layout.setObjectName("group_vertical_layout")
-        self.groupBox.setTitle("自定义应用操作")
+        self.groupBox.setTitle("应用参数设置")
         self.groupBox.setStyleSheet("QGroupBox { background-color:rgb(255,255,255);"
                                     "font-weight: bold; } ")
-        # ==== 第一行区域
-        self.h1_layout = QtWidgets.QHBoxLayout()
-        self.h1_layout.setObjectName("btns_layout")
-        # 应用启动按钮
-        self.startBtn = Tools.newFixedPushButton("start","启动",self.groupBox)
-        self.h1_layout.addWidget(self.startBtn)
-        # 应用停止按钮
-        self.stop = Tools.newFixedPushButton("stop","停止",self.groupBox)
-        self.h1_layout.addWidget(self.stop)
-        # 应用卸载按钮
-        self.uninstall = QtWidgets.QPushButton(self.groupBox)
-        self.uninstall.setObjectName("uninstall")
-        self.uninstall.setText("卸载")
-        self.h1_layout.addWidget(self.uninstall)
-        # 有侧占位控件
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.h1_layout.addItem(spacerItem)
-        self.group_vertical_layout.addLayout(self.h1_layout)
-
-        # ==== 第二行区域
-        self.h2_layout = QtWidgets.QHBoxLayout()
-        self.h2_layout.setObjectName("h2_layout")
+        # ==== 包名选择区域
+        self.package_layout = QtWidgets.QHBoxLayout()
+        self.package_layout.setObjectName("package_layout")
         self.label_app = QtWidgets.QLabel(self.groupBox)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -110,47 +92,71 @@ class Ui_ConvenientArea(object):
         sizePolicy.setHeightForWidth(self.label_app.sizePolicy().hasHeightForWidth())
         self.label_app.setSizePolicy(sizePolicy)
         self.label_app.setObjectName("label_app")
-        self.label_app.setText("目标应用:")
-        self.h2_layout.addWidget(self.label_app)
+        self.label_app.setText("package:")
+        self.label_app.setFont(getWRYHFontStyle())
+        self.package_layout.addWidget(self.label_app)
         # 自定义QComboBox
         self.packagesCombobox = DeleteableComboBox()
         self.packagesCombobox.setMainWinodw(self.mainWindow)
         self.packagesCombobox.setObjectName("custom_packages")
         pkg_local_data = self.mainWindow.pkgManager.query(table_name="package")
         self.packagesCombobox.addItemsWithData(pkg_local_data)
-        self.h2_layout.addWidget(self.packagesCombobox)
+        self.package_layout.addWidget(self.packagesCombobox)
 
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.h2_layout.addItem(spacerItem1)
-        self.h2_layout.setStretch(0, 1)
-        self.h2_layout.setStretch(1, 3)
-        self.h2_layout.setStretch(2, 2)
-        self.group_vertical_layout.addLayout(self.h2_layout)
+        self.package_layout.addItem(spacerItem1)
+        self.package_layout.setStretch(0, 1)
+        self.package_layout.setStretch(1, 1)
+        self.package_layout.setStretch(2, 2)
+        self.group_vertical_layout.addLayout(self.package_layout)
 
-        # ==== 第二行区域
-        self.h3_layout = QtWidgets.QHBoxLayout()
-        self.h3_layout.setObjectName("h3_layout")
-        self.label_extends = QtWidgets.QLabel(self.groupBox)
+        # ==== 类名
+        self.classPathEditText    = self.addCustomEditRow("activity:", "目标activity的完整路径,如:com.example.myapp.MainActivity")
+        self.actionEditText       = self.addCustomEditRow("action :", "用于启动activity或广播发送")
+        self.extendParamsEditText = self.addCustomEditRow("extend:", "扩展参数，如:--es \"key1\" \"value1\"", True)
+        parentLayout.addWidget(self.groupBox)
+
+    def addCustomEditRow(self, labelText, holderText, isTextEdit=False):
+        """
+        添加一行文字+editText的布局
+        :param labelText:
+        :param holderText:
+        :param isTextEdit:
+        :return:
+        """
+        h_layout = QtWidgets.QHBoxLayout()
+        h_layout.setObjectName("labelText")
+        labelView = QtWidgets.QLabel(self.groupBox)
+        labelView.setText(labelText)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.label_extends.sizePolicy().hasHeightForWidth())
-        self.label_extends.setSizePolicy(sizePolicy)
-        self.label_extends.setObjectName("label_extends")
-        self.label_extends.setText("扩展参数:")
-        self.h3_layout.addWidget(self.label_extends)
+        sizePolicy.setHeightForWidth(labelView.sizePolicy().hasHeightForWidth())
+        labelView.setSizePolicy(sizePolicy)
+        labelView.setFont(getWRYHFontStyle())
+        h_layout.addWidget(labelView)
 
-        self.extend_params = QtWidgets.QTextEdit(self.groupBox)
-        self.extend_params.setObjectName("extend_params")
-        self.h3_layout.addWidget(self.extend_params)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.h3_layout.addItem(spacerItem1)
-        self.h3_layout.setStretch(0, 1)
-        self.h3_layout.setStretch(1, 3)
-        self.h3_layout.setStretch(2, 2)
-        self.group_vertical_layout.addLayout(self.h3_layout)
+        if isTextEdit:
+            lineEdit = QtWidgets.QTextEdit(self.groupBox)
+        #     textEdit.setPlaceholderText('''扩展参数为adb标准参数格式: [options] <INTENT>
+        # 以启动为例,扩展参数配置为 -n com.chinaiptv.vod/com.starcor.hunan.CommonActivity
+        # 则执行命令为：adb shell am start -n com.chinaiptv.vod/com.starcor.hunan.CommonActivity
+        #         ''')
+        else:
+            lineEdit = QtWidgets.QLineEdit(self.groupBox)
+        lineEdit.setObjectName("extend_params")
+        lineEdit.setPlaceholderText(holderText)
+        lineEdit.setFont(getWRYHFontStyle())
+        h_layout.addWidget(lineEdit)
 
-        parentLayout.addWidget(self.groupBox)
+        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        h_layout.addItem(spacerItem)
+
+        h_layout.setStretch(0, 1)
+        h_layout.setStretch(1, 4)
+        h_layout.setStretch(2, 1)
+        self.group_vertical_layout.addLayout(h_layout)
+        return lineEdit
 
     def setUpUiDynamic(self, ConvenientArea):
         ConvenientArea.setObjectName("ConvenientArea")

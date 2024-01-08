@@ -10,6 +10,10 @@ from utils.UITools import IconTool
 
 
 class CustomLineEdit(QLineEdit):
+    """
+    针对DeleteableComboBox实现的拦截Key_Enter事件的输入框
+    目的是规避原生控件按回车后，会自动额外添加一个没删除按钮的数据项，所以用这个操作来规避此问题。
+    """
     def __init__(self, parent=None):
         super(CustomLineEdit, self).__init__(parent)
         self.enterAccept = None
@@ -28,6 +32,9 @@ class CustomLineEdit(QLineEdit):
 
 
 class DeleteableComboBox(QComboBox):
+    """
+    可将数据项删除的选择列表控件
+    """
     def __init__(self, parent=None):
         super(DeleteableComboBox, self).__init__(parent)
         self.mainWindow = None
@@ -43,9 +50,10 @@ class DeleteableComboBox(QComboBox):
         self.setSizePolicy(sizePolicy)
         # self.setInsertPolicy(QComboBox.InsertAtTop) InsertAtTop无效  参见:https://blog.csdn.net/ji3009/article/details/119107371
 
-        self.setEditable(True)
+        self.setEditable(True)  # 变成了一个 QLineEdit 和 QComboBox 的组合
         customLineEdit = CustomLineEdit()
         customLineEdit.setEnterAccept(self.onEnterPressClicekd)
+        customLineEdit.setPlaceholderText("输入目标应用包名，按回车键确认")
         self.setLineEdit(customLineEdit)
 
         # 创建QListWidget用于显示自定义项
@@ -118,7 +126,7 @@ class DeleteableComboBox(QComboBox):
 
     def onComBoxIndexChanged(self):
         self.currentChooseApp = self.currentText()
-        z_logger.info("切换目标应用为:" + self.currentChooseApp)
+        # z_logger.info("切换目标应用为:" + self.currentChooseApp)
 
 
 class DraggableLineEdit(QLineEdit):
@@ -129,6 +137,7 @@ class DraggableLineEdit(QLineEdit):
         super(DraggableLineEdit, self).__init__(parent)
         self.block = None
         self.setAcceptDrops(True)
+        self.setFont(getWRYHFontStyle())
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
