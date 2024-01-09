@@ -4,12 +4,13 @@ import logging
 import sys
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, pyqtSignal
 from PyQt5.QtGui import QTextCursor, QIcon
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
     QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView
 from qtpy import QtWidgets
 
+from src import MainWindow
 from src.logcat import log
 from src.logcat.log import z_logger
 from utils.ADBTools import ADBTools
@@ -25,10 +26,11 @@ class BottomTabWidget(QTabWidget):
     """
     底部TabWidget控件
     """
-    def __init__(self, parent=None):
-        super(BottomTabWidget, self).__init__(parent)
+    def __init__(self, parent:MainWindow):
+        super().__init__()
+        self.mainwindow = parent
         # 日志组件
-        self.consoleView = ConsoleWindow()
+        self.consoleView = ConsoleWindow(parent)
         z_logger.add_gui_log_handler(self.consoleView)
         self.tabBar = QTabBar()
 
@@ -72,7 +74,25 @@ class BottomTabWidget(QTabWidget):
                 self.setMaximumHeight(Utils.getWindowHeight())
 
     def updateSelectDeviceInfo(self, ip, isconnect):
+        """
+        更新所选设备的设备信息
+        :return:
+        """
         self.consoleView.updateSelectDeviceInfo(ip, isconnect)
+
+    def updateRunningProcessInfo(self):
+        """
+        更新运行时进程数据信息
+        :return:
+        """
+        self.consoleView.infoBarWidget.update_process_com_box()
+
+    def clearRunningProcessComBox(self):
+        """
+        更新运行时进程数据信息
+        :return:
+        """
+        self.consoleView.infoBarWidget.update_process_com_box(False)
 
     def get_fun_widget(self):
         return self.consoleView.get_fun_widget()
@@ -117,9 +137,9 @@ class ConsoleWindow(QMainWindow):
     """
     global terminalTextBrowser
 
-    def __init__(self, parent=None):
-        super(ConsoleWindow, self).__init__(parent)
-        self.infoBarWidget = InfoBarWidget()
+    def __init__(self, parent:MainWindow):
+        super().__init__(parent)
+        self.infoBarWidget = InfoBarWidget(parent)
 
         self.isConUrl = False
         self.setStyleSheet('''
@@ -262,8 +282,9 @@ class InfoBarWidget(QWidget):
     设备信息和包名选择的组合控件
     """
 
-    def __init__(self):
+    def __init__(self, parent: MainWindow):
         super().__init__()
+        self.mainwindow = parent
         self.current_ip = ""
         self.pkgManger = PackageManager()
         self.pkgComboBox = QComboBox()
@@ -360,14 +381,21 @@ class InfoBarWidget(QWidget):
             return
         self.update_process_com_box()
 
-    def update_process_com_box(self):
+    def update_process_com_box(self, isConnect=True):
         """
         更新PkgComBox数据显示
         :return:
         """
         if len(self.current_ip) == 0:
             return
-        adb_tool.get_running_process(self.current_ip, self._onProcessFiltered)
+        if not isConnect:
+            z_logger.debug("当前选中设备离线,清空runningProcess数据")
+            self.pkgComboBox.clear()
+            self.pkgManger.setSelectedRunningProcessInfo("")
+            return
+        state = adb_tool.get_running_process(self.current_ip, self._onProcessFiltered)
+        if not state:
+            self.mainwindow.check_device_status()
 
     def _onProcessFiltered(self, sorted_processes):
         """
@@ -398,15 +426,14 @@ class InfoBarWidget(QWidget):
             if value_tuple[0] == '':
                 if not isconnect:  # 未连接设备的情况下
                     self.device_info_desc.setText("请先连接此设备")
+                    self.update_device_info(ip, False)
                 else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
                     z_logger.debug("[Update_Device] Current device is connected, but no device info!")
                     self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
             else:
                 z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
                 self.device_info_desc.setText(value_tuple[0])
-                if isconnect:
-                    self.update_process_com_box()
-                    # 更新设备后，立刻查询此设备的ps进程信息（TODO 做定时缓存）
+                self.update_process_com_box(isconnect)
         else:
             # 从数据库查询不到数据，通常是手动添加的未连接设备
             if isconnect:
@@ -414,6 +441,7 @@ class InfoBarWidget(QWidget):
                 self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
             else:
                 self.device_info_desc.setText("请先连接此设备")
+                self.update_process_com_box(False)
 
     def on_device_prop_get_by_adb(self, result):
         """

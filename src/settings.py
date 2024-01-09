@@ -4,8 +4,6 @@ import os
 # BASE_PATH = sys.argv[0]   xxxx/PyQt5Demo/App.py
 import time
 
-from PyQt5.QtCore import QSettings
-
 # 应用窗口屏占比
 APP_SCREEN_RQTIO = 0.75
 
@@ -24,7 +22,7 @@ LOG_APP_FILE = os.path.join(LOGS_PATH, _Log_NAME)
 # 应用数据库路径及名称
 APP_DB_FILE = "%s\\data\\easyADB.db" % BASE_PATH
 
-APP_VERSION = '1.0'
+APP_VERSION = '1.0.1'
 
 DEBUG_PRINT = True
 

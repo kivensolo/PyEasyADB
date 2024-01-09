@@ -101,7 +101,7 @@ class MainWindow(BaseWindow):
         # 内容显示的分割器
         self.vertical_splitter = QSplitter(Qt.Horizontal)
         # 底部控制台窗口
-        self.bottom_tab_widget = BottomTabWidget()
+        self.bottom_tab_widget = BottomTabWidget(self)
         # 左侧面板相关变量
         self.left_panel = None
         self.tree_view = None
@@ -194,8 +194,6 @@ class MainWindow(BaseWindow):
         self.left_panel.setLayout(layout)
 
         self.init_tree_view()
-        # TODO 切换设备信息页面
-        # tree_view.clicked.connect(self.getDebugData)
 
     def init_status_bar(self):
         statusbar = QStatusBar(self)
@@ -457,7 +455,7 @@ class MainWindow(BaseWindow):
         if is_device_node(item):
             z_logger.debug("On tree item double clicked %s" % item.addr)
             if item.addr not in self.active_ip_list:
-                z_logger.info_with_stamp("连接设备中......(%s)" % item.addr)
+                z_logger.info(f"连接{item.addr}......")
                 self.connect_device(item.addr)
             else:
                 z_logger.debug("Already in active device list.")
@@ -511,7 +509,7 @@ class MainWindow(BaseWindow):
         item = self.treeModel.itemFromIndex(index)
         if is_device_node(item):
             isconencted = item.addr in self.active_ip_list
-            z_logger.debug(f'on_tree_item_clicked:{item.addr}  isConnected:{isconencted}')
+            z_logger.debug(f'当前选中设备:{item.addr}  是否已连接:{isconencted}')
             if self.current_device_addr == item.addr and isconencted:
                 return
             self.current_device_addr = item.addr
@@ -627,6 +625,7 @@ class MainWindow(BaseWindow):
             z_logger.info("设备断开成功!")
             self.active_ip_list.remove(self.temp_disconnect_ip)
             self.update_current_tree_item(False)
+            self.bottom_tab_widget.clearRunningProcessComBox()
         elif self.adbTools.isGettingDeviceList():
             self.parse_devices_states(resultList)
         else:
@@ -673,6 +672,7 @@ class MainWindow(BaseWindow):
                             # self.close()
                     else:
                         z_logger.debug("[Parse States] This device already in local.")
+                        self.bottom_tab_widget.updateRunningProcessInfo()
 
             else:
                 # 离线设备 device_state == 'offline' 或 'unknow'
@@ -680,6 +680,8 @@ class MainWindow(BaseWindow):
                 self.update_current_tree_item(False)
 
         z_logger.debug("当前已连接设备列表：" + str(self.active_ip_list))
+        if len(self.active_ip_list) == 0:
+            z_logger.info("无任何连接设备！")
         self.refresh_treeview_by_data()
 
 # ----------------------------------ADB 操作 END-----------------------------------------------

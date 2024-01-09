@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxL
 from qtpy import QtWidgets, QtCore, QtGui
 
 from src.logcat.log import z_logger
+from src.settings import APP_VERSION
 from src.widget.ScreenRecord import Record_Dialog
 from src.DataBase import DBManager
 from src.widget.BaseDialog import BaseDialog
@@ -283,6 +284,7 @@ class device_alis_edit_dialog(BaseDialog):
         if len(str(alis_name)) > 0:
             self.mainWindow.pkgManager.updateDeviceAlias(self.mainWindow.current_device_addr.split(":")[0], alis_name)
             self.on_alias_update_signal.emit(alis_name)
+            self.accept()
 
 
 class AboutDialog(BaseDialog):
@@ -314,7 +316,7 @@ class AboutDialog(BaseDialog):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "关于"))
-        self.label.setText(_translate("Dialog", "EasyABD"))
+        self.label.setText(_translate("Dialog", f"v{APP_VERSION}"))
 
 
 class WarningDialog(BaseDialog):

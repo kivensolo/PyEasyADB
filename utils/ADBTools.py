@@ -50,15 +50,15 @@ def get_filter_processes(device_name):
     获取进程信息
     ['USER', 'PID', 'PPID', 'VSZ', 'RSS', 'WCHAN', 'ADDR', 'S', 'NAME']
     ['USER', 'PID', 'PPID', 'VSIZE', 'RSS', 'WCHAN', 'PC', 'NAME']
-    :return:
+    :return: state, proceList
     """
     processes = []
     try:
         _cmd = f"adb -s {device_name} shell ps"
         output = subprocess.check_output(_cmd, shell=True).decode("utf-8")
     except Exception as e:
-        z_logger.error("获取进程信息失败:" + e)
-        return []
+        z_logger.error("获取进程信息失败:" + str(e))
+        return False, []
 
     # 从第二行开始 分割每一行
     for line in output.splitlines()[1:]:
@@ -91,7 +91,7 @@ def get_filter_processes(device_name):
         if any(name.startswith(prefix) for prefix in filterPrefixes):
             continue
         processes.append((user, pid, name))
-    return processes
+    return True, processes
 
 
 def process_user_name_check(user):
@@ -231,10 +231,13 @@ class ADBTools:
             z_logger.error("Failed to capture screenshot.")
 
     def get_running_process(self, device_name, blcok):
-        filtered_processes = get_filter_processes(device_name)
+        state, filtered_processes = get_filter_processes(device_name)
+        if not state:
+            return False  # 获取失败，多半是设备离线了
         # 按照A-Z顺序对进程名称进行排序
         sorted_processes = sorted(filtered_processes, key=lambda x: x[2])
         blcok(sorted_processes)
+        return True
         # for user, pid, p_name in sorted_processes:
         #     print(f"Process Name: {p_name}, PID: {pid}")
 

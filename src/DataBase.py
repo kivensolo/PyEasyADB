@@ -93,15 +93,15 @@ class DBManager:
 
     def update_ip_data(self, newIp, idx=0):
         sql = f"UPDATE {DBManager.TABLE_DEVICE} SET ip={newIp} WHERE id={idx}"
-        self.exec_sql(sql)
+        return self.exec_sql(sql)
 
     def update_device_prop(self, info, ip):
         sql = f"UPDATE {DBManager.TABLE_DEVICE} SET device_info=\'{info}\' WHERE ip=\'{ip}\'"
-        self.exec_sql(sql)
+        return self.exec_sql(sql)
 
     def update_device_alias(self, ip, alias):
         sql = f"UPDATE {DBManager.TABLE_DEVICE} SET alias=\'{alias}\' WHERE ip=\'{ip}\'"
-        self.exec_sql(sql)
+        return self.exec_sql(sql)
 
     def queryData(self, column='*', table_name='default'):
         """

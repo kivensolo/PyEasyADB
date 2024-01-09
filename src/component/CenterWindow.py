@@ -315,7 +315,7 @@ class Ui_ConvenientArea(object):
             self.dealCustomAction(_action, actionParams)
         else:
             if "uninstall" in _cmd:
-                warningDialog = WarningDialog(self,f"是否要卸载以下应用:\n {self.mainWindow.pkgManager.getSelectedPackageName()}")
+                warningDialog = WarningDialog(self, f"是否要卸载以下应用:\n {self.mainWindow.pkgManager.getSelectedPackageName()}")
                 warningDialog.setWindowModality(Qt.ApplicationModal)
                 warningDialog.setActionParams(actionParams)
                 warningDialog.setOnClickedListener(self.runAdbCMD)

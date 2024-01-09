@@ -16,6 +16,7 @@ class CmdExecutor(QThread):
     def __init__(self, parent=None):
         super(CmdExecutor, self).__init__(parent)
         # 执行命令
+        self.process = None
         self.result = ""
         self.cmd = None
         # 连接计数器
@@ -34,10 +35,11 @@ class CmdExecutor(QThread):
         cmd执行超时的槽函数
         :return:
         """
-        if self._intConnectTime >= 20:  # 超过20s
+        if self._intConnectTime >= 5:  # 超过20s
             self.requestInterruption()  # 请求终止线程
             self.timer.stop()
             self.finishSignal.emit('cmdExectuedTimeout')  # 发送超时信号
+            self.process.kill()
         else:
             self._intConnectTime = self._intConnectTime + 1
 
@@ -56,8 +58,8 @@ class CmdExecutor(QThread):
 
     def run(self):
         # 日志输出文件初始化 --- Start
-        _process = Popen(self.cmd, stdout=PIPE,stderr=PIPE, bufsize=-1, encoding='utf-8')
-        stdout_data, stderr_data = _process.communicate(input=None, timeout=None)
+        self.process = Popen(self.cmd, stdout=PIPE,stderr=PIPE, bufsize=-1, encoding='utf-8')
+        stdout_data, stderr_data = self.process.communicate(input=None, timeout=None)
         if stdout_data is not None:
             # 把多行换行符换成一行(ps命令会有多行)
             stdout_data = stdout_data.replace("\n\n", "\n")
@@ -66,7 +68,7 @@ class CmdExecutor(QThread):
         if stderr_data is not None and stderr_data != "":
             self.result = self.result + "\n" + stderr_data.strip()
 
-        _process.stdout.close()   # close触发finishSignal
+        self.process.stdout.close()   # close触发finishSignal
         # _process.wait()
         if self.isInterruptionRequested():  # 判断是否请求终止线程
             return

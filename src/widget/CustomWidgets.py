@@ -1,11 +1,11 @@
 from IPython.external.qt_for_kernel import QtGui
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon
+from PyQt5.QtCore import Qt, QRegExp
+from PyQt5.QtGui import QIcon, QRegExpValidator
 from PyQt5.QtWidgets import QLineEdit, QComboBox
 
 from src.logcat.log import z_logger
-from utils.Tools import getWRYHFontStyle
+from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
 from utils.UITools import IconTool
 
 
@@ -17,6 +17,9 @@ class CustomLineEdit(QLineEdit):
     def __init__(self, parent=None):
         super(CustomLineEdit, self).__init__(parent)
         self.enterAccept = None
+        validator = QRegExpValidator(QRegExp("^[a-z][a-z0-9_.]*$"), self)
+        self.setValidator(validator)
+        self.setFont(getSimpleFontStyle(9))
 
     def setEnterAccept(self, block):
         self.enterAccept = block
@@ -53,7 +56,6 @@ class DeleteableComboBox(QComboBox):
         self.setEditable(True)  # 变成了一个 QLineEdit 和 QComboBox 的组合
         customLineEdit = CustomLineEdit()
         customLineEdit.setEnterAccept(self.onEnterPressClicekd)
-        customLineEdit.setPlaceholderText("输入目标应用包名，按回车键确认")
         self.setLineEdit(customLineEdit)
 
         # 创建QListWidget用于显示自定义项
@@ -121,7 +123,7 @@ class DeleteableComboBox(QComboBox):
                 self.removeItem(index)
                 result, value = self.mainWindow.pkgManager.exec(f"delete from package where name = \'{text}\'")
                 if result:
-                    z_logger.info(f"删除{package_name}成功")
+                    z_logger.info_with_stamp(f"删除{package_name}成功")
                 else:
                     z_logger.error(f"删除{package_name}失败:{value}")
                 break
@@ -134,8 +136,7 @@ class DeleteableComboBox(QComboBox):
             return
         if _text != "":  # 第一次加载时，有了数据，但也是为空字符串，因此单独处理
             self.mainWindow.pkgManager.setSelectedPackageName(_text)
-
-    # z_logger.info("切换目标应用为:" + self.currentChooseApp)
+            z_logger.info(f"切换目标应用为:{_text}")
 
 
 class DraggableLineEdit(QLineEdit):
