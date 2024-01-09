@@ -352,7 +352,7 @@ class InfoBarWidget(QWidget):
         self.init_process_info()
 
     def onPackageSelectedChanged(self):
-        self.pkgManger.setSelectedPackage(self.pkgComboBox.currentText())
+        self.pkgManger.setSelectedRunningProcessInfo(self.pkgComboBox.currentText())
 
     def init_process_info(self):
         if len(self.current_ip) == 0:
@@ -381,7 +381,7 @@ class InfoBarWidget(QWidget):
             self.pkgComboBox.addItem(f"{p_name}({pid})")
 
         # 第一条数据的p_name字段
-        self.pkgManger.setSelectedPackage(sorted_processes[0][2])
+        self.pkgManger.setSelectedRunningProcessInfo(sorted_processes[0][2])
 
     def update_device_info(self, ip, isconnect):
         """

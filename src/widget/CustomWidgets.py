@@ -90,8 +90,10 @@ class DeleteableComboBox(QComboBox):
             else:
                 z_logger.error(f"添加应用失败:{value}")
 
-    def addItemsWithData(self, list_data):
+    def initData(self, list_data):
         for pos, device in enumerate(list_data):
+            if pos == 0:
+                self.mainWindow.pkgManager.setSelectedPackageName(device[0])
             item_widget: QtWidgets.QWidget = self._deleteBtn(device[0])
             item_wrap = QtWidgets.QListWidgetItem(self.listWidget)
             item_wrap.setFont(getWRYHFontStyle())
@@ -125,8 +127,15 @@ class DeleteableComboBox(QComboBox):
                 break
 
     def onComBoxIndexChanged(self):
-        self.currentChooseApp = self.currentText()
-        # z_logger.info("切换目标应用为:" + self.currentChooseApp)
+        _index = self.currentIndex()
+        _text = self.currentText()
+        if _index == -1:
+            self.mainWindow.pkgManager.setSelectedPackageName("")
+            return
+        if _text != "":  # 第一次加载时，有了数据，但也是为空字符串，因此单独处理
+            self.mainWindow.pkgManager.setSelectedPackageName(_text)
+
+    # z_logger.info("切换目标应用为:" + self.currentChooseApp)
 
 
 class DraggableLineEdit(QLineEdit):

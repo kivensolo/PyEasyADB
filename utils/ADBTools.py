@@ -11,26 +11,38 @@ from utils.CmdExecutor import CmdExecutor
 class ActionCmdParams:
     def __init__(self):
         self.isShellMode = True
-        # 行为命令id, 包含自定义行为，也可能直接是ADB行为命令
-        self.action = ""
+        # ADB行为命令
+        self.cmd = ""
+        # 自定义行为
+        self.custom_action = ""
         self.target_device_ip = ""
         self.needDstPkg = True
         self.target_app = ""
 
-    # def __init__(self, is_shell, format_cmd: string, ip="", app=""):
-    #     self.isShellMode = is_shell
-    #     self.cmd_with_format = format_cmd
-    #     self.target_device_ip = ip
-    #     self.target_app = app
+    def hasCustomAction(self):
+        return self.custom_action != ""
 
     def getAdbCMD(self):
-        _cmd = self.action.format(self.target_app)
+        _cmd = self.cmd.format(self.target_app)
         _full_cmd = ''
         if self.isShellMode:
             _full_cmd = f"adb -s {self.target_device_ip} shell {_cmd}"
         else:
             _full_cmd = f"adb -s {self.target_device_ip} {_cmd}"
         return _full_cmd
+
+    def verifyTargetApp(self):
+        """
+        校验该行为是否需要目标应用包名
+        :return: 是否校验通过  True|False
+        """
+        if self.needDstPkg:
+            if self.target_app == "":
+                return False
+            else:
+                return True
+        else: # no need check target app
+            return True
 
 
 def get_filter_processes(device_name):

@@ -175,7 +175,6 @@ class MainWindow(BaseWindow):
         self.stacked_device_info.addWidget(self.centerArea)
         self.stacked_device_info.setCurrentIndex(0)  # 切换至选中页
 
-        # OldUIManager(self, centralwidget).initViews()
         layout.addWidget(self.stacked_device_info)
         self.center_panel.setLayout(layout)
 
@@ -245,7 +244,6 @@ class MainWindow(BaseWindow):
         # self.tree_model.setItem(0, 1, device_item2)
         device_item.type = TreeItemType.TYPE_ROOT_DEVICE
         device_item.removeRows(0, device_item.rowCount())
-        # TODO 自定义排序规则
         all_device.sort()
         for device in all_device:
             # 填充每一个设备信息  Format: ip:port(alias)
@@ -295,7 +293,6 @@ class MainWindow(BaseWindow):
         self.device_menu_action_disconnect.triggered.connect(self.disconnect_device)
         self.device_menu_action_remove_device = treeView.contextMenu.addAction(self.icon_warning, '| 删除设备')
         self.device_menu_action_remove_device.triggered.connect(self.del_device)
-
 
     def load_adb_cmds(self):
         root_adb_node = QStandardItem("命令列表")
@@ -463,25 +460,26 @@ class MainWindow(BaseWindow):
             else:
                 z_logger.debug("Already in active device list.")
         elif item.type == TreeItemType.TYPE_ADB_CMD:
-            params:ActionCmdParams = ActionCmdParams()
+            params: ActionCmdParams = ActionCmdParams()
             params.isShellMode = item.isShell
             params.needDstPkg = item.needDstPkg
-            params.action = item.cmd
+            params.cmd = item.cmd
             self.runAdbCMD(params)
 
     def runAdbCMD(self, cmdParams: ActionCmdParams):
         if len(self.active_ip_list) == 0:
             z_logger.error("请先连接设备")
         else:
-            pkgName = ""
+            # 最后环节点确定目标应用包名信息
             if cmdParams.needDstPkg:
-                pkgName = self.pkgManager.getSelectedRunningProcessName()
-                if pkgName is None:
-                    z_logger.error("请先选择目标应用")
-                    return
+                cmdParams.target_app = self.pkgManager.getSelectedPackageName()
+            # check
+            _checkPass = cmdParams.verifyTargetApp()
+            if not _checkPass:
+                z_logger.error("请先选择目标应用")
+                return
             # 每次重新赋值
             cmdParams.target_device_ip = self.current_device_addr
-            cmdParams.target_app = pkgName
             self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
 
     def runAdbCMD_V2(self, cmdParams: list):
@@ -491,7 +489,7 @@ class MainWindow(BaseWindow):
             for _cmd in cmdParams:
                 pkgName = ""
                 if _cmd.needDstPkg:
-                    pkgName = self.pkgManager.getSelectedRunningProcessName()
+                    pkgName = self.pkgManager.getSelectedPackageName()
                     if pkgName is None:
                         z_logger.error("请先选择目标应用")
                         return
@@ -499,7 +497,6 @@ class MainWindow(BaseWindow):
                 _cmd.target_device_ip = self.current_device_addr
                 _cmd.target_app = pkgName
                 self.adbTools.exec_adb_cmd(_cmd.getAdbCMD(), self.on_adb_cmd_exectued)
-                # async_exec_adb_cmd
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):

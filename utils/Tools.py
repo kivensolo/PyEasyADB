@@ -24,6 +24,11 @@ def newFixedPushButton(objName="", text="", parent=""):
 
 
 def getWRYHFontStyle(size=10):
+    """
+    获取微软雅黑字体风格，整体为较粗较黑，适合label展示
+    :param size:
+    :return:
+    """
     return QFont("微软雅黑", size)
 
 
@@ -34,6 +39,10 @@ def globalEditTextFontStyle():
 
 def getSongFontStyle(size=11, font=QFont.Normal):
     return QFont("宋体", size, font)
+
+
+def getSimpleFontStyle(size=10, font=QFont.Normal):
+    return QFont("简体", size, font)
 
 
 def isIpMatches(ip):

@@ -16,14 +16,22 @@ class PackageManager:
 
     def __init__(self):
         self.currentSelectedRunningProcessName = ""
+        self.currentSelectedApp = ""
         self.dbManager = DBManager()
         self.adbTools = ADBTools()
 
-    def setSelectedPackage(self, process_info):
+    def setSelectedRunningProcessInfo(self, process_info):
         z_logger.debug("Set selected process:" + process_info)
         segments = str(process_info).split("(")
         self.currentSelectedRunningProcessName = segments[0]
 
+    def setSelectedPackageName(self, name):
+        self.currentSelectedApp = name
+
+    def getSelectedPackageName(self):
+        return self.currentSelectedApp
+
+    @DeprecationWarning
     def getSelectedRunningProcessName(self):
         return self.currentSelectedRunningProcessName
 

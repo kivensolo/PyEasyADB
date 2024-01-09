@@ -90,12 +90,12 @@ class Ui_ToolBar(QToolBar):
         self.btn_unroot.setText(_translate("unroot_adb", "ADB Unroot"))
 
     @pyqtSlot()
-    def adb_cmd_clicked(self, action):
-        rootParams = ActionCmdParams()
-        rootParams.isShellMode = False
-        rootParams.needDstPkg = False
-        rootParams.action = action
-        self.mainWindow.runAdbCMD(rootParams)
+    def adb_cmd_clicked(self, action, hasTargetApp=False):
+        _params = ActionCmdParams()
+        _params.isShellMode = False
+        _params.needDstPkg = hasTargetApp
+        _params.cmd = action
+        self.mainWindow.runAdbCMD(_params)
 
     @pyqtSlot()
     def openShell(self):

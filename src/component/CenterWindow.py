@@ -2,17 +2,15 @@ import sys
 import xml.dom.minidom
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, pyqtSlot, QSize, QDateTime
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog, QListWidget, QComboBox, QListWidgetItem, QPushButton
+from PyQt5.QtCore import Qt, pyqtSlot, QSize, QDateTime, QSettings, QTimer, pyqtSignal
+from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 
+from src import MainWindow, settings
 from src.logcat.log import z_logger
-from src import MainWindow
 from src.widget.CustomWidgets import DeleteableComboBox
 from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
-from utils import Tools
 from utils.ADBTools import ActionCmdParams
-from utils.Tools import getWRYHFontStyle
+from utils.Tools import getWRYHFontStyle, getSongFontStyle, getSimpleFontStyle
 
 
 class CommonFunctionalWidget(QWidget):
@@ -29,34 +27,7 @@ class CommonFunctionalWidget(QWidget):
     # 新版布局逻辑
     def _init_convenient_area(self):
         convenient_area = Ui_ConvenientArea(self.parent)
-        convenient_area.setUpUiDynamic(self)
-
-    def invokePkgAction(self):
-        if not self.parent.is_current_device_connect():
-            return
-        currentPkgName = ""
-        if currentPkgName:
-            class_Path = "{0}/{1}".format(currentPkgName, self.activityClassPath.text())
-            self.parent.adbTools.start_app_page(self.current_ip, class_Path, self._onInvokeActionEnd)
-
-    @pyqtSlot(list)
-    def _onInvokeActionEnd(self, result):
-        for line in result:
-            if "Error:" in line:
-                z_logger.error("操作错误:" + str(line))
-                return
-            elif "Failure" in line:
-                z_logger.info("操作失败:" + str(line))
-                return
-            elif "Unknown package" in line:
-                # 卸载不存在应用的时候，adb会抛异常，但是python输出流无法捕获
-                z_logger.error("操作失败，请确认目标设备中存在此应用:" + str(line))
-        z_logger.debug("操作完毕")
-
-    def dynamicSetupUi(self, parent):
-        parent.setObjectName("dynamic_functions")
-        self.verticalLayout = QtWidgets.QVBoxLayout(parent)
-        self.verticalLayout.setObjectName("verticalLayout")
+        convenient_area.setUpUi(self)
 
 
 # UI模板配置文件路径
@@ -66,8 +37,14 @@ every_row_size = 5
 
 
 class Ui_ConvenientArea(object):
+    edittext_changed = pyqtSignal([])
+
     def __init__(self, mainWidow):
         self.mainWindow = mainWidow
+        self.settings = QSettings('com.zeke.python', 'EasyADB')
+        self.timer = QTimer()
+        self.timer.setSingleShot(True)
+        self.timer.timeout.connect(self.record_text_data)
 
     def _initCustomAppActionArea(self, parentLayout):
         """
@@ -76,10 +53,11 @@ class Ui_ConvenientArea(object):
         :return:
         """
         self.groupBox = QtWidgets.QGroupBox(self.scrollAreaWidgetContents)
+        self.groupBox.setFont(getSimpleFontStyle())
         self.groupBox.setObjectName("app_custom_action_group")
         self.group_vertical_layout = QtWidgets.QVBoxLayout(self.groupBox)
         self.group_vertical_layout.setObjectName("group_vertical_layout")
-        self.groupBox.setTitle("应用参数设置")
+        self.groupBox.setTitle("应用参数配置")
         self.groupBox.setStyleSheet("QGroupBox { background-color:rgb(255,255,255);"
                                     "font-weight: bold; } ")
         # ==== 包名选择区域
@@ -100,7 +78,7 @@ class Ui_ConvenientArea(object):
         self.packagesCombobox.setMainWinodw(self.mainWindow)
         self.packagesCombobox.setObjectName("custom_packages")
         pkg_local_data = self.mainWindow.pkgManager.query(table_name="package")
-        self.packagesCombobox.addItemsWithData(pkg_local_data)
+        self.packagesCombobox.initData(pkg_local_data)
         self.package_layout.addWidget(self.packagesCombobox)
 
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -111,14 +89,30 @@ class Ui_ConvenientArea(object):
         self.group_vertical_layout.addLayout(self.package_layout)
 
         # ==== 类名
-        self.classPathEditText    = self.addCustomEditRow("activity:", "目标activity的完整路径,如:com.example.myapp.MainActivity")
-        self.actionEditText       = self.addCustomEditRow("action :", "用于启动activity或广播发送")
-        self.extendParamsEditText = self.addCustomEditRow("extend:", "扩展参数，如:--es \"key1\" \"value1\"", True)
+        self.classPathEditText: QtWidgets.QLineEdit = self.addCustomEditRow(
+            settings.key_app_activity_classpath, "activity:", "目标activity的完整路径,如:com.example.myapp.MainActivity")
+        self.actionEditText: QtWidgets.QLineEdit = self.addCustomEditRow(
+            settings.key_app_action,"action :", "用于启动activity或广播发送")
+        self.extendParamsEditText: QtWidgets.QTextEdit = self.addCustomEditRow(
+            settings.key_app_extparams, "extend:", "扩展参数，如:--es \"key1\" \"value1\"", True)
         parentLayout.addWidget(self.groupBox)
 
-    def addCustomEditRow(self, labelText, holderText, isTextEdit=False):
+    def onEditTextValueChanged(self, objName, text):
+        # self.timer.start(1000)  # 重置计时器，设置超时时间为1000毫秒（1秒）
+        self.settings.setValue(objName, text)
+        # if self.timer.isActive():
+        #     self.timer.stop()
+        # else:
+        #     self.timer.start(2000)
+        # self.settings.setValue(key, value)-
+
+    def record_text_data(self):
+        pass
+
+    def addCustomEditRow(self, objName, labelText, holderText, isTextEdit=False):
         """
         添加一行文字+editText的布局
+        :param objName:
         :param labelText:
         :param holderText:
         :param isTextEdit:
@@ -138,15 +132,16 @@ class Ui_ConvenientArea(object):
 
         if isTextEdit:
             lineEdit = QtWidgets.QTextEdit(self.groupBox)
-        #     textEdit.setPlaceholderText('''扩展参数为adb标准参数格式: [options] <INTENT>
-        # 以启动为例,扩展参数配置为 -n com.chinaiptv.vod/com.starcor.hunan.CommonActivity
-        # 则执行命令为：adb shell am start -n com.chinaiptv.vod/com.starcor.hunan.CommonActivity
-        #         ''')
+            lineEdit.textChanged.connect(lambda : self.onEditTextValueChanged(lineEdit.objectName(), lineEdit.toPlainText()))
         else:
             lineEdit = QtWidgets.QLineEdit(self.groupBox)
-        lineEdit.setObjectName("extend_params")
+            lineEdit.textChanged.connect(lambda : self.onEditTextValueChanged(lineEdit.objectName(), lineEdit.text()))
+        lineEdit.setObjectName(objName)
         lineEdit.setPlaceholderText(holderText)
-        lineEdit.setFont(getWRYHFontStyle())
+        lineEdit.setFont(getSongFontStyle(10))
+        _cachedText = self.settings.value(objName)
+        if _cachedText != "" and _cachedText is not None:
+            lineEdit.setText(_cachedText)
         h_layout.addWidget(lineEdit)
 
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -158,7 +153,7 @@ class Ui_ConvenientArea(object):
         self.group_vertical_layout.addLayout(h_layout)
         return lineEdit
 
-    def setUpUiDynamic(self, ConvenientArea):
+    def setUpUi(self, ConvenientArea):
         ConvenientArea.setObjectName("ConvenientArea")
 
         # 此UI区域的根布局
@@ -192,10 +187,17 @@ class Ui_ConvenientArea(object):
         self.vlayout_of_scrollarea.setObjectName("scroll_area_layout")
         # self.vlayout_of_scrollarea.setSpacing(0)
 
-        # 【自定义区域---Start】将groupBox加入垂直滚动布局中
+        # 【自定义区域】将groupBox加入垂直滚动布局中
         self._initCustomAppActionArea(self.vlayout_of_scrollarea)
-        # 【自定义区域---End】将groupBox加入垂直滚动布局中
 
+        # 【动态布局区域】
+        self._setUpUIDynamic()
+
+        # 给滚动区域设置Qwidgets
+        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
+        self.ui_root_vlayout.addWidget(self.scrollArea)
+
+    def _setUpUIDynamic(self):
         # 【setUpUiDynamic】
         # if __name__ == "__main__":
         #     template_ui_config_file_path = "../../config/function_templates.xml"
@@ -217,6 +219,7 @@ class Ui_ConvenientArea(object):
             _groupBox.setCheckable(False)
             _groupBox.setObjectName(template_name)
             _groupBox.setTitle(template_name)
+            _groupBox.setFont(getSimpleFontStyle())
 
             item_list = template.getElementsByTagName("item")
 
@@ -234,7 +237,7 @@ class Ui_ConvenientArea(object):
 
                     # 初始化每一个tool按钮
                     item_tool_button = QtWidgets.QToolButton(_groupBox)
-                    item_tool_button.setObjectName("{0}_item_{1}{2}".format(template_name, rowIndex,columnIndex))
+                    item_tool_button.setObjectName("{0}_item_{1}{2}".format(template_name, rowIndex, columnIndex))
                     item_tool_button.setAutoRaise(True)
 
                     item_state = item.getAttribute("state")
@@ -262,17 +265,21 @@ class Ui_ConvenientArea(object):
                             item_tool_button.setIcon(QtGui.QIcon(_value))
                             item_tool_button.setIconSize(QSize(56, 56))
                             item_tool_button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextUnderIcon)
-                        elif _key == "action":
+                        elif _key == "cmd":
                             shellValue = attr.getAttribute("shell")
-                            if shellValue.lower() == "false":
-                                actionParams.isShellMode = False
-                            actionParams.action = _value
+                            actionParams.isShellMode = (shellValue.lower() != "false")
+                            actionParams.cmd = _value
+                        elif _key == "act":
+                            shellValue = attr.getAttribute("shell")
+                            actionParams.isShellMode = (shellValue.lower() != "false")
+                            actionParams.custom_action = _value
                     """
                     https://blog.csdn.net/PixelNovaO/article/details/132727483
                     每次迭代时创建一个新的闭包，以便为每个按钮创建一个独立的事件处理器。并将自定义对象作为参数传递。
                     使用了lambda 函数来创建一个新的闭包，以捕获当前的按钮对象和自定义对象。这样，每个按钮的事件处理器都会独立地处理各自的对象。
                     """
-                    item_tool_button.clicked.connect(lambda checked, params=actionParams: self.onDoAction(params))
+                    item_tool_button.clicked.connect(
+                        lambda checked, params=actionParams: self.onActionIconClicked(params))
 
                     gridLayout.addWidget(item_tool_button, rowIndex, columnIndex, 1, 1)
 
@@ -291,61 +298,101 @@ class Ui_ConvenientArea(object):
 
             # 将groupBox加入垂直滚动布局中
             self.vlayout_of_scrollarea.addWidget(_groupBox)
-
         # 最底部添加"弹簧"
-        scroll_bottom_spacer_item = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        scroll_bottom_spacer_item = QtWidgets.QSpacerItem(20, 20, QtWidgets.QSizePolicy.Minimum,
+                                                          QtWidgets.QSizePolicy.Expanding)
         self.vlayout_of_scrollarea.addItem(scroll_bottom_spacer_item)
-        # 给滚动区域设置Qwidgets
-        self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-        self.ui_root_vlayout.addWidget(self.scrollArea)
 
     @pyqtSlot()
-    def onDoAction(self, actionParams: ActionCmdParams):
+    def onActionIconClicked(self, actionParams: ActionCmdParams):
         """
         执行快捷命令
         :param actionParams:
         :return:
         """
-        _action = actionParams.action
-        if _action == "m_show_install_app_dialog":
+        _action = actionParams.custom_action
+        _cmd = actionParams.cmd
+        if _action != "":
+            self.dealCustomAction(_action, actionParams)
+        else:
+            self.mainWindow.runAdbCMD(actionParams)
+
+    def dealCustomAction(self, custom_act, actionParams: ActionCmdParams):
+        """
+        处理自定义行为
+        :param custom_act:
+        :param actionParams:
+        :return:
+        """
+        if custom_act == "m_show_install_app_dialog":
             if len(self.mainWindow.active_ip_list) == 0:
                 z_logger.error("请先连接设备!!!")
                 return
             install_apk_dialog = installApkDialog(self.mainWindow)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
             install_apk_dialog.exec()
-        elif _action == "m_screenshot":
+        elif custom_act == "m_screenshot":
             self.action_save_screen_shoot()
-        elif _action == "m_screen_record":
+        elif custom_act == "m_screen_record":
             _record_dialog = screen_record_dialog(self.mainWindow)
             _record_dialog.setWindowModality(Qt.ApplicationModal)
             _record_dialog.exec()
-        elif _action == "m_restart_app":
+        elif custom_act == "m_start_app":  # 启动应用
+            self.start_app(actionParams)
+        elif custom_act == "m_restart_app":  # 重启应用
             self.restart_app()
-        elif _action == "m_input_text":
+        elif custom_act == "m_input_text":
             _text_input_dialog = TextInputDialog(self.mainWindow)
             _text_input_dialog.setWindowModality(Qt.ApplicationModal)
             _text_input_dialog.exec()
         else:
+            z_logger.error(f"不支持的自定义行为:{custom_act}")
+
+    def start_app(self, actionParams, onlyCmd=False):
+        """
+        启动应用
+        :param actionParams: ActionCmdParams
+        :return: 执行的adb命令（不包含adb -s <ip> shell前缀)
+        """
+        _cmd = "am start"
+        _package_name = self.packagesCombobox.currentText()
+        _act = self.actionEditText.text()
+        _class_path = self.classPathEditText.text()
+        if _act == "" and _class_path == "":
+            _cmd += f" {_package_name}"
+        else:
+            if _act != "":
+                _cmd += f" -a {_act}"
+            if _class_path != "":
+                _cmd += f" -n {_package_name}/{_class_path}"
+        _extParams = self.extendParamsEditText.toPlainText()
+        if _extParams != "":
+            _cmd += f" {_extParams}"
+        actionParams.cmd = _cmd
+        if not onlyCmd:
             self.mainWindow.runAdbCMD(actionParams)
+        return _cmd
 
     def restart_app(self):
+        """
+        重启应用
+        """
         cmd_1 = ActionCmdParams()
         cmd_1.target_device_ip = self.mainWindow.current_device_addr
         cmd_1.needDstPkg = True
-        cmd_1.target_app = self.mainWindow.pkgManager.getSelectedRunningProcessName()
-        cmd_1.action = "am force-stop {0}"
+        cmd_1.target_app = self.mainWindow.pkgManager.getSelectedPackageName()
+        cmd_1.cmd = "am force-stop {0}"
 
         cmd_2 = ActionCmdParams()
         cmd_2.target_device_ip = self.mainWindow.current_device_addr
         cmd_2.needDstPkg = False
-        cmd_2.action = "sleep 1"
+        cmd_2.cmd = "sleep 1"
 
         cmd_3 = ActionCmdParams()
         cmd_3.target_device_ip = self.mainWindow.current_device_addr
         cmd_3.needDstPkg = True
-        cmd_3.target_app = self.mainWindow.pkgManager.getSelectedRunningProcessName()
-        cmd_3.action = "am start {0}"
+        cmd_3.target_app = self.mainWindow.pkgManager.getSelectedPackageName()
+        cmd_3.cmd = self.start_app(cmd_3, onlyCmd=True)
         cmds = [cmd_1, cmd_2, cmd_3]
 
         self.mainWindow.adbTools.async_exec_adb_cmd(cmds)

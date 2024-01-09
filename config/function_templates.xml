@@ -1,116 +1,122 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-template为每个模板区域，item为模板元素
-icon为元素的图标数据属性;
-text为元素的文字属性;
-action为元素的点击事件类型;
+【节点说明】
+template为每个模板区域，
+item为模板元素
+attr为模板属性;
 
+【属性说明】
+icon: 元素图标资源路径属性, 值可自定义修改;
+text: 元素文字属性, 值可自定义修改;
+cmd : 直接执行的adb命令行为, {0}表示目标应用包名的宏替换符号, 按需使用即可;
+act : 自定义的命令行为，为自定义的行为, 自定义的行为需代码定制化处理，最终生成adb命令，格式建议以"m_"开头;
+sehll: 命令执行是否需要在shell模式中, 可选值: true或false
 -->
 <templates>
     <template name="通用应用操作" layout="grid">
         <item>
             <attr name="icon">./res/img/app_uninstall_256x256.png</attr>
             <attr name="text">卸载应用</attr>
-            <attr name="action" shell="false">uninstall {0}</attr>
+            <attr name="cmd" shell="false">uninstall {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_install_256x256.png</attr>
             <attr name="text">安装应用</attr>
-            <attr name="action">m_show_install_app_dialog</attr>
+            <attr name="act">m_show_install_app_dialog</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_stop_256x256.png</attr>
             <attr name="text">停止应用</attr>
-            <attr name="action">am force-stop {0}</attr>
+            <attr name="cmd">am force-stop {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_start_256x256.png</attr>
             <attr name="text">启动应用</attr>
-            <attr name="action">am start {0}</attr>
+            <attr name="act">m_start_app</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_restart_256x256.png</attr>
             <attr name="text">重启应用</attr>
-            <attr name="action">m_restart_app</attr>
+            <attr name="act">m_restart_app</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_clear_data_256x256.png</attr>
             <attr name="text">清除数据</attr>
-            <attr name="action">pm clear {0}</attr>
+            <attr name="cmd">pm clear {0}</attr>
         </item>
         <item>
             <attr name="icon">./res/img/text_input_256x256.png</attr>
             <attr name="text">文本输入</attr>
-            <attr name="action">m_input_text</attr>
+            <attr name="act">m_input_text</attr>
         </item>
     </template>
     <template name="数据获取" layout="grid">
         <item>
             <attr name="icon">./res/img/screen_capture_256x256.png</attr>
             <attr name="text">屏幕截图</attr>
-            <attr name="action">m_screenshot</attr>
+            <attr name="act">m_screenshot</attr>
         </item>
         <item>
             <attr name="icon">./res/img/screen_record_256x256.png</attr>
             <attr name="text">视频录制</attr>
-            <attr name="action">m_screen_record</attr>
+            <attr name="act">m_screen_record</attr>
         </item>
     </template>
     <template name="按键模拟" layout="grid">
         <item>
             <attr name="icon">./res/img/back_256x256.png</attr>
             <attr name="text">返回键</attr>
-            <attr name="action" shell="true">input keyevent 4</attr>
+            <attr name="cmd" shell="true">input keyevent 4</attr>
         </item>
         <item>
             <attr name="icon">./res/img/arrow_up.png</attr>
             <attr name="text">上键</attr>
-            <attr name="action" shell="true">input keyevent 19</attr>
+            <attr name="cmd" shell="true">input keyevent 19</attr>
         </item>
         <item>
             <attr name="icon">./res/img/ok_256x256.png</attr>
             <attr name="text">确认键</attr>
-            <attr name="action" shell="true">input keyevent 23</attr>
+            <attr name="cmd" shell="true">input keyevent 23</attr>
         </item>
         <item>
             <attr name="icon">./res/img/volume_up_256x256.png</attr>
             <attr name="text">音量加</attr>
-            <attr name="action" shell="true">input keyevent 24</attr>
+            <attr name="cmd" shell="true">input keyevent 24</attr>
         </item>
         <item>
             <attr name="icon">./res/img/menu_256x256.png</attr>
             <attr name="text">菜单键</attr>
-            <attr name="action" shell="true">input keyevent 82</attr>
+            <attr name="cmd" shell="true">input keyevent 82</attr>
         </item>
         <item>
             <attr name="icon">./res/img/arrow_left.png</attr>
             <attr name="text">左键</attr>
-            <attr name="action" shell="true">input keyevent 21</attr>
+            <attr name="cmd" shell="true">input keyevent 21</attr>
         </item>
         <item>
             <attr name="icon">./res/img/arrow_down.png</attr>
             <attr name="text">下键</attr>
-            <attr name="action" shell="true">input keyevent 20</attr>
+            <attr name="cmd" shell="true">input keyevent 20</attr>
         </item>
         <item>
             <attr name="icon">./res/img/arrow_right.png</attr>
             <attr name="text">右键</attr>
-            <attr name="action" shell="true">input keyevent 22</attr>
+            <attr name="cmd" shell="true">input keyevent 22</attr>
         </item>
         <item>
             <attr name="icon">./res/img/volume_down_256x256.png</attr>
             <attr name="text">音量减</attr>
-            <attr name="action">input keyevent 25</attr>
+            <attr name="cmd">input keyevent 25</attr>
         </item>
         <item>
             <attr name="icon">./res/img/power_256x256.png</attr>
             <attr name="text">电源键</attr>
-            <attr name="action" shell="true">input keyevent 26</attr>
+            <attr name="cmd" shell="true">input keyevent 26</attr>
         </item>
         <item state="disable">
             <attr name="icon">./res/img/app_restart_256x256.png</attr>
             <attr name="text">遥控器模式</attr>
-            <attr name="action" shell="true"></attr>
+            <attr name="cmd" shell="true"></attr>
         </item>
     </template>
 </templates>
