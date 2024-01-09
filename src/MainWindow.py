@@ -1,7 +1,7 @@
 import xml.dom.minidom
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSize
+from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSize, QSettings
 from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
     QAbstractItemView, QWidget, QStyleFactory
@@ -77,6 +77,8 @@ class MainWindow(BaseWindow):
     """
     def __init__(self):
         super().__init__()
+        self.settings = QSettings('EasyADB_Tool', 'settings')
+
         self.device_menu_action_remove_device = None
         self.device_menu_action_disconnect = None
         self.device_menu_action_edit_name = None

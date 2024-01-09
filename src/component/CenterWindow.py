@@ -8,7 +8,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
 from src import MainWindow, settings
 from src.logcat.log import z_logger
 from src.widget.CustomWidgets import DeleteableComboBox
-from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
+from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog, WarningDialog
 from utils.ADBTools import ActionCmdParams
 from utils.Tools import getWRYHFontStyle, getSongFontStyle, getSimpleFontStyle
 
@@ -41,7 +41,6 @@ class Ui_ConvenientArea(object):
 
     def __init__(self, mainWidow):
         self.mainWindow = mainWidow
-        self.settings = QSettings('com.zeke.python', 'EasyADB')
         self.timer = QTimer()
         self.timer.setSingleShot(True)
         self.timer.timeout.connect(self.record_text_data)
@@ -99,7 +98,7 @@ class Ui_ConvenientArea(object):
 
     def onEditTextValueChanged(self, objName, text):
         # self.timer.start(1000)  # 重置计时器，设置超时时间为1000毫秒（1秒）
-        self.settings.setValue(objName, text)
+        self.mainWindow.settings.setValue(objName, text)
         # if self.timer.isActive():
         #     self.timer.stop()
         # else:
@@ -139,7 +138,7 @@ class Ui_ConvenientArea(object):
         lineEdit.setObjectName(objName)
         lineEdit.setPlaceholderText(holderText)
         lineEdit.setFont(getSongFontStyle(10))
-        _cachedText = self.settings.value(objName)
+        _cachedText = self.mainWindow.settings.value(objName)
         if _cachedText != "" and _cachedText is not None:
             lineEdit.setText(_cachedText)
         h_layout.addWidget(lineEdit)
@@ -315,7 +314,14 @@ class Ui_ConvenientArea(object):
         if _action != "":
             self.dealCustomAction(_action, actionParams)
         else:
-            self.mainWindow.runAdbCMD(actionParams)
+            if "uninstall" in _cmd:
+                warningDialog = WarningDialog(self,f"是否要卸载以下应用:\n {self.mainWindow.pkgManager.getSelectedPackageName()}")
+                warningDialog.setWindowModality(Qt.ApplicationModal)
+                warningDialog.setActionParams(actionParams)
+                warningDialog.setOnClickedListener(self.runAdbCMD)
+                warningDialog.exec()
+            else:
+                self.runAdbCMD(actionParams)
 
     def dealCustomAction(self, custom_act, actionParams: ActionCmdParams):
         """
@@ -370,7 +376,7 @@ class Ui_ConvenientArea(object):
             _cmd += f" {_extParams}"
         actionParams.cmd = _cmd
         if not onlyCmd:
-            self.mainWindow.runAdbCMD(actionParams)
+            self.runAdbCMD(actionParams)
         return _cmd
 
     def restart_app(self):
@@ -418,6 +424,9 @@ class Ui_ConvenientArea(object):
             )
         else:
             z_logger.info_with_stamp("Cancle screenshot.")
+
+    def runAdbCMD(self, actionParams: ActionCmdParams):
+        self.mainWindow.runAdbCMD(actionParams)
 
 
 if __name__ == "__main__":
