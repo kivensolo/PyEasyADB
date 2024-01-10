@@ -1,8 +1,19 @@
 import sys
+import traceback
 
 # 基本控件位于pyqt5.qtwidgets模块中
 from PyQt5.QtWidgets import QApplication
 from src.MainWindow import MainWindow
+from src.logcat.log import z_logger
+
+
+def exception_handler(exc_type, exc_value, exc_traceback):
+    # App的自定义异常处理函数
+    error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+    z_logger.error(error_msg)
+
+
+sys.excepthook = exception_handler
 
 
 class App:

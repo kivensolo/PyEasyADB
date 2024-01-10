@@ -58,7 +58,7 @@ class AppLogger:
         self._logger = logging.getLogger(self.name)
         # Set log level
         self._logger.setLevel(level)
-        self.set_app_log_level(level)
+        self.log_level = level
 
         # log_formatter
         formatter = logging.Formatter(logFormat)
@@ -129,9 +129,6 @@ class AppLogger:
             ro_handler.maxBytes = maxBytes
         if backupCount:
             ro_handler.backupCount = backupCount
-
-    def set_app_log_level(self, level):
-        self.log_level = level
 
     def judge_log_level(self, level, args):
         if level >= self.log_level:
