@@ -1,13 +1,11 @@
 import xml.dom.minidom
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSize, QSettings
+from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSettings
 from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
     QAbstractItemView, QWidget, QStyleFactory
 
-from src.logcat.log import z_logger
-from src.settings import APP_SCREEN_RQTIO
 from src import TreeItemType
 from src.BaseWindow import BaseWindow
 from src.DataBase import DBManager
@@ -15,6 +13,8 @@ from src.MenuBar import MenuActions
 from src.component.BottomWindow import BottomTabWidget
 from src.component.CenterWindow import CommonFunctionalWidget
 from src.component.ToolBar import Ui_ToolBar
+from src.logcat.log import z_logger
+from src.settings import APP_SCREEN_RQTIO
 from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog
 from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
@@ -147,14 +147,23 @@ class MainWindow(BaseWindow):
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def closeEvent(self, event):
+
+        z_logger.close_log_handlers()
+        event.accept()
         #  关闭窗口的时候,触发QCloseEvent。重写closeEvent()事件处理程序
-        # reply = QMessageBox.question(self, '提示', "要离开了么?",
+        super().closeEvent(event)
+
+        # # 释放log的handler防止文件句柄一直被持有
+        # reply = QMessageBox.question(self, '提示', "确认关闭应用?",
         #                              QMessageBox.Yes | QMessageBox.No,
         #                              QMessageBox.No)
         # if reply == QMessageBox.Yes:
-        event.accept()
+        #     event.accept()
+        #     #  关闭窗口的时候,触发QCloseEvent。重写closeEvent()事件处理程序
+        #     super().closeEvent(event)
         # else:
         #     event.ignore()
+
 
     def init_center_panel(self):
         self.center_panel = QWidget()
@@ -672,7 +681,7 @@ class MainWindow(BaseWindow):
                             # self.close()
                     else:
                         z_logger.debug("[Parse States] This device already in local.")
-                        self.bottom_tab_widget.updateRunningProcessInfo()
+                        need_refresh_runningprocess_info = False
 
             else:
                 # 离线设备 device_state == 'offline' 或 'unknow'

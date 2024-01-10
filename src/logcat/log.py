@@ -139,6 +139,11 @@ class AppLogger:
         else:
             return
 
+    def close_log_handlers(self):
+        for handler in self._logger.handlers[:]:
+            handler.close()
+            self._logger.removeHandler(handler)
+
 
 class GuiLoggerHandler(logging.Handler):
     def __init__(self, logview):
