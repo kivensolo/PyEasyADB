@@ -656,6 +656,8 @@ class MainWindow(BaseWindow):
         # 每次都清除本地记录的活跃设备数据
         self.active_ip_list.clear()
 
+        need_refresh_runningprocess_info = False
+
         for line in result:
             if line.startswith("List of devices attached"):
                 continue
@@ -692,6 +694,10 @@ class MainWindow(BaseWindow):
         if len(self.active_ip_list) == 0:
             z_logger.info("无任何连接设备！")
         self.refresh_treeview_by_data()
+
+        if need_refresh_runningprocess_info:
+            # FIXME 走子线程，不然卡状态刷新, 先临时放在refresh_treeview_by_data后执行
+            self.bottom_tab_widget.updateRunningProcessInfo()
 
 # ----------------------------------ADB 操作 END-----------------------------------------------
 
