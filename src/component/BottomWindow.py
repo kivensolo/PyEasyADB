@@ -106,6 +106,11 @@ def changeLogColor(appen_prefix, level, log):
         _color_log = "<font color=\"yellow\">{0}</font>".format(log)
     elif appen_prefix:
         _color_log = "<font color=\"#005ac7\" >{0}</font>".format(log)
+
+    # 解决该控件插入Html时，不支持\n的问题
+    _color_log = str(_color_log).replace("\n", "<br>")
+    # 文字后加换行符，准备下一次输出(注意必须要有一个空格，否则不生效)
+    # _color_log = _color_log + "<br />"
     return _color_log
 
 
