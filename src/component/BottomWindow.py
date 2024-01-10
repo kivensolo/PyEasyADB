@@ -44,7 +44,7 @@ class BottomTabWidget(QTabWidget):
         self.tabBar.setExpanding(False)
         self.setTabBar(self.tabBar)
         # 将日志view添加至TabWidget中
-        self.addTab(self.consoleView, IconTool.buildQIcon("logcat.png"), "Logcat")
+        self.addTab(self.consoleView, IconTool.buildQIcon("logcat.png"), "Console")
         # self.consoleView.setVisible(False)
         # self.setFixedHeight(Utils.getItemHeight())
         self.consoleView.setVisible(True)
@@ -64,7 +64,7 @@ class BottomTabWidget(QTabWidget):
 
     def status(self):
         # 槽函数
-        if self.tabBar.tabText(self.tabBar.currentIndex()) == 'Logcat':
+        if self.tabBar.tabText(self.tabBar.currentIndex()) == 'Console':
             if self.consoleView.isVisible():
                 self.consoleView.setVisible(False)
                 self.preHeight = self.width()

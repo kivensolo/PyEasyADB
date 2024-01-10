@@ -96,6 +96,13 @@ class Ui_ConvenientArea(object):
             settings.key_app_extparams, "extend:", "扩展参数，如:--es \"key1\" \"value1\"", True)
         parentLayout.addWidget(self.groupBox)
 
+    def _getCurrentSelectedPackage(self):
+        """
+        获取当前packagesCombobox所选应用名称
+        :return:
+        """
+        return self.packagesCombobox.currentText()
+
     def onEditTextValueChanged(self, objName, text):
         # self.timer.start(1000)  # 重置计时器，设置超时时间为1000毫秒（1秒）
         self.mainWindow.settings.setValue(objName, text)
@@ -278,7 +285,7 @@ class Ui_ConvenientArea(object):
                     使用了lambda 函数来创建一个新的闭包，以捕获当前的按钮对象和自定义对象。这样，每个按钮的事件处理器都会独立地处理各自的对象。
                     """
                     item_tool_button.clicked.connect(
-                        lambda checked, params=actionParams: self.onActionIconClicked(params))
+                        lambda checked, params=actionParams: self.onFunctionItemClicked(params))
 
                     gridLayout.addWidget(item_tool_button, rowIndex, columnIndex, 1, 1)
 
@@ -303,9 +310,9 @@ class Ui_ConvenientArea(object):
         self.vlayout_of_scrollarea.addItem(scroll_bottom_spacer_item)
 
     @pyqtSlot()
-    def onActionIconClicked(self, actionParams: ActionCmdParams):
+    def onFunctionItemClicked(self, actionParams: ActionCmdParams):
         """
-        执行快捷命令
+        功能按钮被点击的回调函数
         :param actionParams:
         :return:
         """
@@ -315,7 +322,8 @@ class Ui_ConvenientArea(object):
             self.dealCustomAction(_action, actionParams)
         else:
             if "uninstall" in _cmd:
-                warningDialog = WarningDialog(self, f"是否要卸载以下应用:\n {self.mainWindow.pkgManager.getSelectedPackageName()}")
+
+                warningDialog = WarningDialog(self, f"是否要卸载以下应用:\n {self._getCurrentSelectedPackage()}")
                 warningDialog.setWindowModality(Qt.ApplicationModal)
                 warningDialog.setActionParams(actionParams)
                 warningDialog.setOnClickedListener(self.runAdbCMD)
@@ -331,37 +339,47 @@ class Ui_ConvenientArea(object):
         :return:
         """
         if custom_act == "m_show_install_app_dialog":
-            if len(self.mainWindow.active_ip_list) == 0:
-                z_logger.error("请先连接设备!!!")
+            if not self.hasSelectedPackage():
                 return
             install_apk_dialog = installApkDialog(self.mainWindow)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
             install_apk_dialog.exec()
         elif custom_act == "m_screenshot":
+            # 屏幕截图
             self.action_save_screen_shoot()
         elif custom_act == "m_screen_record":
+            # 屏幕录制
             _record_dialog = screen_record_dialog(self.mainWindow)
             _record_dialog.setWindowModality(Qt.ApplicationModal)
             _record_dialog.exec()
-        elif custom_act == "m_start_app":  # 启动应用
+        elif custom_act == "m_start_app":
+            # 启动应用
             self.start_app(actionParams)
-        elif custom_act == "m_restart_app":  # 重启应用
+        elif custom_act == "m_restart_app":
+            # 重启应用
             self.restart_app()
         elif custom_act == "m_input_text":
+            # 文本输入
             _text_input_dialog = TextInputDialog(self.mainWindow)
             _text_input_dialog.setWindowModality(Qt.ApplicationModal)
             _text_input_dialog.exec()
+        elif custom_act == "m_send_broadcast":
+            # 广播发送
+            self.send_broadcast(actionParams)
+        elif custom_act == "m_query_contentprovider":
+            # 查询ContentProvider
+            self.query_content_provider()
         else:
             z_logger.error(f"不支持的自定义行为:{custom_act}")
 
-    def start_app(self, actionParams, onlyCmd=False):
+    def build_am_cmd(self, name):
         """
-        启动应用
-        :param actionParams: ActionCmdParams
-        :return: 执行的adb命令（不包含adb -s <ip> shell前缀)
+        构建am的执行命令，支持从自定义区域获取自定义的数据进行命令拼接
+        :param name: am命令的名称，如start\boradercast
+        :return:
         """
-        _cmd = "am start"
-        _package_name = self.packagesCombobox.currentText()
+        _cmd = f"am {name}"
+        _package_name = self._getCurrentSelectedPackage()
         _act = self.actionEditText.text()
         _class_path = self.classPathEditText.text()
         if _act == "" and _class_path == "":
@@ -374,10 +392,33 @@ class Ui_ConvenientArea(object):
         _extParams = self.extendParamsEditText.toPlainText()
         if _extParams != "":
             _cmd += f" {_extParams}"
-        actionParams.cmd = _cmd
-        if not onlyCmd:
-            self.runAdbCMD(actionParams)
         return _cmd
+
+    def send_broadcast(self, actionParams):
+        _cmd = self.build_am_cmd("broadcast")
+        actionParams.cmd = _cmd
+        self.runAdbCMD(actionParams)
+
+    def query_content_provider(self):
+        uri_path = self.extendParamsEditText.toPlainText()
+        if "content://" not in uri_path:
+            # z_logger.info(r"请在[extend]扩展编辑框中，正确填入需要查询的uri! 格式要求: content://<authority>/<path>")
+            # 使用实体编码解决<>被识别错误的问题
+            z_logger.error("请在[extend]扩展编辑框中，正确填入需要查询的uri! 格式要求: content://&lt;authority&gt;/&lt;path&gt;")
+            return
+        params = ActionCmdParams(needPackage=False)
+        params.cmd = f"content query --uri {uri_path}"
+        self.runAdbCMD(params)
+
+    def start_app(self, actionParams):
+        """
+        启动应用
+        :param actionParams: ActionCmdParams
+        :return: 执行的adb命令（不包含adb -s <ip> shell前缀)
+        """
+        _cmd = self.build_am_cmd("start")
+        actionParams.cmd = _cmd
+        self.runAdbCMD(actionParams)
 
     def restart_app(self):
         """
@@ -386,7 +427,7 @@ class Ui_ConvenientArea(object):
         cmd_1 = ActionCmdParams()
         cmd_1.target_device_ip = self.mainWindow.current_device_addr
         cmd_1.needDstPkg = True
-        cmd_1.target_app = self.mainWindow.pkgManager.getSelectedPackageName()
+        cmd_1.target_app = self._getCurrentSelectedPackage()
         cmd_1.cmd = "am force-stop {0}"
 
         cmd_2 = ActionCmdParams()
@@ -397,8 +438,8 @@ class Ui_ConvenientArea(object):
         cmd_3 = ActionCmdParams()
         cmd_3.target_device_ip = self.mainWindow.current_device_addr
         cmd_3.needDstPkg = True
-        cmd_3.target_app = self.mainWindow.pkgManager.getSelectedPackageName()
-        cmd_3.cmd = self.start_app(cmd_3, onlyCmd=True)
+        cmd_3.target_app = self._getCurrentSelectedPackage()
+        cmd_3.cmd = self.build_am_cmd("start")
         cmds = [cmd_1, cmd_2, cmd_3]
 
         self.mainWindow.adbTools.async_exec_adb_cmd(cmds)
@@ -408,8 +449,7 @@ class Ui_ConvenientArea(object):
         执行屏幕截图，并保存至本地
         :return:
         """
-        if len(self.mainWindow.active_ip_list) == 0:
-            z_logger.error("请先连接设备!!!")
+        if not self.hasSelectedPackage():
             return
         z_logger.info_with_stamp("Screenshot saving..........")
         chooseDialog = QFileDialog
@@ -427,6 +467,12 @@ class Ui_ConvenientArea(object):
 
     def runAdbCMD(self, actionParams: ActionCmdParams):
         self.mainWindow.runAdbCMD(actionParams)
+
+    def hasSelectedPackage(self):
+        if len(self.mainWindow.active_ip_list) == 0:
+            z_logger.error("请先连接设备!!!")
+            return False
+        return True
 
 
 if __name__ == "__main__":

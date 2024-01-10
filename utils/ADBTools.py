@@ -9,14 +9,15 @@ from utils.CmdExecutor import CmdExecutor
 
 
 class ActionCmdParams:
-    def __init__(self):
-        self.isShellMode = True
+    def __init__(self, isShell=True, needPackage=True):
+        self.isShellMode = isShell
+        self.needDstPkg = needPackage
         # ADB行为命令
         self.cmd = ""
         # 自定义行为
         self.custom_action = ""
+        # 目标设备ip
         self.target_device_ip = ""
-        self.needDstPkg = True
         self.target_app = ""
 
     def hasCustomAction(self):

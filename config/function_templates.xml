@@ -49,6 +49,16 @@ sehll: 命令执行是否需要在shell模式中, 可选值: true或false
             <attr name="text">文本输入</attr>
             <attr name="act">m_input_text</attr>
         </item>
+        <item>
+            <attr name="icon">./res/img/broadcast_256x256.png</attr>
+            <attr name="text">发送广播</attr>
+            <attr name="act">m_send_broadcast</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/query_content_provider_256x256.png</attr>
+            <attr name="text">查询ContentProvider</attr>
+            <attr name="act">m_query_contentprovider</attr>
+        </item>
     </template>
     <template name="数据获取" layout="grid">
         <item>
