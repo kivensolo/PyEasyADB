@@ -319,61 +319,6 @@ class AboutDialog(BaseDialog):
         self.label.setText(_translate("Dialog", f"v{APP_VERSION}"))
 
 
-class WarningDialog(BaseDialog):
-    """
-    警告弹窗
-    """
-    def __init__(self, window=None, content=""):
-        super().__init__("警告")
-        self.action = None
-        self.confirmBtn = None
-        self.label = None
-        self.vLayout = None
-        self.onclicked = None
-        self.mainWindow = window
-        # 提示信息
-        self.tipsContent = content
-        self.initWindow()
-
-    def setActionParams(self, action:ActionCmdParams):
-        self.action = action
-
-    def setOnClickedListener(self, block):
-        self.onclicked = block
-        self.confirmBtn.clicked.connect(lambda: self.onConfirmBtnClicked())
-
-    def onConfirmBtnClicked(self):
-        self.onclicked(self.action)
-        self.accept()
-
-    def initWindow(self):
-        super().initWindow()
-        # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
-        self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.setFixedSize(300, 130)
-        self.vLayout = QtWidgets.QVBoxLayout(self)
-        self.vLayout.setObjectName("vLayout")
-        self.label = QtWidgets.QLabel(self)
-        self.label.setText(self.tipsContent)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.setObjectName("label")
-
-        self.confirmBtn = QtWidgets.QPushButton(self)
-        self.confirmBtn.setText("确认")
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.confirmBtn.sizePolicy().hasHeightForWidth())
-        self.confirmBtn.setSizePolicy(sizePolicy)
-
-        self.vLayout.addWidget(self.label)
-        self.vLayout.addWidget(self.confirmBtn)
-        self.vLayout.setAlignment(self.confirmBtn, QtCore.Qt.AlignCenter)
-
-        QtCore.QMetaObject.connectSlotsByName(self)
-
-
-
 class TextInputDialog(BaseDialog):
     def __init__(self,  window = None):
         super().__init__("文本输入")

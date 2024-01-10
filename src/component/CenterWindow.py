@@ -2,13 +2,13 @@ import sys
 import xml.dom.minidom
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, pyqtSlot, QSize, QDateTime, QSettings, QTimer, pyqtSignal
-from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog
+from PyQt5.QtCore import Qt, pyqtSlot, QSize, QDateTime, QTimer, pyqtSignal
+from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog, QMessageBox
 
 from src import MainWindow, settings
 from src.logcat.log import z_logger
 from src.widget.CustomWidgets import DeleteableComboBox
-from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog, WarningDialog
+from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
 from utils.ADBTools import ActionCmdParams
 from utils.Tools import getWRYHFontStyle, getSongFontStyle, getSimpleFontStyle
 
@@ -89,9 +89,10 @@ class Ui_ConvenientArea(object):
 
         # ==== 类名
         self.classPathEditText: QtWidgets.QLineEdit = self.addCustomEditRow(
-            settings.key_app_activity_classpath, "activity:", "目标activity的完整路径,如:com.example.myapp.MainActivity")
+            settings.key_app_activity_classpath, "activity:",
+            "目标activity的完整路径,如:com.example.myapp.MainActivity")
         self.actionEditText: QtWidgets.QLineEdit = self.addCustomEditRow(
-            settings.key_app_action,"action :", "用于启动activity或广播发送")
+            settings.key_app_action, "action :", "用于启动activity或广播发送")
         self.extendParamsEditText: QtWidgets.QTextEdit = self.addCustomEditRow(
             settings.key_app_extparams, "extend:", "扩展参数，如:--es \"key1\" \"value1\"", True)
         parentLayout.addWidget(self.groupBox)
@@ -138,10 +139,11 @@ class Ui_ConvenientArea(object):
 
         if isTextEdit:
             lineEdit = QtWidgets.QTextEdit(self.groupBox)
-            lineEdit.textChanged.connect(lambda : self.onEditTextValueChanged(lineEdit.objectName(), lineEdit.toPlainText()))
+            lineEdit.textChanged.connect(
+                lambda: self.onEditTextValueChanged(lineEdit.objectName(), lineEdit.toPlainText()))
         else:
             lineEdit = QtWidgets.QLineEdit(self.groupBox)
-            lineEdit.textChanged.connect(lambda : self.onEditTextValueChanged(lineEdit.objectName(), lineEdit.text()))
+            lineEdit.textChanged.connect(lambda: self.onEditTextValueChanged(lineEdit.objectName(), lineEdit.text()))
         lineEdit.setObjectName(objName)
         lineEdit.setPlaceholderText(holderText)
         lineEdit.setFont(getSongFontStyle(10))
@@ -322,12 +324,12 @@ class Ui_ConvenientArea(object):
             self.dealCustomAction(_action, actionParams)
         else:
             if "uninstall" in _cmd:
-
-                warningDialog = WarningDialog(self, f"是否要卸载以下应用:\n {self._getCurrentSelectedPackage()}")
-                warningDialog.setWindowModality(Qt.ApplicationModal)
-                warningDialog.setActionParams(actionParams)
-                warningDialog.setOnClickedListener(self.runAdbCMD)
-                warningDialog.exec()
+                reply = QMessageBox.question(
+                    self.mainWindow, '提示', f"确认卸载以下应用:\n {self._getCurrentSelectedPackage()}",
+                                             QMessageBox.Yes | QMessageBox.No,
+                                             QMessageBox.No)
+                if reply == QMessageBox.Yes:
+                    self.runAdbCMD(actionParams)
             else:
                 self.runAdbCMD(actionParams)
 
@@ -375,7 +377,7 @@ class Ui_ConvenientArea(object):
     def build_am_cmd(self, name):
         """
         构建am的执行命令，支持从自定义区域获取自定义的数据进行命令拼接
-        :param name: am命令的名称，如start\boradercast
+        :param name: am指令名称，如start\boradercast\kill 等
         :return:
         """
         _cmd = f"am {name}"
@@ -404,7 +406,8 @@ class Ui_ConvenientArea(object):
         if "content://" not in uri_path:
             # z_logger.info(r"请在[extend]扩展编辑框中，正确填入需要查询的uri! 格式要求: content://<authority>/<path>")
             # 使用实体编码解决<>被识别错误的问题
-            z_logger.error("请在[extend]扩展编辑框中，正确填入需要查询的uri! 格式要求: content://&lt;authority&gt;/&lt;path&gt;")
+            z_logger.error(
+                "请在[extend]扩展编辑框中，正确填入需要查询的uri! 格式要求: content://&lt;authority&gt;/&lt;path&gt;")
             return
         params = ActionCmdParams(needPackage=False)
         params.cmd = f"content query --uri {uri_path}"
