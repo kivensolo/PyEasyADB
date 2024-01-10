@@ -683,7 +683,7 @@ class MainWindow(BaseWindow):
                             # self.close()
                     else:
                         z_logger.debug("[Parse States] This device already in local.")
-                        need_refresh_runningprocess_info = False
+                        need_refresh_runningprocess_info = True
 
             else:
                 # 离线设备 device_state == 'offline' 或 'unknow'
