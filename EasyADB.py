@@ -1,7 +1,6 @@
 import sys
 import traceback
 
-# 基本控件位于pyqt5.qtwidgets模块中
 from PyQt5.QtWidgets import QApplication
 from src.MainWindow import MainWindow
 from src.logcat.log import z_logger
