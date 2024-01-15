@@ -1,5 +1,25 @@
-# FIXME
-- [] data/logs/xxxx.log存在会在多个路径出现的问题。
+# 工程结构说明说明
+项目根目录/
+├─ config/
+│  ├─ cmdConfig.xml				左侧命令行区域配置文件
+│  ├─ function_templates.xml	主功能区域配置文件
+│  └─ menus_ui.xml  			菜单栏UI配置文件
+├─ pyqtWidgets/   一些pyqt基础组件的demo文件
+├─ data/
+│   ├─ logs/	  应用日志储存目录
+│   └─ easyADB.db 应用本地数据库文件
+├─ res/           应用资源文件
+├─ src/          应用源码目录
+│  ├─ component/   qt组件目录，		
+│  ├─ logcat/	   日志模块
+│  ├─ widget/      各种控件
+│  ├─ settings.py  应用设置模块
+│  ├─ ......
+│  └─ DataBase.py  数据库模块
+├─ utils/  		  早期的工具类源码目录(暂时未移至src)
+├─ README.md     ReadMe文件
+└─ EasyADB.py    程序App启动主入口
+
 
 
 # 更新记录
