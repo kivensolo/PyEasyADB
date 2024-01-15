@@ -5,9 +5,9 @@ import sys
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt, QSize, pyqtSignal
-from PyQt5.QtGui import QTextCursor, QIcon
+from PyQt5.QtGui import QTextCursor, QIcon, QTextCharFormat, QColor
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
-    QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView
+    QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QPlainTextEdit, QTextEdit
 from qtpy import QtWidgets
 
 from src import MainWindow
@@ -26,13 +26,22 @@ class BottomTabWidget(QTabWidget):
     """
     底部TabWidget控件
     """
-    def __init__(self, parent:MainWindow):
+    def __init__(self, parent:MainWindow = None):
         super().__init__()
         self.mainwindow = parent
-        # 日志组件
-        self.consoleView = ConsoleWindow(parent)
-        z_logger.add_gui_log_handler(self.consoleView)
+
         self.tabBar = QTabBar()
+        # 应用自身log输出组件
+        self.consoleView = ConsoleWindow(parent)
+        self.consoleView.setObjectName("console")
+        z_logger.add_gui_log_handler(self.consoleView)
+        # LivingLogcat
+        self.liveLogView = LogCatWindow(parent)
+        self.liveLogView.setObjectName("liveLog")
+        z_logger.add_gui_log_handler(self.liveLogView)
+
+        # 当前选中的tab标签序号记录
+        self.currentSelectedTabIndex = 0
 
         self.pkgComboBox = None
         self.device_info_name = None
@@ -40,21 +49,26 @@ class BottomTabWidget(QTabWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.tabBar.tabBarClicked.connect(self.status)
+        self.tabBar.tabBarClicked.connect(self.on_tab_clicked)
+        self.tabBar.currentChanged.connect(self.on_tab_toggle)
         self.tabBar.setExpanding(False)
         self.setTabBar(self.tabBar)
-        # 将日志view添加至TabWidget中
-        self.addTab(self.consoleView, IconTool.buildQIcon("logcat.png"), "Console")
-        # self.consoleView.setVisible(False)
-        # self.setFixedHeight(Utils.getItemHeight())
-        self.consoleView.setVisible(True)
-        self.setMaximumHeight(Utils.getWindowHeight())
+
+        # 选项卡绘制在页面下方
         self.setTabPosition(QTabWidget.South)
+
+        # 添加组件至TabWidget中
+        self.addTab(self.consoleView, IconTool.buildQIcon("logcat.png"), "Console")
+        self.addTab(self.liveLogView, IconTool.buildQIcon("logcat.png"), "Logcat")
+
+        # self.setFixedHeight(Utils.getItemHeight())
+        self.setMaximumHeight(Utils.getWindowHeight())
+
         self.setStyleSheet(
             "QTabBar::tab {"
                 "border: none; height: " + str(Utils.getItemHeight()) +
                 "px; width:100px;"
-                "color:black;"
+                "color:red;"
             "} "
             "QTabBar::tab:selected { "
                 "border: none;"
@@ -62,16 +76,38 @@ class BottomTabWidget(QTabWidget):
             "} "
         )
 
-    def status(self):
-        # 槽函数
-        if self.tabBar.tabText(self.tabBar.currentIndex()) == 'Console':
-            if self.consoleView.isVisible():
-                self.consoleView.setVisible(False)
-                self.preHeight = self.width()
-                self.setFixedHeight(Utils.getItemHeight())
-            else:
-                self.consoleView.setVisible(True)
-                self.setMaximumHeight(Utils.getWindowHeight())
+    def on_tab_clicked(self, clickedIndex):
+        """
+        tabBar被点击时候的回调.
+        注意：此时self.tabBar.currentIndex()的值，
+        并不是被点击的标签页index，而是选中的页面的index，比如从A切到B, 当前的index依旧是A的。
+        :param clickedIndex: 被点击的index
+        :return:
+        """
+        _widgetView = self.currentWidget()
+        if self.currentSelectedTabIndex != clickedIndex:
+            if _widgetView.isVisible():
+                # 不做手动处理，交给TabBar做正常的Tab切换逻辑。
+                return
+
+        # 手动进行控件的隐藏和现实
+        if _widgetView.isVisible():
+            _widgetView.setVisible(False)
+            self.preHeight = self.width()
+            self.setFixedHeight(Utils.getItemHeight())
+        else:
+            _widgetView.setVisible(True)
+            self.setMaximumHeight(Utils.getWindowHeight())
+
+    def on_tab_toggle(self):
+        _index = self.tabBar.currentIndex()
+        self.currentSelectedTabIndex = _index
+        selectTabName = self.tabBar.tabText(_index)
+        if selectTabName == "Logcat":
+            # 启动日志输出
+            adb_tool
+
+
 
     def updateSelectDeviceInfo(self, ip, isconnect):
         """
@@ -142,6 +178,37 @@ class ConsoleWindow(QMainWindow):
     """
     global terminalTextBrowser
 
+    def initLeftFunctionWidget(self):
+        """
+        初始化左侧功能区
+        :return:
+        """
+        clearButton = QPushButton(self)
+        icon = QIcon(IconTool.buildQIcon("ic_clear.png", "icons"))
+        clearButton.setIcon(icon)
+        clearButton.setFixedWidth(24)
+        clearButton.setFixedHeight(28)
+        clearButton.clicked.connect(self._clear)
+        clearButton.setToolTip("Clear the logcat")
+
+        scrollBtn = QPushButton(self)
+        icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
+        scrollBtn.setIcon(icon)
+        scrollBtn.setFixedWidth(24)
+        scrollBtn.setFixedHeight(28)
+        scrollBtn.clicked.connect(self._scrollToBottom)
+        scrollBtn.setToolTip("Scroll to bottom")
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
+        layout.setSpacing(5)
+        layout.addWidget(clearButton)
+        layout.addWidget(scrollBtn)
+        layout.setContentsMargins(4, 0, 0, 0)
+        self.leftWiget.setAutoFillBackground(True)
+        self.leftWiget.setLayout(layout)
+        self.leftWiget.setFixedWidth(27)
+
     def __init__(self, parent:MainWindow):
         super().__init__(parent)
         self.infoBarWidget = InfoBarWidget(parent)
@@ -191,53 +258,12 @@ class ConsoleWindow(QMainWindow):
         # sys.stdout = ConsoleEmittor(textWritten=self.normalOutputWritten)
         # sys.stderr = ConsoleEmittor(textWritten=self.normalOutputWritten)
 
-    def initLeftFunctionWidget(self):
-        """
-        初始化左侧功能区
-        :return:
-        """
-        clearButton = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("ic_clear.png", "icons"))
-        clearButton.setIcon(icon)
-        clearButton.setFixedWidth(24)
-        clearButton.setFixedHeight(28)
-        clearButton.clicked.connect(self._clear)
-        clearButton.setToolTip("Clear the logcat")
-
-        scrollBtn = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
-        scrollBtn.setIcon(icon)
-        scrollBtn.setFixedWidth(24)
-        scrollBtn.setFixedHeight(28)
-        scrollBtn.clicked.connect(self._scrollToBottom)
-        scrollBtn.setToolTip("Scroll to bottom")
-
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
-        layout.setSpacing(5)
-        layout.addWidget(clearButton)
-        layout.addWidget(scrollBtn)
-        layout.setContentsMargins(4, 0, 0, 0)
-        self.leftWiget.setAutoFillBackground(True)
-        self.leftWiget.setLayout(layout)
-        self.leftWiget.setFixedWidth(27)
-
     def normalOutputWritten(self, text):
         cursor = self.terminalTextBrowser.textCursor()
         cursor.movePosition(QTextCursor.End)
         cursor.insertHtml(text)
         self.terminalTextBrowser.setTextCursor(cursor)
         self.terminalTextBrowser.ensureCursorVisible()
-
-    def initMenuBar(self):
-        menuBar = self.menuBar()
-        fileMenu = menuBar.addMenu('Logcat')
-        showLogAction = QAction('Show Log', self)
-        fileMenu.addAction(showLogAction)
-
-        helpMenu = menuBar.addMenu('Setting')
-        aboutAction = QAction(IconTool.buildQIcon('setting.png'), 'About', self)
-        helpMenu.addAction(aboutAction)
 
     def append_log(self, logMsg, record: logging.LogRecord):
         level = record.levelno
@@ -492,9 +518,109 @@ class InfoBarWidget(QWidget):
         return ''
 
 
+class LogCatWindow(QMainWindow):
+    """
+    实时log窗口
+    """
+    def __init__(self, parent: MainWindow):
+        super().__init__()
+        self.infoBarWidget = InfoBarWidget(parent)
+        self.leftWiget = QWidget()
+        self.initLeftFunctionWidget()
+
+        # 日志窗口控件初始化
+        self.logTextBrowser = QTextBrowser()
+        self.logTextBrowser.setOpenLinks(True)
+        self.logTextBrowser.setOpenExternalLinks(True)
+        self.logTextBrowser.setReadOnly(True)
+        self.logTextBrowser.unsetCursor()
+
+        self.rightWiget = QWidget()
+        self.rightWiget.setAutoFillBackground(True)
+        self.rightWiget.setFixedWidth(15)
+
+        # 左侧工具栏+中间文本展示+右侧工具栏的分割器
+        self.vSplitter = QSplitter(Qt.Horizontal)
+        self.vSplitter.addWidget(self.leftWiget)
+        self.vSplitter.addWidget(self.logTextBrowser)
+        self.vSplitter.addWidget(self.rightWiget)
+
+        # 设置垂直方向的控件区域
+        self.verticalSplitter = QSplitter(Qt.Vertical)
+        # TODO infobar替换 模仿AS
+        self.verticalSplitter.addWidget(self.infoBarWidget)
+        self.verticalSplitter.addWidget(self.vSplitter)
+        self.verticalSplitter.setChildrenCollapsible(0)
+        self.setCentralWidget(self.verticalSplitter)
+
+        self.initUI()
+
+    def initUI(self):
+        # layout = QVBoxLayout()
+        #
+        # layout.addWidget(self.log_text_edit)
+        # self.setLayout(layout)
+
+        # 添加日志信息
+        z_logger.info('这是一条信息级别的日志')
+        z_logger.info('这是一条警告级别的日志')
+        z_logger.info('这是一条错误级别的日志')
+
+    def normalOutputWritten(self, text):
+        cursor = self.logTextBrowser.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertHtml(text)
+        self.logTextBrowser.setTextCursor(cursor)
+        self.logTextBrowser.ensureCursorVisible()
+
+    def append_log(self, msg, record: logging.LogRecord):
+        # 分析log级别
+        # level = record.levelno
+        self.logTextBrowser.append(msg)
+
+    def initLeftFunctionWidget(self):
+        """
+        初始化左侧功能区
+        :return:
+        """
+        clearButton = QPushButton(self)
+        icon = QIcon(IconTool.buildQIcon("ic_clear.png", "icons"))
+        clearButton.setIcon(icon)
+        clearButton.setFixedWidth(24)
+        clearButton.setFixedHeight(28)
+        clearButton.clicked.connect(self._clear)
+        clearButton.setToolTip("Clear the logcat")
+
+        scrollBtn = QPushButton(self)
+        icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
+        scrollBtn.setIcon(icon)
+        scrollBtn.setFixedWidth(24)
+        scrollBtn.setFixedHeight(28)
+        scrollBtn.clicked.connect(self._scrollToBottom)
+        scrollBtn.setToolTip("Scroll to bottom")
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
+        layout.setSpacing(5)
+        layout.addWidget(clearButton)
+        layout.addWidget(scrollBtn)
+        layout.setContentsMargins(4, 0, 0, 0)
+        self.leftWiget.setAutoFillBackground(True)
+        self.leftWiget.setLayout(layout)
+        self.leftWiget.setFixedWidth(27)
+
+    def _clear(self):
+        self.logTextBrowser.clear()
+        return
+
+    def _scrollToBottom(self):
+        self.logTextBrowser.moveCursor(QTextCursor.End)
+        self.logTextBrowser.ensureCursorVisible()
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    mainWin = BottomTabWidget()
+    mainWin = BottomTabWidget(None)
     mainWin.show()
     # mainWin = ConsoleWindow()
     # mainWin.show()

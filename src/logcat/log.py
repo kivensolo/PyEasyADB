@@ -6,14 +6,20 @@ import logging
 import logging.handlers
 import os
 
+from PyQt5.QtWidgets import QWidget
+
 # 创建对应文件夹
 from src.settings import LOGS_PATH, DEBUG_PRINT, LOG_APP_FILE
 
 TIME_STAMP_PREFIX = "[STAMP]"
+LIVE_LOG_PREFIX = "[LIVE_LOG]"
 
 if not os.path.exists(LOGS_PATH):
     os.makedirs(LOGS_PATH)
 
+
+def isLiveLogView(objectName: str):
+    return objectName == "liveLog"
 
 # def w(*args):
 #     z_logger.warn(args)
@@ -105,7 +111,7 @@ class AppLogger:
     def remove(self):
         AppLogger.logger_map.pop(self.name)
 
-    def add_gui_log_handler(self, view):
+    def add_gui_log_handler(self, view:QWidget):
         """
         添加自定义的GUI log记录器
         :param view: 自定义的日志输出View
@@ -114,7 +120,6 @@ class AppLogger:
         gui_handler = GuiLoggerHandler(view)
         # 使用logging的format
         # gui_handler.setFormatter(logging.Formatter(log_format))
-        gui_handler.setLevel(logging.INFO)
         self._logger.addHandler(gui_handler)
 
     def modify_rotating(self, maxBytes=None, backupCount=None):
@@ -150,11 +155,25 @@ class GuiLoggerHandler(logging.Handler):
         super().__init__(0)
         self.logView = logview
 
+        if isLiveLogView(logview.objectName()):
+            # 实时日志,级别设置为Error
+            self.setLevel(logging.ERROR)
+        else:
+            # 应用日志,级别设置为INFO
+            self.setLevel(logging.INFO)
+
     """
     为UI控件提供的日志处理器, 此处相当于对系统日志做了一个代理层，将满足级别的日志，添加到编辑框中
     """
     def emit(self, record: logging.LogRecord):
-        self.logView.append_log(self.format(record), record)
+        self_format = self.format(record)
+        if isLiveLogView(self.logView.objectName()):
+            if self_format.startswith(LIVE_LOG_PREFIX):
+                # 如果GUI是实时日志窗口，则要确认为实时日志，才能输出
+                self.logView.append_log(self_format, record)
+                return
+        else:
+            self.logView.append_log(self_format, record)
 
 
 class WindowLogController:

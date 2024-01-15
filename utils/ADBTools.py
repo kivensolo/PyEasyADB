@@ -101,6 +101,10 @@ def process_user_name_check(user):
         and user != "system" \
         and user != "bluetooth"
 
+class LiveLogAdbThread(QThread):
+    # TODO 实时日志获取的子线程
+    output_received = pyqtSignal(list)
+    name = "Live_log_adb_thread"
 
 class AsyncAdbThread(QThread):
     output_received = pyqtSignal(list)
@@ -150,7 +154,6 @@ class ADBTools:
 
     def __init__(self):
         super(ADBTools, self).__init__()
-        # 不能把executor放入exec_adb_cmd中，出栈的时候会被回收
         self.thread = AsyncAdbThread()
         self.thread.output_received.connect(self.on_async_single_recevied)
         self.executor = CmdExecutor()
@@ -259,9 +262,13 @@ class ADBTools:
         z_logger.info_with_stamp("Start screen record.")
         self.async_exec_adb_cmd(cmds)
 
+    def start
+
+
     def stop_screen_record(self):
         if self.thread.isRunning():
             self.thread.stop()
+
 
     def on_async_single_recevied(self, content):
         """
