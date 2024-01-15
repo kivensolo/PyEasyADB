@@ -10,9 +10,9 @@ from src import TreeItemType
 from src.BaseWindow import BaseWindow
 from src.DataBase import DBManager
 from src.MenuBar import MenuActions
-from src.component.BottomWindow import BottomTabWidget
-from src.component.CenterWindow import CommonFunctionalWidget
-from src.component.ToolBar import Ui_ToolBar
+from src.BottomWindow import BottomTabWidget
+from src.CenterWindow import CommonFunctionalWidget
+from src.ToolBar import Ui_ToolBar
 from src.logcat.log import z_logger
 from src.settings import APP_SCREEN_RQTIO
 from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog
