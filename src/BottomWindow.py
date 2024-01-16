@@ -3,12 +3,11 @@
 import logging
 import sys
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import Qt, QSize, pyqtSignal
-from PyQt5.QtGui import QTextCursor, QIcon, QTextCharFormat, QColor
+from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QTextCursor, QIcon
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
-    QAction, QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QPlainTextEdit, QTextEdit
-from qtpy import QtWidgets
+    QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView
 
 from src import MainWindow
 from src.logcat import log

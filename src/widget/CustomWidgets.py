@@ -1,5 +1,4 @@
-from IPython.external.qt_for_kernel import QtGui
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QIcon, QRegExpValidator
 from PyQt5.QtWidgets import QLineEdit, QComboBox

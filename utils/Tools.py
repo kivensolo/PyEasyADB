@@ -5,7 +5,6 @@ import subprocess
 from pathlib import Path
 
 from PyQt5.QtGui import QFont
-from qtpy import QtWidgets
 
 from src.settings import LOG_CMD_OUT, LOG_CMD_ERROR, LOGS_PATH
 from src.logcat import log

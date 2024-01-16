@@ -2,7 +2,6 @@ import sys
 
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
-from qtpy import QtWidgets, QtCore, QtGui
 
 from src.logcat.log import z_logger
 from src.settings import APP_VERSION
