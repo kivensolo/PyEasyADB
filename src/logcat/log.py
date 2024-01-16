@@ -111,7 +111,7 @@ class AppLogger:
     def remove(self):
         AppLogger.logger_map.pop(self.name)
 
-    def add_gui_log_handler(self, view:QWidget):
+    def add_gui_log_handler(self, view: QWidget):
         """
         添加自定义的GUI log记录器
         :param view: 自定义的日志输出View
@@ -154,26 +154,15 @@ class GuiLoggerHandler(logging.Handler):
     def __init__(self, logview):
         super().__init__(0)
         self.logView = logview
-
-        if isLiveLogView(logview.objectName()):
-            # 实时日志,级别设置为Error
-            self.setLevel(logging.ERROR)
-        else:
-            # 应用日志,级别设置为INFO
-            self.setLevel(logging.INFO)
+        # 应用日志,级别设置为INFO
+        self.setLevel(logging.INFO)
 
     """
     为UI控件提供的日志处理器, 此处相当于对系统日志做了一个代理层，将满足级别的日志，添加到编辑框中
     """
     def emit(self, record: logging.LogRecord):
         self_format = self.format(record)
-        if isLiveLogView(self.logView.objectName()):
-            if self_format.startswith(LIVE_LOG_PREFIX):
-                # 如果GUI是实时日志窗口，则要确认为实时日志，才能输出
-                self.logView.append_log(self_format, record)
-                return
-        else:
-            self.logView.append_log(self_format, record)
+        self.logView.append_log(self_format, record)
 
 
 class WindowLogController:

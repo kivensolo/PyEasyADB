@@ -101,10 +101,50 @@ def process_user_name_check(user):
         and user != "system" \
         and user != "bluetooth"
 
+
 class LiveLogAdbThread(QThread):
-    # TODO 实时日志获取的子线程
     output_received = pyqtSignal(list)
     name = "Live_log_adb_thread"
+
+    def __init__(self):
+        super().__init__()
+
+        self.cmd = ""
+        self.process = None
+        self.isStoped = False
+
+    def run(self):
+        self.isStoped = False
+        print("ADB子线程运行")
+        if self.isStoped:
+            # 手动终止，不执行任何命令
+            return
+        if isinstance(self.cmd, ActionCmdParams):
+            _cmd = self.cmd.getAdbCMD()
+        else:
+            _cmd = self.cmd
+        self.process = subprocess.Popen(
+            _cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8'
+        )
+        while True:
+            stdout = self.process.stdout.readline()
+            if stdout:
+                self.output_received.emit(["[LIVE_LOG]", stdout])
+            else:
+                break   # 输出结束，中断循环并退出线程
+
+        # 会阻塞，所以没法和stdout放在一些读取
+        stderr = self.process.stderr.read()
+        if stderr:
+            self.output_received.emit(["[LIVE_LOG]", stderr])
+        # process.communicate()  # 等待命令完成
+        self.exit()  # 返回状态(不是严格必要的)
+
+    def stop(self):
+        self.output_received.emit(["[LIVE_LOG]", "Stop"])
+        self.isStoped = True
+        os.kill(self.process.pid, signal.SIGINT)
+
 
 class AsyncAdbThread(QThread):
     output_received = pyqtSignal(list)
@@ -113,7 +153,8 @@ class AsyncAdbThread(QThread):
     def __init__(self):
         super().__init__()
 
-        self.cmds = ""
+        self.cmds = "adb -s 192.168.137.7:5555 logcat"
+
         self.process = None
         self.isStoped = False
 
@@ -237,6 +278,7 @@ class ADBTools:
     def get_running_process(self, device_name, blcok):
         state, filtered_processes = get_filter_processes(device_name)
         if not state:
+            # FIXME 有死循环
             return False  # 获取失败，多半是设备离线了
         # 按照A-Z顺序对进程名称进行排序
         sorted_processes = sorted(filtered_processes, key=lambda x: x[2])
@@ -262,13 +304,9 @@ class ADBTools:
         z_logger.info_with_stamp("Start screen record.")
         self.async_exec_adb_cmd(cmds)
 
-    def start
-
-
     def stop_screen_record(self):
         if self.thread.isRunning():
             self.thread.stop()
-
 
     def on_async_single_recevied(self, content):
         """
