@@ -613,7 +613,7 @@ class MainWindow(BaseWindow):
         # 结果数据特殊处理
         if "cmdExectuedTimeout" in resultList:
             if _execed_cmd.startswith('adb connect'):
-                z_logger.error('很遗憾, 设备连接超时！')
+                z_logger.error('设备连接超时！请确认设备是否满足连接条件！')
             else:
                 z_logger.error("命令执行超时!")
             return
@@ -626,10 +626,12 @@ class MainWindow(BaseWindow):
             elif 'cannot connect to' in result_info:
                 # ['cannot connect to xxxx: 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。 (10060)']
                 z_logger.error(result_info)
+            elif 'connected to' in result_info:
+                z_logger.info("设备连接失败!!")
+                self.check_device_status()
             else:
                 # 可能会存在空的情况
-                z_logger.info("设备连接无异常,检查设备状态....")
-                self.check_device_status()
+                z_logger.error(f"连接时出现未知异常:[{result_info}]")
         elif _execed_cmd.startswith('adb disconnect'):
             z_logger.info("设备断开成功!")
             self.active_ip_list.remove(self.temp_disconnect_ip)
