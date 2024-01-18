@@ -1,3 +1,5 @@
+import re
+
 from src.logcat.log import z_logger
 from src.DataBase import DBManager
 from utils.ADBTools import ADBTools
@@ -16,14 +18,26 @@ class PackageManager:
 
     def __init__(self):
         self.currentSelectedRunningProcessName = ""
+        self.currentSelectedRunningProcessPid = ""
         self.currentSelectedApp = ""
         self.dbManager = DBManager()
         self.adbTools = ADBTools()
 
     def setSelectedRunningProcessInfo(self, process_info):
+        """
+        设置选中的进程信息
+        :param process_info: processName(pid)
+        :return:
+        """
         z_logger.debug("Set selected process:" + process_info)
-        segments = str(process_info).split("(")
-        self.currentSelectedRunningProcessName = segments[0]
+        result = re.match(r'^([\.\w]+)\((\d+)\)$', process_info)
+        if result:
+            package_name, pid_number = result.groups()
+            self.currentSelectedRunningProcessName = package_name
+            self.currentSelectedRunningProcessPid = pid_number
+        else:
+            z_logger.error("进程信息传参错误!!")
+            self.currentSelectedRunningProcessName = ""
 
     def setSelectedPackageName(self, name):
         self.currentSelectedApp = name
