@@ -111,14 +111,14 @@ class LiveLogAdbThread(QThread):
 
         self.cmd = ""
         self.process = None
-        self.isStoped = False
+        self.isRunning = False
 
     def run(self):
-        self.isStoped = False
-        print("ADB子线程运行")
-        if self.isStoped:
+        if self.isRunning:
             # 手动终止，不执行任何命令
             return
+        print("ADB子线程运行")
+        self.isRunning = True
         if isinstance(self.cmd, ActionCmdParams):
             _cmd = self.cmd.getAdbCMD()
         else:
@@ -142,7 +142,7 @@ class LiveLogAdbThread(QThread):
 
     def stop(self):
         self.output_received.emit(["[LIVE_LOG]", "Stop"])
-        self.isStoped = True
+        self.isRunning = False
         os.kill(self.process.pid, signal.SIGINT)
 
 
@@ -159,7 +159,6 @@ class AsyncAdbThread(QThread):
         self.isStoped = False
 
     def run(self):
-        self.isStoped = False
         print("ADB子线程运行")
         for _cmd in self.cmds:
             if self.isStoped:

@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 import logging
 import sys
-from msilib.schema import RadioButton
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QTextCursor, QIcon
+from PyQt5.QtGui import QTextCursor, QIcon, QPixmap
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
     QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QCheckBox
 
@@ -313,20 +312,22 @@ class ConsoleWindow(QMainWindow):
         return self.infoBarWidget
 
 
+_simpleNameToLevel = {
+    "D": logging.DEBUG,
+    "W": logging.WARNING,
+    "E": logging.ERROR,
+    "I": logging.INFO
+}
+
+
 class LogCatWindow(QMainWindow):
     """
     实时ADB log窗口
     """
-    log_levels = {
-        "D": logging.DEBUG,
-        "W": logging.WARNING,
-        "E": logging.ERROR,
-        "I": logging.INFO
-    }
-
     def __init__(self, parent: MainWindow):
         super().__init__()
         self.mainWindow = parent
+        self.logcatFilter = LogCatFilter()
         self.livelogThread = LiveLogAdbThread()
         self.livelogThread.output_received.connect(self.on_live_log_dump)
 
@@ -346,8 +347,47 @@ class LogCatWindow(QMainWindow):
             }
             ''')
 
-        self.leftWiget = QWidget()
-        self.initLeftFunctionWidget()
+        self.leftWiget = QWidget(self)
+        """
+        初始化左侧功能区
+        :return:
+        """
+        self.startButton = QPushButton()
+        self.icon_start = QIcon(".\\res\\icons\\ic_start.png")
+        self.icon_stop = QIcon(".\\res\\icons\\ic_stop.png")
+        self.startButton.setIcon(self.icon_start)
+        self.startButton.setFixedWidth(24)
+        self.startButton.setFixedHeight(28)
+        self.startButton.clicked.connect(self._start_or_stop)
+        self.startButton.setToolTip("Start live logcat")
+
+        clearButton = QPushButton(self)
+        icon = QIcon(IconTool.buildQIcon("ic_clear.png", "icons"))
+        clearButton.setIcon(icon)
+        clearButton.setFixedWidth(24)
+        clearButton.setFixedHeight(28)
+        clearButton.clicked.connect(self._clear)
+        clearButton.setToolTip("Clear the logcat")
+
+        scrollBtn = QPushButton(self)
+        icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
+        scrollBtn.setIcon(icon)
+        scrollBtn.setFixedWidth(24)
+        scrollBtn.setFixedHeight(28)
+        scrollBtn.clicked.connect(self._scrollToBottom)
+        scrollBtn.setToolTip("Scroll to bottom")
+
+        layout = QVBoxLayout()
+        layout.setAlignment(Qt.AlignTop)
+        layout.setSpacing(5)
+        layout.addWidget(self.startButton)
+        layout.addWidget(clearButton)
+        layout.addWidget(scrollBtn)
+        layout.setContentsMargins(4, 0, 0, 0)
+        self.leftWiget.setAutoFillBackground(True)
+        self.leftWiget.setLayout(layout)
+        self.leftWiget.setFixedWidth(27)
+        # self.initLeftFunctionWidget()
 
         # 日志窗口控件初始化
         self.logTextBrowser = QTextBrowser()
@@ -386,9 +426,10 @@ class LogCatWindow(QMainWindow):
         初始化左侧功能区
         :return:
         """
-        self.startButton = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("ic_start.png", "icons"))
-        self.startButton.setIcon(icon)
+        self.startButton = QPushButton()
+        self.icon_start = QIcon(".\\res\\icons\\ic_start.png")
+        self.icon_stop = QIcon(".\\res\\icons\\ic_stop.png")
+        self.startButton.setIcon(self.icon_start)
         self.startButton.setFixedWidth(24)
         self.startButton.setFixedHeight(28)
         self.startButton.clicked.connect(self._start_or_stop)
@@ -423,22 +464,22 @@ class LogCatWindow(QMainWindow):
 
     def on_live_log_dump(self, content: list):
         src_log = content[1]
+        self.logcatFilter.record(src_log)
         logMsg = src_log.rstrip("\n")
-        log_parts = logMsg.split()
-        if len(log_parts) >= 5:
-            logTag = log_parts[4]
-        else:
-            logTag = "I"
+        isFiltered, pid, level = self.logcatFilter.filter(src_log)
+        if isFiltered:
+            # TODO 过滤后，刷新现有数据，支持从输出记录中进行筛选
+            return
 
-        level = LogCatWindow.log_levels.get(logTag, logging.INFO)
+        if self._isOverLimitRow():
+            self.logTextBrowser.clear()
+            self.logcatFilter.clearRecord()
+
         # url高亮处理
         content = highlight_link_addr(logMsg)
         # 着色处理
         ui_log = changeLogColor(False, level, content)
-        if self._isOverLimitRow():
-            self.logTextBrowser.clear()
 
-        # TODO 加过滤条件
         self.logTextBrowser.append(ui_log)
 
     def _isOverLimitRow(self):
@@ -460,7 +501,7 @@ class LogCatWindow(QMainWindow):
             addr = self.mainWindow.current_device_addr
             cmd = f'adb -s {addr} logcat'
             self.livelogThread.cmd = cmd
-            if not self.livelogThread.isStoped:
+            if not self.livelogThread.isRunning:
                 self._changeStartButton(True)
                 self.livelogThread.start()
             else:
@@ -478,7 +519,7 @@ class LogCatWindow(QMainWindow):
         icon = IconTool.buildQIcon(ic_name, "icons")
         self.startButton.setIcon(icon)
         self.startButton.setToolTip(tips)
-        self.startButton.clicked.connect(self._start_or_stop)
+        # self.startButton.clicked.connect(self._start_or_stop)
 
     def _scrollToBottom(self):
         self.logTextBrowser.moveCursor(QTextCursor.End)
@@ -614,7 +655,9 @@ class LogcatInfoBarWidget(QWidget):
 
     def onPackageSelectedChanged(self):
         self.pkgManger.setSelectedRunningProcessInfo(self.pkgComboBox.currentText())
-        self.parentView.updateLogPrint()
+        if self.enableFilter:
+            z_logger.debug("开始过滤进程日志.")
+            self.parentView.updateLogPrint()
 
     def init_process_info(self):
         if len(self.current_ip) == 0:
@@ -650,7 +693,7 @@ class LogcatInfoBarWidget(QWidget):
             self.pkgComboBox.addItem(f"{p_name}({pid})")
 
         # 第一条数据的p_name字段
-        self.pkgManger.setSelectedRunningProcessInfo(sorted_processes[0][2])
+        self.pkgManger.setSelectedRunningProcessInfo(f'{sorted_processes[0][2]}({sorted_processes[0][1]})')
 
     def update_device_info(self, ip, isconnect):
         """
@@ -728,13 +771,95 @@ class LogcatInfoBarWidget(QWidget):
         return ''
 
 
-class LogCatCacheManager(object):
+class LogCatFilter(object):
     """
     TODO 做数据缓存、数据筛选分类、数据过滤重输出
     """
+    # 过滤的pid
+    selected_pid = ""
+    # 日志过滤级别(只显示 >= 此级别的日志) 默认ALL
+    filtered_level = logging.NOTSET
+    enable_filter_pid = False
+    log_cache_list = []
+    filtered_gui_log = []
+
     def __init__(self):
         pass
 
+    def setFilterEnable(self, enable: bool):
+        self.enable_filter_pid = enable
+        self.filtered_gui_log.clear()
+
+    def setFilterLevel(self, levelSimpleName:str):
+        """
+        设置过滤级别tag
+        :param levelSimpleName: I\W\E\D 等
+        """
+        self.filtered_level = _simpleNameToLevel.get(levelSimpleName, logging.NOTSET)
+        self.filtered_gui_log.clear()
+
+    def changeSelectedPid(self, pid=""):
+        self.selected_pid = pid
+        self._filterHistoryLog()
+
+    def filter(self, logMsg):
+        """
+        单条实时日志的过滤处理
+        :param logMsg: 原始的单条日志数据
+        :return:
+        返回格式:
+            <是否会被过滤(True|False)> <当前日志的进程pid> <当前日志的级别(数字)>
+        """
+
+        log_parts = logMsg.split()
+        if len(log_parts) >= 5:
+            _pid = log_parts[2]
+            _level_name = log_parts[4]
+        else:
+            _pid = "-1"
+            _level_name = "I"
+
+        _level = _simpleNameToLevel.get(_level_name, logging.NOTSET)
+
+        # Level——1: 日志级别过滤
+        if _level < self.filtered_level:
+            return True, _pid, _level
+            # TODO 如果需要过滤,则更新历史数据
+
+        # Level——2: 进程过滤
+        if self.enable_filter_pid:
+            # 与选中进程不一致的进程需要被过滤掉
+            isFilter = (_pid != self.selected_pid)
+            return isFilter, _pid, _level
+        else:
+            return False, _pid, _level
+
+    def record(self, _historyLog):
+        """
+        记录获取到的每一条日志数据
+        :param _historyLog:
+        :return:
+        """
+        self.log_cache_list.append(_historyLog)
+
+    def clearRecord(self):
+        self.log_cache_list.clear()
+
+    def _filterHistoryLog(self):
+        """
+        # TODO  根据最新过滤规则，进行历史数据过滤和刷新
+        :return:
+        """
+        for _log in self.log_cache_list:
+            filtered, pid, level = self.filter(_log)
+            if not filtered:
+                # url高亮处理
+                content = highlight_link_addr(_log)
+                # 着色处理
+                ui_log = changeLogColor(False, level, content)
+                self.filtered_gui_log.append(ui_log)
+            else:
+                continue
 
 
 class InfoBarWidget(QWidget):

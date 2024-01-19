@@ -150,10 +150,10 @@ def exec_cmd(cmd, logger=None):
 
     if return_code != 0:
         status = False
-        msg = error.strip("\n")  # TODo 后期进行详细错误描述
+        msg = error.strip("\n")
     else:
         status = True
-        msg = out.strip("\n")  # TODo 后期进行详细错误描述
+        msg = out.strip("\n")
 
     return status, msg
 
