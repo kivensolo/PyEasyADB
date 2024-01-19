@@ -46,7 +46,7 @@ def isLiveLogView(objectName: str):
 #     z_logger.judge_log_level(logging.CRITICAL, args)
 
 
-log_format = "%(name)s %(levelname)s %(asctime)s (%(filename)s: %(lineno)d) - %(message)s"
+log_format = "%(asctime)s %(levelname)s (%(filename)s: %(lineno)d) - %(message)s"
 
 
 class AppLogger:
