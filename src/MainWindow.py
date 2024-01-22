@@ -58,12 +58,16 @@ def is_device_root_node(item: QStandardItem):
     return item and item.type == TreeItemType.TYPE_ROOT_DEVICE
 
 
-def is_device_active(state):
+def is_device_connect(state):
     """
-    设备连接状态是否正常
+    设备是否已连接
     :param state:
     :return:
     """
+    return state == 'device' or state == 'offline'
+
+
+def is_device_state_normal(state):
     return state == 'device'
 
 
@@ -85,7 +89,8 @@ class MainWindow(BaseWindow):
         self.toolbar = None
         self.initWindow()
 
-        self.icon_connect = IconTool.buildQIcon("state_connect.png")
+        self.icon_connect = IconTool.buildQIcon("state_connect_normal.png")
+        self.icon_offline = IconTool.buildQIcon("state_connect_offline.png")
         self.icon_disconnect = IconTool.buildQIcon("state_disconnect.png")
         self.icon_warning = IconTool.buildQIcon("warning.png")
         self.icon_edit = IconTool.buildQIcon("edit.png")
@@ -109,8 +114,8 @@ class MainWindow(BaseWindow):
         self.center_panel = None
         self.right_panel = None
 
-        # 已连接设备列表
-        self.active_ip_list = []
+        # 已连接设备列表, 状态有“正常”和“离线”
+        self.active_ip_list = {}
 
         self.adbTools = ADBTools()
         self.init_all_ui()
@@ -560,7 +565,11 @@ class MainWindow(BaseWindow):
             for child_index in range(device_ips):
                 child = item.child(child_index)
                 if child.addr in self.active_ip_list:
-                    child.setIcon(self.icon_connect)
+                    _state = self.active_ip_list[child.addr]
+                    if _state == "device":
+                        child.setIcon(self.icon_connect)
+                    else:
+                        child.setIcon(self.icon_offline)
                     # 没有选中设备时，选择第一个已连接设备
                     if not has_device_selected:
                         has_device_selected = True
@@ -634,7 +643,7 @@ class MainWindow(BaseWindow):
                 z_logger.error(f"连接时出现未知异常:[{result_info}]")
         elif _execed_cmd.startswith('adb disconnect'):
             z_logger.info("设备断开成功!")
-            self.active_ip_list.remove(self.temp_disconnect_ip)
+            self.active_ip_list.pop(self.temp_disconnect_ip, "Default IP")
             self.update_current_tree_item(False)
             self.bottom_tab_widget.clearRunningProcessComBox()
         elif self.adbTools.isGettingDeviceList():
@@ -668,13 +677,13 @@ class MainWindow(BaseWindow):
                 continue
             device_ip_info = dev_line[0]
             device_state = dev_line[1]
-            if is_device_active(device_state): # 对已连接的设备做处理
+            if is_device_connect(device_state):
                 z_logger.debug("[Parse States] active devices:" + line)
 
                 # 本地已连接列表中，没有此设备的话，同步数据至内存和数据库;
                 if device_ip_info not in self.active_ip_list:
                     z_logger.info("在线设备:" + device_ip_info)
-                    self.active_ip_list.append(device_ip_info)
+                    self.active_ip_list[device_ip_info] = device_state
                     exist, msg = self.dbManager.get_device_prop_info(device_ip_info)
                     # 若发现新的已连接设备,自动同步该设备
                     if not exist:
@@ -685,10 +694,13 @@ class MainWindow(BaseWindow):
                             # self.close()
                     else:
                         z_logger.debug("[Parse States] This device already in local.")
-                        need_refresh_runningprocess_info = True
+                        if is_device_state_normal(device_state):
+                            need_refresh_runningprocess_info = True
+                        else:
+                            z_logger.debug("[Parse States] But device state not normal, don't refresh processInfo.")
 
             else:
-                # 离线设备 device_state == 'offline' 或 'unknow'
+                # 未知状态的设备，均认为未连接
                 self.dbManager.change_device_state(device_ip_info, False)
                 self.update_current_tree_item(False)
 
