@@ -153,7 +153,7 @@ class AsyncAdbThread(QThread):
     def __init__(self):
         super().__init__()
 
-        self.cmds = "adb -s 192.168.137.7:5555 logcat"
+        self.cmds = ""
 
         self.process = None
         self.isStoped = False
