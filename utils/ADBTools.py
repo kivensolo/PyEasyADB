@@ -141,7 +141,7 @@ class LiveLogAdbThread(QThread):
         self.exit()  # 返回状态(不是严格必要的)
 
     def stop(self):
-        self.output_received.emit(["[LIVE_LOG]", "Stop"])
+        self.output_received.emit(["[LIVE_LOG]", "Logging live is Stoped."])
         self.isRunning = False
         os.kill(self.process.pid, signal.SIGINT)
 
