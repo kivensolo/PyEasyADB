@@ -682,7 +682,7 @@ class MainWindow(BaseWindow):
 
                 # 本地已连接列表中，没有此设备的话，同步数据至内存和数据库;
                 if device_ip_info not in self.active_ip_list:
-                    z_logger.info("在线设备:" + device_ip_info)
+                    z_logger.info(f"设备信息:${device_ip_info}, 是否在线:${is_device_state_normal(device_state)}")
                     self.active_ip_list[device_ip_info] = device_state
                     exist, msg = self.dbManager.get_device_prop_info(device_ip_info)
                     # 若发现新的已连接设备,自动同步该设备

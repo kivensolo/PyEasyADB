@@ -117,7 +117,7 @@ class LiveLogAdbThread(QThread):
         if self.isRunning:
             # 手动终止，不执行任何命令
             return
-        print("ADB子线程运行")
+        z_logger.debug("启动实时日志输出.....")
         self.isRunning = True
         if isinstance(self.cmd, ActionCmdParams):
             _cmd = self.cmd.getAdbCMD()
@@ -126,6 +126,7 @@ class LiveLogAdbThread(QThread):
         self.process = subprocess.Popen(
             _cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8'
         )
+        z_logger.debug("开启subprocess.....")
         while True:
             stdout = self.process.stdout.readline()
             if stdout:
@@ -141,6 +142,7 @@ class LiveLogAdbThread(QThread):
         self.exit()  # 返回状态(不是严格必要的)
 
     def stop(self):
+        z_logger.debug("停止实时日志输出！")
         self.output_received.emit(["[LIVE_LOG]", "Logging live is Stoped."])
         self.isRunning = False
         os.kill(self.process.pid, signal.SIGINT)

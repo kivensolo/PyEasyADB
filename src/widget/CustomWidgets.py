@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QIcon, QRegExpValidator
-from PyQt5.QtWidgets import QLineEdit, QComboBox
+from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser
 
 from src.logcat.log import z_logger
 from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
@@ -178,4 +178,16 @@ class DraggableLineEdit(QLineEdit):
 
     def setDropEventListerner(self, block):
         self.block = block
+
+
+class LiveLogTextBrowser(QTextBrowser):
+    # """
+    # 具备按条件做过滤的TextBrowser
+    # """
+    def wheelEvent(self, event):
+        if event.modifiers() == Qt.ControlModifier:
+            # 禁止 Ctrl+鼠标滑轮缩放
+            event.ignore()
+        else:
+            super().wheelEvent(event)
 

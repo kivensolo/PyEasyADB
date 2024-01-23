@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import logging
+import re
 import sys
 
 from PyQt5 import QtCore, QtWidgets
@@ -12,6 +13,7 @@ from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWid
 from src import MainWindow
 from src.logcat import log
 from src.logcat.log import z_logger
+from src.widget.CustomWidgets import LiveLogTextBrowser
 from utils.ADBTools import ADBTools, LiveLogAdbThread
 from utils.PackageManager import PackageManager
 from utils.Tools import getSongFontStyle, getWRYHFontStyle, getSimpleFontStyle
@@ -312,11 +314,21 @@ class ConsoleWindow(QMainWindow):
         return self.infoBarWidget
 
 
+_nameToLevel = {
+    'Verbose': logging.NOTSET,
+    'Debug': logging.DEBUG,
+    'Info': logging.INFO,
+    'Warn': logging.WARNING,
+    'Error': logging.ERROR,
+    'Assert': logging.CRITICAL
+}
+
 _simpleNameToLevel = {
     "D": logging.DEBUG,
+    "I": logging.INFO,
     "W": logging.WARNING,
     "E": logging.ERROR,
-    "I": logging.INFO
+    "A": logging.CRITICAL
 }
 
 
@@ -390,7 +402,7 @@ class LogCatWindow(QMainWindow):
         # self.initLeftFunctionWidget()
 
         # 日志窗口控件初始化
-        self.logTextBrowser = QTextBrowser()
+        self.logTextBrowser = LiveLogTextBrowser()
         self.logTextBrowser.setOpenLinks(True)
         self.logTextBrowser.setOpenExternalLinks(True)
         self.logTextBrowser.setReadOnly(True)
@@ -408,7 +420,6 @@ class LogCatWindow(QMainWindow):
 
         # 设置垂直方向的控件区域
         self.verticalSplitter = QSplitter(Qt.Vertical)
-        # TODO infobar替换 模仿AS
         self.verticalSplitter.addWidget(self.infoBarWidget)
         self.verticalSplitter.addWidget(self.vSplitter)
         self.verticalSplitter.setChildrenCollapsible(0)
@@ -464,8 +475,12 @@ class LogCatWindow(QMainWindow):
 
     def on_live_log_dump(self, content: list):
         src_log = content[1]
-        self.logcatFilter.record(src_log)
         logMsg = src_log.rstrip("\n")
+        if len(logMsg) == 0:
+            # 部分设备(例如S3)会在每条输出后输出\n,这种数据过滤掉
+            return
+
+        self.logcatFilter.record(src_log)
         isFiltered, pid, level = self.logcatFilter.filter(src_log)
         if isFiltered:
             # TODO 过滤后，刷新现有数据，支持从输出记录中进行筛选
@@ -473,7 +488,7 @@ class LogCatWindow(QMainWindow):
 
         if self._isOverLimitRow():
             self.logTextBrowser.clear()
-            self.logcatFilter.clearRecord()
+            self.logcatFilter.clear()
 
         # url高亮处理
         content = highlight_link_addr(logMsg)
@@ -490,16 +505,23 @@ class LogCatWindow(QMainWindow):
         self.logTextBrowser.clear()
         return
 
-    def updateLogPrint(self):
-        # TODO 更新日志输出,[过滤器+数据筛选+重新输出]
-        pass
+    def reloadHistoryLiveLog(self):
+        """
+        重新从历史数据中筛出目标应用和等级的数据
+        调用点: 应用进程变化、日志级别变化、进程开关
+        :return:
+        """
+        logs = self.logcatFilter.getHistoryLogsWithRules()
+        self.logTextBrowser.clear()
+        if len(logs) > 0:
+            self.logTextBrowser.append(logs)
 
     def _start_or_stop(self):
         if self.mainWindow is None or self.mainWindow.current_device_addr == "":
             z_logger.error('请先连接设备！！')
         else:
             addr = self.mainWindow.current_device_addr
-            cmd = f'adb -s {addr} logcat'
+            cmd = f'adb -s {addr} logcat -v time'
             self.livelogThread.cmd = cmd
             if not self.livelogThread.isRunning:
                 self._changeStartButton(True)
@@ -507,6 +529,7 @@ class LogCatWindow(QMainWindow):
             else:
                 self._changeStartButton(False)
                 self.livelogThread.stop()
+                self.logcatFilter.clear()
         return
 
     def _changeStartButton(self, start: bool):
@@ -537,37 +560,45 @@ class LogcatInfoBarWidget(QWidget):
     """
     设备信息和包名选择的组合控件
     """
+    _isOnlyShowSelectedApp = False
 
     def __init__(self, parent: LogCatWindow,mainWindow:MainWindow):
         super().__init__()
         self.parentView = parent
         self.mainwindow = mainWindow
         self.current_ip = ""
+        self.setStyleSheet("""
+            background-color: #ffffff ;
+        """)
         self.pkgManger = PackageManager()
+
         self.pkgComboBox = QComboBox()
+        self.logLevelComboBox = QComboBox()
+        self.filterCheckBox = QCheckBox()
+
         # 设备名称
         self.device_info_desc = None
         self.adbTools = ADBTools()
 
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
         self.setSizePolicy(sizePolicy)
-        self.setMaximumSize(QtCore.QSize(16777215, 55))
+        self.setMaximumHeight(37)
 
         self.qh_layout = QHBoxLayout(self)
-        self.qh_layout.setContentsMargins(0, -1, -1, -1)
+        self.qh_layout.setContentsMargins(0, 4, 0, 0)
         self.qh_layout.setObjectName("info_bar_horizontalLayout")
 
         self.initDeviceInfo()
         self.initProcessComboBox()
-        self.enableFilter = False
+        self.initLogLevelComboBox()
         # 右侧添加补位弹簧
         spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.qh_layout.addItem(spacerItem)
-
         self.initFilterCheckBox()
+
         self.qh_layout.setStretch(1, 2)
         self.qh_layout.setStretch(2, 2)
         self.qh_layout.setStretch(3, 3)
@@ -578,10 +609,9 @@ class LogcatInfoBarWidget(QWidget):
         初始化后侧过滤选择的CheckBox
         :return:
         """
-        self.filterCheckBox = QCheckBox()
-        self.filterCheckBox.setChecked(self.enableFilter)
-        self.filterCheckBox.setText("No Filter")
-        self.filterCheckBox.stateChanged.connect(self._onFilterToggled)
+        self.filterCheckBox.setChecked(self._isOnlyShowSelectedApp)
+        self.filterCheckBox.setText("Show only selected application")
+        self.filterCheckBox.stateChanged.connect(self._onPidFilterToggled)
         self.filterCheckBox.setStyleSheet("""
                 border: 1px solid #C0C0C0;
                 padding: 2px,2px,2px,2px;
@@ -589,39 +619,45 @@ class LogcatInfoBarWidget(QWidget):
             """)
         self.qh_layout.addWidget(self.filterCheckBox)
 
-    def _onFilterToggled(self, state):
-        self.enableFilter = (state == Qt.Checked)
-        self.parentView.updateLogPrint()
+    def _onPidFilterToggled(self, state):
+        """
+        pid进程过滤规则改变
+        :param state:
+        :return:
+        """
+        isChecked = (state == Qt.Checked)
+        self._isOnlyShowSelectedApp = isChecked
+        self.parentView.logcatFilter.setOnlyShowSelectedPidLog(isChecked)
+        # FIXME 数据量多了会卡UI
+        self.parentView.reloadHistoryLiveLog()
 
     def initDeviceInfo(self):
         """
         设备名称&版本等信息展示
         :return:
         """
-        deviceImageView = QLabel(self)
-        # deviceImageView.setPixmap(QPixmap("../../res/img/device.png"))
-        deviceImageView.setPixmap(IconTool.buildQPixmap("device.png"))
-        deviceImageView.setAlignment(Qt.AlignCenter)
-        self.qh_layout.addWidget(deviceImageView)
+        # deviceImageView = QLabel(self)
+        # deviceImageView.setPixmap(IconTool.buildQPixmap("device.png"))
+        # deviceImageView.setAlignment(Qt.AlignCenter)
+        #
+        # self.qh_layout.addWidget(deviceImageView)
 
         self.device_info_desc = QLabel()
         # self.device_info_desc.setText("B869Ajiojioajiojdq2165465461654")
-        self.device_info_desc.setFont(getSongFontStyle())
+        self.device_info_desc.setPixmap(IconTool.buildQPixmap("device.png"))
+        self.device_info_desc.setFont(getWRYHFontStyle())
         self.device_info_desc.setTextFormat(QtCore.Qt.AutoText)
         self.device_info_desc.setObjectName("device_prop")
         self.device_info_desc.setToolTip("设备名称信息")
-        self.device_info_desc.setMinimumSize(QtCore.QSize(200, 30))
-        self.device_info_desc.setMaximumSize(QtCore.QSize(350, 40))
+        self.device_info_desc.setMinimumWidth(200)
+        self.device_info_desc.setMaximumWidth(350)
         self.device_info_desc.setStyleSheet("""
-                background-color: #f0f0f0 ;
-                border: 1px solid #C0C0C0;
-                padding: 2px,2px,2px,2px;
-                margin: 0px,0px,20px,0px;
+                border: 1px solid #d7d7d7;
+                margin: 0px,0px,0px, 5px;
             """)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.device_info_desc.sizePolicy().hasHeightForWidth())
         self.device_info_desc.setSizePolicy(sizePolicy)
         self.qh_layout.addWidget(self.device_info_desc)
 
@@ -667,10 +703,13 @@ class LogcatInfoBarWidget(QWidget):
         self.init_process_info()
 
     def onPackageSelectedChanged(self):
-        self.pkgManger.setSelectedRunningProcessInfo(self.pkgComboBox.currentText())
-        if self.enableFilter:
-            z_logger.debug("开始过滤进程日志.")
-            self.parentView.updateLogPrint()
+        applicationInfo = self.pkgComboBox.currentText()
+        self.pkgManger.setSelectedRunningProcessInfo(applicationInfo)
+        if self._isOnlyShowSelectedApp:
+            z_logger.debug(f"所选进程被改变:{applicationInfo}, 刷新日志输出.")
+            pid = self.pkgManger.currentSelectedRunningProcessPid
+            self.parentView.logcatFilter.onSelectedPidChanged(pid)
+            self.parentView.reloadHistoryLiveLog()
 
     def init_process_info(self):
         if len(self.current_ip) == 0:
@@ -707,6 +746,50 @@ class LogcatInfoBarWidget(QWidget):
 
         # 第一条数据的p_name字段
         self.pkgManger.setSelectedRunningProcessInfo(f'{sorted_processes[0][2]}({sorted_processes[0][1]})')
+
+    def initLogLevelComboBox(self):
+        """
+        初始化日志过滤级别展示Box
+        :return:
+        """
+        comboBox = QComboBox()
+        # 设置下拉显示固定个数，超过个数，滚动显示
+        comboBox.setMaxVisibleItems(6)
+        comboBox.setMinimumSize(QSize(100, 31))
+        comboBox.setMaximumSize(QSize(100, 40))
+        comboBox.setObjectName("logLevelComboBox")
+        comboBox.setFont(getSimpleFontStyle())
+        comboBox.setStyleSheet(
+            """
+             QComboBox {
+                    border: 2px solid #c4c4c4;
+                    border-radius: 4px;
+             }
+             QComboBox:selected {
+                    border: 2px solid #2a89f6;
+                    border-radius: 4px;
+             }
+             QComboBox::drop-down{
+                    width:15px;
+                }
+             QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
+             QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
+            """
+        )
+        # Sets the view to be used in the combobox popup to the given itemView.
+        comboBox.setView(QListView())
+        for name in _nameToLevel:
+            comboBox.addItem(name)
+        comboBox.currentIndexChanged.connect(self.onLogLevelSelectedChanged)
+        self.logLevelComboBox = comboBox
+        self.qh_layout.addWidget(self.logLevelComboBox)
+        self.init_process_info()
+
+    def onLogLevelSelectedChanged(self):
+        levelText = self.logLevelComboBox.currentText()
+        z_logger.debug(f"设置日志过滤级别为: {levelText}")
+        self.parentView.logcatFilter.changeFilterLevelByName(levelText)
+        self.parentView.reloadHistoryLiveLog()
 
     def update_device_info(self, ip, isconnect):
         """
@@ -785,49 +868,49 @@ class LogcatInfoBarWidget(QWidget):
 
 
 class LogCatFilter(object):
-    """
-    TODO 做数据缓存、数据筛选分类、数据过滤重输出
-    """
     # 过滤的pid
     selected_pid = ""
     # 日志过滤级别(只显示 >= 此级别的日志) 默认ALL
-    filtered_level = logging.NOTSET
-    enable_filter_pid = False
+    _filtered_level = logging.NOTSET
+    _only_show_selected_app_log = False
     log_cache_list = []
-    filtered_gui_log = []
+    # 过滤后的gui历史log
+    gui_history_log = []
 
     def __init__(self):
         pass
 
-    def setFilterEnable(self, enable: bool):
-        self.enable_filter_pid = enable
-        self.filtered_gui_log.clear()
+    def setOnlyShowSelectedPidLog(self, enable: bool):
+        self._only_show_selected_app_log = enable
 
-    def setFilterLevel(self, levelSimpleName:str):
+    def changeFilterLevelByName(self, levelName: str):
         """
         设置过滤级别tag
-        :param levelSimpleName: I\W\E\D 等
+        :param levelName: I\W\E\D 等
         """
-        self.filtered_level = _simpleNameToLevel.get(levelSimpleName, logging.NOTSET)
-        self.filtered_gui_log.clear()
+        if len(levelName) == 1:
+            self._filtered_level = _simpleNameToLevel.get(levelName, logging.NOTSET)
+        else:
+            self._filtered_level = _nameToLevel.get(levelName, logging.NOTSET)
 
-    def changeSelectedPid(self, pid=""):
+    def onSelectedPidChanged(self, pid=""):
         self.selected_pid = pid
-        self._filterHistoryLog()
 
     def filter(self, logMsg):
         """
         单条实时日志的过滤处理
         :param logMsg: 原始的单条日志数据
+                 01-22 11:20:30.188 W/InputMethodManagerService( 1884): LogMessage
         :return:
         返回格式:
             <是否会被过滤(True|False)> <当前日志的进程pid> <当前日志的级别(数字)>
         """
 
-        log_parts = logMsg.split()
-        if len(log_parts) >= 5:
-            _pid = log_parts[2]
-            _level_name = log_parts[4]
+        pattern  = re.compile(r'^.+\s([VIDWE])\/.+\(\s*(\d+)\)\:.+$')
+        match = pattern.search(logMsg)
+        if match:
+            _level_name = match.group(1)
+            _pid = match.group(2)
         else:
             _pid = "-1"
             _level_name = "I"
@@ -835,12 +918,12 @@ class LogCatFilter(object):
         _level = _simpleNameToLevel.get(_level_name, logging.NOTSET)
 
         # Level——1: 日志级别过滤
-        if _level < self.filtered_level:
+        if _level < self._filtered_level:
             return True, _pid, _level
             # TODO 如果需要过滤,则更新历史数据
 
         # Level——2: 进程过滤
-        if self.enable_filter_pid:
+        if self._only_show_selected_app_log:
             # 与选中进程不一致的进程需要被过滤掉
             isFilter = (_pid != self.selected_pid)
             return isFilter, _pid, _level
@@ -853,16 +936,19 @@ class LogCatFilter(object):
         :param _historyLog:
         :return:
         """
+        # TODO 同步
         self.log_cache_list.append(_historyLog)
 
-    def clearRecord(self):
+    def clear(self):
+        self.gui_history_log.clear()
         self.log_cache_list.clear()
 
-    def _filterHistoryLog(self):
+    def getHistoryLogsWithRules(self):
         """
-        # TODO  根据最新过滤规则，进行历史数据过滤和刷新
-        :return:
+        从缓存列表中，获取历史日志书
+        :return: ，收集过滤后的数据
         """
+        self.gui_history_log.clear()
         for _log in self.log_cache_list:
             filtered, pid, level = self.filter(_log)
             if not filtered:
@@ -870,9 +956,11 @@ class LogCatFilter(object):
                 content = highlight_link_addr(_log)
                 # 着色处理
                 ui_log = changeLogColor(False, level, content)
-                self.filtered_gui_log.append(ui_log)
+                self.gui_history_log.append(ui_log)
             else:
                 continue
+
+        return "\n".join(self.gui_history_log)
 
 
 class InfoBarWidget(QWidget):
