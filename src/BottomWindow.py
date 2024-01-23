@@ -14,7 +14,7 @@ from src.logcat import log
 from src.logcat.log import z_logger
 from utils.ADBTools import ADBTools, LiveLogAdbThread
 from utils.PackageManager import PackageManager
-from utils.Tools import getSongFontStyle
+from utils.Tools import getSongFontStyle, getWRYHFontStyle, getSimpleFontStyle
 from utils.UITools import IconTool
 from utils.Utils import Utils
 
@@ -583,7 +583,6 @@ class LogcatInfoBarWidget(QWidget):
         self.filterCheckBox.setText("No Filter")
         self.filterCheckBox.stateChanged.connect(self._onFilterToggled)
         self.filterCheckBox.setStyleSheet("""
-                background-color: #f0f0f0 ;
                 border: 1px solid #C0C0C0;
                 padding: 2px,2px,2px,2px;
                 margin: 0px,0px,20px,0px;
@@ -642,9 +641,23 @@ class LogcatInfoBarWidget(QWidget):
         comboBox.setObjectName("pkgComboBoxView")
         comboBox.setFont(getSongFontStyle())
         comboBox.setStyleSheet(
-            "QComboBox QAbstractItemView { min-width: 700px; }"
-            "QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}"
-            "QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}"
+            """
+                QComboBox {
+                   border: 2px solid #c4c4c4;
+                   border-radius: 4px;
+                }
+                QComboBox:selected {
+                   border: 2px solid #2a89f6;
+                   border-radius: 4px;
+                }
+                QComboBox::drop-down{
+                    background-color: none; 
+                     width:15px;
+                }
+                QComboBox QAbstractItemView { min-width: 700px; }
+                QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
+                QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
+            """
         )
         # Sets the view to be used in the combobox popup to the given itemView.
         comboBox.setView(QListView())
