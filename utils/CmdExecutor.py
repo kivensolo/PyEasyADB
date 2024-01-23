@@ -35,7 +35,7 @@ class CmdExecutor(QThread):
         cmd执行超时的槽函数
         :return:
         """
-        if self._intConnectTime >= 5:  # 超过20s
+        if self._intConnectTime >= 20:  # 超过20s
             self.requestInterruption()  # 请求终止线程
             self.timer.stop()
             self.finishSignal.emit('cmdExectuedTimeout')  # 发送超时信号
