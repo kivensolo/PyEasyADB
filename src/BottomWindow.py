@@ -195,7 +195,7 @@ class ConsoleWindow(QMainWindow):
         clearButton.setFixedWidth(24)
         clearButton.setFixedHeight(28)
         clearButton.clicked.connect(self._clear)
-        clearButton.setToolTip("Clear the logcat")
+        clearButton.setToolTip("Clear the console log")
 
         scrollBtn = QPushButton(self)
         icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
@@ -343,7 +343,10 @@ class LogCatWindow(QMainWindow):
         self.livelogThread = LiveLogAdbThread()
         self.livelogThread.output_received.connect(self.on_live_log_dump)
 
-        self.infoBarWidget = LogcatInfoBarWidget(self, parent)
+        #信息栏
+        self.infoBarWidget = self.LogcatInfoBarWidget(self, parent)
+        #左侧功能区
+        self.leftWiget = self.LeftBarWidget(self)
 
         self.setStyleSheet('''
             QPushButton{
@@ -358,48 +361,6 @@ class LogCatWindow(QMainWindow):
                 border-style: solid;
             }
             ''')
-
-        self.leftWiget = QWidget(self)
-        """
-        初始化左侧功能区
-        :return:
-        """
-        self.startButton = QPushButton()
-        self.icon_start = QIcon(".\\res\\icons\\ic_start.png")
-        self.icon_stop = QIcon(".\\res\\icons\\ic_stop.png")
-        self.startButton.setIcon(self.icon_start)
-        self.startButton.setFixedWidth(24)
-        self.startButton.setFixedHeight(28)
-        self.startButton.clicked.connect(self._start_or_stop)
-        self.startButton.setToolTip("Start live logcat")
-
-        clearButton = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("ic_clear.png", "icons"))
-        clearButton.setIcon(icon)
-        clearButton.setFixedWidth(24)
-        clearButton.setFixedHeight(28)
-        clearButton.clicked.connect(self._clear)
-        clearButton.setToolTip("Clear the logcat")
-
-        scrollBtn = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
-        scrollBtn.setIcon(icon)
-        scrollBtn.setFixedWidth(24)
-        scrollBtn.setFixedHeight(28)
-        scrollBtn.clicked.connect(self._scrollToBottom)
-        scrollBtn.setToolTip("Scroll to bottom")
-
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
-        layout.setSpacing(5)
-        layout.addWidget(self.startButton)
-        layout.addWidget(clearButton)
-        layout.addWidget(scrollBtn)
-        layout.setContentsMargins(4, 0, 0, 0)
-        self.leftWiget.setAutoFillBackground(True)
-        self.leftWiget.setLayout(layout)
-        self.leftWiget.setFixedWidth(27)
-        # self.initLeftFunctionWidget()
 
         # 日志窗口控件初始化
         self.logTextBrowser = LiveLogTextBrowser()
@@ -432,47 +393,6 @@ class LogCatWindow(QMainWindow):
         self.logTextBrowser.setTextCursor(cursor)
         self.logTextBrowser.ensureCursorVisible()
 
-    def initLeftFunctionWidget(self):
-        """
-        初始化左侧功能区
-        :return:
-        """
-        self.startButton = QPushButton()
-        self.icon_start = QIcon(".\\res\\icons\\ic_start.png")
-        self.icon_stop = QIcon(".\\res\\icons\\ic_stop.png")
-        self.startButton.setIcon(self.icon_start)
-        self.startButton.setFixedWidth(24)
-        self.startButton.setFixedHeight(28)
-        self.startButton.clicked.connect(self._start_or_stop)
-        self.startButton.setToolTip("Start live logcat")
-
-        clearButton = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("ic_clear.png", "icons"))
-        clearButton.setIcon(icon)
-        clearButton.setFixedWidth(24)
-        clearButton.setFixedHeight(28)
-        clearButton.clicked.connect(self._clear)
-        clearButton.setToolTip("Clear the logcat")
-
-        scrollBtn = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
-        scrollBtn.setIcon(icon)
-        scrollBtn.setFixedWidth(24)
-        scrollBtn.setFixedHeight(28)
-        scrollBtn.clicked.connect(self._scrollToBottom)
-        scrollBtn.setToolTip("Scroll to bottom")
-
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignTop)
-        layout.setSpacing(5)
-        layout.addWidget(self.startButton)
-        layout.addWidget(clearButton)
-        layout.addWidget(scrollBtn)
-        layout.setContentsMargins(4, 0, 0, 0)
-        self.leftWiget.setAutoFillBackground(True)
-        self.leftWiget.setLayout(layout)
-        self.leftWiget.setFixedWidth(27)
-
     def on_live_log_dump(self, content: list):
         src_log = content[1]
         logMsg = src_log.rstrip("\n")
@@ -501,7 +421,7 @@ class LogCatWindow(QMainWindow):
         # 数据是否超长 TODO 做设置处理
         return self.logTextBrowser.document().lineCount() > 2000
 
-    def _clear(self):
+    def clear(self):
         self.logTextBrowser.clear()
         return
 
@@ -516,7 +436,7 @@ class LogCatWindow(QMainWindow):
         if len(logs) > 0:
             self.logTextBrowser.append(logs)
 
-    def _start_or_stop(self):
+    def start_or_stop(self):
         if self.mainWindow is None or self.mainWindow.current_device_addr == "":
             z_logger.error('请先连接设备！！')
         else:
@@ -542,7 +462,6 @@ class LogCatWindow(QMainWindow):
         icon = IconTool.buildQIcon(ic_name, "icons")
         self.startButton.setIcon(icon)
         self.startButton.setToolTip(tips)
-        # self.startButton.clicked.connect(self._start_or_stop)
 
     def _scrollToBottom(self):
         self.logTextBrowser.moveCursor(QTextCursor.End)
@@ -555,313 +474,361 @@ class LogCatWindow(QMainWindow):
         # FIXME 如何直接找到子view
         return self.infoBarWidget
 
-
-class LogcatInfoBarWidget(QWidget):
-    """
-    设备信息和包名选择的组合控件
-    """
-    _isOnlyShowSelectedApp = False
-
-    def __init__(self, parent: LogCatWindow,mainWindow:MainWindow):
-        super().__init__()
-        self.parentView = parent
-        self.mainwindow = mainWindow
-        self.current_ip = ""
-        self.setStyleSheet("""
-            background-color: #ffffff ;
-        """)
-        self.pkgManger = PackageManager()
-
-        self.pkgComboBox = QComboBox()
-        self.logLevelComboBox = QComboBox()
-        self.filterCheckBox = QCheckBox()
-
-        # 设备名称
-        self.device_info_desc = None
-        self.adbTools = ADBTools()
-
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-        self.setSizePolicy(sizePolicy)
-        self.setMaximumHeight(37)
-
-        self.qh_layout = QHBoxLayout(self)
-        self.qh_layout.setContentsMargins(0, 0, 0, 0)
-        self.qh_layout.setObjectName("info_bar_horizontalLayout")
-
-        self.initDeviceInfo()
-        self.initProcessComboBox()
-        self.initLogLevelComboBox()
-        # 右侧添加补位弹簧
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.qh_layout.addItem(spacerItem)
-        self.initFilterCheckBox()
-
-        self.qh_layout.setStretch(1, 2)
-        self.qh_layout.setStretch(2, 2)
-        self.qh_layout.setStretch(3, 3)
-        self.qh_layout.setStretch(4, 2)
-
-    def initFilterCheckBox(self):
+    class LeftBarWidget(QWidget):
         """
-        初始化后侧过滤选择的CheckBox
+        左侧功能区
         :return:
         """
-        self.filterCheckBox.setChecked(self._isOnlyShowSelectedApp)
-        self.filterCheckBox.setText("Show only selected application")
-        self.filterCheckBox.stateChanged.connect(self._onPidFilterToggled)
-        self.filterCheckBox.setStyleSheet("""
-                border: 1px solid #C0C0C0;
-                padding: 2px,2px,2px,2px;
-                margin: 0px,0px,20px,0px;
+        def __init__(self, parent):
+            super().__init__()
+            # parent为LogCatWindow
+            self.parent = parent
+            self.startButton = QPushButton()
+            self.icon_start = QIcon(".\\res\\icons\\ic_start.png")
+            self.icon_stop = QIcon(".\\res\\icons\\ic_stop.png")
+            self.setUpUi()
+
+        def setUpUi(self):
+            self.startButton.setIcon(self.icon_start)
+            self.startButton.setFixedWidth(24)
+            self.startButton.setFixedHeight(28)
+            self.startButton.clicked.connect(self.parent.start_or_stop)
+            self.startButton.setToolTip("Start live logcat")
+
+            clearButton = QPushButton(self)
+            icon = QIcon(IconTool.buildQIcon("ic_clear.png", "icons"))
+            clearButton.setIcon(icon)
+            clearButton.setFixedWidth(24)
+            clearButton.setFixedHeight(28)
+            clearButton.clicked.connect(self.parent.clear)
+            clearButton.setToolTip("Clear the logcat")
+
+            scrollBtn = QPushButton(self)
+            icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
+            scrollBtn.setIcon(icon)
+            scrollBtn.setFixedWidth(24)
+            scrollBtn.setFixedHeight(28)
+            scrollBtn.clicked.connect(self.parent._scrollToBottom)
+            scrollBtn.setToolTip("Scroll to bottom")
+
+            layout = QVBoxLayout()
+            layout.setAlignment(Qt.AlignTop)
+            layout.setSpacing(5)
+            layout.addWidget(self.startButton)
+            layout.addWidget(clearButton)
+            layout.addWidget(scrollBtn)
+            layout.setContentsMargins(4, 0, 0, 0)
+            self.setAutoFillBackground(True)
+            self.setLayout(layout)
+            self.setFixedWidth(27)
+
+    class LogcatInfoBarWidget(QWidget):
+        """
+        设备信息和包名选择的组合控件
+        """
+        _isOnlyShowSelectedApp = False
+
+        def __init__(self, parent, mainWindow: MainWindow):
+            super().__init__()
+            self.parentView = parent
+            self.mainwindow = mainWindow
+            self.current_ip = ""
+            self.setStyleSheet("""
+                background-color: #ffffff ;
             """)
-        self.qh_layout.addWidget(self.filterCheckBox)
+            self.pkgManger = PackageManager()
 
-    def _onPidFilterToggled(self, state):
-        """
-        pid进程过滤规则改变
-        :param state:
-        :return:
-        """
-        isChecked = (state == Qt.Checked)
-        self._isOnlyShowSelectedApp = isChecked
-        self.parentView.logcatFilter.setOnlyShowSelectedPidLog(isChecked)
-        # FIXME 数据量多了会卡UI
-        self.parentView.reloadHistoryLiveLog()
+            self.pkgComboBox = QComboBox()
+            self.logLevelComboBox = QComboBox()
+            self.filterCheckBox = QCheckBox()
 
-    def initDeviceInfo(self):
-        """
-        设备名称&版本等信息展示
-        :return:
-        """
-        deviceImageView = QLabel()
-        deviceImageView.setPixmap(IconTool.buildQPixmap("Honeyview_device.png"))
-        deviceImageView.setStyleSheet("""
-            background-color: #00ff00; 
-        """)
-        self.qh_layout.addWidget(deviceImageView)
+            # 设备名称
+            self.device_info_desc = None
+            self.adbTools = ADBTools()
 
-        self.device_info_desc = QLabel()
-        self.device_info_desc.setObjectName("device_prop")
-        self.device_info_desc.setToolTip("设备名称信息")
-        self.device_info_desc.setMinimumWidth(200)
-        self.device_info_desc.setMaximumWidth(350)
-        self.device_info_desc.setStyleSheet("""
-            background-color: #ff0000; 
-            border: 1px solid #d7d7d7;
-        """)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        self.device_info_desc.setSizePolicy(sizePolicy)
-        self.qh_layout.addWidget(self.device_info_desc)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+            self.setSizePolicy(sizePolicy)
+            self.setMaximumHeight(37)
 
-    def initProcessComboBox(self):
-        """
-        初始化进程列表展示Box
-        :return:
-        """
-        comboBox = QComboBox()
-        # 设置下拉显示固定个数，超过个数，滚动显示
-        comboBox.setMaxVisibleItems(8)
-        # 宽度调整策略，按照内容最大宽度
-        # comboBox.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-        # comboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
-        comboBox.setMinimumSize(QSize(250, 31))
-        comboBox.setMaximumSize(QtCore.QSize(350, 40))
-        comboBox.setObjectName("pkgComboBoxView")
-        comboBox.setFont(getSongFontStyle())
-        comboBox.setStyleSheet(
+            self.qh_layout = QHBoxLayout(self)
+            self.qh_layout.setContentsMargins(0, 0, 0, 0)
+            self.qh_layout.setObjectName("info_bar_horizontalLayout")
+
+            self.initDeviceInfo()
+            self.initProcessComboBox()
+            self.initLogLevelComboBox()
+            # 右侧添加补位弹簧
+            spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+            self.qh_layout.addItem(spacerItem)
+            self.initFilterCheckBox()
+
+            self.qh_layout.setStretch(1, 2)
+            self.qh_layout.setStretch(2, 2)
+            self.qh_layout.setStretch(3, 3)
+            self.qh_layout.setStretch(4, 2)
+
+        def initFilterCheckBox(self):
             """
-                QComboBox {
-                   border: 2px solid #c4c4c4;
-                   border-radius: 4px;
-                }
-                QComboBox:selected {
-                   border: 2px solid #2a89f6;
-                   border-radius: 4px;
-                }
-                QComboBox::drop-down{
-                    background-color: none; 
-                     width:15px;
-                }
-                QComboBox QAbstractItemView { min-width: 700px; }
-                QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
-                QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
+            初始化后侧过滤选择的CheckBox
+            :return:
             """
-        )
-        # Sets the view to be used in the combobox popup to the given itemView.
-        comboBox.setView(QListView())
-        comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
-        self.pkgComboBox = comboBox
-        self.qh_layout.addWidget(self.pkgComboBox)
-        self.init_process_info()
+            self.filterCheckBox.setChecked(self._isOnlyShowSelectedApp)
+            self.filterCheckBox.setText("Show only selected application")
+            self.filterCheckBox.stateChanged.connect(self._onPidFilterToggled)
+            self.filterCheckBox.setStyleSheet("""
+                    border: 1px solid #C0C0C0;
+                    padding: 2px,2px,2px,2px;
+                    margin: 0px,0px,20px,0px;
+                """)
+            self.qh_layout.addWidget(self.filterCheckBox)
 
-    def onPackageSelectedChanged(self):
-        applicationInfo = self.pkgComboBox.currentText()
-        self.pkgManger.setSelectedRunningProcessInfo(applicationInfo)
-        if self._isOnlyShowSelectedApp:
-            z_logger.debug(f"所选进程被改变:{applicationInfo}, 刷新日志输出.")
-            pid = self.pkgManger.currentSelectedRunningProcessPid
-            self.parentView.logcatFilter.onSelectedPidChanged(pid)
+        def _onPidFilterToggled(self, state):
+            """
+            pid进程过滤规则改变
+            :param state:
+            :return:
+            """
+            isChecked = (state == Qt.Checked)
+            self._isOnlyShowSelectedApp = isChecked
+            self.parentView.logcatFilter.setOnlyShowSelectedPidLog(isChecked)
+            # FIXME 数据量多了会卡UI
             self.parentView.reloadHistoryLiveLog()
 
-    def init_process_info(self):
-        if len(self.current_ip) == 0:
-            z_logger.error('未选择设备')
-            return
-        self.update_process_com_box()
+        def initDeviceInfo(self):
+            """
+            设备名称&版本等信息展示
+            :return:
+            """
+            deviceImageView = QLabel()
+            deviceImageView.setPixmap(IconTool.buildQPixmap("Honeyview_device.png"))
+            deviceImageView.setStyleSheet("""
+                background-color: #00ff00; 
+            """)
+            self.qh_layout.addWidget(deviceImageView)
 
-    def update_process_com_box(self, isConnect=True):
-        """
-        更新PkgComBox数据显示
-        :return:
-        """
-        if len(self.current_ip) == 0:
-            return
-        if not isConnect:
-            z_logger.debug("当前选中设备离线,清空runningProcess数据")
+            self.device_info_desc = QLabel()
+            self.device_info_desc.setObjectName("device_prop")
+            self.device_info_desc.setToolTip("设备名称信息")
+            self.device_info_desc.setMinimumWidth(200)
+            self.device_info_desc.setMaximumWidth(350)
+            self.device_info_desc.setStyleSheet("""
+                background-color: #ff0000; 
+                border: 1px solid #d7d7d7;
+            """)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
+            self.device_info_desc.setSizePolicy(sizePolicy)
+            self.qh_layout.addWidget(self.device_info_desc)
+
+        def initProcessComboBox(self):
+            """
+            初始化进程列表展示Box
+            :return:
+            """
+            comboBox = QComboBox()
+            # 设置下拉显示固定个数，超过个数，滚动显示
+            comboBox.setMaxVisibleItems(8)
+            # 宽度调整策略，按照内容最大宽度
+            # comboBox.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
+            # comboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
+            comboBox.setMinimumSize(QSize(250, 31))
+            comboBox.setMaximumSize(QtCore.QSize(350, 40))
+            comboBox.setObjectName("pkgComboBoxView")
+            comboBox.setFont(getSongFontStyle())
+            comboBox.setStyleSheet(
+                """
+                    QComboBox {
+                       border: 2px solid #c4c4c4;
+                       border-radius: 4px;
+                    }
+                    QComboBox:selected {
+                       border: 2px solid #2a89f6;
+                       border-radius: 4px;
+                    }
+                    QComboBox::drop-down{
+                        background-color: none; 
+                         width:15px;
+                    }
+                    QComboBox QAbstractItemView { min-width: 700px; }
+                    QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
+                    QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
+                """
+            )
+            # Sets the view to be used in the combobox popup to the given itemView.
+            comboBox.setView(QListView())
+            comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
+            self.pkgComboBox = comboBox
+            self.qh_layout.addWidget(self.pkgComboBox)
+            self.init_process_info()
+
+        def onPackageSelectedChanged(self):
+            applicationInfo = self.pkgComboBox.currentText()
+            self.pkgManger.setSelectedRunningProcessInfo(applicationInfo)
+            if self._isOnlyShowSelectedApp:
+                z_logger.debug(f"所选进程被改变:{applicationInfo}, 刷新日志输出.")
+                pid = self.pkgManger.currentSelectedRunningProcessPid
+                self.parentView.logcatFilter.onSelectedPidChanged(pid)
+                self.parentView.reloadHistoryLiveLog()
+
+        def init_process_info(self):
+            if len(self.current_ip) == 0:
+                z_logger.error('未选择设备')
+                return
+            self.update_process_com_box()
+
+        def update_process_com_box(self, isConnect=True):
+            """
+            更新PkgComBox数据显示
+            :return:
+            """
+            if len(self.current_ip) == 0:
+                return
+            if not isConnect:
+                z_logger.debug("当前选中设备离线,清空runningProcess数据")
+                self.pkgComboBox.clear()
+                self.pkgManger.setSelectedRunningProcessInfo("")
+                return
+            state = adb_tool.get_running_process(self.current_ip, self._onProcessFiltered)
+            if not state:
+                self.mainwindow.check_device_status()
+
+        def _onProcessFiltered(self, sorted_processes):
+            """
+            针对已选设备查询到的满足条件的进程数据
+            """
+            if len(sorted_processes) == 0:
+                z_logger.error("获取设备进程异常！")
+                return
             self.pkgComboBox.clear()
-            self.pkgManger.setSelectedRunningProcessInfo("")
-            return
-        state = adb_tool.get_running_process(self.current_ip, self._onProcessFiltered)
-        if not state:
-            self.mainwindow.check_device_status()
+            for user, pid, p_name in sorted_processes:
+                self.pkgComboBox.addItem(f"{p_name}({pid})")
 
-    def _onProcessFiltered(self, sorted_processes):
-        """
-        针对已选设备查询到的满足条件的进程数据
-        """
-        if len(sorted_processes) == 0:
-            z_logger.error("获取设备进程异常！")
-            return
-        self.pkgComboBox.clear()
-        for user, pid, p_name in sorted_processes:
-            self.pkgComboBox.addItem(f"{p_name}({pid})")
+            # 第一条数据的p_name字段
+            self.pkgManger.setSelectedRunningProcessInfo(f'{sorted_processes[0][2]}({sorted_processes[0][1]})')
 
-        # 第一条数据的p_name字段
-        self.pkgManger.setSelectedRunningProcessInfo(f'{sorted_processes[0][2]}({sorted_processes[0][1]})')
-
-    def initLogLevelComboBox(self):
-        """
-        初始化日志过滤级别展示Box
-        :return:
-        """
-        comboBox = QComboBox()
-        # 设置下拉显示固定个数，超过个数，滚动显示
-        comboBox.setMaxVisibleItems(6)
-        comboBox.setMinimumSize(QSize(100, 31))
-        comboBox.setMaximumSize(QSize(100, 40))
-        comboBox.setObjectName("logLevelComboBox")
-        comboBox.setFont(getSimpleFontStyle())
-        comboBox.setStyleSheet(
+        def initLogLevelComboBox(self):
             """
-             QComboBox {
-                    border: 2px solid #c4c4c4;
-                    border-radius: 4px;
-             }
-             QComboBox:selected {
-                    border: 2px solid #2a89f6;
-                    border-radius: 4px;
-             }
-             QComboBox::drop-down{
-                    width:15px;
-                }
-             QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
-             QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
+            初始化日志过滤级别展示Box
+            :return:
             """
-        )
-        # Sets the view to be used in the combobox popup to the given itemView.
-        comboBox.setView(QListView())
-        for name in _nameToLevel:
-            comboBox.addItem(name)
-        comboBox.currentIndexChanged.connect(self.onLogLevelSelectedChanged)
-        self.logLevelComboBox = comboBox
-        self.qh_layout.addWidget(self.logLevelComboBox)
-        self.init_process_info()
+            comboBox = QComboBox()
+            # 设置下拉显示固定个数，超过个数，滚动显示
+            comboBox.setMaxVisibleItems(6)
+            comboBox.setMinimumSize(QSize(100, 31))
+            comboBox.setMaximumSize(QSize(100, 40))
+            comboBox.setObjectName("logLevelComboBox")
+            comboBox.setFont(getSimpleFontStyle())
+            comboBox.setStyleSheet(
+                """
+                 QComboBox {
+                        border: 2px solid #c4c4c4;
+                        border-radius: 4px;
+                 }
+                 QComboBox:selected {
+                        border: 2px solid #2a89f6;
+                        border-radius: 4px;
+                 }
+                 QComboBox::drop-down{
+                        width:15px;
+                    }
+                 QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
+                 QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
+                """
+            )
+            # Sets the view to be used in the combobox popup to the given itemView.
+            comboBox.setView(QListView())
+            for name in _nameToLevel:
+                comboBox.addItem(name)
+            comboBox.currentIndexChanged.connect(self.onLogLevelSelectedChanged)
+            self.logLevelComboBox = comboBox
+            self.qh_layout.addWidget(self.logLevelComboBox)
+            self.init_process_info()
 
-    def onLogLevelSelectedChanged(self):
-        levelText = self.logLevelComboBox.currentText()
-        z_logger.debug(f"设置日志过滤级别为: {levelText}")
-        self.parentView.logcatFilter.changeFilterLevelByName(levelText)
-        self.parentView.reloadHistoryLiveLog()
+        def onLogLevelSelectedChanged(self):
+            levelText = self.logLevelComboBox.currentText()
+            z_logger.debug(f"设置日志过滤级别为: {levelText}")
+            self.parentView.logcatFilter.changeFilterLevelByName(levelText)
+            self.parentView.reloadHistoryLiveLog()
 
-    def update_device_info(self, ip, isconnect):
-        """
-        更新设备信息及进程数据
-        :param ip: 设备ip
-        :param isconnect: 当前设备是否已连接
-        :return: None
-        """
-        self.current_ip = ip
-        z_logger.debug("Update selected device info! conenct: " + str(isconnect))
-        result, value_tuple = self.pkgManger.queryDeviceInfo(ip)
-        if result and len(value_tuple) != 0:
-            # 从数据库查询到数据
-            if value_tuple[0] == '':
-                if not isconnect:  # 未连接设备的情况下
-                    self.device_info_desc.setText("请先连接此设备")
-                    self.update_device_info(ip, False)
-                else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
-                    z_logger.debug("[Update_Device] Current device is connected, but no device info!")
+        def update_device_info(self, ip, isconnect):
+            """
+            更新设备信息及进程数据
+            :param ip: 设备ip
+            :param isconnect: 当前设备是否已连接
+            :return: None
+            """
+            self.current_ip = ip
+            z_logger.debug("Update selected device info! conenct: " + str(isconnect))
+            result, value_tuple = self.pkgManger.queryDeviceInfo(ip)
+            if result and len(value_tuple) != 0:
+                # 从数据库查询到数据
+                if value_tuple[0] == '':
+                    if not isconnect:  # 未连接设备的情况下
+                        self.device_info_desc.setText("请先连接此设备")
+                        self.update_device_info(ip, False)
+                    else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
+                        z_logger.debug("[Update_Device] Current device is connected, but no device info!")
+                        self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
+                else:
+                    z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
+                    self.device_info_desc.setText(value_tuple[0])
+                    self.update_process_com_box(isconnect)
+            else:
+                # 从数据库查询不到数据，通常是手动添加的未连接设备
+                if isconnect:
+                    z_logger.debug("No this device prop cache, get with adb!")
                     self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
-            else:
-                z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
-                self.device_info_desc.setText(value_tuple[0])
-                self.update_process_com_box(isconnect)
-        else:
-            # 从数据库查询不到数据，通常是手动添加的未连接设备
-            if isconnect:
-                z_logger.debug("No this device prop cache, get with adb!")
-                self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
-            else:
-                self.device_info_desc.setText("请先连接此设备")
-                self.update_process_com_box(False)
+                else:
+                    self.device_info_desc.setText("请先连接此设备")
+                    self.update_process_com_box(False)
 
-    def on_device_prop_get_by_adb(self, result):
-        """
-        从ADB获取到设备属性数据(只有新增设备时，才会去查属性)
-        :param result: adb返回的字符串
-        :return:
-        """
-        # z_logger.debug("result_list="+str(result_list))
-        result_list = result.split('\n')
-        manufacturer = ''
-        model = ''
-        sys_version = ''
-        api_level = ''
-        if len(result_list):
-            if len(result_list) < 4:
+        def on_device_prop_get_by_adb(self, result):
+            """
+            从ADB获取到设备属性数据(只有新增设备时，才会去查属性)
+            :param result: adb返回的字符串
+            :return:
+            """
+            # z_logger.debug("result_list="+str(result_list))
+            result_list = result.split('\n')
+            manufacturer = ''
+            model = ''
+            sys_version = ''
+            api_level = ''
+            if len(result_list):
+                if len(result_list) < 4:
+                    self.device_info_desc.setText("Unknow Device")
+                else:
+                    # 会存在['']的情况
+                    for line in result_list:
+                        if 'android.os.Build.MANUFACTURER' in line:
+                            manufacturer = self.get_prop_value(line)
+                        if 'ro.product.model' in line:
+                            model = self.get_prop_value(line)
+                        if 'ro.build.version.release' in line:
+                            sys_version = self.get_prop_value(line)
+                        if 'ro.build.version.sdk' in line:
+                            api_level = self.get_prop_value(line)
+                    result = "{0} {1}({2}),API {3}".format(manufacturer, model, sys_version, api_level)
+                    z_logger.info_with_stamp("设备概况信息:" + result)
+                    self.device_info_desc.setText(result)
+                    self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
+                    z_logger.debug("Get running processes...")
+                    self.update_process_com_box()
+
+            else:
                 self.device_info_desc.setText("Unknow Device")
-            else:
-                # 会存在['']的情况
-                for line in result_list:
-                    if 'android.os.Build.MANUFACTURER' in line:
-                        manufacturer = self.get_prop_value(line)
-                    if 'ro.product.model' in line:
-                        model = self.get_prop_value(line)
-                    if 'ro.build.version.release' in line:
-                        sys_version = self.get_prop_value(line)
-                    if 'ro.build.version.sdk' in line:
-                        api_level = self.get_prop_value(line)
-                result = "{0} {1}({2}),API {3}".format(manufacturer, model, sys_version, api_level)
-                z_logger.info_with_stamp("设备概况信息:" + result)
-                self.device_info_desc.setText(result)
-                self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
-                z_logger.debug("Get running processes...")
-                self.update_process_com_box()
 
-        else:
-            self.device_info_desc.setText("Unknow Device")
+        @staticmethod
+        def get_prop_value(content):
+            strArr = content.split(":")
+            if len(strArr) == 2:
+                return strArr[1].replace("[", "").replace("]", "").strip()
+            return ''
 
-    @staticmethod
-    def get_prop_value(content):
-        strArr = content.split(":")
-        if len(strArr) == 2:
-            return strArr[1].replace("[", "").replace("]", "").strip()
-        return ''
 
 
 class LogCatFilter(object):
