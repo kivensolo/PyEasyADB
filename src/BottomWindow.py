@@ -1,12 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import logging
-import re
 import sys
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QTextCursor, QIcon, QPixmap
+from PyQt5.QtGui import QTextCursor, QIcon
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
     QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QCheckBox
 
@@ -16,9 +15,9 @@ from src.logcat.log import z_logger
 from src.widget.CustomWidgets import LiveLogTextBrowser
 from utils.ADBTools import ADBTools, LiveLogAdbThread
 from utils.PackageManager import PackageManager
-from utils.Tools import getSongFontStyle, getWRYHFontStyle, getSimpleFontStyle
+from utils.Tools import getSongFontStyle, getSimpleFontStyle
 from utils.UITools import IconTool
-from utils.Utils import Utils
+from utils.Utils import Utils, LogUtils, _nameToLevel
 
 adb_tool = ADBTools()
 
@@ -131,52 +130,6 @@ class BottomTabWidget(QTabWidget):
         return self.consoleView.get_fun_widget()
 
 
-def changeLogColor(appen_prefix, level, log):
-    _color_log = log
-
-    if appen_prefix:                # 蓝
-        _color_log = "<font color=\"#005ac7\" >{0}</font>".format(log)
-        _color_log = str(_color_log).replace("\n", "<br>")
-        return _color_log
-
-    if level >= logging.ERROR:      # 红
-        _color_log = "<font color=\"#bf360c\">{0}</font>".format(log)
-    elif level == logging.WARNING:  # 黄
-        _color_log = "<font color=\"#b6a014\">{0}</font>".format(log)
-    elif level == logging.INFO:     # 黑
-        _color_log = "<font color=\"#263238\" >{0}</font>".format(log)
-    elif level == logging.DEBUG:    # 绿
-        _color_log = "<font color=\"#388e3c\">{0}</font>".format(log)
-
-    # 解决该控件插入Html时，不支持\n的问题
-    _color_log = str(_color_log).replace("\n", "<br>")
-    # 文字后加换行符，准备下一次输出(注意必须要有一个空格，否则不生效)
-    # _color_log = _color_log + "<br />"
-    return _color_log
-
-
-def _build_time_stamp():
-    import time
-    ct = time.time()
-    local_time = time.localtime(ct)
-    data_head = time.strftime("%Y-%m-%d %H:%M:%S", local_time)
-    data_secs = (ct - int(ct)) * 1000
-    time_stamp = "%s.%03d" % (data_head, data_secs)
-    return time_stamp + ": "
-
-
-def highlight_link_addr(text):
-    if isinstance(text, str):
-        import re
-        # FIXME 匹配  http://imgzm.qun7.com/uploads/20230117/63c66916d79e9.jpg!webp_____position:2   失败
-        regexUrl = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*,]|(?:%[0-9a-fA-F][0-9a-fA-F]))+(?:\.jpg|\.jpeg|\.png|\.gif|\.bmp|\.webp)*",
-                              re.IGNORECASE)
-        urls = regexUrl.findall(text)
-        for url in urls:
-            preS = "<a href=\"" + url + "\">" + url + "</a>"
-            text = text.replace(url, preS)
-    return text
-
 
 class ConsoleWindow(QMainWindow):
     """
@@ -282,12 +235,12 @@ class ConsoleWindow(QMainWindow):
             logMsg = logMsg[7:]  # 切片操作，去除前缀
 
         # url检测
-        content = highlight_link_addr(logMsg)
+        content = LogUtils.highlight_link_addr(logMsg)
         # 颜色检测
-        ui_log = changeLogColor(is_need_appen_prefix, level, content)
+        ui_log = LogUtils.changeLogColor(is_need_appen_prefix, level, content)
 
         if is_need_appen_prefix:
-            ui_log = f"{_build_time_stamp()}{ui_log}"
+            ui_log = f"{LogUtils.build_time_stamp()}{ui_log}"
         self.terminalTextBrowser.append(ui_log)
 
         # 解决该控件插入Html时，不支持\n的问题
@@ -314,24 +267,6 @@ class ConsoleWindow(QMainWindow):
         return self.infoBarWidget
 
 
-_nameToLevel = {
-    'Verbose': logging.NOTSET,
-    'Debug': logging.DEBUG,
-    'Info': logging.INFO,
-    'Warn': logging.WARNING,
-    'Error': logging.ERROR,
-    'Assert': logging.CRITICAL
-}
-
-_simpleNameToLevel = {
-    "D": logging.DEBUG,
-    "I": logging.INFO,
-    "W": logging.WARNING,
-    "E": logging.ERROR,
-    "A": logging.CRITICAL
-}
-
-
 class LogCatWindow(QMainWindow):
     """
     实时ADB log窗口
@@ -339,9 +274,9 @@ class LogCatWindow(QMainWindow):
     def __init__(self, parent: MainWindow):
         super().__init__()
         self.mainWindow = parent
-        self.logcatFilter = LogCatFilter()
         self.livelogThread = LiveLogAdbThread()
-        self.livelogThread.output_received.connect(self.on_live_log_dump)
+        self.livelogThread.live_log_dump_signal.connect(self.on_live_log_dump)
+        self.logTextBrowser = LiveLogTextBrowser()
 
         #信息栏
         self.infoBarWidget = self.LogcatInfoBarWidget(self, parent)
@@ -363,7 +298,7 @@ class LogCatWindow(QMainWindow):
             ''')
 
         # 日志窗口控件初始化
-        self.logTextBrowser = LiveLogTextBrowser()
+
         self.logTextBrowser.setOpenLinks(True)
         self.logTextBrowser.setOpenExternalLinks(True)
         self.logTextBrowser.setReadOnly(True)
@@ -393,29 +328,12 @@ class LogCatWindow(QMainWindow):
         self.logTextBrowser.setTextCursor(cursor)
         self.logTextBrowser.ensureCursorVisible()
 
-    def on_live_log_dump(self, content: list):
-        src_log = content[1]
-        logMsg = src_log.rstrip("\n")
-        if len(logMsg) == 0:
-            # 部分设备(例如S3)会在每条输出后输出\n,这种数据过滤掉
-            return
-
-        self.logcatFilter.record(src_log)
-        isFiltered, pid, level = self.logcatFilter.filter(src_log)
-        if isFiltered:
-            # TODO 过滤后，刷新现有数据，支持从输出记录中进行筛选
-            return
-
+    def on_live_log_dump(self, ui_log):
         if self._isOverLimitRow():
             self.logTextBrowser.clear()
-            self.logcatFilter.clear()
-
-        # url高亮处理
-        content = highlight_link_addr(logMsg)
-        # 着色处理
-        ui_log = changeLogColor(False, level, content)
-
+            self.livelogThread.clearFilter()
         self.logTextBrowser.append(ui_log)
+        # print(ui_log)
 
     def _isOverLimitRow(self):
         # 数据是否超长 TODO 做设置处理
@@ -431,7 +349,7 @@ class LogCatWindow(QMainWindow):
         调用点: 应用进程变化、日志级别变化、进程开关
         :return:
         """
-        logs = self.logcatFilter.getHistoryLogsWithRules()
+        logs = self.livelogThread.getHistoryLogsWithRules()
         self.logTextBrowser.clear()
         if len(logs) > 0:
             self.logTextBrowser.append(logs)
@@ -444,24 +362,12 @@ class LogCatWindow(QMainWindow):
             cmd = f'adb -s {addr} logcat -v time'
             self.livelogThread.cmd = cmd
             if not self.livelogThread.isRunning:
-                self._changeStartButton(True)
+                self.leftWiget.changeStartButton(True)
                 self.livelogThread.start()
             else:
-                self._changeStartButton(False)
+                self.leftWiget.changeStartButton(False)
                 self.livelogThread.stop()
-                self.logcatFilter.clear()
         return
-
-    def _changeStartButton(self, start: bool):
-        if not start:
-            ic_name = "ic_start.png"
-            tips = "Start live logcat"
-        else:
-            ic_name = "ic_stop.png"
-            tips = "Stop"
-        icon = IconTool.buildQIcon(ic_name, "icons")
-        self.startButton.setIcon(icon)
-        self.startButton.setToolTip(tips)
 
     def _scrollToBottom(self):
         self.logTextBrowser.moveCursor(QTextCursor.End)
@@ -522,7 +428,21 @@ class LogCatWindow(QMainWindow):
             self.setLayout(layout)
             self.setFixedWidth(27)
 
+        def changeStartButton(self, start: bool):
+            if not start:
+                ic_name = "ic_start.png"
+                tips = "Start live logcat"
+            else:
+                ic_name = "ic_stop.png"
+                tips = "Stop"
+            icon = IconTool.buildQIcon(ic_name, "icons")
+            self.startButton.setIcon(icon)
+            self.startButton.setToolTip(tips)
+
     class LogcatInfoBarWidget(QWidget):
+        # 日志筛选级别改变事件
+        # filterLevelChangeSignal = pyqtSignal(str)
+
         """
         设备信息和包名选择的组合控件
         """
@@ -593,7 +513,7 @@ class LogCatWindow(QMainWindow):
             """
             isChecked = (state == Qt.Checked)
             self._isOnlyShowSelectedApp = isChecked
-            self.parentView.logcatFilter.setOnlyShowSelectedPidLog(isChecked)
+            self.parentView.livelogThread.logcatFilter.setOnlyShowSelectedPidLog(isChecked)
             # FIXME 数据量多了会卡UI
             self.parentView.reloadHistoryLiveLog()
 
@@ -671,7 +591,7 @@ class LogCatWindow(QMainWindow):
             if self._isOnlyShowSelectedApp:
                 z_logger.debug(f"所选进程被改变:{applicationInfo}, 刷新日志输出.")
                 pid = self.pkgManger.currentSelectedRunningProcessPid
-                self.parentView.logcatFilter.onSelectedPidChanged(pid)
+                self.parentView.livelogThread.logcatFilter.onSelectedPidChanged(pid)
                 self.parentView.reloadHistoryLiveLog()
 
         def init_process_info(self):
@@ -751,7 +671,8 @@ class LogCatWindow(QMainWindow):
         def onLogLevelSelectedChanged(self):
             levelText = self.logLevelComboBox.currentText()
             z_logger.debug(f"设置日志过滤级别为: {levelText}")
-            self.parentView.logcatFilter.changeFilterLevelByName(levelText)
+
+            self.parentView.livelogThread.logcatFilter.changeFilterLevelByName(levelText)
             self.parentView.reloadHistoryLiveLog()
 
         def update_device_info(self, ip, isconnect):
@@ -829,102 +750,6 @@ class LogCatWindow(QMainWindow):
                 return strArr[1].replace("[", "").replace("]", "").strip()
             return ''
 
-
-
-class LogCatFilter(object):
-    # 过滤的pid
-    selected_pid = ""
-    # 日志过滤级别(只显示 >= 此级别的日志) 默认ALL
-    _filtered_level = logging.NOTSET
-    _only_show_selected_app_log = False
-    log_cache_list = []
-    # 过滤后的gui历史log
-    gui_history_log = []
-
-    def __init__(self):
-        pass
-
-    def setOnlyShowSelectedPidLog(self, enable: bool):
-        self._only_show_selected_app_log = enable
-
-    def changeFilterLevelByName(self, levelName: str):
-        """
-        设置过滤级别tag
-        :param levelName: I\W\E\D 等
-        """
-        if len(levelName) == 1:
-            self._filtered_level = _simpleNameToLevel.get(levelName, logging.NOTSET)
-        else:
-            self._filtered_level = _nameToLevel.get(levelName, logging.NOTSET)
-
-    def onSelectedPidChanged(self, pid=""):
-        self.selected_pid = pid
-
-    def filter(self, logMsg):
-        """
-        单条实时日志的过滤处理
-        :param logMsg: 原始的单条日志数据
-                 01-22 11:20:30.188 W/InputMethodManagerService( 1884): LogMessage
-        :return:
-        返回格式:
-            <是否会被过滤(True|False)> <当前日志的进程pid> <当前日志的级别(数字)>
-        """
-
-        pattern  = re.compile(r'^.+\s([VIDWE])\/.+\(\s*(\d+)\)\:.+$')
-        match = pattern.search(logMsg)
-        if match:
-            _level_name = match.group(1)
-            _pid = match.group(2)
-        else:
-            _pid = "-1"
-            _level_name = "I"
-
-        _level = _simpleNameToLevel.get(_level_name, logging.NOTSET)
-
-        # Level——1: 日志级别过滤
-        if _level < self._filtered_level:
-            return True, _pid, _level
-            # TODO 如果需要过滤,则更新历史数据
-
-        # Level——2: 进程过滤
-        if self._only_show_selected_app_log:
-            # 与选中进程不一致的进程需要被过滤掉
-            isFilter = (_pid != self.selected_pid)
-            return isFilter, _pid, _level
-        else:
-            return False, _pid, _level
-
-    def record(self, _historyLog):
-        """
-        记录获取到的每一条日志数据
-        :param _historyLog:
-        :return:
-        """
-        # TODO 同步
-        self.log_cache_list.append(_historyLog)
-
-    def clear(self):
-        self.gui_history_log.clear()
-        self.log_cache_list.clear()
-
-    def getHistoryLogsWithRules(self):
-        """
-        从缓存列表中，获取历史日志书
-        :return: ，收集过滤后的数据
-        """
-        self.gui_history_log.clear()
-        for _log in self.log_cache_list:
-            filtered, pid, level = self.filter(_log)
-            if not filtered:
-                # url高亮处理
-                content = highlight_link_addr(_log)
-                # 着色处理
-                ui_log = changeLogColor(False, level, content)
-                self.gui_history_log.append(ui_log)
-            else:
-                continue
-
-        return "\n".join(self.gui_history_log)
 
 
 class InfoBarWidget(QWidget):

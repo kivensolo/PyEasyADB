@@ -1,11 +1,14 @@
+import logging
 import os
+import re
 import signal
 import subprocess
 
-from PyQt5.QtCore import QThread, pyqtSignal
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 
 from src.logcat.log import z_logger
 from utils.CmdExecutor import CmdExecutor
+from utils.Utils import LogUtils, _simpleNameToLevel, _nameToLevel
 
 
 class ActionCmdParams:
@@ -103,7 +106,7 @@ def process_user_name_check(user):
 
 
 class LiveLogAdbThread(QThread):
-    output_received = pyqtSignal(list)
+    live_log_dump_signal = pyqtSignal(str)
     name = "Live_log_adb_thread"
 
     def __init__(self):
@@ -112,6 +115,7 @@ class LiveLogAdbThread(QThread):
         self.cmd = ""
         self.process = None
         self.isRunning = False
+        self.logcatFilter = self.LogCatFilter()
 
     def run(self):
         if self.isRunning:
@@ -130,22 +134,144 @@ class LiveLogAdbThread(QThread):
         while True:
             stdout = self.process.stdout.readline()
             if stdout:
-                self.output_received.emit(["[LIVE_LOG]", stdout])
+                logMsg = stdout.rstrip("\n")
+                z_logger.debug(logMsg)
+                if len(logMsg) == 0:
+                    # 部分设备(例如S3、小米S4)会在每条输出后输出\n,这种数据过滤掉
+                    continue
+
+                # 记录每一条原始数据
+                self.logcatFilter.record(logMsg)
+
+                # 进行数据级别过滤
+                isFiltered, pid, level = self.logcatFilter.filter(logMsg)
+                if isFiltered:
+                    continue
+                # url高亮处理
+                content = LogUtils.highlight_link_addr(logMsg)
+                # 着色处理
+                ui_log = LogUtils.changeLogColor(False, level, content)
+
+                # 发送给UI线程
+                self.live_log_dump_signal.emit(ui_log)
+                continue
             else:
                 break   # 输出结束，中断循环并退出线程
 
         # 会阻塞，所以没法和stdout放在一些读取
         stderr = self.process.stderr.read()
         if stderr:
-            self.output_received.emit(["[LIVE_LOG]", stderr])
+            self.live_log_dump_signal.emit(stderr)
         # process.communicate()  # 等待命令完成
         self.exit()  # 返回状态(不是严格必要的)
 
     def stop(self):
         z_logger.debug("停止实时日志输出！")
-        self.output_received.emit(["[LIVE_LOG]", "Logging live is Stoped."])
+        self.live_log_dump_signal.emit("Logging live is Stoped.")
         self.isRunning = False
+        self.clearFilter()
         os.kill(self.process.pid, signal.SIGINT)
+
+    def clearFilter(self):
+        self.logcatFilter.clear()
+
+    def getHistoryLogsWithRules(self):
+        self.logcatFilter.getHistoryLogsWithRules()
+
+    class LogCatFilter(object):
+        # 过滤的pid
+        selected_pid = ""
+        # 日志过滤级别(只显示 >= 此级别的日志) 默认ALL
+        _filtered_level = logging.NOTSET
+        _only_show_selected_app_log = False
+        log_cache_list = []
+        # 过滤后的gui历史log
+        gui_history_log = []
+
+        def __init__(self):
+            pass
+
+        def setOnlyShowSelectedPidLog(self, enable: bool):
+            self._only_show_selected_app_log = enable
+
+        def changeFilterLevelByName(self, levelName: str):
+            """
+            设置过滤级别tag
+            :param levelName: I\W\E\D 等
+            """
+            if len(levelName) == 1:
+                self._filtered_level = _simpleNameToLevel.get(levelName, logging.NOTSET)
+            else:
+                self._filtered_level = _nameToLevel.get(levelName, logging.NOTSET)
+
+        def onSelectedPidChanged(self, pid=""):
+            self.selected_pid = pid
+
+        def filter(self, logMsg):
+            """
+            单条实时日志的过滤处理
+            :param logMsg: 原始的单条日志数据
+                     01-22 11:20:30.188 W/InputMethodManagerService( 1884): LogMessage
+            :return:
+            返回格式:
+                <是否会被过滤(True|False)> <当前日志的进程pid> <当前日志的级别(数字)>
+            """
+
+            pattern  = re.compile(r'^.+\s([VIDWE])\/.+\(\s*(\d+)\)\:.+$')
+            match = pattern.search(logMsg)
+            if match:
+                _level_name = match.group(1)
+                _pid = match.group(2)
+            else:
+                _pid = "-1"
+                _level_name = "I"
+
+            _level = _simpleNameToLevel.get(_level_name, logging.NOTSET)
+
+            # Level——1: 日志级别过滤
+            if _level < self._filtered_level:
+                return True, _pid, _level
+                # TODO 如果需要过滤,则更新历史数据
+
+            # Level——2: 进程过滤
+            if self._only_show_selected_app_log:
+                # 与选中进程不一致的进程需要被过滤掉
+                isFilter = (_pid != self.selected_pid)
+                return isFilter, _pid, _level
+            else:
+                return False, _pid, _level
+
+        def record(self, _historyLog):
+            """
+            记录获取到的每一条日志数据
+            :param _historyLog:
+            :return:
+            """
+            # TODO 同步
+            self.log_cache_list.append(_historyLog)
+
+        def clear(self):
+            self.gui_history_log.clear()
+            self.log_cache_list.clear()
+
+        def getHistoryLogsWithRules(self):
+            """
+            从缓存列表中，获取历史日志书
+            :return: ，收集过滤后的数据
+            """
+            self.gui_history_log.clear()
+            for _log in self.log_cache_list:
+                filtered, pid, level = self.filter(_log)
+                if not filtered:
+                    # url高亮处理
+                    content = LogUtils.highlight_link_addr(_log)
+                    # 着色处理
+                    ui_log = LogUtils.changeLogColor(False, level, content)
+                    self.gui_history_log.append(ui_log)
+                else:
+                    continue
+
+            return "\n".join(self.gui_history_log)
 
 
 class AsyncAdbThread(QThread):
