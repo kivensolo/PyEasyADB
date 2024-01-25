@@ -1,7 +1,9 @@
+import typing
+
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QIcon, QRegExpValidator
-from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser
+from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser, QAction, QMenu
 
 from src.logcat.log import z_logger
 from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
@@ -184,6 +186,18 @@ class LiveLogTextBrowser(QTextBrowser):
     # """
     # 具备按条件做过滤的TextBrowser
     # """
+
+    def __init__(self, parent=None):
+        super(LiveLogTextBrowser, self).__init__(parent)
+        clearIcon = IconTool.buildQIcon("ic_clear.png", "icons")
+        self.menu = self.createStandardContextMenu()
+        self.menu.addSeparator()
+        action = self.menu.addAction(clearIcon, "Clear All")
+        action.triggered.connect(self.clear)
+
+    def contextMenuEvent(self, e: typing.Optional[QtGui.QContextMenuEvent]) -> None:
+        self.menu.exec(e.globalPos())
+
     def wheelEvent(self, event):
         if event.modifiers() == Qt.ControlModifier:
             # 禁止 Ctrl+鼠标滑轮缩放
@@ -191,3 +205,9 @@ class LiveLogTextBrowser(QTextBrowser):
         else:
             super().wheelEvent(event)
 
+    def show_context_menu(self, pos):
+        menu = QMenu(self)
+        clear_action = QAction("Clear", self)
+        clear_action.triggered.connect(self.clear)
+        menu.addAction(clear_action)
+        menu.exec_(self.viewport().mapToGlobal(pos))
