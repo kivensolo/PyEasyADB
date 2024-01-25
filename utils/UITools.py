@@ -12,6 +12,8 @@ class IconTool:
         path = os.path.join(".", "res", dir, iconName)
         return QIcon(path)
 
-    def buildQPixmap(pixmapName):
-        return QPixmap(os.path.join('.', 'res', 'img', pixmapName))
+    @staticmethod
+    def buildQPixmap(pixmapName, dir="img"):
+        join = os.path.join('.', 'res', dir, pixmapName)
+        return QPixmap(join)
 

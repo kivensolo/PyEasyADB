@@ -588,7 +588,7 @@ class LogcatInfoBarWidget(QWidget):
         self.setMaximumHeight(37)
 
         self.qh_layout = QHBoxLayout(self)
-        self.qh_layout.setContentsMargins(0, 4, 0, 0)
+        self.qh_layout.setContentsMargins(0, 0, 0, 0)
         self.qh_layout.setObjectName("info_bar_horizontalLayout")
 
         self.initDeviceInfo()
@@ -636,25 +636,22 @@ class LogcatInfoBarWidget(QWidget):
         设备名称&版本等信息展示
         :return:
         """
-        # deviceImageView = QLabel(self)
-        # deviceImageView.setPixmap(IconTool.buildQPixmap("device.png"))
-        # deviceImageView.setAlignment(Qt.AlignCenter)
-        #
-        # self.qh_layout.addWidget(deviceImageView)
+        deviceImageView = QLabel()
+        deviceImageView.setPixmap(IconTool.buildQPixmap("Honeyview_device.png"))
+        deviceImageView.setStyleSheet("""
+            background-color: #00ff00; 
+        """)
+        self.qh_layout.addWidget(deviceImageView)
 
         self.device_info_desc = QLabel()
-        # self.device_info_desc.setText("B869Ajiojioajiojdq2165465461654")
-        self.device_info_desc.setPixmap(IconTool.buildQPixmap("device.png"))
-        self.device_info_desc.setFont(getWRYHFontStyle())
-        self.device_info_desc.setTextFormat(QtCore.Qt.AutoText)
         self.device_info_desc.setObjectName("device_prop")
         self.device_info_desc.setToolTip("设备名称信息")
         self.device_info_desc.setMinimumWidth(200)
         self.device_info_desc.setMaximumWidth(350)
         self.device_info_desc.setStyleSheet("""
-                border: 1px solid #d7d7d7;
-                margin: 0px,0px,0px, 5px;
-            """)
+            background-color: #ff0000; 
+            border: 1px solid #d7d7d7;
+        """)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -1004,7 +1001,7 @@ class InfoBarWidget(QWidget):
         """
         deviceImageView = QLabel(self)
         # deviceImageView.setPixmap(QPixmap("../../res/img/device.png"))
-        deviceImageView.setPixmap(IconTool.buildQPixmap("device.png"))
+        deviceImageView.setPixmap(IconTool.buildQPixmap("Honeyview_device.png"))
         deviceImageView.setAlignment(Qt.AlignCenter)
         self.qh_layout.addWidget(deviceImageView)
 
@@ -1019,7 +1016,6 @@ class InfoBarWidget(QWidget):
         self.device_info_desc.setStyleSheet("""
                 background-color: #f0f0f0 ;
                 border: 1px solid #C0C0C0;
-                padding: 2px,2px,2px,2px;
                 margin: 0px,0px,20px,0px;
             """)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
