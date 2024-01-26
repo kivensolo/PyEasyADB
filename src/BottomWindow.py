@@ -363,10 +363,10 @@ class LogCatWindow(QMainWindow):
             self.livelogThread.cmd = cmd
             if not self.livelogThread.isRunning:
                 self.leftWiget.changeStartButton(True)
-                # self.livelogThread.start()
+                self.livelogThread.start()
             else:
                 self.leftWiget.changeStartButton(False)
-                # self.livelogThread.stop()
+                self.livelogThread.stop()
         return
 
     def _scrollToBottom(self):
