@@ -111,7 +111,7 @@ class BottomTabWidget(QTabWidget):
         :return:
         """
         self.liveLogView.updateSelectDeviceInfo(ip, isconnect)
-        self.consoleView.updateSelectDeviceInfo(ip, isconnect)
+        # self.consoleView.updateSelectDeviceInfo(ip, isconnect)
 
     def updateRunningProcessInfo(self):
         """
@@ -126,10 +126,6 @@ class BottomTabWidget(QTabWidget):
         :return:
         """
         self.liveLogView.infoBarWidget.update_process_com_box(False)
-
-    def get_fun_widget(self):
-        return self.consoleView.get_fun_widget()
-
 
 
 class ConsoleWindow(QMainWindow):
@@ -171,8 +167,6 @@ class ConsoleWindow(QMainWindow):
 
     def __init__(self, parent:MainWindow):
         super().__init__(parent)
-        self.infoBarWidget = InfoBarWidget(parent)
-
         self.isConUrl = False
         self.setStyleSheet('''
             QPushButton{
@@ -208,11 +202,16 @@ class ConsoleWindow(QMainWindow):
         self.bodySplitter.addWidget(self.terminalTextBrowser)
         self.bodySplitter.addWidget(self.rightWiget)
 
-        self.verticalSplitter = QSplitter(Qt.Vertical)
-        self.verticalSplitter.addWidget(self.infoBarWidget)
-        self.verticalSplitter.addWidget(self.bodySplitter)
-        self.verticalSplitter.setChildrenCollapsible(0)
-        self.setCentralWidget(self.verticalSplitter)
+        # self.verticalSplitter = QSplitter(Qt.Vertical)
+
+        self.topWiget = QWidget()
+        self.topWiget.setAutoFillBackground(True)
+        self.topWiget.setFixedHeight(2)
+
+        # self.verticalSplitter.addWidget(self.topWiget)
+        # self.verticalSplitter.addWidget(self.bodySplitter)
+        # self.verticalSplitter.setChildrenCollapsible(0)
+        self.setCentralWidget(self.bodySplitter)
 
         # 重定向输出
         # sys.stdout = ConsoleEmittor(textWritten=self.normalOutputWritten)
@@ -260,11 +259,8 @@ class ConsoleWindow(QMainWindow):
         self.terminalTextBrowser.moveCursor(QTextCursor.End)
         self.terminalTextBrowser.ensureCursorVisible()
 
-    def updateSelectDeviceInfo(self, ip, isconnect):
-        self.infoBarWidget.update_device_info(ip, isconnect)
-
-    def get_fun_widget(self):
-        return self.infoBarWidget
+    # def updateSelectDeviceInfo(self, ip, isconnect):
+    #     self.infoBarWidget.update_device_info(ip, isconnect)
 
 
 class LogCatWindow(QMainWindow):
@@ -345,7 +341,7 @@ class LogCatWindow(QMainWindow):
         self.livelogThread.reloadHistoryLogs()
 
     def start_or_stop(self):
-        if self.mainWindow is None or self.mainWindow.current_device_addr == "":
+        if self.mainWindow is None or (not self.mainWindow.is_current_device_connect()):
             z_logger.error('请先连接设备！！')
         else:
             addr = self.mainWindow.current_device_addr
@@ -365,9 +361,6 @@ class LogCatWindow(QMainWindow):
 
     def updateSelectDeviceInfo(self, ip, isconnect):
         self.infoBarWidget.update_device_info(ip, isconnect)
-
-    def get_fun_widget(self):
-        return self.infoBarWidget
 
     class LeftBarWidget(QWidget):
         """
@@ -597,7 +590,7 @@ class LogCatWindow(QMainWindow):
             if len(applicationInfo) == 0:
                 return
             z_logger.debug(f"所选进程被改变:{applicationInfo}.")
-            self.pkgManger.setSelectedRunningProcessInfo(applicationInfo)
+            self.pkgManger.updateSelectedRunningProcessInfo(applicationInfo)
             pid = self.pkgManger.getSelectedProcessPid()
             self.parentView.livelogThread.logcatFilter.onSelectedPidChanged(pid)
             if self.enableFilterPid:
@@ -620,7 +613,7 @@ class LogCatWindow(QMainWindow):
             if not isConnect:
                 z_logger.debug("当前选中设备离线,清空runningProcess数据")
                 self.pkgComboBox.clear()
-                self.pkgManger.setSelectedRunningProcessInfo("")
+                self.pkgManger.updateSelectedRunningProcessInfo("")
                 return
             state = adb_tool.get_running_process(self.current_ip, self._onProcessFiltered)
             if not state:
@@ -638,7 +631,7 @@ class LogCatWindow(QMainWindow):
                 self.pkgComboBox.addItem(f"{p_name}({pid})")
 
             # 第一条数据的p_name字段
-            self.pkgManger.setSelectedRunningProcessInfo(f'{sorted_processes[0][2]}({sorted_processes[0][1]})')
+            self.pkgManger.updateSelectedRunningProcessInfo(f'{sorted_processes[0][2]}({sorted_processes[0][1]})')
 
         def initLogLevelComboBox(self):
             """
@@ -740,143 +733,6 @@ class LogCatWindow(QMainWindow):
             if len(strArr) == 2:
                 return strArr[1].replace("[", "").replace("]", "").strip()
             return ''
-
-
-class InfoBarWidget(QWidget):
-    """
-    设备信息和包名选择的组合控件
-    """
-
-    def __init__(self, parent: MainWindow):
-        super().__init__()
-        self.mainwindow = parent
-        self.current_ip = ""
-        self.pkgManger = PackageManager()
-        self.pkgComboBox = QComboBox()
-        # 设备名称
-        self.device_info_desc = None
-        self.adbTools = ADBTools()
-
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Minimum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-        self.setSizePolicy(sizePolicy)
-        self.setMaximumSize(QtCore.QSize(16777215, 55))
-
-        self.qh_layout = QHBoxLayout(self)
-        self.qh_layout.setContentsMargins(0, -1, -1, -1)
-        self.qh_layout.setObjectName("info_bar_horizontalLayout")
-
-        self.initDeviceInfo()
-        # 右侧添加补位弹簧
-        spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        self.qh_layout.addItem(spacerItem)
-        self.qh_layout.setStretch(1, 1)
-        self.qh_layout.setStretch(2, 1)
-        self.qh_layout.setStretch(3, 1)
-
-    def initDeviceInfo(self):
-        """
-        设备名称&版本等信息展示
-        :return:
-        """
-        deviceImageView = QLabel(self)
-        # deviceImageView.setPixmap(QPixmap("../../res/img/device.png"))
-        deviceImageView.setPixmap(IconTool.buildQPixmap("Honeyview_device.png"))
-        deviceImageView.setAlignment(Qt.AlignCenter)
-        self.qh_layout.addWidget(deviceImageView)
-
-        self.device_info_desc = QLabel()
-        # self.device_info_desc.setText("B869Ajiojioajiojdq2165465461654")
-        self.device_info_desc.setFont(getSongFontStyle())
-        self.device_info_desc.setTextFormat(QtCore.Qt.AutoText)
-        self.device_info_desc.setObjectName("device_prop")
-        self.device_info_desc.setToolTip("设备名称信息")
-        self.device_info_desc.setMinimumSize(QtCore.QSize(200, 30))
-        self.device_info_desc.setMaximumSize(QtCore.QSize(350, 40))
-        self.device_info_desc.setStyleSheet("""
-                background-color: #f0f0f0 ;
-                border: 1px solid #C0C0C0;
-                margin: 0px,0px,20px,0px;
-            """)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Maximum)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.device_info_desc.sizePolicy().hasHeightForWidth())
-        self.device_info_desc.setSizePolicy(sizePolicy)
-        self.qh_layout.addWidget(self.device_info_desc)
-
-    def update_device_info(self, ip, isconnect):
-        """
-        更新设备信息及进程数据
-        :param ip: 设备ip
-        :param isconnect: 当前设备是否已连接
-        :return: None
-        """
-        self.current_ip = ip
-        z_logger.debug("Update selected device info! conenct: " + str(isconnect))
-        result, value_tuple = self.pkgManger.queryDeviceInfo(ip)
-        if result and len(value_tuple) != 0:
-            # 从数据库查询到数据
-            if value_tuple[0] == '':
-                if not isconnect:  # 未连接设备的情况下
-                    self.device_info_desc.setText("请先连接此设备")
-                else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
-                    z_logger.debug("[Update_Device] Current device is connected, but no device info!")
-                    self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
-            else:
-                z_logger.debug("[Update_Device] Get this device prop cache! data = [%s]" % value_tuple[0])
-                self.device_info_desc.setText(value_tuple[0])
-        else:
-            # 从数据库查询不到数据，通常是手动添加的未连接设备
-            if isconnect:
-                z_logger.debug("No this device prop cache, get with adb!")
-                self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
-            else:
-                self.device_info_desc.setText("请先连接此设备")
-
-    def on_device_prop_get_by_adb(self, result):
-        """
-        从ADB获取到设备属性数据(只有新增设备时，才会去查属性)
-        :param result: adb返回的字符串
-        :return:
-        """
-        # z_logger.debug("result_list="+str(result_list))
-        result_list = result.split('\n')
-        manufacturer = ''
-        model = ''
-        sys_version = ''
-        api_level = ''
-        if len(result_list):
-            if len(result_list) < 4:
-                self.device_info_desc.setText("Unknow Device")
-            else:
-                # 会存在['']的情况
-                for line in result_list:
-                    if 'android.os.Build.MANUFACTURER' in line:
-                        manufacturer = self.get_prop_value(line)
-                    if 'ro.product.model' in line:
-                        model = self.get_prop_value(line)
-                    if 'ro.build.version.release' in line:
-                        sys_version = self.get_prop_value(line)
-                    if 'ro.build.version.sdk' in line:
-                        api_level = self.get_prop_value(line)
-                result = "{0} {1}({2}),API {3}".format(manufacturer, model, sys_version, api_level)
-                z_logger.info_with_stamp("设备概况信息:" + result)
-                self.device_info_desc.setText(result)
-                self.pkgManger.updateDeviceInfo(result, self.current_ip.split(":")[0])
-                z_logger.debug("Get running processes...")
-
-        else:
-            self.device_info_desc.setText("Unknow Device")
-
-    @staticmethod
-    def get_prop_value(content):
-        strArr = content.split(":")
-        if len(strArr) == 2:
-            return strArr[1].replace("[", "").replace("]", "").strip()
-        return ''
 
 
 if __name__ == "__main__":

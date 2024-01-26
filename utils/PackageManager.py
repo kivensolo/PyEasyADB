@@ -25,12 +25,16 @@ class PackageManager:
         self.dbManager = DBManager()
         self.adbTools = ADBTools()
 
-    def setSelectedRunningProcessInfo(self, process_info):
+    def updateSelectedRunningProcessInfo(self, process_info):
         """
         设置选中的进程信息
         :param process_info: processName(pid)
         :return:
         """
+        if len(process_info) == 0:
+            self.__selectedProcessNames = ""
+            self.__selectedProcessPid = ""
+            return
         z_logger.debug("Set selected process:" + process_info)
         result = re.match(r'^([.:\w]+)\((\d+)\)$', process_info)
         if result:
