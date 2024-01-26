@@ -3,6 +3,7 @@ import os
 import re
 import signal
 import subprocess
+import time
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 
@@ -135,7 +136,6 @@ class LiveLogAdbThread(QThread):
             stdout = self.process.stdout.readline()
             if stdout:
                 logMsg = stdout.rstrip("\n")
-                z_logger.debug(logMsg)
                 if len(logMsg) == 0:
                     # 部分设备(例如S3、小米S4)会在每条输出后输出\n,这种数据过滤掉
                     continue
@@ -151,6 +151,9 @@ class LiveLogAdbThread(QThread):
                 content = LogUtils.highlight_link_addr(logMsg)
                 # 着色处理
                 ui_log = LogUtils.changeLogColor(False, level, content)
+
+                # 每条数据发送等待10ms,防止GUI频繁渲染导致的卡顿
+                time.sleep(1 / 100)
 
                 # 发送给UI线程
                 self.live_log_dump_signal.emit(ui_log)
