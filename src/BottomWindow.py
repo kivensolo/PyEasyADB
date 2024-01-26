@@ -606,6 +606,9 @@ class LogCatWindow(QMainWindow):
 
         def onPackageSelectedChanged(self):
             applicationInfo = self.pkgComboBox.currentText()
+            if len(applicationInfo) == 0:
+                return
+            z_logger.debug(f"所选进程被改变:{applicationInfo}.")
             self.pkgManger.setSelectedRunningProcessInfo(applicationInfo)
             if self._isOnlyShowSelectedApp:
                 z_logger.debug(f"所选进程被改变:{applicationInfo}, 刷新日志输出.")
