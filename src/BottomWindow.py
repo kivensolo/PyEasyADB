@@ -54,7 +54,7 @@ class BottomTabWidget(QTabWidget):
         self.setTabPosition(QTabWidget.South)
 
         # 添加组件至TabWidget中
-        self.addTab(self.consoleView, IconTool.buildQIcon("logcat.png"), "Console")
+        self.addTab(self.consoleView, IconTool.buildQIcon("console.png", "icons"), "Console")
         self.addTab(self.liveLogView, IconTool.buildQIcon("logcat.png"), "Logcat")
 
         # self.setFixedHeight(Utils.getItemHeight())
@@ -333,7 +333,6 @@ class LogCatWindow(QMainWindow):
             self.logTextBrowser.clear()
             self.livelogThread.clearFilter()
         self.logTextBrowser.append(ui_log)
-        # print(ui_log)
 
     def _isOverLimitRow(self):
         # 数据是否超长 TODO 做设置处理
@@ -351,8 +350,9 @@ class LogCatWindow(QMainWindow):
         """
         logs = self.livelogThread.getHistoryLogsWithRules()
         self.logTextBrowser.clear()
-        if len(logs) > 0:
-            self.logTextBrowser.append(logs)
+        if logs is not None:
+            if len(logs) > 0:
+                self.logTextBrowser.append(logs)
 
     def start_or_stop(self):
         if self.mainWindow is None or self.mainWindow.current_device_addr == "":
@@ -523,7 +523,7 @@ class LogCatWindow(QMainWindow):
             :return:
             """
             deviceImageView = QLabel()
-            deviceImageView.setPixmap(IconTool.buildQPixmap("Honeyview_device.png"))
+            deviceImageView.setPixmap(IconTool.buildQPixmap("device_small.png"))
             deviceImageView.setStyleSheet("""
                 background-color: #00ff00; 
             """)
@@ -690,7 +690,6 @@ class LogCatWindow(QMainWindow):
                 if value_tuple[0] == '':
                     if not isconnect:  # 未连接设备的情况下
                         self.device_info_desc.setText("请先连接此设备")
-                        self.update_device_info(ip, False)
                     else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
                         z_logger.debug("[Update_Device] Current device is connected, but no device info!")
                         self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
