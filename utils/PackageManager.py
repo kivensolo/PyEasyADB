@@ -17,9 +17,11 @@ class PackageManager:
         return PackageManager.__instance
 
     def __init__(self):
-        self.currentSelectedRunningProcessName = ""
-        self.currentSelectedRunningProcessPid = ""
-        self.currentSelectedApp = ""
+        # 进程名称 可能是包名，也可能是“包名:子进程名”
+        self.__selectedProcessNames = ""
+        self.__selectedProcessPid = ""
+
+        self.__selectedPackageNameInCustomActionComBox = ""
         self.dbManager = DBManager()
         self.adbTools = ADBTools()
 
@@ -30,24 +32,23 @@ class PackageManager:
         :return:
         """
         z_logger.debug("Set selected process:" + process_info)
-        result = re.match(r'^([\.\w]+)\((\d+)\)$', process_info)
+        result = re.match(r'^([.:\w]+)\((\d+)\)$', process_info)
         if result:
-            package_name, pid_number = result.groups()
-            self.currentSelectedRunningProcessName = package_name
-            self.currentSelectedRunningProcessPid = pid_number
+            pid_name_info, pid_number = result.groups()
+            # 注意:此处的pid_name_info可能是“主进程名”，也可能是“主进程名:子进程名”
+            self.__selectedProcessNames = pid_name_info
+            self.__selectedProcessPid = pid_number
         else:
-            z_logger.error("进程信息传参错误!!")
-            self.currentSelectedRunningProcessName = ""
+            z_logger.error(f"未支持的进程信息,请反馈至开发者! {process_info}")
+
+    def getSelectedProcessPid(self):
+        return self.__selectedProcessPid
 
     def setSelectedPackageName(self, name):
-        self.currentSelectedApp = name
+        self.__selectedPackageNameInCustomActionComBox = name
 
     def getSelectedPackageName(self):
-        return self.currentSelectedApp
-
-    @DeprecationWarning
-    def getSelectedRunningProcessName(self):
-        return self.currentSelectedRunningProcessName
+        return self.__selectedPackageNameInCustomActionComBox
 
     def isDbReady(self):
         return self.dbManager
