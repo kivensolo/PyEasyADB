@@ -170,7 +170,6 @@ class LiveLogAdbThread(QThread):
 
     def stop(self):
         z_logger.debug("停止实时日志输出！")
-        self.live_log_dump_signal.emit("Logging live is Stoped.")
         self.isRunning = False
         self.clearFilter()
         os.kill(self.process.pid, signal.SIGINT)
