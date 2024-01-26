@@ -115,6 +115,11 @@ _simpleNameToLevel = {
     "A": logging.CRITICAL
 }
 
+_filterOptions = [
+    "Show only selected application",
+    "No Filter"
+]
+
 
 class LogUtils(object):
     @staticmethod

@@ -17,7 +17,7 @@ from utils.ADBTools import ADBTools, LiveLogAdbThread
 from utils.PackageManager import PackageManager
 from utils.Tools import getSongFontStyle, getSimpleFontStyle
 from utils.UITools import IconTool
-from utils.Utils import Utils, LogUtils, _nameToLevel
+from utils.Utils import Utils, LogUtils, _nameToLevel, _filterOptions
 
 adb_tool = ADBTools()
 
@@ -455,12 +455,26 @@ class LogCatWindow(QMainWindow):
             self.current_ip = ""
             self.setStyleSheet("""
                 background-color: #ffffff ;
+                
+                QComboBox {
+                       border: 2px solid #c4c4c4;
+                       border-radius: 4px;
+                }
+                QComboBox:selected {
+                       border: 2px solid #2a89f6;
+                       border-radius: 4px;
+                }
+                QComboBox::drop-down{
+                       width:15px;
+                   }
+                QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
+                QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
             """)
             self.pkgManger = PackageManager()
 
             self.pkgComboBox = QComboBox()
             self.logLevelComboBox = QComboBox()
-            self.filterCheckBox = QCheckBox()
+            self.filterCheckBox = QComboBox()
 
             # 设备名称
             self.device_info_desc = None
@@ -480,41 +494,50 @@ class LogCatWindow(QMainWindow):
             self.initDeviceInfo()
             self.initProcessComboBox()
             self.initLogLevelComboBox()
-            # 右侧添加补位弹簧
             spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-            self.qh_layout.addItem(spacerItem)
-            self.initFilterCheckBox()
+            self.initFilterOptionComBox()
+
+            self.qh_layout.addWidget(self.device_info_desc)
+            self.qh_layout.addWidget(self.pkgComboBox)
+            self.qh_layout.addWidget(self.logLevelComboBox)
+            self.qh_layout.addItem(spacerItem)  # 右侧添加补位弹簧
+            self.qh_layout.addWidget(self.filterCheckBox)
 
             self.qh_layout.setStretch(1, 2)
             self.qh_layout.setStretch(2, 2)
             self.qh_layout.setStretch(3, 3)
             self.qh_layout.setStretch(4, 2)
 
-        def initFilterCheckBox(self):
+        def initFilterOptionComBox(self):
             """
             初始化后侧过滤选择的CheckBox
             :return:
             """
-            self.filterCheckBox.setChecked(self._isOnlyShowSelectedApp)
-            self.filterCheckBox.setText("Show only selected application")
-            self.filterCheckBox.stateChanged.connect(self._onPidFilterToggled)
-            self.filterCheckBox.setStyleSheet("""
-                    border: 1px solid #C0C0C0;
-                    padding: 2px,2px,2px,2px;
-                    margin: 0px,0px,20px,0px;
-                """)
-            self.qh_layout.addWidget(self.filterCheckBox)
+            comboBox = QComboBox()
+            # 反射将QComboBox的wheelEvent方法重置掉
+            setattr(comboBox, "wheelEvent", lambda a: None)
+            comboBox.setMaxVisibleItems(6)
+            comboBox.setMinimumSize(QSize(300, 31))
+            comboBox.setMaximumSize(QSize(500, 40))
+            comboBox.setObjectName("filterOptionsComBox")
+            comboBox.setFont(getSimpleFontStyle(size=12))
+            comboBox.setView(QListView())
+            for name in _filterOptions:
+                comboBox.addItem(name)
+            comboBox.currentIndexChanged.connect(self._onPidFilterChanged)
 
-        def _onPidFilterToggled(self, state):
+            self.filterCheckBox = comboBox
+
+        def _onPidFilterChanged(self):
             """
             pid进程过滤规则改变
-            :param state:
             :return:
             """
-            isChecked = (state == Qt.Checked)
-            self._isOnlyShowSelectedApp = isChecked
-            self.parentView.livelogThread.logcatFilter.setOnlyShowSelectedPidLog(isChecked)
-            # FIXME 数据量多了会卡UI
+            filterOption = self.filterCheckBox.currentText()
+            enableFilterPid = False
+            if filterOption == _filterOptions[0]:
+                enableFilterPid = True
+            self.parentView.livelogThread.logcatFilter.setOnlyShowSelectedPidLog(enableFilterPid)
             self.parentView.reloadHistoryLiveLog()
 
         def initDeviceInfo(self):
@@ -542,7 +565,6 @@ class LogCatWindow(QMainWindow):
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
             self.device_info_desc.setSizePolicy(sizePolicy)
-            self.qh_layout.addWidget(self.device_info_desc)
 
         def initProcessComboBox(self):
             """
@@ -550,39 +572,19 @@ class LogCatWindow(QMainWindow):
             :return:
             """
             comboBox = QComboBox()
+            # 反射将QComboBox的wheelEvent方法重置掉
+            setattr(comboBox, "wheelEvent", lambda a: None)
             # 设置下拉显示固定个数，超过个数，滚动显示
             comboBox.setMaxVisibleItems(8)
-            # 宽度调整策略，按照内容最大宽度
-            # comboBox.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
-            # comboBox.setGeometry(QtCore.QRect(0, 0, 261, 31))
+            comboBox.setStyleSheet("QComboBox QAbstractItemView { min-width: 700px; }")
             comboBox.setMinimumSize(QSize(250, 31))
             comboBox.setMaximumSize(QtCore.QSize(350, 40))
             comboBox.setObjectName("pkgComboBoxView")
-            comboBox.setFont(getSongFontStyle())
-            comboBox.setStyleSheet(
-                """
-                    QComboBox {
-                       border: 2px solid #c4c4c4;
-                       border-radius: 4px;
-                    }
-                    QComboBox:selected {
-                       border: 2px solid #2a89f6;
-                       border-radius: 4px;
-                    }
-                    QComboBox::drop-down{
-                        background-color: none; 
-                         width:15px;
-                    }
-                    QComboBox QAbstractItemView { min-width: 700px; }
-                    QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
-                    QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
-                """
-            )
+            comboBox.setFont(getSimpleFontStyle(size=12))
             # Sets the view to be used in the combobox popup to the given itemView.
             comboBox.setView(QListView())
             comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
             self.pkgComboBox = comboBox
-            self.qh_layout.addWidget(self.pkgComboBox)
             self.init_process_info()
 
         def onPackageSelectedChanged(self):
@@ -638,34 +640,16 @@ class LogCatWindow(QMainWindow):
             comboBox = QComboBox()
             # 设置下拉显示固定个数，超过个数，滚动显示
             comboBox.setMaxVisibleItems(6)
-            comboBox.setMinimumSize(QSize(100, 31))
-            comboBox.setMaximumSize(QSize(100, 40))
+            comboBox.setMinimumSize(QSize(120, 31))
+            comboBox.setMaximumSize(QSize(120, 40))
             comboBox.setObjectName("logLevelComboBox")
-            comboBox.setFont(getSimpleFontStyle())
-            comboBox.setStyleSheet(
-                """
-                 QComboBox {
-                        border: 2px solid #c4c4c4;
-                        border-radius: 4px;
-                 }
-                 QComboBox:selected {
-                        border: 2px solid #2a89f6;
-                        border-radius: 4px;
-                 }
-                 QComboBox::drop-down{
-                        width:15px;
-                    }
-                 QComboBox QAbstractItemView::item { border-bottom:1px solid #d0d0d0;}
-                 QComboBox QAbstractItemView::item:selected{background-color: #2a89f6;}
-                """
-            )
+            comboBox.setFont(getSimpleFontStyle(size=11))
             # Sets the view to be used in the combobox popup to the given itemView.
             comboBox.setView(QListView())
             for name in _nameToLevel:
                 comboBox.addItem(name)
             comboBox.currentIndexChanged.connect(self.onLogLevelSelectedChanged)
             self.logLevelComboBox = comboBox
-            self.qh_layout.addWidget(self.logLevelComboBox)
             self.init_process_info()
 
         def onLogLevelSelectedChanged(self):
