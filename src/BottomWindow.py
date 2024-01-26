@@ -297,13 +297,6 @@ class LogCatWindow(QMainWindow):
             }
             ''')
 
-        # 日志窗口控件初始化
-
-        self.logTextBrowser.setOpenLinks(True)
-        self.logTextBrowser.setOpenExternalLinks(True)
-        self.logTextBrowser.setReadOnly(True)
-        self.logTextBrowser.unsetCursor()
-
         self.rightWiget = QWidget()
         self.rightWiget.setAutoFillBackground(True)
         self.rightWiget.setFixedWidth(15)
@@ -463,7 +456,6 @@ class LogCatWindow(QMainWindow):
             self.current_ip = ""
             self.enableFilterPid = LIVE_LOG_DEFAULT_FILTER_PID
             self.setStyleSheet("""
-                
                 QComboBox {
                        border: 2px solid #c4c4c4;
                        border-radius: 4px;
@@ -497,7 +489,7 @@ class LogCatWindow(QMainWindow):
 
             self.qh_layout = QHBoxLayout(self)
             # 布局边缘与内容之间的间距
-            self.qh_layout.setContentsMargins(0, 0, 0, 0)
+            self.qh_layout.setContentsMargins(10, 0, 0, 0)
             # 子控件之间的间距
             self.qh_layout.setSpacing(5)
             self.qh_layout.setObjectName("info_bar_horizontalLayout")
@@ -561,20 +553,15 @@ class LogCatWindow(QMainWindow):
             """
             deviceImageView = QLabel()
             deviceImageView.setPixmap(IconTool.buildQPixmap("device_small.png"))
-            deviceImageView.setStyleSheet("""
-                background-color: #00ff00; 
-            """)
             self.qh_layout.addWidget(deviceImageView)
 
             self.device_info_desc = QLabel()
             self.device_info_desc.setObjectName("device_prop")
             self.device_info_desc.setToolTip("设备名称信息")
+            self.device_info_desc.setFont(getSimpleFontStyle(size=11))
             self.device_info_desc.setMinimumWidth(320)
             self.device_info_desc.setMaximumWidth(320)
-            self.device_info_desc.setStyleSheet("""
-                background-color: #ff0000; 
-                border: 1px solid #d7d7d7;
-            """)
+            self.device_info_desc.setStyleSheet("border: 1px solid #d7d7d7;")
             sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
@@ -753,7 +740,6 @@ class LogCatWindow(QMainWindow):
             if len(strArr) == 2:
                 return strArr[1].replace("[", "").replace("]", "").strip()
             return ''
-
 
 
 class InfoBarWidget(QWidget):

@@ -2,7 +2,7 @@ import typing
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QRegExp
-from PyQt5.QtGui import QIcon, QRegExpValidator
+from PyQt5.QtGui import QIcon, QRegExpValidator, QFont
 from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser, QAction, QMenu
 
 from src.logcat.log import z_logger
@@ -189,14 +189,40 @@ class LiveLogTextBrowser(QTextBrowser):
 
     def __init__(self, parent=None):
         super(LiveLogTextBrowser, self).__init__(parent)
-        clearIcon = IconTool.buildQIcon("ic_clear.png", "icons")
-        self.menu = self.createStandardContextMenu()
+        self.setOpenLinks(True)
+        self.setOpenExternalLinks(True)
+        self.setReadOnly(True)
+        self.unsetCursor()
+        font = QFont("Microsofy YaHei Light", 11)
+        self.setFont(font)
+
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showContextMenu)
+
+        self.menu = QMenu(self)
+        self.action_copy = self.menu.addAction("Copy")
+        self.action_copy.setShortcut("Ctrl+C")
+        self.action_copy.triggered.connect(self.copy)
+        self.action_select = self.menu.addAction("Select All")
+        self.action_select.setShortcut("Ctrl+A")
+        self.action_select.triggered.connect(self.selectAll)
+
         self.menu.addSeparator()
-        action = self.menu.addAction(clearIcon, "Clear All")
-        action.triggered.connect(self.clear)
+        clearIcon = IconTool.buildQIcon("ic_clear.png", "icons")
+        self.action_clear = self.menu.addAction(clearIcon, "Clear All")
+        self.action_clear.triggered.connect(self.clear)
+
+    def showContextMenu(self, position):
+        cursor = self.textCursor()
+        self.action_copy.setEnabled(cursor.hasSelection())
+        hasContent = self.document().lineCount() > 1
+        self.action_select.setEnabled(hasContent)
+        self.action_clear.setEnabled(hasContent)
+
+        self.menu.exec_(self.mapToGlobal(position))
 
     def contextMenuEvent(self, e: typing.Optional[QtGui.QContextMenuEvent]) -> None:
-        self.menu.exec(e.globalPos())
+        self.showContextMenu(e.pos())
 
     def wheelEvent(self, event):
         if event.modifiers() == Qt.ControlModifier:
@@ -206,8 +232,8 @@ class LiveLogTextBrowser(QTextBrowser):
             super().wheelEvent(event)
 
     def show_context_menu(self, pos):
-        menu = QMenu(self)
+        self.menu = QMenu(self)
         clear_action = QAction("Clear", self)
         clear_action.triggered.connect(self.clear)
-        menu.addAction(clear_action)
-        menu.exec_(self.viewport().mapToGlobal(pos))
+        self.menu.addAction(clear_action)
+        self.menu.exec_(self.viewport().mapToGlobal(pos))
