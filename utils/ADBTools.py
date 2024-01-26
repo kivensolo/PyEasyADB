@@ -179,7 +179,7 @@ class LiveLogAdbThread(QThread):
         self.logcatFilter.clear()
 
     def getHistoryLogsWithRules(self):
-        self.logcatFilter.getHistoryLogsWithRules()
+        return self.logcatFilter.getHistoryLogsWithRules()
 
     class LogCatFilter(object):
         # 过滤的pid
@@ -262,6 +262,7 @@ class LiveLogAdbThread(QThread):
             从缓存列表中，获取历史日志书
             :return: ，收集过滤后的数据
             """
+            # TODO 改为子线程
             self.gui_history_log.clear()
             for _log in self.log_cache_list:
                 filtered, pid, level = self.filter(_log)
