@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWid
 from src import MainWindow
 from src.logcat import log
 from src.logcat.log import z_logger
+from src.settings import LIVE_LOG_DEFAULT_FILTER_PID, LIVE_LOG_CONUTS_LIMITS
 from src.widget.CustomWidgets import LiveLogTextBrowser
 from utils.ADBTools import ADBTools, LiveLogAdbThread
 from utils.PackageManager import PackageManager
@@ -263,7 +264,6 @@ class ConsoleWindow(QMainWindow):
         self.infoBarWidget.update_device_info(ip, isconnect)
 
     def get_fun_widget(self):
-        # FIXME 如何直接找到子view
         return self.infoBarWidget
 
 
@@ -278,9 +278,9 @@ class LogCatWindow(QMainWindow):
         self.livelogThread.live_log_dump_signal.connect(self.on_live_log_dump)
         self.logTextBrowser = LiveLogTextBrowser()
 
-        #信息栏
+        # 信息栏
         self.infoBarWidget = self.LogcatInfoBarWidget(self, parent)
-        #左侧功能区
+        # 左侧功能区
         self.leftWiget = self.LeftBarWidget(self)
 
         self.setStyleSheet('''
@@ -335,8 +335,8 @@ class LogCatWindow(QMainWindow):
         self.logTextBrowser.append(ui_log)
 
     def _isOverLimitRow(self):
-        # 数据是否超长 TODO 做设置处理
-        return self.logTextBrowser.document().lineCount() > 2000
+        # 数据是否超长
+        return self.logTextBrowser.document().lineCount() > LIVE_LOG_CONUTS_LIMITS
 
     def clear(self):
         self.logTextBrowser.clear()
@@ -348,11 +348,8 @@ class LogCatWindow(QMainWindow):
         调用点: 应用进程变化、日志级别变化、进程开关
         :return:
         """
-        logs = self.livelogThread.getHistoryLogsWithRules()
         self.logTextBrowser.clear()
-        if logs is not None:
-            if len(logs) > 0:
-                self.logTextBrowser.append(logs)
+        self.livelogThread.reloadHistoryLogs()
 
     def start_or_stop(self):
         if self.mainWindow is None or self.mainWindow.current_device_addr == "":
@@ -377,7 +374,6 @@ class LogCatWindow(QMainWindow):
         self.infoBarWidget.update_device_info(ip, isconnect)
 
     def get_fun_widget(self):
-        # FIXME 如何直接找到子view
         return self.infoBarWidget
 
     class LeftBarWidget(QWidget):
@@ -457,21 +453,16 @@ class LogCatWindow(QMainWindow):
             self.startButton.setToolTip(tips)
 
     class LogcatInfoBarWidget(QWidget):
-        # 日志筛选级别改变事件
-        # filterLevelChangeSignal = pyqtSignal(str)
-
         """
         设备信息和包名选择的组合控件
         """
-        _isOnlyShowSelectedApp = False
-
         def __init__(self, parent, mainWindow: MainWindow):
             super().__init__()
             self.parentView = parent
             self.mainwindow = mainWindow
             self.current_ip = ""
+            self.enableFilterPid = LIVE_LOG_DEFAULT_FILTER_PID
             self.setStyleSheet("""
-                background-color: #ffffff ;
                 
                 QComboBox {
                        border: 2px solid #c4c4c4;
@@ -491,7 +482,7 @@ class LogCatWindow(QMainWindow):
 
             self.pkgComboBox = QComboBox()
             self.logLevelComboBox = QComboBox()
-            self.filterCheckBox = QComboBox()
+            self.filterOptionsBox = QComboBox()
 
             # 设备名称
             self.device_info_desc = None
@@ -505,25 +496,33 @@ class LogCatWindow(QMainWindow):
             self.setMaximumHeight(37)
 
             self.qh_layout = QHBoxLayout(self)
+            # 布局边缘与内容之间的间距
             self.qh_layout.setContentsMargins(0, 0, 0, 0)
+            # 子控件之间的间距
+            self.qh_layout.setSpacing(5)
             self.qh_layout.setObjectName("info_bar_horizontalLayout")
 
             self.initDeviceInfo()
             self.initProcessComboBox()
             self.initLogLevelComboBox()
-            spacerItem = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
             self.initFilterOptionComBox()
 
             self.qh_layout.addWidget(self.device_info_desc)
             self.qh_layout.addWidget(self.pkgComboBox)
             self.qh_layout.addWidget(self.logLevelComboBox)
-            self.qh_layout.addItem(spacerItem)  # 右侧添加补位弹簧
-            self.qh_layout.addWidget(self.filterCheckBox)
+            spacer1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+            self.qh_layout.addItem(spacer1)  # 右侧添加补位弹簧
+            self.qh_layout.addWidget(self.filterOptionsBox)
 
-            self.qh_layout.setStretch(1, 2)
-            self.qh_layout.setStretch(2, 2)
-            self.qh_layout.setStretch(3, 3)
-            self.qh_layout.setStretch(4, 2)
+            rightWiget = QWidget()
+            rightWiget.setAutoFillBackground(True)
+            rightWiget.setFixedWidth(20)
+            self.qh_layout.addWidget(rightWiget)
+
+            # self.qh_layout.setStretch(1, 2)
+            # self.qh_layout.setStretch(2, 2)
+            # self.qh_layout.setStretch(3, 3)
+            # self.qh_layout.setStretch(4, 2)
 
         def initFilterOptionComBox(self):
             """
@@ -534,27 +533,25 @@ class LogCatWindow(QMainWindow):
             # 反射将QComboBox的wheelEvent方法重置掉
             setattr(comboBox, "wheelEvent", lambda a: None)
             comboBox.setMaxVisibleItems(6)
-            comboBox.setMinimumSize(QSize(300, 31))
-            comboBox.setMaximumSize(QSize(500, 40))
+            comboBox.setMinimumSize(QSize(400, 31))
+            comboBox.setMaximumSize(QSize(400, 40))
             comboBox.setObjectName("filterOptionsComBox")
-            comboBox.setFont(getSimpleFontStyle(size=12))
+            comboBox.setFont(getSimpleFontStyle(size=11))
             comboBox.setView(QListView())
             for name in _filterOptions:
                 comboBox.addItem(name)
             comboBox.currentIndexChanged.connect(self._onPidFilterChanged)
 
-            self.filterCheckBox = comboBox
+            self.filterOptionsBox = comboBox
 
         def _onPidFilterChanged(self):
             """
             pid进程过滤规则改变
             :return:
             """
-            filterOption = self.filterCheckBox.currentText()
-            enableFilterPid = False
-            if filterOption == _filterOptions[0]:
-                enableFilterPid = True
-            self.parentView.livelogThread.logcatFilter.setOnlyShowSelectedPidLog(enableFilterPid)
+            filterOption = self.filterOptionsBox.currentText()
+            self.enableFilterPid = (filterOption == _filterOptions[1])
+            self.parentView.livelogThread.logcatFilter.changeFilterOptions(self.enableFilterPid)
             self.parentView.reloadHistoryLiveLog()
 
         def initDeviceInfo(self):
@@ -572,13 +569,13 @@ class LogCatWindow(QMainWindow):
             self.device_info_desc = QLabel()
             self.device_info_desc.setObjectName("device_prop")
             self.device_info_desc.setToolTip("设备名称信息")
-            self.device_info_desc.setMinimumWidth(200)
-            self.device_info_desc.setMaximumWidth(350)
+            self.device_info_desc.setMinimumWidth(320)
+            self.device_info_desc.setMaximumWidth(320)
             self.device_info_desc.setStyleSheet("""
                 background-color: #ff0000; 
                 border: 1px solid #d7d7d7;
             """)
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
             sizePolicy.setHorizontalStretch(0)
             sizePolicy.setVerticalStretch(0)
             self.device_info_desc.setSizePolicy(sizePolicy)
@@ -594,14 +591,18 @@ class LogCatWindow(QMainWindow):
             # 设置下拉显示固定个数，超过个数，滚动显示
             comboBox.setMaxVisibleItems(8)
             comboBox.setStyleSheet("QComboBox QAbstractItemView { min-width: 700px; }")
-            comboBox.setMinimumSize(QSize(250, 31))
-            comboBox.setMaximumSize(QtCore.QSize(350, 40))
+            comboBox.setMinimumSize(QSize(350, 31))
+            comboBox.setMaximumSize(QSize(350, 40))
             comboBox.setObjectName("pkgComboBoxView")
-            comboBox.setFont(getSimpleFontStyle(size=12))
+            comboBox.setFont(getSimpleFontStyle(size=11))
             # Sets the view to be used in the combobox popup to the given itemView.
             comboBox.setView(QListView())
             comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
+            sizePolicy.setHorizontalStretch(0)
+            sizePolicy.setVerticalStretch(0)
             self.pkgComboBox = comboBox
+            self.pkgComboBox.setSizePolicy(sizePolicy)
             self.init_process_info()
 
         def onPackageSelectedChanged(self):
@@ -610,10 +611,10 @@ class LogCatWindow(QMainWindow):
                 return
             z_logger.debug(f"所选进程被改变:{applicationInfo}.")
             self.pkgManger.setSelectedRunningProcessInfo(applicationInfo)
-            if self._isOnlyShowSelectedApp:
-                z_logger.debug(f"所选进程被改变:{applicationInfo}, 刷新日志输出.")
-                pid = self.pkgManger.currentSelectedRunningProcessPid
-                self.parentView.livelogThread.logcatFilter.onSelectedPidChanged(pid)
+            pid = self.pkgManger.getSelectedProcessPid()
+            self.parentView.livelogThread.logcatFilter.onSelectedPidChanged(pid)
+            if self.enableFilterPid:
+                z_logger.debug("开启了过滤pid功能,筛选历史日志数据.")
                 self.parentView.reloadHistoryLiveLog()
 
         def init_process_info(self):

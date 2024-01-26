@@ -8,6 +8,7 @@ import time
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 
 from src.logcat.log import z_logger
+from src.settings import LIVE_LOG_DEFAULT_FILTER_PID
 from utils.CmdExecutor import CmdExecutor
 from utils.Utils import LogUtils, _simpleNameToLevel, _nameToLevel
 
@@ -153,7 +154,7 @@ class LiveLogAdbThread(QThread):
                 ui_log = LogUtils.changeLogColor(False, level, content)
 
                 # 每条数据发送等待10ms,防止GUI频繁渲染导致的卡顿
-                time.sleep(1 / 100)
+                time.sleep(0.001)
 
                 # 发送给UI线程
                 self.live_log_dump_signal.emit(ui_log)
@@ -164,6 +165,7 @@ class LiveLogAdbThread(QThread):
         # 会阻塞，所以没法和stdout放在一些读取
         stderr = self.process.stderr.read()
         if stderr:
+            time.sleep(1 / 100)
             self.live_log_dump_signal.emit(stderr)
         # process.communicate()  # 等待命令完成
         self.exit()  # 返回状态(不是严格必要的)
@@ -177,15 +179,25 @@ class LiveLogAdbThread(QThread):
     def clearFilter(self):
         self.logcatFilter.clear()
 
-    def getHistoryLogsWithRules(self):
-        return self.logcatFilter.getHistoryLogsWithRules()
+    def reloadHistoryLogs(self):
+        """
+        重新加载历史日志数据
+        :return:
+        """
+        guiLogs = self.logcatFilter.getFilteredHistoryLogs()
+        if (guiLogs is not None) and len(guiLogs) > 0:
+            for _log in guiLogs:
+                self.live_log_dump_signal.emit(_log)
 
     class LogCatFilter(object):
-        # 过滤的pid
-        selected_pid = ""
         # 日志过滤级别(只显示 >= 此级别的日志) 默认ALL
         _filtered_level = logging.NOTSET
-        _only_show_selected_app_log = False
+
+        # 当前选择的pid
+        selected_pid = ""
+        # 是否只展示所选进程应用的日志
+        __only_show_selected_app_log = LIVE_LOG_DEFAULT_FILTER_PID
+
         log_cache_list = []
         # 过滤后的gui历史log
         gui_history_log = []
@@ -193,8 +205,8 @@ class LiveLogAdbThread(QThread):
         def __init__(self):
             pass
 
-        def setOnlyShowSelectedPidLog(self, enable: bool):
-            self._only_show_selected_app_log = enable
+        def changeFilterOptions(self, enableFilter: bool):
+            self.__only_show_selected_app_log = enableFilter
 
         def changeFilterLevelByName(self, levelName: str):
             """
@@ -211,7 +223,7 @@ class LiveLogAdbThread(QThread):
 
         def filter(self, logMsg):
             """
-            单条实时日志的过滤处理
+            单条实时日志的过滤处理, 会自动根据pid、日志级别、文字过滤的状态去筛选
             :param logMsg: 原始的单条日志数据
                      01-22 11:20:30.188 W/InputMethodManagerService( 1884): LogMessage
             :return:
@@ -233,15 +245,16 @@ class LiveLogAdbThread(QThread):
             # Level——1: 日志级别过滤
             if _level < self._filtered_level:
                 return True, _pid, _level
-                # TODO 如果需要过滤,则更新历史数据
 
             # Level——2: 进程过滤
-            if self._only_show_selected_app_log:
+            if self.__only_show_selected_app_log:
                 # 与选中进程不一致的进程需要被过滤掉
                 isFilter = (_pid != self.selected_pid)
                 return isFilter, _pid, _level
             else:
                 return False, _pid, _level
+
+            # Level——3: 关键字过滤
 
         def record(self, _historyLog):
             """
@@ -249,19 +262,19 @@ class LiveLogAdbThread(QThread):
             :param _historyLog:
             :return:
             """
-            # TODO 同步
             self.log_cache_list.append(_historyLog)
 
         def clear(self):
             self.gui_history_log.clear()
             self.log_cache_list.clear()
 
-        def getHistoryLogsWithRules(self):
+        def getCachedLogs(self):
+            return self.log_cache_list
+
+        def getFilteredHistoryLogs(self):
             """
-            从缓存列表中，获取历史日志书
-            :return: ，收集过滤后的数据
+            获取历史缓存日志数据
             """
-            # TODO 改为子线程
             self.gui_history_log.clear()
             for _log in self.log_cache_list:
                 filtered, pid, level = self.filter(_log)
@@ -274,7 +287,8 @@ class LiveLogAdbThread(QThread):
                 else:
                     continue
 
-            return "\n".join(self.gui_history_log)
+            return self.gui_history_log
+        # return self.log_cache_list
 
 
 class AsyncAdbThread(QThread):

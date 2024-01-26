@@ -22,7 +22,7 @@ LOG_APP_FILE = os.path.join(LOGS_PATH, _Log_NAME)
 # 应用数据库路径及名称
 APP_DB_FILE = "%s\\data\\easyADB.db" % BASE_PATH
 
-APP_VERSION = '1.0.1'
+APP_VERSION = '1.0.2'
 
 DEBUG_PRINT = True
 
@@ -31,4 +31,11 @@ key_app_activity_classpath = "line_edit_classpath"
 key_app_action = "line_edit_action"
 key_app_extparams = "edit_ext_params"
 
+"""
+实时日志配置
+"""
+# 默认是否只展示选中进程日志
+LIVE_LOG_DEFAULT_FILTER_PID = False
+# 日志上限条数
+LIVE_LOG_CONUTS_LIMITS = 3000
 

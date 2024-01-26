@@ -42,7 +42,7 @@ def getSongFontStyle(size=11, font=QFont.Normal):
 
 
 def getSimpleFontStyle(size=10, font=QFont.Normal):
-    return QFont("简体", size, font)
+    return QFont("Microsofy YaHei Light", size, font)
 
 
 def isIpMatches(ip):

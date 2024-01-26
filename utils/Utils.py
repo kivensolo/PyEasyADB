@@ -116,8 +116,8 @@ _simpleNameToLevel = {
 }
 
 _filterOptions = [
-    "Show only selected application",
-    "No Filter"
+    "No Filter",
+    "Show only selected application"
 ]
 
 
@@ -134,7 +134,7 @@ class LogUtils(object):
         if level >= logging.ERROR:      # 红
             _color_log = "<font color=\"#bf360c\">{0}</font>".format(log)
         elif level == logging.WARNING:  # 黄
-            _color_log = "<font color=\"#b6a014\">{0}</font>".format(log)
+            _color_log = "<font color=\"#b07805\">{0}</font>".format(log)
         elif level == logging.INFO:     # 黑
             _color_log = "<font color=\"#263238\" >{0}</font>".format(log)
         elif level == logging.DEBUG:    # 绿
