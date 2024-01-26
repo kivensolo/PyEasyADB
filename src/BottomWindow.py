@@ -4,7 +4,7 @@ import logging
 import sys
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtGui import QTextCursor, QIcon
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
     QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QCheckBox
@@ -363,10 +363,10 @@ class LogCatWindow(QMainWindow):
             self.livelogThread.cmd = cmd
             if not self.livelogThread.isRunning:
                 self.leftWiget.changeStartButton(True)
-                self.livelogThread.start()
+                # self.livelogThread.start()
             else:
                 self.leftWiget.changeStartButton(False)
-                self.livelogThread.stop()
+                # self.livelogThread.stop()
         return
 
     def _scrollToBottom(self):
@@ -394,11 +394,16 @@ class LogCatWindow(QMainWindow):
             self.icon_stop = QIcon(".\\res\\icons\\ic_stop.png")
             self.setUpUi()
 
+            self.timer = QTimer()
+            self.timer.setSingleShot(True)
+            self.timer.timeout.connect(self.resetClickBarrier)
+            self.limitMultipleClick = False
+
         def setUpUi(self):
             self.startButton.setIcon(self.icon_start)
             self.startButton.setFixedWidth(24)
             self.startButton.setFixedHeight(28)
-            self.startButton.clicked.connect(self.parent.start_or_stop)
+            self.startButton.clicked.connect(self.onLiveLogRunButtonClicked)
             self.startButton.setToolTip("Start live logcat")
 
             clearButton = QPushButton(self)
@@ -427,6 +432,18 @@ class LogCatWindow(QMainWindow):
             self.setAutoFillBackground(True)
             self.setLayout(layout)
             self.setFixedWidth(27)
+
+        def onLiveLogRunButtonClicked(self):
+            if self.limitMultipleClick:
+                return
+            self.parent.start_or_stop()
+
+            self.limitMultipleClick = True
+            # 设置超时时间为1000毫秒
+            self.timer.start(1000)
+
+        def resetClickBarrier(self):
+            self.limitMultipleClick = False
 
         def changeStartButton(self, start: bool):
             if not start:
