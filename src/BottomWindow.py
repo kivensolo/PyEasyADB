@@ -832,7 +832,6 @@ class InfoBarWidget(QWidget):
             if value_tuple[0] == '':
                 if not isconnect:  # 未连接设备的情况下
                     self.device_info_desc.setText("请先连接此设备")
-                    self.update_device_info(ip, False)
                 else:  # 已连接设备，但设备信息为空，通常是自动刷新后加入了已连接设备
                     z_logger.debug("[Update_Device] Current device is connected, but no device info!")
                     self.adbTools.get_device_info(ip, self.on_device_prop_get_by_adb)
