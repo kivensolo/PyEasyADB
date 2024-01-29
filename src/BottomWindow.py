@@ -7,7 +7,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtGui import QTextCursor, QIcon
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
-    QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QCheckBox
+    QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QCheckBox, QLineEdit, QAction
 
 from src import MainWindow
 from src.logcat import log
@@ -444,6 +444,7 @@ class LogCatWindow(QMainWindow):
         """
         def __init__(self, parent, mainWindow: MainWindow):
             super().__init__()
+            self.hasInputSearchText = False
             self.parentView = parent
             self.mainwindow = mainWindow
             self.current_ip = ""
@@ -467,6 +468,7 @@ class LogCatWindow(QMainWindow):
 
             self.pkgComboBox = QComboBox()
             self.logLevelComboBox = QComboBox()
+            self.searchEditText = QLineEdit()
             self.filterOptionsBox = QComboBox()
 
             # 设备名称
@@ -487,27 +489,75 @@ class LogCatWindow(QMainWindow):
             self.qh_layout.setSpacing(5)
             self.qh_layout.setObjectName("info_bar_horizontalLayout")
 
+            self.sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+            self.sizePolicy.setHorizontalStretch(0)
+            self.sizePolicy.setVerticalStretch(0)
             self.initDeviceInfo()
             self.initProcessComboBox()
             self.initLogLevelComboBox()
+            self.initSearchEditText()
             self.initFilterOptionComBox()
 
             self.qh_layout.addWidget(self.device_info_desc)
             self.qh_layout.addWidget(self.pkgComboBox)
             self.qh_layout.addWidget(self.logLevelComboBox)
-            spacer1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-            self.qh_layout.addItem(spacer1)  # 右侧添加补位弹簧
+            self.qh_layout.addWidget(self.searchEditText)
             self.qh_layout.addWidget(self.filterOptionsBox)
+
+            # spacer1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+            # self.qh_layout.addItem(spacer1)  # 右侧添加补位弹簧
 
             rightWiget = QWidget()
             rightWiget.setAutoFillBackground(True)
             rightWiget.setFixedWidth(20)
             self.qh_layout.addWidget(rightWiget)
 
-            # self.qh_layout.setStretch(1, 2)
-            # self.qh_layout.setStretch(2, 2)
-            # self.qh_layout.setStretch(3, 3)
-            # self.qh_layout.setStretch(4, 2)
+            self.qh_layout.setStretch(1, 0)
+            self.qh_layout.setStretch(2, 2)
+            self.qh_layout.setStretch(3, 0)
+            self.qh_layout.setStretch(4, 4)
+            self.qh_layout.setStretch(5, 2)
+
+        def initSearchEditText(self):
+            linEdit = QLineEdit()
+            logAction = QAction(linEdit)
+            q_icon = IconTool.buildQIcon("search_24x24.png", "icons")
+            logAction.setIcon(q_icon)
+            self.clearAction = QAction(linEdit)
+            self.clearAction.setIcon((IconTool.buildQIcon("clear_small.png","icons")))
+            self.clearAction.triggered.connect(lambda: self.searchEditText.clear())
+            linEdit.addAction(logAction, QLineEdit.LeadingPosition)
+            linEdit.setFont(getSimpleFontStyle())
+            linEdit.setStyleSheet(
+                """
+                QLineEdit:focus {  
+                    border: 2px solid #2a89f6;
+                    border-radius: 4px;
+                }  
+                """)
+            # margins = linEdit.textMargins()
+            # linEdit.setTextMargins(margins.left(), margins.top(), 20, margins.bottom())
+            linEdit.setPlaceholderText("请输入搜索内容")
+            linEdit.setSizePolicy(self.sizePolicy)
+            linEdit.textChanged.connect(self.onSearchEditTextChanged)
+
+            self.searchEditText = linEdit
+            # self.searchEditText.returnPressed.connect(self.onSearchEditEnter())
+
+        def onSearchEditTextChanged(self, text):
+            if len(text) > 0:
+                if not self.hasInputSearchText:
+                    self.hasInputSearchText = True
+                    self.searchEditText.addAction(self.clearAction, QLineEdit.TrailingPosition)
+            else:
+                self.hasInputSearchText = False
+                self.searchEditText.removeAction(self.clearAction)
+
+        def onSearchEditEnter(self):
+            content = self.searchEditText.text()
+            if len(content) == 0:
+                return
+            # TODO 过滤和刷新log区域
 
         def initFilterOptionComBox(self):
             """
@@ -518,15 +568,15 @@ class LogCatWindow(QMainWindow):
             # 反射将QComboBox的wheelEvent方法重置掉
             setattr(comboBox, "wheelEvent", lambda a: None)
             comboBox.setMaxVisibleItems(6)
-            comboBox.setMinimumSize(QSize(400, 31))
-            comboBox.setMaximumSize(QSize(400, 40))
+            comboBox.setMinimumSize(QSize(200, 31))
+            comboBox.setMaximumSize(QSize(350, 40))
             comboBox.setObjectName("filterOptionsComBox")
             comboBox.setFont(getSimpleFontStyle(size=11))
             comboBox.setView(QListView())
             for name in _filterOptions:
                 comboBox.addItem(name)
             comboBox.currentIndexChanged.connect(self._onPidFilterChanged)
-
+            comboBox.setSizePolicy(self.sizePolicy)
             self.filterOptionsBox = comboBox
 
         def _onPidFilterChanged(self):
@@ -552,13 +602,9 @@ class LogCatWindow(QMainWindow):
             self.device_info_desc.setObjectName("device_prop")
             self.device_info_desc.setToolTip("设备名称信息")
             self.device_info_desc.setFont(getSimpleFontStyle(size=11))
-            self.device_info_desc.setMinimumWidth(320)
             self.device_info_desc.setMaximumWidth(320)
             self.device_info_desc.setStyleSheet("border: 1px solid #d7d7d7;")
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
-            self.device_info_desc.setSizePolicy(sizePolicy)
+            self.device_info_desc.setSizePolicy(self.sizePolicy)
 
         def initProcessComboBox(self):
             """
@@ -571,18 +617,15 @@ class LogCatWindow(QMainWindow):
             # 设置下拉显示固定个数，超过个数，滚动显示
             comboBox.setMaxVisibleItems(8)
             comboBox.setStyleSheet("QComboBox QAbstractItemView { min-width: 700px; }")
-            comboBox.setMinimumSize(QSize(350, 31))
+            # comboBox.setMinimumSize(QSize(350, 31))
             comboBox.setMaximumSize(QSize(350, 40))
             comboBox.setObjectName("pkgComboBoxView")
             comboBox.setFont(getSimpleFontStyle(size=11))
             # Sets the view to be used in the combobox popup to the given itemView.
             comboBox.setView(QListView())
             comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
-            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Preferred)
-            sizePolicy.setHorizontalStretch(0)
-            sizePolicy.setVerticalStretch(0)
             self.pkgComboBox = comboBox
-            self.pkgComboBox.setSizePolicy(sizePolicy)
+            self.pkgComboBox.setSizePolicy(self.sizePolicy)
             self.init_process_info()
 
         def onPackageSelectedChanged(self):
@@ -641,10 +684,11 @@ class LogCatWindow(QMainWindow):
             comboBox = QComboBox()
             # 设置下拉显示固定个数，超过个数，滚动显示
             comboBox.setMaxVisibleItems(6)
-            comboBox.setMinimumSize(QSize(120, 31))
+            # comboBox.setMinimumSize(QSize(120, 31))
             comboBox.setMaximumSize(QSize(120, 40))
             comboBox.setObjectName("logLevelComboBox")
             comboBox.setFont(getSimpleFontStyle(size=11))
+            comboBox.setSizePolicy(self.sizePolicy)
             # Sets the view to be used in the combobox popup to the given itemView.
             comboBox.setView(QListView())
             for name in _nameToLevel:
@@ -733,6 +777,11 @@ class LogCatWindow(QMainWindow):
             if len(strArr) == 2:
                 return strArr[1].replace("[", "").replace("]", "").strip()
             return ''
+
+    class LogcatSearchWidget(QWidget):
+        def __init__(self, parent, mainWindow: MainWindow):
+            super().__init__()
+
 
 
 if __name__ == "__main__":
