@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSettings
 from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
-    QAbstractItemView, QWidget, QStyleFactory
+    QAbstractItemView, QWidget, QStyleFactory, QFileSystemModel, QTreeWidget
 
 from src import TreeItemType
 from src.BaseWindow import BaseWindow
@@ -202,12 +202,10 @@ class MainWindow(BaseWindow):
         layout = QVBoxLayout()
         self.left_panel = QWidget()
         layout.setContentsMargins(0, 0, 6, 0)  # left, top, right, bottom
-        # 创建tree_view
-        self.tree_view = QTreeView()
-        layout.addWidget(self.tree_view)
-        self.left_panel.setLayout(layout)
 
         self.init_tree_view()
+        layout.addWidget(self.tree_view)
+        self.left_panel.setLayout(layout)
 
     def init_status_bar(self):
         statusbar = QStatusBar(self)
@@ -244,13 +242,20 @@ class MainWindow(BaseWindow):
         """
         初始化tree_view配置及数据
         :return:
-        TODO 改为子线程？
-        TODO 优化，学习TreeView 只需要刷新数据，而不需要重新构建UI
-        https://blog.csdn.net/qq_27061049/article/details/89641210
-        https://blog.csdn.net/seniorwizard/article/details/110199352?spm=1001.2101.3001.6650.8&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8.pc_relevant_default&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7EBlogCommendFromBaidu%7ERate-8.pc_relevant_default&utm_relevant_index=13
         """
-        self.load_adb_cmds()
+        # 创建tree_view
+        self.tree_view = QTreeView()
+        self.tree_view.setStyleSheet("""
+            QTreeView::item:selected {
+                background-color: #90caf9;
+                color:#000000 
+            }
+            QTreeView::item:hover {
+                background-color: #bbdefb;
+            }
+        """)
 
+        self.__loadAdbCmds()
         # 获取所有本地缓存ip数据
         all_device = self.dbManager.get_all_device()
 
@@ -283,32 +288,31 @@ class MainWindow(BaseWindow):
         self.treeModel.setHeaderData(0, Qt.Horizontal, '功能区')
 
         # TreeView设置
-        treeView = self.tree_view
-        treeView.setContextMenuPolicy(Qt.CustomContextMenu)
-        treeView.setRootIsDecorated(False)
-        treeView.customContextMenuRequested.connect(self.on_ip_menu_show)  # 右键菜单显示函数
-        treeView.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree_view.setRootIsDecorated(False)
+        self.tree_view.customContextMenuRequested.connect(self.on_ip_menu_show)  # 右键菜单显示函数
+        self.tree_view.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # set model to treeview
-        treeView.setModel(self.treeModel)
-        treeView.doubleClicked.connect(self.on_tree_item_double_clicked)
-        treeView.clicked.connect(self.on_tree_item_clicked)
+        self.tree_view.setModel(self.treeModel)
+        self.tree_view.doubleClicked.connect(self.on_tree_item_double_clicked)
+        self.tree_view.clicked.connect(self.on_tree_item_clicked)
         # 设置成有虚线连接的方式
-        treeView.setStyle(QStyleFactory.create('windows'))
+        self.tree_view.setStyle(QStyleFactory.create('windows'))
         # 展开整个树形视图
-        treeView.expandAll()
+        self.tree_view.expandAll()
 
         self.check_device_status()
         # 右键菜单键设置
-        treeView.contextMenu = QMenu()
+        self.tree_view.contextMenu = QMenu()
         # self.actionC.setDisabled(True)
-        self.device_menu_action_edit_name = treeView.contextMenu.addAction(self.icon_edit, '| 备注设置')
+        self.device_menu_action_edit_name = self.tree_view.contextMenu.addAction(self.icon_edit, '| 备注设置')
         self.device_menu_action_edit_name.triggered.connect(self.show_device_alias_edit_dialog)
-        self.device_menu_action_disconnect = treeView.contextMenu.addAction(self.icon_disconnect, '| 断开连接')
+        self.device_menu_action_disconnect = self.tree_view.contextMenu.addAction(self.icon_disconnect, '| 断开连接')
         self.device_menu_action_disconnect.triggered.connect(self.disconnect_device)
-        self.device_menu_action_remove_device = treeView.contextMenu.addAction(self.icon_warning, '| 删除设备')
+        self.device_menu_action_remove_device = self.tree_view.contextMenu.addAction(self.icon_warning, '| 删除设备')
         self.device_menu_action_remove_device.triggered.connect(self.del_device)
 
-    def load_adb_cmds(self):
+    def __loadAdbCmds(self):
         root_adb_node = QStandardItem("命令列表")
         dom = xml.dom.minidom.parse("./config/cmdConfig.xml")
         root = dom.documentElement
