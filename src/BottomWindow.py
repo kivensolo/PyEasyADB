@@ -274,8 +274,9 @@ class LogCatWindow(QMainWindow):
         self.livelogThread = LiveLogAdbThread()
         self.livelogThread.live_log_dump_signal.connect(self.on_live_log_dump)
         self.logTextBrowser = LiveLogTextBrowser()
+        self.adbTools = ADBTools()
 
-        # 信息栏
+        #    信息栏
         self.infoBarWidget = self.LogcatInfoBarWidget(self, parent)
         # 左侧功能区
         self.leftWiget = self.LeftBarWidget(self)
@@ -356,12 +357,15 @@ class LogCatWindow(QMainWindow):
                 self.livelogThread.stop()
         return
 
-    def stopLiveLog(self):
+    def destoryLiveLog(self):
         if self.livelogThread.isRunning:
             z_logger.debug("live log正在运行,停止进程。")
             self.leftWiget.changeStartButton(False)
             self.livelogThread.stop()
             self.clear()
+
+            z_logger.debug("清空logcat 缓存.")
+            addr = self.mainWindow.current_device_addr
 
     def _scrollToBottom(self):
         self.logTextBrowser.moveCursor(QTextCursor.End)
@@ -578,13 +582,14 @@ class LogCatWindow(QMainWindow):
             else:
                 self.hasInputSearchText = False
                 self.searchEditText.removeAction(self.clearAction)
+                self.textFilterTimer.start(50)
 
         def onTextInputFinished(self):
             z_logger.debug("On timer timeout.")
             self.textFilterTimer.stop()
             content = self.searchEditText.text()
-            if not content or self.editTextContent == content:
-                return  # 输入文本为空或者文本没改变
+            if self.editTextContent == content:
+                return      # 输入文本没改变
             z_logger.debug(f"New filter text.{content}")
             self.editTextContent = content
             self.parentView.livelogThread.updateFilterText(content)
