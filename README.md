@@ -3,11 +3,23 @@ EasyADB是基于PyQt5框架实现的一款便捷进行ADB操作的软件，包�
 目的是让ADB相关操作变得更加简单方便。
 
 # 工程说明
-整体基于**python 3.11**,更高版本的兼容性需开发者自测，理论上3.17、3.18等应该都没问题。
+整体基于**python 3.11.1**,更高版本的兼容性需开发者自测，理论上3.17、3.18等应该都没问题。
 
 ## 虚拟环境
-使用IDE导入此项目后，python解释器请选择虚拟环境中的解释器：`./ea_venv/Scripts/pythpn.exe`,<br>项目主要所需的PyQt5、lxml、pyinstaller等第三方库已经在虚拟环境中安装。可直接使用。
-<br>虚拟环境中的pip版本为23.3.2
+使用IDE导入此项目后，python解释器建议选择虚拟环境中的解释器，路径为:`./venv/Scripts/pythpn.exe`。<br>
+在工程根目录下运行以下命令来创建虚拟环境：
+
+`python -m venv ea_venv` <br>
+`ea_venv`为环境名，可以自定义。
+
+创建虚拟环境后，进入`ea_venv/Scripts`目录，执行`activate`可进入虚拟环境。<br>
+退出:`deactivate`
+
+## 依赖库安装
+所需依赖库信息，比如PyQt5、lxml、pyinstaller等，已经在`requriements.txt`文件中包含。<br>
+安装命令: `pip install -r requirements.txt`
+
+**注意**：不同版本的python与依赖库之间有版本兼容性问题存在，所以如果在安装中报错，需要自己修改对应库的版本号。
 
 
 ## 结构说明
@@ -28,9 +40,10 @@ EasyADB是基于PyQt5框架实现的一款便捷进行ADB操作的软件，包�
 │  ├─ settings.py  应用设置模块<br>
 │  ├─ ......<br>
 │  └─ DataBase.py  数据库模块<br>
-├─ utils/  		  早期的工具类源码目录(暂时未移至src)<br>
-├─ README.md     ReadMe文件<br>
-└─ EasyADB.py    程序App启动主入口<br>
+├─ utils/  		    早期的工具类源码目录(暂时未移至src)<br>
+├─ README.md        ReadMe文件<br>
+├─ EasyADB.py       程序App启动主入口<br>
+└─ requriements.txt requriements文件<br>
 
 
 
