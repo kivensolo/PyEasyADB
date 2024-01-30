@@ -179,7 +179,7 @@ class LiveLogAdbThread(QThread):
     def clearFilterText(self):
         self.updateFilterText()
 
-    def updateFilterText(self, text = ""):
+    def updateFilterText(self, text=""):
         self.logcatFilter.onFilterContentChanged(text)
 
     def clearFilter(self):

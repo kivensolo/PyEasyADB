@@ -356,6 +356,13 @@ class LogCatWindow(QMainWindow):
                 self.livelogThread.stop()
         return
 
+    def stopLiveLog(self):
+        if self.livelogThread.isRunning:
+            z_logger.debug("live log正在运行,停止进程。")
+            self.leftWiget.changeStartButton(False)
+            self.livelogThread.stop()
+            self.clear()
+
     def _scrollToBottom(self):
         self.logTextBrowser.moveCursor(QTextCursor.End)
         self.logTextBrowser.ensureCursorVisible()

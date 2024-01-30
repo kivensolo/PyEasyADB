@@ -87,6 +87,7 @@ class MainWindow(BaseWindow):
     """
     def __init__(self):
         super().__init__()
+        self.garbge_ip = None
         self.settings = QSettings('EasyADB_Tool', 'settings')
 
         self.device_menu_action_remove_device = None
@@ -601,8 +602,13 @@ class MainWindow(BaseWindow):
     def disconnect_device(self):
         item_model = self.get_current_standard_item()
         if is_device_node(item_model):
-            self.temp_disconnect_ip = item_model.addr
+            self.garbge_ip = item_model.addr
+            if item_model.addr == self.current_device_addr:
+                z_logger.debug("断开设备未当前选中的连接设备,检查live log.")
+                # 断开当前设备时,检查live log
+                self.bottom_tab_widget.liveLogView.stopLiveLog()
             self.adbTools.disconnect_device(item_model.addr, self.on_adb_cmd_exectued)
+
     @pyqtSlot()
     def connect_device(self, addr):
         z_logger.debug("Start to connect " + addr)
@@ -653,7 +659,7 @@ class MainWindow(BaseWindow):
                 z_logger.error(f"连接时出现未知异常:[{result_info}]")
         elif _execed_cmd.startswith('adb disconnect'):
             z_logger.info("设备断开成功!")
-            self.active_ip_list.pop(self.temp_disconnect_ip, "Default IP")
+            self.active_ip_list.pop(self.garbge_ip, "Default IP")
             self.update_current_tree_item(False)
             self.bottom_tab_widget.clearRunningProcessComBox()
         elif self.adbTools.isGettingDeviceList():
