@@ -68,7 +68,13 @@ def is_device_connect(state):
 
 
 def is_device_state_normal(state):
-    return state == 'device'
+    device_state = (state == 'device')
+    if device_state:
+        msg = "设备状态正常"
+    else:
+        msg = "设备状态异常"
+
+    return device_state, msg
 
 
 class MainWindow(BaseWindow):
@@ -248,7 +254,7 @@ class MainWindow(BaseWindow):
         self.tree_view.setStyleSheet("""
             QTreeView::item:selected {
                 background-color: #90caf9;
-                color:#000000 
+                color:#000000;
             }
             QTreeView::item:hover {
                 background-color: #bbdefb;
@@ -686,7 +692,8 @@ class MainWindow(BaseWindow):
 
                 # 本地已连接列表中，没有此设备的话，同步数据至内存和数据库;
                 if device_ip_info not in self.active_ip_list:
-                    z_logger.info(f"设备信息:{device_ip_info}, 是否在线:{is_device_state_normal(device_state)}")
+                    _deviceStateNormal, msg = is_device_state_normal(device_state)
+                    z_logger.info(f"设备信息:{device_ip_info}, {msg}")
                     self.active_ip_list[device_ip_info] = device_state
                     exist, msg = self.dbManager.get_device_prop_info(device_ip_info)
                     # 若发现新的已连接设备,自动同步该设备
@@ -698,7 +705,7 @@ class MainWindow(BaseWindow):
                             # self.close()
                     else:
                         z_logger.debug("[Parse States] This device already in local.")
-                        if is_device_state_normal(device_state):
+                        if _deviceStateNormal:
                             need_refresh_runningprocess_info = True
                         else:
                             z_logger.debug("[Parse States] But device state not normal, don't refresh processInfo.")

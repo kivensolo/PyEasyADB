@@ -665,8 +665,8 @@ class LogCatWindow(QMainWindow):
                 self.parentView.reloadHistoryLiveLog()
 
         def init_process_info(self):
-            if len(self.current_ip) == 0:
-                z_logger.error('未选择设备')
+            if not self.current_ip:
+                z_logger.debug('init_process_info() return. current_ip is empty.')
                 return
             self.update_process_com_box()
 
