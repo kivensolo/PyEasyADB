@@ -176,6 +176,12 @@ class LiveLogAdbThread(QThread):
         self.clearFilter()
         os.kill(self.process.pid, signal.SIGINT)
 
+    def clearFilterText(self):
+        self.updateFilterText()
+
+    def updateFilterText(self, text = ""):
+        self.logcatFilter.onFilterContentChanged(text)
+
     def clearFilter(self):
         self.logcatFilter.clear()
 
@@ -197,6 +203,9 @@ class LiveLogAdbThread(QThread):
         selected_pid = ""
         # 是否只展示所选进程应用的日志
         __only_show_selected_app_log = LIVE_LOG_DEFAULT_FILTER_PID
+
+        # 过滤的文本
+        filterContent = ""
 
         log_cache_list = []
         # 过滤后的gui历史log
@@ -220,6 +229,9 @@ class LiveLogAdbThread(QThread):
 
         def onSelectedPidChanged(self, pid=""):
             self.selected_pid = pid
+
+        def onFilterContentChanged(self, content=""):
+            self.filterContent = content
 
         def filter(self, logMsg):
             """
@@ -251,10 +263,16 @@ class LiveLogAdbThread(QThread):
                 # 与选中进程不一致的进程需要被过滤掉
                 isFilter = (_pid != self.selected_pid)
                 return isFilter, _pid, _level
+
+            #  Level——3: 关键字过滤
+            if self.filterContent:
+                # 字段非空，并且不在日志中，
+                if self.filterContent not in logMsg:
+                    return True, _pid, _level
+                else:
+                    return False, _pid, _level
             else:
                 return False, _pid, _level
-
-            # Level——3: 关键字过滤
 
         def record(self, _historyLog):
             """

@@ -55,22 +55,26 @@ class BottomTabWidget(QTabWidget):
         self.setTabPosition(QTabWidget.South)
 
         # 添加组件至TabWidget中
-        self.addTab(self.consoleView, IconTool.buildQIcon("console.png", "icons"), "Console")
-        self.addTab(self.liveLogView, IconTool.buildQIcon("logcat.png"), "Logcat")
+        self.addTab(self.consoleView, IconTool.buildQIcon("console.png", "icons"), "Run")
+        self.addTab(self.liveLogView, IconTool.buildQIcon("logcat.png"), "Live Log")
 
         # self.setFixedHeight(Utils.getItemHeight())
         self.setMaximumHeight(Utils.getWindowHeight())
 
         self.setStyleSheet(
-            "QTabBar::tab {"
-                "border: none; height: " + str(Utils.getItemHeight()) +
-                "px; width:100px;"
-                "color:black;"
-            "} "
-            "QTabBar::tab:selected { "
-                "border: none;"
-                "background: lightgray; "
-            "} "
+            """
+            QTabBar::tab {
+                border: none; 
+                height: str(Utils.getItemHeight()) + px; 
+                color:black;
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+            QTabBar::tab:selected {
+                border: none;
+                background: lightgray;
+            }
+            """
         )
 
     def on_tab_clicked(self, clickedIndex):
@@ -132,7 +136,6 @@ class ConsoleWindow(QMainWindow):
     """
     Desc: 底部应用日志输出窗口
     """
-    global terminalTextBrowser
 
     def initLeftFunctionWidget(self):
         """
@@ -196,26 +199,24 @@ class ConsoleWindow(QMainWindow):
         self.rightWiget.setAutoFillBackground(True)
         self.rightWiget.setFixedWidth(15)
 
-        # 左侧工具栏+中间文本展示+右侧工具栏的分割器
+        # 横向布局空间分割器，分割左侧工具栏、日志展示控件、右侧栏
         self.bodySplitter = QSplitter(Qt.Horizontal)
+        self.bodySplitter.setChildrenCollapsible(0)
         self.bodySplitter.addWidget(self.leftWiget)
         self.bodySplitter.addWidget(self.terminalTextBrowser)
         self.bodySplitter.addWidget(self.rightWiget)
+        self.setCentralWidget(self.bodySplitter)
 
         # self.verticalSplitter = QSplitter(Qt.Vertical)
-
-        self.topWiget = QWidget()
-        self.topWiget.setAutoFillBackground(True)
-        self.topWiget.setFixedHeight(2)
-
+        #
+        # self.topWiget = QWidget()
+        # self.topWiget.setAutoFillBackground(True)
+        # self.topWiget.setFixedHeight(10)
+        #
         # self.verticalSplitter.addWidget(self.topWiget)
         # self.verticalSplitter.addWidget(self.bodySplitter)
         # self.verticalSplitter.setChildrenCollapsible(0)
-        self.setCentralWidget(self.bodySplitter)
-
-        # 重定向输出
-        # sys.stdout = ConsoleEmittor(textWritten=self.normalOutputWritten)
-        # sys.stderr = ConsoleEmittor(textWritten=self.normalOutputWritten)
+        # self.setCentralWidget(self.verticalSplitter)
 
     def normalOutputWritten(self, text):
         cursor = self.terminalTextBrowser.textCursor()
@@ -448,6 +449,12 @@ class LogCatWindow(QMainWindow):
             self.parentView = parent
             self.mainwindow = mainWindow
             self.current_ip = ""
+
+            self.textFilterTimer = QTimer()
+            self.textFilterTimer.timeout.connect(self.onTextInputFinished)
+            # 文本过滤框的输入文本
+            self.editTextContent = ""
+
             self.enableFilterPid = LIVE_LOG_DEFAULT_FILTER_PID
             self.setStyleSheet("""
                 QComboBox {
@@ -525,7 +532,7 @@ class LogCatWindow(QMainWindow):
             logAction.setIcon(q_icon)
             self.clearAction = QAction(linEdit)
             self.clearAction.setIcon((IconTool.buildQIcon("clear_small.png","icons")))
-            self.clearAction.triggered.connect(lambda: self.searchEditText.clear())
+            self.clearAction.triggered.connect(self.onSearchEditTextClear)
             linEdit.addAction(logAction, QLineEdit.LeadingPosition)
             linEdit.setFont(getSimpleFontStyle())
             linEdit.setStyleSheet(
@@ -537,27 +544,44 @@ class LogCatWindow(QMainWindow):
                 """)
             # margins = linEdit.textMargins()
             # linEdit.setTextMargins(margins.left(), margins.top(), 20, margins.bottom())
-            linEdit.setPlaceholderText("请输入搜索内容")
+            # linEdit.setPlaceholderText("请输入过滤内容")
             linEdit.setSizePolicy(self.sizePolicy)
             linEdit.textChanged.connect(self.onSearchEditTextChanged)
 
             self.searchEditText = linEdit
-            # self.searchEditText.returnPressed.connect(self.onSearchEditEnter())
+
+        def onSearchEditTextClear(self):
+            self.searchEditText.clear()
+            self.editTextContent = ""
+            self.parentView.livelogThread.clearFilterText()
 
         def onSearchEditTextChanged(self, text):
-            if len(text) > 0:
+            z_logger.debug(f"onSearchEditTextChanged(): {text}")
+            if text:
                 if not self.hasInputSearchText:
                     self.hasInputSearchText = True
                     self.searchEditText.addAction(self.clearAction, QLineEdit.TrailingPosition)
+                # 延迟过滤
+                if self.textFilterTimer.isActive():
+                    z_logger.debug("stop pre timer.")
+                    self.textFilterTimer.stop()
+                else:
+                    z_logger.debug("Post finished single after 350ms.")
+                    self.textFilterTimer.start(350)
             else:
                 self.hasInputSearchText = False
                 self.searchEditText.removeAction(self.clearAction)
 
-        def onSearchEditEnter(self):
+        def onTextInputFinished(self):
+            z_logger.debug("On timer timeout.")
+            self.textFilterTimer.stop()
             content = self.searchEditText.text()
-            if len(content) == 0:
-                return
-            # TODO 过滤和刷新log区域
+            if not content or self.editTextContent == content:
+                return  # 输入文本为空或者文本没改变
+            z_logger.debug(f"New filter text.{content}")
+            self.editTextContent = content
+            self.parentView.livelogThread.updateFilterText(content)
+            self.parentView.reloadHistoryLiveLog()
 
         def initFilterOptionComBox(self):
             """
@@ -781,7 +805,6 @@ class LogCatWindow(QMainWindow):
     class LogcatSearchWidget(QWidget):
         def __init__(self, parent, mainWindow: MainWindow):
             super().__init__()
-
 
 
 if __name__ == "__main__":
