@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtCore import pyqtSlot, QProcess
 from PyQt5.QtWidgets import QToolBar, QApplication
 
 from utils.ADBTools import ActionCmdParams
@@ -99,13 +99,18 @@ class Ui_ToolBar(QToolBar):
 
     @pyqtSlot()
     def openShell(self):
+        if not self.mainWindow.is_current_device_connect():
+            return
+        current_device = self.mainWindow.current_device_addr
         local_app_data = os.getenv('LOCALAPPDATA')
         wt_path = f"{local_app_data}\Microsoft\WindowsApps\wt.exe"
         if os.path.exists(wt_path):
-            shell_path = wt_path
+            cmd = f'start {wt_path} adb -s {current_device} shell'
         else:
             shell_path = "C:\Windows\System32\cmd.exe"
-        os.startfile(shell_path)
+            cmd = f'start {shell_path} /k adb -s {current_device} shell'
+        os.system(cmd)
+
 
 
 if __name__ == "__main__":
