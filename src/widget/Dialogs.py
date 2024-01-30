@@ -1,6 +1,6 @@
 import sys
 
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
 
@@ -11,7 +11,6 @@ from src.DataBase import DBManager
 from src.widget.BaseDialog import BaseDialog
 from src.widget.CustomWidgets import DraggableLineEdit
 from utils import Tools
-from utils.ADBTools import ActionCmdParams
 from utils.UITools import IconTool
 
 
