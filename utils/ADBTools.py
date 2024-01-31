@@ -440,7 +440,6 @@ class ADBTools:
     def get_running_process(self, device_name, blcok):
         state, filtered_processes = get_filter_processes(device_name)
         if not state:
-            # FIXME 有死循环
             return False  # 获取失败，多半是设备离线了
         # 按照A-Z顺序对进程名称进行排序
         sorted_processes = sorted(filtered_processes, key=lambda x: x[2])

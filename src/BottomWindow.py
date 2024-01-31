@@ -696,7 +696,7 @@ class LogCatWindow(QMainWindow):
                 return
             state = adb_tool.get_running_process(self.current_ip, self._onProcessFiltered)
             if not state:
-                self.mainwindow.check_device_status()
+                z_logger.error(f"获取目标设备进程信息失败，请检查设备状态:{self.current_ip}")
 
         def _onProcessFiltered(self, sorted_processes):
             """
