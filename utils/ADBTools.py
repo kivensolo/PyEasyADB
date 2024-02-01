@@ -380,7 +380,7 @@ class ADBTools:
     def async_exec_adb_cmd(self, cmds):
         """
         异步执行adb命令，支持多批次命令
-        :param cmds:
+        :param cmds: 可迭代的对象，元素可以是字符串， 也可以是ActionCmdParams
         :return:
         """
         try:

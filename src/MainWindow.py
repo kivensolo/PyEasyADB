@@ -604,7 +604,7 @@ class MainWindow(BaseWindow):
         if is_device_node(item_model):
             self.garbge_ip = item_model.addr
             if item_model.addr == self.current_device_addr:
-                z_logger.debug("断开设备未当前选中的连接设备,检查live log.")
+                z_logger.debug("断开设备为当前选中的连接设备,检查live log.")
                 # 断开当前设备时,检查live log
                 self.bottom_tab_widget.liveLogView.destoryLiveLog()
 
