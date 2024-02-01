@@ -601,10 +601,6 @@ class MainWindow(BaseWindow):
                 z_logger.debug("断开设备为当前选中的连接设备,检查live log.")
                 # 断开当前设备时,检查live log
                 self.bottom_tab_widget.liveLogView.destoryLiveLog()
-
-            cmd = f'adb -s {item_model.addr} logcat -c'
-            self.adbTools.exec_adb_cmd(cmd=cmd)
-
             self.adbTools.disconnect_device(item_model.addr, self.on_adb_cmd_exectued)
 
     @pyqtSlot()
