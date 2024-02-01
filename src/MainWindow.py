@@ -705,13 +705,12 @@ class MainWindow(BaseWindow):
                     # 若发现新的已连接设备,自动同步该设备
                     if not exist:
                         z_logger.debug("[Parse States] This Device is not in db, add new：%s}" % device_name)
-
-                        _port = ""
+                        _port = 0
                         if any(char.isalpha() for char in device_name):
                             # 检查是否包含任意字母字符
                             z_logger.debug("[Parse States] 设备信息包含字符, 不做")
                         elif ":" not in device_name:
-                            _port = "5555"  # 默认端口
+                            _port = 5555  # 默认端口
 
                         state, name = self.dbManager.add_device_to_db(ip=device_name, port=_port)
                         if state:

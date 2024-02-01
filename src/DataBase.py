@@ -121,7 +121,7 @@ class DBManager:
         sql = f"select * from {DBManager.TABLE_DEVICE}"
         return self.exec_sql(sql)[1]
 
-    def add_device_to_db(self, ip="", port="", active=0):
+    def add_device_to_db(self, ip="", port=0, active=0):
         """
         往设备信息表中插入新数据
         :param ip:      设备名称数据，最开始只考虑了ip，其实可能有纯字符串，纯数字
