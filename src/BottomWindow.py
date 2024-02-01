@@ -687,6 +687,7 @@ class LogCatWindow(QMainWindow):
             更新PkgComBox数据显示
             :return:
             """
+            z_logger.debug(f"Update process info for {self.current_ip}[{isConnect}]")
             if len(self.current_ip) == 0:
                 return
             if not isConnect:

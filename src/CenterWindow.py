@@ -472,7 +472,7 @@ class Ui_ConvenientArea(object):
         self.mainWindow.runAdbCMD(actionParams)
 
     def hasSelectedPackage(self):
-        if len(self.mainWindow.active_ip_list) == 0:
+        if len(self.mainWindow.collect_device_list) == 0:
             z_logger.error("请先连接设备!!!")
             return False
         return True

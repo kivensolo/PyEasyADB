@@ -121,10 +121,10 @@ class DBManager:
         sql = f"select * from {DBManager.TABLE_DEVICE}"
         return self.exec_sql(sql)[1]
 
-    def add_device_to_db(self, ip="", port="5555", active=0):
+    def add_device_to_db(self, ip="", port="", active=0):
         """
         往设备信息表中插入新数据
-        :param ip:      ip数据
+        :param ip:      设备名称数据，最开始只考虑了ip，其实可能有纯字符串，纯数字
         :param port:    端口数据
         :param active:  是否激活状态(连接中)
         :return:
@@ -151,7 +151,12 @@ class DBManager:
             # cursor.execute("delete from device where ip = \'" + ip + "\'")
             cursor.execute(f"INSERT INTO device VALUES (\'{host}\',{_port}, \'\', \'\', {active})")
             conn.commit()
-            return True, host + ":" + _port
+
+            if _port:
+                name = host + ":" + _port
+            else:
+                name = host
+            return True, name
         except Exception as e:
             z_logger.error('设备入库失败, 请检查Sql语句:' + str(e))
             return False, "设备入库失败, 请检查Sql语句"
