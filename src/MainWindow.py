@@ -273,13 +273,13 @@ class MainWindow(BaseWindow):
         all_device.sort()
         for device in all_device:
             # 填充每一个设备信息  Format: ip:port(alias)
-            if device[1] <= 0:
+            if device[1] == "0":
                 addr = device[0]
             else:
                 addr = device[0] + ":" + device[1]
             alias = device[2]
             show_name = addr
-            if len(alias) != 0:
+            if alias:
                 show_name = f"{addr}({alias})"
             item = QStandardItem(show_name)
             item.addr = addr
@@ -708,12 +708,12 @@ class MainWindow(BaseWindow):
                     # 若发现新的已连接设备,自动同步该设备
                     if not exist:
                         z_logger.debug("[Parse States] This Device is not in db, add new：%s}" % device_name)
-                        _port = 0
+                        _port = "0"
                         if any(char.isalpha() for char in device_name):
                             # 检查是否包含任意字母字符
-                            z_logger.debug("[Parse States] 设备信息包含字符, 不做")
+                            z_logger.debug("[Parse States] 设备信息包含字符, 不做处理")
                         elif ":" not in device_name:
-                            _port = 5555  # 默认端口
+                            _port = "5555"
 
                         state, name = self.dbManager.add_device_to_db(ip=device_name, port=_port)
                         if state:
