@@ -273,7 +273,10 @@ class MainWindow(BaseWindow):
         all_device.sort()
         for device in all_device:
             # 填充每一个设备信息  Format: ip:port(alias)
-            addr = device[0] + ":" + device[1]  #
+            if device[1] <= 0:
+                addr = device[0]
+            else:
+                addr = device[0] + ":" + device[1]
             alias = device[2]
             show_name = addr
             if len(alias) != 0:
