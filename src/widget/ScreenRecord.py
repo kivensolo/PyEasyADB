@@ -185,7 +185,7 @@ class Record_Dialog(object):
         执行屏幕录制，并保存至本地
         :return:
         """
-        if len(self.mainWindow.collect_device_list) == 0:
+        if len(self.mainWindow.connected_device_list) == 0:
             z_logger.error("请先连接设备!!!")
             return
         chooseDialog = QFileDialog

@@ -110,7 +110,7 @@ class MainWindow(BaseWindow):
         self.right_panel = None
 
         # 连接的设备信息(包含离线设备) {"name1":"devices";"name2":"offline"}
-        self.collect_device_list = {}
+        self.connected_device_list = {}
 
         self.adbTools = ADBTools()
         self.init_all_ui()
@@ -230,7 +230,7 @@ class MainWindow(BaseWindow):
         super(MainWindow, self).initWindow()
 
     def is_current_device_connect(self):
-        return self.current_device_addr in self.collect_device_list
+        return self.current_device_addr in self.connected_device_list
 
     # ----------------------------------左侧TreeView START-----------------------------------------------
     def init_tree_view(self):
@@ -383,7 +383,7 @@ class MainWindow(BaseWindow):
     def on_ip_menu_show(self):
         item_model = self.get_current_standard_item()
         if is_device_node(item_model):
-            if item_model.addr in self.collect_device_list:
+            if item_model.addr in self.connected_device_list:
                 self.device_menu_action_remove_device.setDisabled(True)
                 self.device_menu_action_disconnect.setDisabled(False)
             else:
@@ -463,7 +463,7 @@ class MainWindow(BaseWindow):
         item = self.treeModel.itemFromIndex(index)  # QStandardItem
         if is_device_node(item):
             z_logger.debug("On tree item double clicked %s" % item.addr)
-            if item.addr not in self.collect_device_list:
+            if item.addr not in self.connected_device_list:
                 z_logger.info(f"连接{item.addr}......")
                 self.connect_device(item.addr)
             else:
@@ -476,7 +476,7 @@ class MainWindow(BaseWindow):
             self.runAdbCMD(params)
 
     def runAdbCMD(self, cmdParams: ActionCmdParams):
-        if len(self.collect_device_list) == 0:
+        if len(self.connected_device_list) == 0:
             z_logger.error("请先连接设备")
         else:
             # 最后环节点确定目标应用包名信息
@@ -492,7 +492,7 @@ class MainWindow(BaseWindow):
             self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
 
     def runAdbCMD_V2(self, cmdParams: list):
-        if len(self.collect_device_list) == 0:
+        if len(self.connected_device_list) == 0:
             z_logger.error("请先连接设备")
         else:
             for _cmd in cmdParams:
@@ -517,7 +517,7 @@ class MainWindow(BaseWindow):
         # self.stackedWidget_param.setCurrentIndex(index)
         item = self.treeModel.itemFromIndex(index)
         if is_device_node(item):
-            isconencted = item.addr in self.collect_device_list
+            isconencted = item.addr in self.connected_device_list
             z_logger.debug(f'当前选中设备:{item.addr}  是否已连接:{isconencted}')
             if self.current_device_addr == item.addr and isconencted:
                 return
@@ -559,8 +559,8 @@ class MainWindow(BaseWindow):
             device_ips = item.rowCount()
             for child_index in range(device_ips):
                 child = item.child(child_index)
-                if child.addr in self.collect_device_list:
-                    _state = self.collect_device_list[child.addr]
+                if child.addr in self.connected_device_list:
+                    _state = self.connected_device_list[child.addr]
                     if _state == "device":
                         child.setIcon(self.icon_connect)
                     else:
@@ -638,7 +638,7 @@ class MainWindow(BaseWindow):
                 z_logger.error(f"连接时出现未知异常:[{result_info}]")
         elif _execed_cmd.startswith('adb disconnect'):
             z_logger.info("设备断开成功!")
-            self.collect_device_list.pop(self.garbge_ip, "Default IP")
+            self.connected_device_list.pop(self.garbge_ip, "Default IP")
             self.update_current_tree_item(False)
             self.bottom_tab_widget.clearRunningProcessComBox()
         else:
@@ -654,7 +654,7 @@ class MainWindow(BaseWindow):
         z_logger.debug("[Refresh Devices] on_devices_refreshed()")
         z_logger.debug(f"Current select device:{self.current_device_addr}")
         updateSelectedDeviceProcessInfo = False
-        self.collect_device_list.clear()
+        self.connected_device_list.clear()
 
         for deviceInfo in watchedDevices:
             device_name = deviceInfo.name
@@ -667,7 +667,7 @@ class MainWindow(BaseWindow):
                 _isStateOK, msg = deviceInfo.is_device_state_normal()
                 z_logger.debug(f"检测到已连接设备:{device_name}[{msg}]")
 
-                self.collect_device_list[device_name] = device_state
+                self.connected_device_list[device_name] = device_state
                 exist, msg = self.dbManager.get_device_prop_info(device_name)
                 if not exist:
                     z_logger.debug(f"[Refresh Devices] Find new device {device_name}, save to database.")
@@ -694,8 +694,8 @@ class MainWindow(BaseWindow):
                 # 未知状态的设备，均认为未连接
                 self.dbManager.change_device_state(device_name, False)
 
-        z_logger.debug("[Parse States] 当前已连接设备列表：" + str(self.collect_device_list))
-        if len(self.collect_device_list) == 0:
+        z_logger.debug("[Parse States] 当前已连接设备列表：" + str(self.connected_device_list))
+        if len(self.connected_device_list) == 0:
             z_logger.info("无任何连接设备！")
         self.refresh_treeview_by_data()
 
