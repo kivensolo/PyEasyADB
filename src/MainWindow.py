@@ -9,6 +9,7 @@ from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayo
 from src import TreeItemType
 from src.BaseWindow import BaseWindow
 from src.DataBase import DBManager
+from src.DevicesWatcher import DevicesWatcher
 from src.MenuBar import MenuActions
 from src.BottomWindow import BottomTabWidget
 from src.CenterWindow import CommonFunctionalWidget
@@ -58,25 +59,6 @@ def is_device_root_node(item: QStandardItem):
     return item and item.type == TreeItemType.TYPE_ROOT_DEVICE
 
 
-def is_device_connect(state):
-    """
-    设备是否已连接
-    :param state:
-    :return:
-    """
-    return state == 'device' or state == 'offline'
-
-
-def is_device_state_normal(state):
-    device_state = (state == 'device')
-    if device_state:
-        msg = "设备状态正常"
-    else:
-        msg = "设备状态异常"
-
-    return device_state, msg
-
-
 class MainWindow(BaseWindow):
     treeModel = None
     tree_data_list = []
@@ -87,6 +69,12 @@ class MainWindow(BaseWindow):
     """
     def __init__(self):
         super().__init__()
+
+        # 启动设备自动检测器
+        self.devicesWatcher = DevicesWatcher()
+        self.devicesWatcher.changedSignal.connect(self.on_devices_refreshed)
+        self.devicesWatcher.start()
+
         self.garbge_ip = None
         self.settings = QSettings('EasyADB_Tool', 'settings')
 
@@ -121,7 +109,7 @@ class MainWindow(BaseWindow):
         self.center_panel = None
         self.right_panel = None
 
-        # 收集到的设备列表, 状态有“正常”和“离线”
+        # 连接的设备信息(包含离线设备) {"name1":"devices";"name2":"offline"}
         self.collect_device_list = {}
 
         self.adbTools = ADBTools()
@@ -311,7 +299,6 @@ class MainWindow(BaseWindow):
         # 展开整个树形视图
         self.tree_view.expandAll()
 
-        self.check_device_status()
         # 右键菜单键设置
         self.tree_view.contextMenu = QMenu()
         # self.actionC.setDisabled(True)
@@ -614,7 +601,7 @@ class MainWindow(BaseWindow):
     @pyqtSlot()
     def check_device_status(self):
         z_logger.debug("Check device status....")
-        self.adbTools.get_devices_state(self.on_adb_cmd_exectued)
+        # self.adbTools.get_devices_state(self.on_adb_cmd_exectued)
 
     @pyqtSlot(str)
     def on_adb_cmd_exectued(self, result):
@@ -623,10 +610,6 @@ class MainWindow(BaseWindow):
         :param result: List for result.
         :return:
         """
-        # 特殊情况需要将输出的换行符给去除
-        if self.adbTools.isGettingDeviceList():
-            result = result.strip()
-
         resultList = result.split('\n')
         z_logger.debug('On adb cmd result:' + str(result))
 
@@ -649,8 +632,7 @@ class MainWindow(BaseWindow):
                 # ['cannot connect to xxxx: 由于连接方在一段时间后没有正确答复或连接的主机没有反应，连接尝试失败。 (10060)']
                 z_logger.error(result_info)
             elif 'connected to' in result_info:
-                z_logger.info("设备连接失败!!")
-                self.check_device_status()
+                z_logger.info("设备连接成功!!")
             else:
                 # 可能会存在空的情况
                 z_logger.error(f"连接时出现未知异常:[{result_info}]")
@@ -659,80 +641,60 @@ class MainWindow(BaseWindow):
             self.collect_device_list.pop(self.garbge_ip, "Default IP")
             self.update_current_tree_item(False)
             self.bottom_tab_widget.clearRunningProcessComBox()
-        elif self.adbTools.isGettingDeviceList():
-            self.parse_devices_states(resultList)
         else:
             if len(result) != 0:
                 z_logger.info(result)
 
-    def parse_devices_states(self, result):
+    def on_devices_refreshed(self, watchedDevices: list):
         """
-        解析ADb连接的设备状态数据
-        :param result: List data:
-            ['List of devices attached',
-            '172.31.10.236:5555\tdevice',
-            'emulator-5554:5555\tdevice'
-            ]
-
-            device , 设备连接正常
-            offline , 设备离线，连接出现异常
-            unauthorized 设备为进行授权，需要在设备上是否允许调试对话框进行授权
+        设备连接状态变更时, 刷新设备信息
+        :param watchedDevices:  包含DeviceInfo的列表
         :return:
         """
-        z_logger.debug(f"[Parse States] Current select device:{self.current_device_addr}")
+        z_logger.debug("[Refresh Devices] on_devices_refreshed()")
+        z_logger.debug(f"Current select device:{self.current_device_addr}")
         updateSelectedDeviceProcessInfo = False
-
-        # 每次都清除本地记录的活跃设备数据
         self.collect_device_list.clear()
 
-        for line in result:
-            if line.startswith("List of devices attached"):
-                continue
-            dev_line = line.split("\t")
-            if len(dev_line) < 2:
-                continue
+        for deviceInfo in watchedDevices:
+            device_name = deviceInfo.name
+            device_state = deviceInfo.state
 
-            # 设备名称:可能是ip地址，也可能是纯数字、也可能是字符串
-            device_name = dev_line[0]
-            device_state = dev_line[1]
-            if is_device_connect(device_state):
-                z_logger.debug("[Parse States] active devices:" + line)
+            if deviceInfo.isConnected():
+                z_logger.debug("[Refresh Devices] active devices:" + device_name)
 
                 # 本地已连接列表中，没有此设备的话，同步数据至内存和数据库;
-                if device_name not in self.collect_device_list:
-                    _isStateOK, msg = is_device_state_normal(device_state)
-                    z_logger.info(f"设备信息:{device_name}, {msg}")
+                _isStateOK, msg = deviceInfo.is_device_state_normal()
+                z_logger.debug(f"检测到已连接设备:{device_name}[{msg}]")
 
-                    self.collect_device_list[device_name] = device_state
-                    exist, msg = self.dbManager.get_device_prop_info(device_name)
-                    # 若发现新的已连接设备,自动同步该设备
-                    if not exist:
-                        z_logger.debug("[Parse States] This Device is not in db, add new：%s}" % device_name)
-                        _port = "0"
-                        if any(char.isalpha() for char in device_name):
-                            # 检查是否包含任意字母字符
-                            z_logger.debug("[Parse States] 设备信息包含字符, 不做处理")
-                        elif ":" not in device_name:
-                            _port = "5555"
+                self.collect_device_list[device_name] = device_state
+                exist, msg = self.dbManager.get_device_prop_info(device_name)
+                if not exist:
+                    z_logger.debug(f"[Refresh Devices] Find new device {device_name}, save to database.")
+                    _port = "0"
+                    if any(char.isalpha() for char in device_name):
+                        # 检查是否包含任意字母字符
+                        z_logger.debug("[Refresh Devices] 设备信息包含字符, 不做处理")
+                    elif ":" not in device_name:
+                        _port = "5555"
 
-                        state, name = self.dbManager.add_device_to_db(ip=device_name, port=_port)
-                        if state:
-                            self.onNewDeviceAdded(name)
-                            # self.close()
+                    state, name = self.dbManager.add_device_to_db(ip=device_name, port=_port)
+                    if state:
+                        self.onNewDeviceAdded(name)
+                        # self.close()
+                else:
+                    z_logger.debug("[Refresh Devices] This device already in local.")
+
+                    if _isStateOK and (self.current_device_addr == device_name):
+                        updateSelectedDeviceProcessInfo = True
                     else:
-                        z_logger.debug("[Parse States] This device already in local.")
-
-                        if _isStateOK and (self.current_device_addr == device_name):
-                            updateSelectedDeviceProcessInfo = True
-                        else:
-                            z_logger.debug("[Parse States] But device state not normal, don't refresh processInfo.")
+                        z_logger.debug("[Parse States] But device state not normal, don't refresh processInfo.")
 
             else:
                 # 未知状态的设备，均认为未连接
                 self.dbManager.change_device_state(device_name, False)
-                self.update_current_tree_item(False)
 
-        z_logger.debug("当前已连接设备列表：" + str(self.collect_device_list))
+        z_logger.debug("[Parse States] 当前已连接设备列表：" + str(self.collect_device_list))
         if len(self.collect_device_list) == 0:
             z_logger.info("无任何连接设备！")
         self.refresh_treeview_by_data()

@@ -362,9 +362,6 @@ class ADBTools:
         self.executor = CmdExecutor()
         self.current_cmd = ''
 
-    def isGettingDeviceList(self):
-        return self.current_cmd == 'adb devices'
-
     def exec_adb_cmd(self, cmd, block=None):
         """
         执行ADB命令
@@ -407,10 +404,6 @@ class ADBTools:
         adb_cmd = "adb -s {0} shell am start {1}".format(ip, class_path)
         z_logger.info("Start app: %s" % class_path)
         self.exec_adb_cmd(adb_cmd, block)
-
-    def get_devices_state(self, block):
-        cmd = 'adb devices'
-        self.exec_adb_cmd(cmd, block)
 
     def connect_device(self, device_ip, block):
         cmd = "adb connect %s" % device_ip

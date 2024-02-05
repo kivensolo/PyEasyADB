@@ -10,7 +10,7 @@ class CmdExecutor(QThread):
     """
     CMD命令执行的子线程
     """
-    # 线程结束信号,信号包含内容都是一个list
+    # 线程结束信号,信号包含内容都是一个str
     finishSignal = pyqtSignal(str)
 
     def __init__(self, parent=None):

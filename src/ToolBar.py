@@ -7,6 +7,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import pyqtSlot, QProcess
 from PyQt5.QtWidgets import QToolBar, QApplication
 
+from src.logcat.log import z_logger
 from utils.ADBTools import ActionCmdParams
 from utils.UITools import IconTool
 from utils.UiWidgts import AppPushButton
@@ -26,7 +27,6 @@ class Ui_ToolBar(QToolBar):
         self.mainWindow = context
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.btn_adddevice = AppPushButton("", self.mainWindow.show_new_device_dialog)
-        self.btn_refresh = AppPushButton("", self.mainWindow.check_device_status)
         self.btn_openshell = AppPushButton("Open Shell", self.openShell)
         self.btn_root = AppPushButton("")
         self.btn_root.clicked.connect(lambda: self.adb_cmd_clicked("root"))
@@ -51,12 +51,6 @@ class Ui_ToolBar(QToolBar):
         self.btn_adddevice.setObjectName("add_devices")
         self.btn_adddevice.setMouseTracking(True)  # 确保鼠标悬停和点击效果仍然有效
         self.addWidget(self.btn_adddevice)
-
-        iconRefresh = IconTool.buildQIcon("refresh_32x32.png", "icons")
-        self.btn_refresh.setIcon(iconRefresh)
-        self.btn_refresh.setIconSize(QtCore.QSize(22, 22))
-        self.btn_refresh.setObjectName("refresh_devices")
-        self.addWidget(self.btn_refresh)
 
         iconOpenShell = IconTool.buildQIcon("open_shell_32x32.png", "icons")
         self.btn_openshell.setIcon(iconOpenShell)
@@ -84,8 +78,6 @@ class Ui_ToolBar(QToolBar):
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.btn_adddevice.setText(_translate("add_devices", "添加设备"))
-        self.btn_refresh.setToolTip(_translate("refresh_devices", "刷新设备列表"))
-        self.btn_refresh.setText(_translate("refresh_devices", "刷新设备"))
         self.btn_root.setText(_translate("root_adb", "ADB Root"))
         self.btn_unroot.setText(_translate("unroot_adb", "ADB Unroot"))
 
@@ -100,6 +92,7 @@ class Ui_ToolBar(QToolBar):
     @pyqtSlot()
     def openShell(self):
         if not self.mainWindow.is_current_device_connect():
+            z_logger.error("请先连接设备！！")
             return
         current_device = self.mainWindow.current_device_addr
         local_app_data = os.getenv('LOCALAPPDATA')
