@@ -468,6 +468,9 @@ class Ui_ConvenientArea(object):
         else:
             z_logger.info_with_stamp("Cancle screenshot.")
 
+    def _on_screen_shoot_finished(self, result):
+        z_logger.debug(result)
+
     def runAdbCMD(self, actionParams: ActionCmdParams):
         self.mainWindow.runAdbCMD(actionParams)
 

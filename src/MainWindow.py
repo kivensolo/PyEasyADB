@@ -489,7 +489,7 @@ class MainWindow(BaseWindow):
                 return
             # 每次重新赋值
             cmdParams.target_device_ip = self.current_device_addr
-            self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), self.on_adb_cmd_exectued)
+            self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), block=self.on_adb_cmd_exectued)
 
     def runAdbCMD_V2(self, cmdParams: list):
         if len(self.connected_device_list) == 0:
@@ -505,7 +505,7 @@ class MainWindow(BaseWindow):
                 # 每次重新赋值
                 _cmd.target_device_ip = self.current_device_addr
                 _cmd.target_app = pkgName
-                self.adbTools.exec_adb_cmd(_cmd.getAdbCMD(), self.on_adb_cmd_exectued)
+                self.adbTools.exec_adb_cmd(_cmd.getAdbCMD(), block=self.on_adb_cmd_exectued)
 
     @pyqtSlot(QModelIndex)
     def on_tree_item_clicked(self, index):

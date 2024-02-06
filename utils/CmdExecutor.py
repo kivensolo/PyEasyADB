@@ -26,6 +26,11 @@ class CmdExecutor(QThread):
         # 线程结束的事件绑定
         self.finished.connect(self.threadFinish)
 
+        # UseShellExecute
+        self.useShell = False
+        # return code
+        self.returnCode = False
+
     def _initConnectTimer(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self._onCmdExectuedTimeout)
@@ -58,15 +63,18 @@ class CmdExecutor(QThread):
 
     def run(self):
         # 日志输出文件初始化 --- Start
-        self.process = Popen(self.cmd, stdout=PIPE,stderr=PIPE, bufsize=-1, encoding='utf-8')
+        self.process = Popen(self.cmd, shell=self.useShell, stdout=PIPE ,stderr=PIPE, bufsize=-1, encoding='utf-8')
         stdout_data, stderr_data = self.process.communicate(input=None, timeout=None)
-        if stdout_data is not None:
-            # 把多行换行符换成一行(ps命令会有多行)
-            stdout_data = stdout_data.replace("\n\n", "\n")
-            # 正常输出的结果不进行strip操作
-            self.result = stdout_data.strip()
-        if stderr_data is not None and stderr_data != "":
-            self.result = self.result + "\n" + stderr_data.strip()
+        if self.returnCode:
+            self.result = str(self.process.returncode)
+        else:
+            if stdout_data is not None:
+                # 把多行换行符换成一行(ps命令会有多行)
+                stdout_data = stdout_data.replace("\n\n", "\n")
+                # 正常输出的结果不进行strip操作
+                self.result = stdout_data.strip()
+            if stderr_data is not None and stderr_data != "":
+                self.result = self.result + "\n" + stderr_data.strip()
 
         self.process.stdout.close()   # close触发finishSignal
         # _process.wait()

@@ -316,7 +316,7 @@ class AsyncAdbThread(QThread):
     def __init__(self):
         super().__init__()
 
-        self.cmds = ""
+        self.cmds = []
 
         self.process = None
         self.isStoped = False
@@ -362,16 +362,20 @@ class ADBTools:
         self.executor = CmdExecutor()
         self.current_cmd = ''
 
-    def exec_adb_cmd(self, cmd, block=None):
+    def exec_adb_cmd(self, cmd, useShell=False, useReturnCode=False, block=None):
         """
         执行ADB命令
         :param cmd: ADB执行命令
+        :param useShell: 是否在shell环境中执行命令
+        :param useReturnCode: 是否返回执行状态，默认返回stdout或stderr
         :param block:  回调函数
         :return:  list
         """
         z_logger.info_with_stamp(cmd)
         self.current_cmd = cmd
         self.executor.setFinishCallback(block)
+        self.executor.useShell = useShell
+        self.executor.returnCode = useReturnCode
         self.executor.exec(cmd)
 
     def async_exec_adb_cmd(self, cmds):
@@ -386,14 +390,6 @@ class ADBTools:
         except Exception as e:
             print(e)
 
-    @DeprecationWarning
-    def _exec_cmd(self, ip, cmd="", is_shell=False, block=None):
-        if is_shell:
-            adb_cmd = "adb -s {0} shell {1}".format(ip, cmd)
-        else:
-            adb_cmd = "adb -s {0} {1}".format(ip, cmd)
-        self.exec_adb_cmd(adb_cmd, block)
-
     def start_app_page(self, ip, class_path, block):
         """
         根据class路径启动目标应用页面
@@ -403,30 +399,30 @@ class ADBTools:
         """
         adb_cmd = "adb -s {0} shell am start {1}".format(ip, class_path)
         z_logger.info("Start app: %s" % class_path)
-        self.exec_adb_cmd(adb_cmd, block)
+        self.exec_adb_cmd(adb_cmd, block=block)
 
     def connect_device(self, device_ip, block):
         cmd = "adb connect %s" % device_ip
-        self.exec_adb_cmd(cmd, block)
+        self.exec_adb_cmd(cmd, block=block)
 
     def disconnect_device(self, device_ip, block):
         cmd = "adb disconnect %s" % device_ip
-        self.exec_adb_cmd(cmd, block)
+        self.exec_adb_cmd(cmd, block=block)
 
-    # TODO 优化，统一记录ip
     def get_device_info(self, ip, block):
         cmd = "adb -s {0} shell getprop".format(ip)
-        self.exec_adb_cmd(cmd, block)
+        self.exec_adb_cmd(cmd, block=block)
 
-    # FIXME 卡主线程的
     def get_screen_shoot(self, device_ip, save_path):
         # 执行adb exec-out screencap命令，并将输出重定向到文件
-        cmd = 'adb -s {0} exec-out screencap -p > {1}'.format(device_ip, save_path)
-        process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)
-        process.communicate()
-        return_code = process.returncode
-        if return_code == 0:
-            z_logger.info(f"Screenshot captured successfully! > {save_path}")
+        cmd = f'adb -s {device_ip} exec-out screencap -p > {save_path}'
+        self.exec_adb_cmd(cmd, useShell=True, useReturnCode=True,
+                          block=self.__onScreenShootFinished)
+
+    @staticmethod
+    def __onScreenShootFinished(code):
+        if code == "0":
+            z_logger.info("Screenshot captured successfully!")
         else:
             z_logger.error("Failed to capture screenshot.")
 
