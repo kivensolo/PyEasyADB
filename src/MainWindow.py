@@ -164,30 +164,23 @@ class MainWindow(BaseWindow):
         # else:
         #     event.ignore()
 
-
     def init_center_panel(self):
-        self.center_panel = QWidget()
-        layout = QVBoxLayout()
-        # left, top, right, bottom
-        layout.setContentsMargins(2, 2, 2, 2)
-        # centralwidget = QWidget(self)
-        # centralwidget.setGeometry(QtCore.QRect(221, 70, 500, 400))
-
-        # 创建设备信息 的多分页窗口
-        self.stacked_device_info = QtWidgets.QStackedWidget(self)  # QStackedWidget表示多分页的窗口
-        self.stacked_device_info.setObjectName("stackedWidget_param")
-        self.stacked_device_info.setGeometry(221, 70, 500, 400)
-        self.stacked_device_info.setStyleSheet("""
+        """
+        初始化中部区域的UI
+        :return:
+        """
+        self.center_panel = QtWidgets.QTabWidget(self)
+        self.center_panel.setObjectName("center_widget")
+        self.center_panel.setStyleSheet("""
             QStackedWidget {background-color:rgb(255,255,255);}
             """)
-        # self.stackedWidget_param.setStyleSheet("QWidget{background-color:rgb(188,188,188);border:none}")
-        # 创建分页对象，并载入分页
-        self.centerArea = CommonFunctionalWidget(self)
-        self.stacked_device_info.addWidget(self.centerArea)
-        self.stacked_device_info.setCurrentIndex(0)  # 切换至选中页
+        # App操作页面
+        appOprateArea = CommonFunctionalWidget(self)
+        # 设备实时预览的UI
+        deviceMonitor = QtWidgets.QMainWindow()
 
-        layout.addWidget(self.stacked_device_info)
-        self.center_panel.setLayout(layout)
+        self.center_panel.addTab(appOprateArea, "常用操作")
+        self.center_panel.addTab(deviceMonitor, "设备预览")
 
     def init_left_panel(self):
         """
@@ -514,7 +507,6 @@ class MainWindow(BaseWindow):
         :param index: model index of the clicked row in the tree
         :return:
         """
-        # self.stackedWidget_param.setCurrentIndex(index)
         item = self.treeModel.itemFromIndex(index)
         if is_device_node(item):
             isconencted = item.addr in self.connected_device_list
