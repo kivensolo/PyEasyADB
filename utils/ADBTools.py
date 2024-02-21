@@ -348,7 +348,7 @@ class AsyncAdbThread(QThread):
         self.exit()  # 返回状态(不是严格必要的)
 
     def stop(self):
-        self.output_received.emit(["output", "录屏已终止"])
+        self.output_received.emit(["output", "任务已终止"])
         self.isStoped = True
         os.kill(self.process.pid, signal.SIGINT)
 
@@ -357,8 +357,6 @@ class ADBTools:
 
     def __init__(self):
         super(ADBTools, self).__init__()
-        self.thread = AsyncAdbThread()
-        self.thread.output_received.connect(self.on_async_single_recevied)
         self.executor = CmdExecutor()
         self.current_cmd = ''
 
@@ -385,6 +383,8 @@ class ADBTools:
         :return:
         """
         try:
+            self.thread = AsyncAdbThread()
+            self.thread.output_received.connect(self.on_async_single_recevied)
             self.thread.cmds = cmds
             self.thread.start()
         except Exception as e:

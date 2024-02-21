@@ -6,16 +6,11 @@ import time
 
 """ 依赖环境检测配置 """
 appdata_local = os.environ['LOCALAPPDATA']
-appEasyADBPath = os.path.join(appdata_local, 'EasyADB')
-if not os.path.exists(appEasyADBPath):
-    os.mkdir(appEasyADBPath)
-platformToolsPath = os.path.join(appEasyADBPath, "platform-tools")
-toolsPath = os.path.join(appEasyADBPath, "tools")
-
-# 默认自动下载的scrcpy 版本(released on Dec 2, 2023)
-# 最新版本查看 https://github.com/Genymobile/scrcpy/releases/latest
-defaultScrcpyDownloadVersion = 'v2.3.1'
-
+localAppDataOfEasyADB = os.path.join(appdata_local, 'EasyADB')
+if not os.path.exists(localAppDataOfEasyADB):
+    os.mkdir(localAppDataOfEasyADB)
+platformToolsPath = os.path.join(localAppDataOfEasyADB, "platform-tools")
+toolsPath = os.path.join(localAppDataOfEasyADB, "tools")
 """ 依赖环境检测配置 """
 
 # 应用窗口屏占比

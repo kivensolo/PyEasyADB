@@ -10,8 +10,9 @@ from PyQt5.QtCore import Qt, QObject, QEvent, QTimer
 from PyQt5.QtGui import QWindow, QMouseEvent
 from PyQt5.QtWidgets import QSizePolicy, QWidget
 
-from src import settings
+import Dependencies
 from src.logcat.log import z_logger
+from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
 
 
 class ScrcpyEmbedWidget(QWidget):
@@ -25,7 +26,7 @@ class ScrcpyEmbedWidget(QWidget):
         self.scrcpy_pid = -1
         # 设置控件可以接收键盘焦点
         self.setFocusPolicy(Qt.StrongFocus)
-        self.setContentsMargins(0,0,0,0)
+        self.setContentsMargins(0, 0, 0, 0)
         self.setupUi(self)
 
         self.timerWaitScrcpy = QTimer()
@@ -47,7 +48,7 @@ class ScrcpyEmbedWidget(QWidget):
         self.verticalLayout.setContentsMargins(2, 2, 2, 2)
         # 横向操作按钮
         btnsWidgets = QWidget()
-        # btnsWidgets.setStyleSheet("border: 3px solid green;")
+        # btnsWidgets.setStyleSheet("border: 1px solid green;")
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -56,10 +57,11 @@ class ScrcpyEmbedWidget(QWidget):
         btnsWidgets.setFocusPolicy(Qt.NoFocus)
 
         buttonsLayout = QtWidgets.QHBoxLayout(btnsWidgets)
-        buttonsLayout.setContentsMargins(2, 0, 2, 0)
+        buttonsLayout.setContentsMargins(5, 5, 5, 0)
         self.startScrcpyBtn = QtWidgets.QPushButton(embedWidget)
-        self.startScrcpyBtn.setText("连接设备屏幕")
-        self.startScrcpyBtn.clicked.connect(self.connectScrcpy)
+        self.startScrcpyBtn.setText("开启实时预览")
+        self.startScrcpyBtn.setFont(getWRYHFontStyle())
+        self.startScrcpyBtn.clicked.connect(self.tryConnectScrcpy)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -69,7 +71,8 @@ class ScrcpyEmbedWidget(QWidget):
         buttonsLayout.addWidget(self.startScrcpyBtn, alignment=Qt.AlignLeft)
 
         self.stopScrcpyBtn = QtWidgets.QPushButton(embedWidget)
-        self.stopScrcpyBtn.setText("断开设备屏幕")
+        self.stopScrcpyBtn.setText("关闭实时预览")
+        self.stopScrcpyBtn.setFont(getWRYHFontStyle())
         self.stopScrcpyBtn.setEnabled(False)
         self.stopScrcpyBtn.clicked.connect(self.__killScrcpy)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -80,27 +83,48 @@ class ScrcpyEmbedWidget(QWidget):
         self.stopScrcpyBtn.setObjectName("stopScrcpyBtn")
         buttonsLayout.addWidget(self.stopScrcpyBtn, alignment=Qt.AlignLeft)
 
+        self.tipsLabel = QtWidgets.QLabel(embedWidget)
+        self.tipsLabel.setFont(getSimpleFontStyle(size=9))
+        self.tipsLabel.setText("(若出现键盘无法控制远程设备的情况,点击一下右侧空白区域.)")
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.tipsLabel.sizePolicy().hasHeightForWidth())
+        self.tipsLabel.setSizePolicy(sizePolicy)
+        buttonsLayout.addWidget(self.tipsLabel, alignment=Qt.AlignLeft)
+
         self.verticalLayout.addWidget(btnsWidgets, alignment=Qt.AlignTop)
         self.myhwnd = int(self.winId())
 
-    def connectScrcpy(self):
-        """
-        连接Scrcpy
-        :return:
-        """
-        scrcpyExe = f'{settings.SCRCPY_PATH}\\scrcpy.exe'
-        if not os.path.exists(scrcpyExe):
-            z_logger.error(f"""【WARRING】: 系统找不到指定的文件: {scrcpyExe},
-            请从 https://github.com/Genymobile/scrcpy/releases 下载编译好的win64版本。
-            例如下载 scrcpy-win64-v2.3.1.zip ，解压缩后修改文件夹名为 scrcpy-win64 放置在tool目录下即可。
-            如果要升级替换 scrcpy 的版本，只需要替换 scrcpy-win64 目录下的文件即可，实现无缝升级；
-            
-            【说明】scrcpy 的操作是右键点击返回。
-            """)
-            return False
-        startCMD = f'{scrcpyExe} --window-title {self.windowTitle}'
-        self.mainWindow.adbTools.async_exec_adb_cmd([startCMD])
-        self.timerWaitScrcpy.start(2000)
+    def tryConnectScrcpy(self):
+        checker = Dependencies.ScrcpyChecker()
+        checker.checkFinished.connect(self.on_check_finished)
+        checker.startCheck()
+
+    def on_check_finished(self, checkResult: []):
+        result = checkResult[0]
+        param = checkResult[1]
+        if result:
+            if not os.path.exists(param):
+                z_logger.error(f"""【WARRING】: 系统找不到指定的文件: {param},
+                请从 https://github.com/Genymobile/scrcpy/releases 下载编译好的win64版本。
+                例如下载 scrcpy-win64-v2.3.1.zip ，解压缩后修改文件夹名为 scrcpy-win64 放置在tools目录下即可。
+                后续如果要升级替换 scrcpy 的版本，只需要替换 scrcpy-win64 目录下的文件即可，实现无缝升级；
+                
+                【说明】scrcpy 的操作是右键点击返回。
+                """)
+                return False
+            startCMD = f'scrcpy -s {self.mainWindow.current_device_addr} --window-title {self.windowTitle}'
+            self.mainWindow.adbTools.async_exec_adb_cmd([startCMD])
+            self.timerWaitScrcpy.start(2000)
+        else:
+            z_logger.error(f"无法进行远程设备屏幕链接! 原因:\n{param}")
+            if 'timeout' in param:
+                z_logger.error("""下载失败！可开启科学上网后再进行重试!
+                也可以从 https://github.com/Genymobile/scrcpy/releases 下载编译好的win64版本。
+                例如下载 scrcpy-win64-v2.3.1.zip ，解压缩后修改文件夹名为 scrcpy-win64 放置在tools目录下即可。
+                后续如果要升级替换 scrcpy 的版本，只需要替换 scrcpy-win64 目录下的文件即可，实现无缝升级；
+                """)
 
     def __killScrcpy(self):
         """
@@ -132,7 +156,7 @@ class ScrcpyEmbedWidget(QWidget):
         # 根据标题查找窗口句柄
         self.scrcpy_hwnd = win32gui.FindWindow(None, self.windowTitle)
         self.scrcpy_pid = win32process.GetWindowThreadProcessId(self.scrcpy_hwnd)[1]
-        if self.scrcpy_hwnd != -1:
+        if self.scrcpy_hwnd > 0:
             self.startScrcpyBtn.setEnabled(False)
             self.stopScrcpyBtn.setEnabled(True)
             # 找到scrcpy的窗口
@@ -142,10 +166,7 @@ class ScrcpyEmbedWidget(QWidget):
 
             self.container: QWidget = QWidget.createWindowContainer(native_window)
             self.container.setWindowFlags(Qt.Window | Qt.WindowTitleHint | Qt.WindowMinMaxButtonsHint)
-            self.container.setWindowTitle("测试数据")
             self.container.setFocusPolicy(Qt.StrongFocus)
-            # 保留原始窗口的边框和标题栏, 直接使用 QWindow 对象，并将其嵌入到一个 QWidget
-            # embedded_window = EmbeddedWindow(_hwnd)
             sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
             sizePolicy.setHeightForWidth(self.container.sizePolicy().hasHeightForWidth())
             self.container.setSizePolicy(sizePolicy)
@@ -156,7 +177,7 @@ class ScrcpyEmbedWidget(QWidget):
             # filter = EventFilter(self, native_window)
             # self.installEventFilter(filter)
         else:
-            z_logger.error('请确认远程设备已连接！！！')
+            z_logger.error('请确认远程设备是否已连接！')
 
     def __enumWindows(self, hwnd, what):
         """
@@ -180,10 +201,7 @@ class ScrcpyEmbedWidget(QWidget):
             return super().mousePressEvent(event)
         if event.button() == Qt.LeftButton:
             win32gui.SetFocus(self.scrcpy_hwnd)
-        elif event.button() == Qt.RightButton:
-            print("右键点击")
-        elif event.button() == Qt.MiddleButton:
-            print("中键点击")
+
 
 class EventFilter(QObject):
     """

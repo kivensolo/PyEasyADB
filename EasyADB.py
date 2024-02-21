@@ -3,7 +3,7 @@ import traceback
 
 from PyQt5.QtWidgets import QApplication, QDesktopWidget
 
-from Dependencies import Dependencies
+from Dependencies import AndroidDependencies
 from src.MainWindow import MainWindow
 from src.logcat.log import z_logger
 from utils.Utils import Utils
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     Utils.init(screen)
 
     try:
-        Dependencies().Check()
+        AndroidDependencies().Check()
     except Exception as e:
         print(e)
         sys.exit(0)

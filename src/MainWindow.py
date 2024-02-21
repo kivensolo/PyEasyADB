@@ -21,6 +21,7 @@ from src.widget.win32Wrapper import ScrcpyEmbedWidget
 from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
+from utils.Tools import getSongFontStyle
 from utils.UITools import IconTool
 from utils.Utils import Utils
 
@@ -172,6 +173,7 @@ class MainWindow(BaseWindow):
         :return:
         """
         self.center_panel = QtWidgets.QTabWidget(self)
+        self.center_panel.setFont(getSongFontStyle(size=10))
         self.center_panel.setObjectName("center_widget")
         # App操作页面
         appOprateArea = CommonFunctionalWidget(self)
@@ -179,7 +181,7 @@ class MainWindow(BaseWindow):
         embedWidget = ScrcpyEmbedWidget(self)
 
         self.center_panel.addTab(appOprateArea, "常用操作")
-        self.center_panel.addTab(embedWidget, "设备预览")
+        self.center_panel.addTab(embedWidget, "设备实时预览")
 
     def init_left_panel(self):
         """
