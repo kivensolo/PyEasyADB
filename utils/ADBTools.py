@@ -44,7 +44,7 @@ class ActionCmdParams:
         """
         if self.needDstPkg:
             if self.target_app == "":
-                z_logger.error("请先在 [应用参数配置] 区域配置应用包名数据.")
+                z_logger.error("该操作需要指明应用包名,请先在\"常用操作>>>应用参数配置\"区域指明应用包名数据。")
                 return False
             else:
                 return True

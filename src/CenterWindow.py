@@ -418,7 +418,7 @@ class Ui_ConvenientArea(object):
             # z_logger.info(r"请在[extend]扩展编辑框中，正确填入需要查询的uri! 格式要求: content://<authority>/<path>")
             # 使用实体编码解决<>被识别错误的问题
             z_logger.error(
-                "请在[extend]扩展编辑框中，正确填入需要查询的uri! 格式要求: content://&lt;authority&gt;/&lt;path&gt;")
+                "请在\"常用操作>>>应用参数配置>>>extend\"扩展编辑框中，正确填入需要查询的uri! 格式要求: content://&lt;authority&gt;/&lt;path&gt;")
             return
         params = ActionCmdParams(needPackage=False)
         params.cmd = f"content query --uri {uri_path}"
