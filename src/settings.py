@@ -4,23 +4,30 @@ import os
 # BASE_PATH = sys.argv[0]   xxxx/PyQt5Demo/App.py
 import time
 
-""" 依赖环境检测配置 """
+APP_VERSION = '1.0.3'
+
+# 依赖环境检测配置
 appdata_local = os.environ['LOCALAPPDATA']
 localAppDataOfEasyADB = os.path.join(appdata_local, 'EasyADB')
 if not os.path.exists(localAppDataOfEasyADB):
     os.mkdir(localAppDataOfEasyADB)
 platformToolsPath = os.path.join(localAppDataOfEasyADB, "platform-tools")
 toolsPath = os.path.join(localAppDataOfEasyADB, "tools")
-""" 依赖环境检测配置 """
+
+# 应用数据路径
+APP_DATA_PATH = os.path.join(localAppDataOfEasyADB, 'data')
+if not os.path.exists(APP_DATA_PATH):
+    os.mkdir(APP_DATA_PATH)
+# 应用数据库路径及名称
+APP_DB_FILE = os.path.join(APP_DATA_PATH, 'easyADB.db')
 
 # 应用窗口屏占比
 APP_SCREEN_RQTIO = 0.75
 
-# 根目录
-BASE_PATH = os.getcwd()
 
+BASE_PATH = os.getcwd()
 # 日志配置
-LOGS_PATH = "%s\\data\\logs" % BASE_PATH
+LOGS_PATH = "%s\\logs" % BASE_PATH
 
 LOG_CMD_OUT = "pro_{0}.log".format(time.strftime("%Y-%m-%d"))
 LOG_CMD_ERROR = "pro_{0}.err".format(time.strftime("%Y-%m-%d"))
@@ -31,10 +38,7 @@ LOG_APP_FILE = os.path.join(LOGS_PATH, _Log_NAME)
 # Scrcpy应用路径
 SCRCPY_PATH = os.path.join(BASE_PATH, 'tool', 'scrcpy-win64')
 
-# 应用数据库路径及名称
-APP_DB_FILE = "%s\\data\\easyADB.db" % BASE_PATH
 
-APP_VERSION = '1.0.2'
 
 DEBUG_PRINT = True
 
