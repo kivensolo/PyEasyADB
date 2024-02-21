@@ -479,7 +479,6 @@ class MainWindow(BaseWindow):
             # check
             _checkPass = cmdParams.verifyTargetApp()
             if not _checkPass:
-                z_logger.error("请先选择目标应用")
                 return
             # 每次重新赋值
             cmdParams.target_device_ip = self.current_device_addr

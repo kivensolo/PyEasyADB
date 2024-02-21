@@ -14,7 +14,7 @@ from utils.Utils import LogUtils, _simpleNameToLevel, _nameToLevel
 
 
 class ActionCmdParams:
-    def __init__(self, isShell=True, needPackage=True):
+    def __init__(self, isShell=True, needPackage=False):
         self.isShellMode = isShell
         self.needDstPkg = needPackage
         # ADB行为命令
@@ -44,6 +44,7 @@ class ActionCmdParams:
         """
         if self.needDstPkg:
             if self.target_app == "":
+                z_logger.error("请先在 [应用参数配置] 区域配置应用包名数据.")
                 return False
             else:
                 return True

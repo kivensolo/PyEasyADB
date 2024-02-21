@@ -258,6 +258,7 @@ class Ui_ConvenientArea(object):
                     sizePolicy.setVerticalStretch(0)
                     item_tool_button.setSizePolicy(sizePolicy)
                     attrs = item.getElementsByTagName("attr")
+
                     actionParams = ActionCmdParams()
                     for attr in attrs:
                         if attr.firstChild is None:
@@ -281,6 +282,9 @@ class Ui_ConvenientArea(object):
                             shellValue = attr.getAttribute("shell")
                             actionParams.isShellMode = (shellValue.lower() != "false")
                             actionParams.custom_action = _value
+                        elif _key == "isNeedPkgName":
+                            actionParams.needDstPkg = (_value.lower() == "true")
+
                     """
                     https://blog.csdn.net/PixelNovaO/article/details/132727483
                     每次迭代时创建一个新的闭包，以便为每个按钮创建一个独立的事件处理器。并将自定义对象作为参数传递。
@@ -340,6 +344,13 @@ class Ui_ConvenientArea(object):
         :param actionParams:
         :return:
         """
+        # 检查自定义行为需不需要指定目标应用包名
+        if actionParams.needDstPkg:
+            actionParams.target_app = self.mainWindow.pkgManager.getSelectedPackageName()
+            _checkPass = actionParams.verifyTargetApp()
+            if not _checkPass:
+                return
+
         if custom_act == "m_show_install_app_dialog":
             if not self.hasSelectedPackage():
                 return
