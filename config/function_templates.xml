@@ -123,10 +123,10 @@ sehll: 命令执行是否需要在shell模式中, 可选值: true或false
             <attr name="text">电源键</attr>
             <attr name="cmd" shell="true">input keyevent 26</attr>
         </item>
-        <item state="disable">
+        <!--<item state="disable">
             <attr name="icon">./res/img/app_restart_256x256.png</attr>
             <attr name="text">遥控器模式</attr>
             <attr name="cmd" shell="true"></attr>
-        </item>
+        </item>-->
     </template>
 </templates>

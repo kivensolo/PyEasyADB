@@ -19,6 +19,8 @@ class DBManager:
     COLUMN_NAME = "name"
 
     def __init__(self):
+        conn = None
+        cursor = None
         try:
             conn = sqlite3.connect(APP_DB_FILE)
             cursor = conn.cursor()
@@ -49,10 +51,12 @@ class DBManager:
             #                'config_key nvarchar(100) not null unique ,'
             #                'config_value nvarchar(512) null )')
         except Exception as e:
-            print(e)
+            print("数据库检查失败:" + e)
         finally:
-            cursor.close()
-            conn.close()
+            if cursor is not None:
+                cursor.close()
+            if conn is not None:
+                conn.close()
 
         # self.conn = sqlite3.connect(database_name)
 
@@ -67,6 +71,8 @@ class DBManager:
         # self.cursor = self.conn.cursor()
 
     def exec_sql(self, sql):
+        conn = None
+        cursor = None
         try:
             conn = sqlite3.connect(APP_DB_FILE)
             cursor: Cursor = conn.cursor()
@@ -81,8 +87,10 @@ class DBManager:
         except Exception as e:
             return [False, str(e)]
         finally:
-            cursor.close()
-            conn.close()
+            if cursor is not None:
+                cursor.close()
+            if conn is not None:
+                conn.close()
         return [True, result]
 
     def addPackageToDB(self, package):
