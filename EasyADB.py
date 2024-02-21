@@ -1,11 +1,12 @@
 import sys
 import traceback
 
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QDesktopWidget
 
 from Dependencies import Dependencies
 from src.MainWindow import MainWindow
 from src.logcat.log import z_logger
+from utils.Utils import Utils
 
 
 def exception_handler(exc_type, exc_value, exc_traceback):
@@ -24,6 +25,12 @@ class App:
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    # 获取当前屏幕信息
+    desktop = QDesktopWidget()
+    screen = desktop.screenGeometry()
+    Utils.init(screen)
+
     try:
         Dependencies().Check()
     except Exception as e:

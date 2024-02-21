@@ -5,16 +5,13 @@ import zipfile
 from PyQt5.QtWidgets import QMessageBox
 from pip._vendor import requests
 
+from src import settings
 from src.logcat.log import z_logger
 
 
 class Dependencies:
-    appdata_local = os.environ['LOCALAPPDATA']
-    appEasyADBPath = os.path.join(appdata_local, 'EasyADB')
-    if not os.path.exists(appEasyADBPath):
-        os.mkdir(appEasyADBPath)
-    downloadedZipFile = os.path.join(appEasyADBPath, "platform-tools-latest-windows.zip")
-    tmpPlatformPath = os.path.join(appEasyADBPath, "platform-tools")
+    downloadedZipFile = os.path.join(settings.appEasyADBPath, "platform-tools-latest-windows.zip")
+    tmpPlatformPath = settings.platformToolsPath
     # 平台工具最新集合包
     downloadUrl = "https://dl.google.com/android/repository/platform-tools-latest-windows.zip"
     # 目前在使用的依赖库文件
@@ -82,5 +79,46 @@ class Dependencies:
         message_box.setWindowTitle("完成")
         message_box.setText("文件下载完毕!")
         message_box.setStandardButtons(QMessageBox.Ok)
+        dialogResult = message_box.exec_()
+        return dialogResult
+
+
+class Scrcpy:
+    _version = settings.defaultScrcpyDownloadVersion
+    toolsPath = os.path.join(settings.appEasyADBPath, "tools")
+
+    downloadedZipFile = os.path.join(toolsPath, f"scrcpy-win64-{_version}.zip")
+    scrcpyPath = os.path.join(toolsPath, f"scrcpy-win64", "scrcpy.exe")
+    downloadUrl = f'https://github.com/Genymobile/scrcpy/releases/download/{_version}/scrcpy-win64-{_version}.zip'
+
+    def Check(self):
+        self.setEnvVariable()
+        if os.path.exists(self.scrcpyPath):
+            return True
+        result = self.__showWarning()
+        if result == QMessageBox.Cancel:
+            # self.__downloadFiles()
+            # self.__extractFiles()
+            # self.__showComplated()
+            print(f"下载Scrcpy:{self.downloadUrl}")
+
+        elif result == QMessageBox.OK:
+            # 设置路径
+            print("设置路径")
+
+    def setEnvVariable(self):
+        oldEnv = os.environ['PATH']
+        if self.toolsPath in oldEnv:
+            return
+        toolsPath = self.toolsPath
+        os.environ['PATH'] = f'{oldEnv}{toolsPath}'
+
+    def __showWarning(self):
+        message_box = QMessageBox()
+        message_box.setIcon(QMessageBox.Warning)
+        message_box.setWindowTitle("警告")
+        message_box.setText("环境缺少Scrcpy工具，是否进行默认版本下载？")
+        # ok是选择自定义路径， 取消是进行下载
+        message_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         dialogResult = message_box.exec_()
         return dialogResult

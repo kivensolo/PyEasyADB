@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSettings
 from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
-    QAbstractItemView, QWidget, QStyleFactory, QFileSystemModel, QTreeWidget
+    QAbstractItemView, QWidget, QStyleFactory, QFileSystemModel, QTreeWidget, QDesktopWidget
 
 from src import TreeItemType
 from src.BaseWindow import BaseWindow
@@ -17,6 +17,7 @@ from src.ToolBar import Ui_ToolBar
 from src.logcat.log import z_logger
 from src.settings import APP_SCREEN_RQTIO
 from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog
+from src.widget.win32Wrapper import ScrcpyEmbedWidget
 from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
@@ -138,7 +139,8 @@ class MainWindow(BaseWindow):
         self.horizontal_splitter.setHandleWidth(0)
         self.horizontal_splitter.addWidget(self.vertical_splitter)
         self.horizontal_splitter.addWidget(self.bottom_tab_widget)
-        self.horizontal_splitter.setStretchFactor(1, 4)
+        self.horizontal_splitter.setStretchFactor(0, 8)
+        self.horizontal_splitter.setStretchFactor(1, 2)
         self.horizontal_splitter.setChildrenCollapsible(0)  # 过窄不可隐藏子控件
         self.setCentralWidget(self.horizontal_splitter)
 
@@ -171,16 +173,13 @@ class MainWindow(BaseWindow):
         """
         self.center_panel = QtWidgets.QTabWidget(self)
         self.center_panel.setObjectName("center_widget")
-        self.center_panel.setStyleSheet("""
-            QStackedWidget {background-color:rgb(255,255,255);}
-            """)
         # App操作页面
         appOprateArea = CommonFunctionalWidget(self)
         # 设备实时预览的UI
-        deviceMonitor = QtWidgets.QMainWindow()
+        embedWidget = ScrcpyEmbedWidget(self)
 
         self.center_panel.addTab(appOprateArea, "常用操作")
-        self.center_panel.addTab(deviceMonitor, "设备预览")
+        self.center_panel.addTab(embedWidget, "设备预览")
 
     def init_left_panel(self):
         """

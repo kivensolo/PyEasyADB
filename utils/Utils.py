@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
-import json
 import logging
 import sqlite3
 
 # import xmltodict
 # from PyQt5.QtWebEngineWidgets import QWebEngineScript
-from lxml import etree
 
 # from XulDebugTool.logcatapi.Logcat import STCLogger
 
@@ -47,6 +45,11 @@ class Utils(object):
     #     except Exception as e:
     #         STCLogger().e(e)
     #     return list[0]
+
+    @staticmethod
+    def init(rect):
+        Utils.windowWidth = rect.width()
+        Utils.windowHeight = rect.width()
 
     @staticmethod
     def setWindowWidth(width):
