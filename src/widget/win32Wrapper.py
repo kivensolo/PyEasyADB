@@ -118,11 +118,12 @@ class ScrcpyEmbedWidget(QWidget):
             self.mainWindow.adbTools.async_exec_adb_cmd([startCMD])
             self.timerWaitScrcpy.start(2000)
         else:
-            z_logger.error(f"无法进行远程设备屏幕链接! 原因:\n{param}")
-            if 'timeout' in param:
-                z_logger.error("""下载失败！可开启科学上网后再进行重试!
+            z_logger.error(f"无法进行远程设备屏幕连接! 说明:\n{param}")
+            if 'timeout' in param \
+                    or 'Connection aborted' in param:
+                z_logger.error("""下载失败！建议开启科学上网后再进行重试!
                 也可以从 https://github.com/Genymobile/scrcpy/releases 下载编译好的win64版本。
-                例如下载 scrcpy-win64-v2.3.1.zip ，解压缩后修改文件夹名为 scrcpy-win64 放置在tools目录下即可。
+                例如下载 scrcpy-win64-v2.3.1.zip ，解压缩后修改文件夹名为 scrcpy-win64 放置在'<User>\\AppData\\Local\\EasyADB\\tools'目录下即可。
                 后续如果要升级替换 scrcpy 的版本，只需要替换 scrcpy-win64 目录下的文件即可，实现无缝升级；
                 """)
 
