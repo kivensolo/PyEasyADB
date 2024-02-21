@@ -3,7 +3,7 @@ import sys
 import threading
 import zipfile
 
-from PyQt5.QtCore import pyqtSignal, QObject, QTimer
+from PyQt5.QtCore import pyqtSignal, QObject, QTimer, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox
 from pip._vendor import requests
 
@@ -18,7 +18,7 @@ def downloadFiles(url, filePath):
     :param filePath:
     :return:
     """
-    if os.path.exists(filePath) and (os.path.getsize(filePath) != 0):
+    if os.path.exists(filePath) and (os.path.getsize(filePath) > 1024):
         z_logger.debug("文件存在,无需下载")
         return True, "文件存在,无需下载"
 
@@ -80,6 +80,12 @@ class AndroidDependencies:
             # 对工具包进行解压
             extractFiles(self.downloadedZipFile, settings.localAppDataOfEasyADB)
 
+            # 删除下载后的压缩文件
+            try:
+                os.remove(self.downloadedZipFile)
+            except Exception as e:
+                z_logger.debug(f"删除platform-tools压缩包失败：{e}")
+
             self.__showComplated()
         elif result == QMessageBox.Cancel:
             sys.exit(0)
@@ -127,14 +133,19 @@ class ScrcpyChecker(QObject):
         super().__init__()
         self.thread = threading.Thread(target=self.__check)
         self.thread.name = 'ScrcpyChecker'
+
     def __check(self):
+        self.isDownloadTimeOut = False
         if not os.path.exists(self.downloadedZipFile):
-            self.downloadTimer = QTimer()
-            self.downloadTimer.timeout.connect(self.onTimerFinish)
+            QTimer.singleShot(10 * 1000, self.onTimerFinish)
             result, desc = downloadFiles(self.downloadUrl, self.downloadedZipFile)
-            if not result:
-                self.checkFinished.emit((False, f'{desc}'))
+            if not self.isDownloadTimeOut:
+                if not result:
+                    self.checkFinished.emit((False, f'{desc}'))
+                    return
+            else:
                 return
+
         # 对工具包进行解压
         z_logger.info(f"依赖组件下载完毕, 释放中....")
         extractFiles(self.downloadedZipFile, self.toolsPath)
@@ -144,8 +155,10 @@ class ScrcpyChecker(QObject):
         z_logger.info(f"释放完毕,即将启动.....")
         self.checkFinished.emit((True, self.scrcpyExeFilePath))
 
+    @pyqtSlot()
     def onTimerFinish(self):
-        self.checkFinished.emit((False, '下载超时!建议科学上网后，再进行尝试。'))
+        self.isDownloadTimeOut = True
+        self.checkFinished.emit((False, '下载超时!建议科学上网后，再进行尝试。或者进行离线安装。'))
 
     def startCheck(self):
         """
@@ -164,17 +177,17 @@ class ScrcpyChecker(QObject):
 
         result = self.__showWarning()
         if result == QMessageBox.Ok:
-            z_logger.error("开始下载依赖组件,耗时会受网络因素影响，请耐心等待.......")
+            z_logger.info_with_stamp("开始下载依赖组件,耗时会受网络因素影响，请耐心等待.......")
             self.thread.start()
         elif result == QMessageBox.Cancel:
-            z_logger.info("下载取消")
-            self.checkFinished.emit((False, ""))
+            z_logger.info_with_stamp("下载取消")
+            self.checkFinished.emit((False, "手动取消"))
 
     def __showWarning(self):
         message_box = QMessageBox()
         message_box.setIcon(QMessageBox.Warning)
         message_box.setWindowTitle("警告")
-        message_box.setText("检测到缺少镜像功能需要的依赖组件\n是否进行自动下载？")
+        message_box.setText("检测到缺少镜像功能需要的依赖组件\n是否进行自动下载？(建议开启科学上网)")
         message_box.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         dialogResult = message_box.exec_()
         return dialogResult
