@@ -3,6 +3,7 @@ from PyQt5.QtCore import QDir, QUrl
 from PyQt5.QtGui import QIcon, QDesktopServices
 from PyQt5.QtWidgets import QAction, qApp, QMenu
 
+from src import settings
 from src.logcat.log import z_logger
 import xml.dom.minidom
 
@@ -73,7 +74,5 @@ class MenuActions(object):
 
     @staticmethod
     def open_log_folder():
-        # 获取当前工作目录
-        current_dir = QDir.currentPath()
         # 使用系统资源管理器打开文件夹
-        QDesktopServices.openUrl(QUrl.fromLocalFile(f"{current_dir}/data/logs"))
+        QDesktopServices.openUrl(QUrl.fromLocalFile(settings.LOGS_PATH))
