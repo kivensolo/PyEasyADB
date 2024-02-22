@@ -39,11 +39,9 @@ class Ui_ToolBar(QToolBar):
     """
     App快捷工具栏(菜单栏下面)
     """
-
     def setupUi(self):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.setLayout(self.horizontalLayout)
-        self.setContentsMargins(5, 0, 0, 0)
 
         iconAdd = IconTool.buildQIcon("add_new_32x32.png", "icons")
         self.btn_adddevice.setIcon(iconAdd)
@@ -54,7 +52,7 @@ class Ui_ToolBar(QToolBar):
 
         iconOpenShell = IconTool.buildQIcon("open_shell_32x32.png", "icons")
         self.btn_openshell.setIcon(iconOpenShell)
-        self.btn_openshell.setIconSize(QtCore.QSize(28, 28))
+        self.btn_openshell.setIconSize(QtCore.QSize(28, 24))
         self.btn_openshell.setObjectName("open_shell")
         self.addWidget(self.btn_openshell)
 

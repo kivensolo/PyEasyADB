@@ -68,8 +68,8 @@ class AppPushButton(QPushButton):
             QPushButton {
                 background-color: transparent;
                 border: none;
-                padding:5px,5px,5px,5px;
-                margin:5px,3px,5px,3px;
+                padding:1px,1px,1px,1px;
+                margin:3px,1px,3px,1px;
             }
             QPushButton:hover {
                 background-color: #b3d7f3;
