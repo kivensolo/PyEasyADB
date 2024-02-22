@@ -24,6 +24,9 @@ class ScrcpyEmbedWidget(QWidget):
         self.scrcpy_hwnd = -1
         # scrcpy的PID
         self.scrcpy_pid = -1
+        # 查找scrcpy window窗口的次数
+        self.search_conunt = 0
+
         # 设置控件可以接收键盘焦点
         self.setFocusPolicy(Qt.StrongFocus)
         self.setContentsMargins(0, 0, 0, 0)
@@ -85,7 +88,7 @@ class ScrcpyEmbedWidget(QWidget):
 
         self.tipsLabel = QtWidgets.QLabel(embedWidget)
         self.tipsLabel.setFont(getWRYHFontStyle())
-        self.tipsLabel.setText("(若出现键盘无法控制远程设备的情况,请点击我)")
+        self.tipsLabel.setText("(若出现键盘无法控制远程设备的情况,请点击一下此处红色文本.)")
         self.tipsLabel.setStyleSheet("color: #bf200b")
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -118,6 +121,7 @@ class ScrcpyEmbedWidget(QWidget):
             startCMD = f'scrcpy -s {self.mainWindow.current_device_addr} --window-title {self.windowTitle}'
             self.mainWindow.adbTools.async_exec_adb_cmd([startCMD])
             self.timerWaitScrcpy.start(2000)
+
         else:
             z_logger.error(f"无法进行远程设备屏幕连接! 说明:\n{param}")
             if 'timeout' in param \
@@ -150,6 +154,7 @@ class ScrcpyEmbedWidget(QWidget):
         self.findAndInflateScrcpy()
 
     def findAndInflateScrcpy(self):
+        self.search_conunt += 1
         """
         发现Scrcpy窗口
         :return:
@@ -159,6 +164,7 @@ class ScrcpyEmbedWidget(QWidget):
         self.scrcpy_hwnd = win32gui.FindWindow(None, self.windowTitle)
         self.scrcpy_pid = win32process.GetWindowThreadProcessId(self.scrcpy_hwnd)[1]
         if self.scrcpy_hwnd > 0:
+            self.search_conunt = 0
             self.startScrcpyBtn.setEnabled(False)
             self.stopScrcpyBtn.setEnabled(True)
             # 找到scrcpy的窗口
@@ -179,7 +185,12 @@ class ScrcpyEmbedWidget(QWidget):
             # filter = EventFilter(self, native_window)
             # self.installEventFilter(filter)
         else:
-            z_logger.error('请确认远程设备是否已连接！')
+            if self.search_conunt <= 3:
+                # 有的设备第一次启动的时候，时间会迟于2秒，减少间隔时间，再次重试(给到5秒的时间)。
+                self.timerWaitScrcpy.start(1000)
+            else:
+                self.search_conunt = 0
+                z_logger.error('无法找到有效镜像窗口，请确认远程设备是否已连接！')
 
     def __enumWindows(self, hwnd, what):
         """
