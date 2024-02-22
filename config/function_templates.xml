@@ -83,10 +83,6 @@ isNeedPkgName: 操作是否需要依赖应用包名, 默认为false
     <template name="按键模拟" layout="grid">
         <item>
             <attr name="icon">./res/img/back_256x256.png</attr>
-            <attr name="text">数字键1</attr>
-            <attr name="cmd" shell="true">input keyevent 12312</attr>
-        </item> <item>
-            <attr name="icon">./res/img/back_256x256.png</attr>
             <attr name="text">返回键</attr>
             <attr name="cmd" shell="true">input keyevent 4</attr>
         </item>

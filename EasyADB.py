@@ -21,6 +21,7 @@ sys.excepthook = exception_handler
 # requests库需要的CA证书设置
 os.environ['REQUESTS_CA_BUNDLE'] = os.path.join(os.path.dirname(sys.argv[0]), os.path.join('certifi', 'cacert.pem'))
 
+
 class App:
     def __init__(self):
         super.__init__()
@@ -39,6 +40,7 @@ if __name__ == '__main__':
     except Exception as e:
         print(e)
         sys.exit(0)
+
     ex = MainWindow()
     # 使程序进入主循环(应用程序的消息循环队列),主循环会获取并分发事件。
     sys.exit(app.exec_())
