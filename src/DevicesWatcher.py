@@ -48,11 +48,12 @@ class DevicesWatcher(QObject):
         super().__init__()
         self.thread = threading.Thread(target=self.run)
         self.thread.name = 'DeviceWatcher'
+        # 设置为守护线程，主线程结束时会终止子线程
+        self.thread.daemon = True
         self.oldValue = ""
 
     def run(self):
         while True:
-            # print("检测检测+1")
             # 进行ADB执行
             process = Popen('adb devices', stdout=PIPE, stderr=PIPE,
                             bufsize=-1, encoding='utf-8')
