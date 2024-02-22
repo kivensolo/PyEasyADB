@@ -84,8 +84,9 @@ class ScrcpyEmbedWidget(QWidget):
         buttonsLayout.addWidget(self.stopScrcpyBtn, alignment=Qt.AlignLeft)
 
         self.tipsLabel = QtWidgets.QLabel(embedWidget)
-        self.tipsLabel.setFont(getSimpleFontStyle(size=9))
-        self.tipsLabel.setText("(若出现键盘无法控制远程设备的情况,点击一下右侧空白区域.)")
+        self.tipsLabel.setFont(getWRYHFontStyle())
+        self.tipsLabel.setText("(若出现键盘无法控制远程设备的情况,请点击我)")
+        self.tipsLabel.setStyleSheet("color: #bf200b")
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)

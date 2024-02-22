@@ -2,8 +2,8 @@ import typing
 
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QRegExp
-from PyQt5.QtGui import QIcon, QRegExpValidator, QFont
-from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser, QAction, QMenu
+from PyQt5.QtGui import QIcon, QRegExpValidator, QFont, QTextCursor
+from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser, QAction, QMenu, QPushButton
 
 from src.logcat.log import z_logger
 from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
@@ -185,10 +185,12 @@ class DraggableLineEdit(QLineEdit):
 class LiveLogTextBrowser(QTextBrowser):
     # """
     # 具备按条件做过滤的TextBrowser
+    # 用于日志实时打印
     # """
 
     def __init__(self, parent=None):
         super(LiveLogTextBrowser, self).__init__(parent)
+        self.needScrollToEnd = False
         self.setOpenLinks(True)
         self.setOpenExternalLinks(True)
         self.setReadOnly(True)
@@ -211,6 +213,9 @@ class LiveLogTextBrowser(QTextBrowser):
         clearIcon = IconTool.buildQIcon("ic_clear.png", "icons")
         self.action_clear = self.menu.addAction(clearIcon, "Clear All")
         self.action_clear.triggered.connect(self.clear)
+
+    def setAlwaysScrollToEnd(self, isEnable):
+        self.needScrollToEnd = isEnable
 
     def showContextMenu(self, position):
         cursor = self.textCursor()
@@ -237,3 +242,26 @@ class LiveLogTextBrowser(QTextBrowser):
         clear_action.triggered.connect(self.clear)
         self.menu.addAction(clear_action)
         self.menu.exec_(self.viewport().mapToGlobal(pos))
+
+    def append(self, text: typing.Optional[str]) -> None:
+        if self.needScrollToEnd:
+            self.moveCursor(QTextCursor.End)
+            self.ensureCursorVisible()
+        return super().append(text)
+
+
+class StatePushButton(QPushButton):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.isPressed = False
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            if self.isPressed:
+                self.setStyleSheet("background-color: #00ffffff;")
+                self.isPressed = False
+            else:
+                self.setStyleSheet("background-color: #d4d4d4;")
+                self.isPressed = True
+        return super().mousePressEvent(event)
+

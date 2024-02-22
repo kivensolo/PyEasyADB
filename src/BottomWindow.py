@@ -5,15 +5,15 @@ import sys
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtGui import QTextCursor, QIcon
+from PyQt5.QtGui import QTextCursor, QIcon, QColor
 from PyQt5.QtWidgets import QTabWidget, QTabBar, QApplication, QMainWindow, QWidget, QComboBox, QTextBrowser, QSplitter, \
-    QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QCheckBox, QLineEdit, QAction
+    QPushButton, QVBoxLayout, QHBoxLayout, QLabel, QListView, QCheckBox, QLineEdit, QAction, QRadioButton
 
 from src import MainWindow
 from src.logcat import log
 from src.logcat.log import z_logger
 from src.settings import LIVE_LOG_DEFAULT_FILTER_PID, LIVE_LOG_CONUTS_LIMITS
-from src.widget.CustomWidgets import LiveLogTextBrowser
+from src.widget.CustomWidgets import LiveLogTextBrowser, StatePushButton
 from utils.ADBTools import ADBTools, LiveLogAdbThread
 from utils.PackageManager import PackageManager
 from utils.Tools import getSongFontStyle, getSimpleFontStyle
@@ -55,7 +55,7 @@ class BottomTabWidget(QTabWidget):
         self.setTabPosition(QTabWidget.South)
 
         # 添加组件至TabWidget中
-        self.addTab(self.consoleView, IconTool.buildQIcon("console.png", "icons"), "Run")
+        self.addTab(self.consoleView, IconTool.buildQIcon("console.png", "icons"), "日志")
         self.addTab(self.liveLogView, IconTool.buildQIcon("logcat.png"), "Live Log")
 
         # self.setFixedHeight(Utils.getItemHeight())
@@ -150,13 +150,12 @@ class ConsoleWindow(QMainWindow):
         clearButton.clicked.connect(self._clear)
         clearButton.setToolTip("Clear the console log")
 
-        scrollBtn = QPushButton(self)
-        icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
+        scrollBtn = StatePushButton(self)
+        icon = QIcon(IconTool.getIconFromSVG("scroll_down.svg"))
         scrollBtn.setIcon(icon)
-        scrollBtn.setFixedWidth(24)
-        scrollBtn.setFixedHeight(28)
-        scrollBtn.clicked.connect(self._scrollToBottom)
-        scrollBtn.setToolTip("Scroll to bottom")
+        scrollBtn.clicked.connect(self.__onScrollDownClicked)
+        scrollBtn.setToolTip("Scroll to End")
+        self.needScrollToEnd = False
 
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignTop)
@@ -174,7 +173,7 @@ class ConsoleWindow(QMainWindow):
         self.setStyleSheet('''
             QPushButton{
                 border: none;
-                background-color: #0000 ;
+                background-color: #00ffffff ;
             }
             
             QPushButton:hover {
@@ -218,13 +217,6 @@ class ConsoleWindow(QMainWindow):
         # self.verticalSplitter.setChildrenCollapsible(0)
         # self.setCentralWidget(self.verticalSplitter)
 
-    def normalOutputWritten(self, text):
-        cursor = self.terminalTextBrowser.textCursor()
-        cursor.movePosition(QTextCursor.End)
-        cursor.insertHtml(text)
-        self.terminalTextBrowser.setTextCursor(cursor)
-        self.terminalTextBrowser.ensureCursorVisible()
-
     def append_log(self, logMsg, record: logging.LogRecord):
         level = record.levelno
         # _funcName = record.funcName     # 执行log打印的函数名
@@ -233,7 +225,7 @@ class ConsoleWindow(QMainWindow):
         logMsg = logMsg.rstrip("\n")
         is_need_appen_prefix = logMsg.startswith(log.TIME_STAMP_PREFIX)
         if is_need_appen_prefix:
-            logMsg = logMsg[7:]  # 切片操作，去除前缀
+            logMsg = logMsg[len(log.TIME_STAMP_PREFIX):]  # 切片操作，去除前缀
 
         # url检测
         content = LogUtils.highlight_link_addr(logMsg)
@@ -242,6 +234,9 @@ class ConsoleWindow(QMainWindow):
 
         if is_need_appen_prefix:
             ui_log = f"{LogUtils.build_time_stamp()}{ui_log}"
+
+        self.checkScrollToEnd()
+
         self.terminalTextBrowser.append(ui_log)
 
         # 解决该控件插入Html时，不支持\n的问题
@@ -256,9 +251,14 @@ class ConsoleWindow(QMainWindow):
         self.terminalTextBrowser.clear()
         return
 
-    def _scrollToBottom(self):
-        self.terminalTextBrowser.moveCursor(QTextCursor.End)
-        self.terminalTextBrowser.ensureCursorVisible()
+    def __onScrollDownClicked(self):
+        source = self.sender()  # 获取信号源对象，即点击的按钮
+        self.needScrollToEnd = source.isPressed
+
+    def checkScrollToEnd(self):
+        if self.needScrollToEnd:
+            self.terminalTextBrowser.moveCursor(QTextCursor.End)
+            self.terminalTextBrowser.ensureCursorVisible()
 
     # def updateSelectDeviceInfo(self, ip, isconnect):
     #     self.infoBarWidget.update_device_info(ip, isconnect)
@@ -284,7 +284,7 @@ class LogCatWindow(QMainWindow):
         self.setStyleSheet('''
             QPushButton{
                 border: none;
-                background-color: #0000 ;
+                background-color: #00ffffff ;
             }
             
             QPushButton:hover {
@@ -311,13 +311,6 @@ class LogCatWindow(QMainWindow):
         self.verticalSplitter.addWidget(self.vSplitter)
         self.verticalSplitter.setChildrenCollapsible(0)
         self.setCentralWidget(self.verticalSplitter)
-
-    def normalOutputWritten(self, text):
-        cursor = self.logTextBrowser.textCursor()
-        cursor.movePosition(QTextCursor.End)
-        cursor.insertHtml(text)
-        self.logTextBrowser.setTextCursor(cursor)
-        self.logTextBrowser.ensureCursorVisible()
 
     def on_live_log_dump(self, ui_log):
         if self._isOverLimitRow():
@@ -367,9 +360,13 @@ class LogCatWindow(QMainWindow):
             z_logger.debug("清空logcat 缓存.")
             addr = self.mainWindow.current_device_addr
 
-    def _scrollToBottom(self):
-        self.logTextBrowser.moveCursor(QTextCursor.End)
-        self.logTextBrowser.ensureCursorVisible()
+    def onLiveLogScrollDownClicked(self):
+        # 获取信号源对象，即点击的按钮
+        source = self.sender()
+        self.logTextBrowser.setAlwaysScrollToEnd(source.isPressed)
+        if source.isPressed:
+            self.logTextBrowser.moveCursor(QTextCursor.End)
+            self.logTextBrowser.ensureCursorVisible()
 
     def updateSelectDeviceInfo(self, ip, isconnect):
         self.infoBarWidget.update_device_info(ip, isconnect)
@@ -408,13 +405,11 @@ class LogCatWindow(QMainWindow):
             clearButton.clicked.connect(self.parent.clear)
             clearButton.setToolTip("Clear the logcat")
 
-            scrollBtn = QPushButton(self)
-            icon = QIcon(IconTool.buildQIcon("ic_arrow_down.png", "icons"))
+            scrollBtn = StatePushButton(self)
+            icon = QIcon(IconTool.getIconFromSVG("scroll_down.svg"))
             scrollBtn.setIcon(icon)
-            scrollBtn.setFixedWidth(24)
-            scrollBtn.setFixedHeight(28)
-            scrollBtn.clicked.connect(self.parent._scrollToBottom)
-            scrollBtn.setToolTip("Scroll to bottom")
+            scrollBtn.clicked.connect(self.parent.onLiveLogScrollDownClicked)
+            scrollBtn.setToolTip("Scroll to End")
 
             layout = QVBoxLayout()
             layout.setAlignment(Qt.AlignTop)
