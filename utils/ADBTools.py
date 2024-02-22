@@ -135,33 +135,36 @@ class LiveLogAdbThread(QThread):
         )
         z_logger.debug("开启subprocess.....")
         while True:
-            stdout = self.process.stdout.readline()
-            if stdout:
-                logMsg = stdout.rstrip("\n")
-                if len(logMsg) == 0:
-                    # 部分设备(例如S3、小米S4)会在每条输出后输出\n,这种数据过滤掉
+            try:
+                stdout = self.process.stdout.readline()
+                if stdout:
+                    logMsg = stdout.rstrip("\n")
+                    if len(logMsg) == 0:
+                        # 部分设备(例如S3、小米S4)会在每条输出后输出\n,这种数据过滤掉
+                        continue
+
+                    # 记录每一条原始数据
+                    self.logcatFilter.record(logMsg)
+
+                    # 进行数据级别过滤
+                    isFiltered, pid, level = self.logcatFilter.filter(logMsg)
+                    if isFiltered:
+                        continue
+                    # url高亮处理
+                    content = LogUtils.highlight_link_addr(logMsg)
+                    # 着色处理
+                    ui_log = LogUtils.changeLogColor(False, level, content)
+
+                    # 每条数据发送等待10ms,防止GUI频繁渲染导致的卡顿
+                    time.sleep(0.001)
+
+                    # 发送给UI线程
+                    self.live_log_dump_signal.emit(ui_log)
                     continue
-
-                # 记录每一条原始数据
-                self.logcatFilter.record(logMsg)
-
-                # 进行数据级别过滤
-                isFiltered, pid, level = self.logcatFilter.filter(logMsg)
-                if isFiltered:
-                    continue
-                # url高亮处理
-                content = LogUtils.highlight_link_addr(logMsg)
-                # 着色处理
-                ui_log = LogUtils.changeLogColor(False, level, content)
-
-                # 每条数据发送等待10ms,防止GUI频繁渲染导致的卡顿
-                time.sleep(0.001)
-
-                # 发送给UI线程
-                self.live_log_dump_signal.emit(ui_log)
-                continue
-            else:
-                break   # 输出结束，中断循环并退出线程
+                else:
+                    break   # 输出结束，中断循环并退出线程
+            except Exception as e:
+                z_logger.error(f"Read output error: {e}")
 
         # 会阻塞，所以没法和stdout放在一些读取
         stderr = self.process.stderr.read()
