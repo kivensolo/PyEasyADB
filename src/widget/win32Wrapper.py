@@ -143,9 +143,12 @@ class ScrcpyEmbedWidget(QWidget):
         self.verticalLayout.removeWidget(self.container)
 
         # 结束Scrcpy进程
-        handle = win32api.OpenProcess(win32con.PROCESS_TERMINATE, False, self.scrcpy_pid)
-        win32api.TerminateProcess(handle, 0)
-        win32api.CloseHandle(handle)
+        try:
+            handle = win32api.OpenProcess(win32con.PROCESS_TERMINATE, False, self.scrcpy_pid)
+            win32api.TerminateProcess(handle, 0)
+            win32api.CloseHandle(handle)
+        except Exception as e:
+            z_logger.error(f"关闭实时预览出现异常！\b{e} \n请确认是否单独启动了不同版本的Scrcpy程序!")
         self.scrcpy_hwnd = -1
         self.startScrcpyBtn.setEnabled(True)
         self.stopScrcpyBtn.setEnabled(False)
