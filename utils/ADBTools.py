@@ -132,6 +132,7 @@ class LiveLogAdbThread(QThread):
             _cmd = self.cmd
         self.process = subprocess.Popen(
             _cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf-8'
+            , errors="replace"
         )
         z_logger.debug("开启subprocess.....")
         while True:
@@ -165,6 +166,10 @@ class LiveLogAdbThread(QThread):
                     break   # 输出结束，中断循环并退出线程
             except Exception as e:
                 z_logger.error(f"Read output error: {e}")
+                # if isinstance(e, UnicodeDecodeError):
+                #     bytesString = e.args[1]
+                #     z_logger.error(f"字符解码异常详细数据:{bytesString}")
+
 
         # 会阻塞，所以没法和stdout放在一些读取
         stderr = self.process.stderr.read()
