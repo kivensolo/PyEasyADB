@@ -398,6 +398,7 @@ class MainWindow(BaseWindow):
         result, msg = self.dbManager.remove_device_from_db(item_model.addr)
         if result:
             z_logger.info('删除设备(%s)成功!' % str(item_model.addr))
+            self.devicesWatcher.onDeviceDeleted()
 
     @pyqtSlot()
     def show_device_alias_edit_dialog(self):

@@ -89,6 +89,7 @@ class DevicesWatcher(QObject):
 
                 # 确保在主线程中调用观察者方法
                 self.changedSignal.emit(devices_list)
+
             time.sleep(self.refreshInterval)
 
     def start(self, interval=2):
@@ -96,6 +97,13 @@ class DevicesWatcher(QObject):
         self.thread.start()
         z_logger.debug(f'[DeviceWatcher] thread[{self.thread.name}] started')
 
+    def onDeviceDeleted(self):
+        """
+        任意设备被删除时被调用
+        清除旧值，强制触发一次改变信号。
+        :return:
+        """
+        self.oldValue = ''
 
 class ObserverTest(QObject):
     def __init__(self, video):
