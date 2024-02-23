@@ -4,7 +4,7 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSettings
 from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
-    QAbstractItemView, QWidget, QStyleFactory, QFileSystemModel, QTreeWidget, QDesktopWidget
+    QAbstractItemView, QWidget, QStyleFactory, QFileSystemModel, QTreeWidget, QDesktopWidget, QMessageBox
 
 from src import TreeItemType
 from src.BaseWindow import BaseWindow
@@ -471,18 +471,35 @@ class MainWindow(BaseWindow):
             self.runAdbCMD(params)
 
     def runAdbCMD(self, cmdParams: ActionCmdParams):
+        """
+        执行单次的ADB命令
+        :param cmdParams:   命令封装对象
+        :return:
+        """
         if len(self.connected_device_list) == 0:
-            z_logger.error("请先连接设备")
+            z_logger.error("请先连接设备!")
         else:
-            # 最后环节点确定目标应用包名信息
+            # Step_1:Complete target app parameter
             if cmdParams.needDstPkg:
                 cmdParams.target_app = self.pkgManager.getSelectedPackageName()
-            # check
+
+            # Step_2:Check if this action needs to rely on package name.
             _checkPass = cmdParams.verifyTargetApp()
             if not _checkPass:
                 return
-            # 每次重新赋值
+
+            # Step_3: Custom confirm tips
+            if "uninstall" in cmdParams.cmd:
+                reply = QMessageBox.question(
+                    self, '提示', f"确认卸载以下应用:\n {cmdParams.target_app}",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.No)
+                if reply != QMessageBox.Yes:
+                    return
+
+            # Step_4: Update target device
             cmdParams.target_device_ip = self.current_device_addr
+
             self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), block=self.on_adb_cmd_exectued)
 
     def runAdbCMD_V2(self, cmdParams: list):

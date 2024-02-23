@@ -29,6 +29,11 @@ class ActionCmdParams:
         return self.custom_action != ""
 
     def getAdbCMD(self):
+        """
+        组装执行命令的cmd字符串
+        会自动进行{0}符号的宏替换
+        :return:
+        """
         _cmd = self.cmd.format(self.target_app)
         _full_cmd = ''
         if self.isShellMode:

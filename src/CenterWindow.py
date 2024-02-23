@@ -317,30 +317,14 @@ class Ui_ConvenientArea(object):
 
     @pyqtSlot()
     def onFunctionItemClicked(self, actionParams: ActionCmdParams):
-        """
-        功能按钮被点击的回调函数
-        :param actionParams:
-        :return:
-        """
-        _action = actionParams.custom_action
-        _cmd = actionParams.cmd
-        if _action != "":
-            self.dealCustomAction(_action, actionParams)
+        if actionParams.hasCustomAction():
+            self.doCustomAction(actionParams)
         else:
-            if "uninstall" in _cmd:
-                reply = QMessageBox.question(
-                    self.mainWindow, '提示', f"确认卸载以下应用:\n {self._getCurrentSelectedPackage()}",
-                                             QMessageBox.Yes | QMessageBox.No,
-                                             QMessageBox.No)
-                if reply == QMessageBox.Yes:
-                    self.runAdbCMD(actionParams)
-            else:
-                self.runAdbCMD(actionParams)
+            self.runAdbCMD(actionParams)
 
-    def dealCustomAction(self, custom_act, actionParams: ActionCmdParams):
+    def doCustomAction(self, actionParams: ActionCmdParams):
         """
         处理自定义行为
-        :param custom_act:
         :param actionParams:
         :return:
         """
@@ -351,8 +335,9 @@ class Ui_ConvenientArea(object):
             if not _checkPass:
                 return
 
+        custom_act = actionParams.custom_action
         if custom_act == "m_show_install_app_dialog":
-            if not self.hasSelectedPackage():
+            if not self.hasConnectedDevices():
                 return
             install_apk_dialog = installApkDialog(self.mainWindow)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
@@ -463,7 +448,7 @@ class Ui_ConvenientArea(object):
         执行屏幕截图，并保存至本地
         :return:
         """
-        if not self.hasSelectedPackage():
+        if not self.hasConnectedDevices():
             return
         z_logger.info_with_stamp("Screenshot saving..........")
         chooseDialog = QFileDialog
@@ -485,7 +470,7 @@ class Ui_ConvenientArea(object):
     def runAdbCMD(self, actionParams: ActionCmdParams):
         self.mainWindow.runAdbCMD(actionParams)
 
-    def hasSelectedPackage(self):
+    def hasConnectedDevices(self):
         if len(self.mainWindow.connected_device_list) == 0:
             z_logger.error("请先连接设备!!!")
             return False
