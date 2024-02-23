@@ -90,7 +90,6 @@ class Ui_ToolBar(QToolBar):
     @pyqtSlot()
     def openShell(self):
         if not self.mainWindow.is_current_device_connect():
-            z_logger.error("请先连接设备！！")
             return
         current_device = self.mainWindow.current_device_addr
         local_app_data = os.getenv('LOCALAPPDATA')

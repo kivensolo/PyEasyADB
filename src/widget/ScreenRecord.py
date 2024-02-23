@@ -185,9 +185,9 @@ class Record_Dialog(object):
         执行屏幕录制，并保存至本地
         :return:
         """
-        if len(self.mainWindow.connected_device_list) == 0:
-            z_logger.error("请先连接设备!!!")
+        if not self.mainWindow.has_any_connected_devices():
             return
+
         chooseDialog = QFileDialog
         default_file_name = QDateTime.currentDateTime().toString("yyyyMMdd_hhmmss")
         self.record_file_save_path = chooseDialog.getSaveFileName(

@@ -58,6 +58,8 @@ EasyADB是基于PyQt5框架实现的一款便捷进行ADB操作的软件，包�
 EasyADB会自动调用tool/scrcpy-win64/scrcpy.exe；
 如果要升级替换 scrcpy 的版本，只需要替换 scrcpy-win64 目录下的文件即可，实现无缝升级；
 
+# FIXME 弹窗位置要优化，多屏设备的时候，在屏幕2点击，会展示在屏幕1中心.
+
 
 # 更新记录
 ## v 1.0.3

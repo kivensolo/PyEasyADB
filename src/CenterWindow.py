@@ -337,7 +337,7 @@ class Ui_ConvenientArea(object):
 
         custom_act = actionParams.custom_action
         if custom_act == "m_show_install_app_dialog":
-            if not self.hasConnectedDevices():
+            if not self.mainWindow.has_any_connected_devices():
                 return
             install_apk_dialog = installApkDialog(self.mainWindow)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
@@ -357,6 +357,8 @@ class Ui_ConvenientArea(object):
             # 重启应用
             self.restart_app()
         elif custom_act == "m_input_text":
+            if not self.mainWindow.is_current_device_connect():
+                return
             # 文本输入
             _text_input_dialog = TextInputDialog(self.mainWindow)
             _text_input_dialog.setWindowModality(Qt.ApplicationModal)
@@ -448,7 +450,7 @@ class Ui_ConvenientArea(object):
         执行屏幕截图，并保存至本地
         :return:
         """
-        if not self.hasConnectedDevices():
+        if not self.mainWindow.has_any_connected_devices():
             return
         z_logger.info_with_stamp("Screenshot saving..........")
         chooseDialog = QFileDialog
@@ -469,13 +471,6 @@ class Ui_ConvenientArea(object):
 
     def runAdbCMD(self, actionParams: ActionCmdParams):
         self.mainWindow.runAdbCMD(actionParams)
-
-    def hasConnectedDevices(self):
-        if len(self.mainWindow.connected_device_list) == 0:
-            z_logger.error("请先连接设备!!!")
-            return False
-        return True
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -336,8 +336,11 @@ class LogCatWindow(QMainWindow):
         self.livelogThread.reloadHistoryLogs()
 
     def start_or_stop(self):
-        if self.mainWindow is None or (not self.mainWindow.is_current_device_connect()):
-            z_logger.error('请先连接设备！！')
+        if self.mainWindow is None:
+            return
+        if not self.mainWindow.is_current_device_connect():
+            #TODO 当前设备未连接时，点击Run,使用者看不到直观的提示，要切换到日志窗口才行。
+            return
         else:
             addr = self.mainWindow.current_device_addr
             cmd = f'adb -s {addr} logcat -v time'

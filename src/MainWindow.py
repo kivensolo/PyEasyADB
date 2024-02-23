@@ -224,7 +224,24 @@ class MainWindow(BaseWindow):
         super(MainWindow, self).initWindow()
 
     def is_current_device_connect(self):
-        return self.current_device_addr in self.connected_device_list
+        """
+        当前选中设备是否已连接
+        :return:
+        """
+        hasIn = self.current_device_addr in self.connected_device_list
+        if not hasIn:
+            z_logger.error("当前所选设备未连接，请先进行连接！")
+        return hasIn
+
+    def has_any_connected_devices(self):
+        """
+        是否有连接设备的设备存在
+        :return:
+        """
+        has_connected = len(self.connected_device_list) != 0
+        if not has_connected:
+            z_logger.error("请先连接设备!")
+        return has_connected
 
     # ----------------------------------左侧TreeView START-----------------------------------------------
     def init_tree_view(self):
@@ -476,9 +493,7 @@ class MainWindow(BaseWindow):
         :param cmdParams:   命令封装对象
         :return:
         """
-        if len(self.connected_device_list) == 0:
-            z_logger.error("请先连接设备!")
-        else:
+        if self.has_any_connected_devices():
             # Step_1:Complete target app parameter
             if cmdParams.needDstPkg:
                 cmdParams.target_app = self.pkgManager.getSelectedPackageName()
@@ -503,9 +518,7 @@ class MainWindow(BaseWindow):
             self.adbTools.exec_adb_cmd(cmdParams.getAdbCMD(), block=self.on_adb_cmd_exectued)
 
     def runAdbCMD_V2(self, cmdParams: list):
-        if len(self.connected_device_list) == 0:
-            z_logger.error("请先连接设备")
-        else:
+        if self.has_any_connected_devices():
             for _cmd in cmdParams:
                 pkgName = ""
                 if _cmd.needDstPkg:
@@ -704,9 +717,8 @@ class MainWindow(BaseWindow):
                 # 未知状态的设备，均认为未连接
                 self.dbManager.change_device_state(device_name, False)
 
-        z_logger.debug("[Parse States] 当前已连接设备列表：" + str(self.connected_device_list))
-        if len(self.connected_device_list) == 0:
-            z_logger.info("无任何连接设备！")
+        z_logger.debug(f"[Parse States] 当前已连接设备列表数量:{len(self.connected_device_list)} \n"
+                       f" 设备列表:{str(self.connected_device_list)}")
         self.refresh_treeview_by_data()
 
         z_logger.debug("[Parse States] Current select device is connected.Update process info.")
