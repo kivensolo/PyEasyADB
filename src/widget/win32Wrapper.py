@@ -8,7 +8,7 @@ import win32process
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, QObject, QEvent, QTimer
 from PyQt5.QtGui import QWindow, QMouseEvent
-from PyQt5.QtWidgets import QSizePolicy, QWidget
+from PyQt5.QtWidgets import QSizePolicy, QWidget, QMainWindow
 
 import Dependencies
 from src.logcat.log import z_logger
@@ -26,6 +26,9 @@ class ScrcpyEmbedWidget(QWidget):
         self.scrcpy_pid = -1
         # 查找scrcpy window窗口的次数
         self.search_conunt = 0
+        # scrcpy是否嵌入进QT
+        self.isEnableEmbed = True
+
 
         # 设置控件可以接收键盘焦点
         self.setFocusPolicy(Qt.StrongFocus)
@@ -35,7 +38,7 @@ class ScrcpyEmbedWidget(QWidget):
         self.timerWaitScrcpy = QTimer()
         self.timerWaitScrcpy.setSingleShot(True)
         self.timerWaitScrcpy.timeout.connect(self.onTimerFinish)
-        self.windowTitle = "EasyADB_Scrcpy"
+        self.windowTitle = "EasyADB Device Mirror"
 
     def setupUi(self, embedWidget):
         embedWidget.setObjectName("embedWidget")
@@ -86,19 +89,41 @@ class ScrcpyEmbedWidget(QWidget):
         self.stopScrcpyBtn.setObjectName("stopScrcpyBtn")
         buttonsLayout.addWidget(self.stopScrcpyBtn, alignment=Qt.AlignLeft)
 
-        self.tipsLabel = QtWidgets.QLabel(embedWidget)
-        self.tipsLabel.setFont(getWRYHFontStyle())
-        self.tipsLabel.setText("(若出现键盘无法控制远程设备的情况,请点击一下此处红色文本.)")
-        self.tipsLabel.setStyleSheet("color: #bf200b")
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.tipsLabel.sizePolicy().hasHeightForWidth())
+        # sizePolicy.setHeightForWidth(self.tipsLabel.sizePolicy().hasHeightForWidth())
+
+        self.enabneEmbedOption = QtWidgets.QCheckBox()
+        self.enabneEmbedOption.setFont(getWRYHFontStyle())
+        self.enabneEmbedOption.setText("嵌入模式")
+        self.enabneEmbedOption.setChecked(self.isEnableEmbed)
+        self.enabneEmbedOption.stateChanged.connect(self.embed_state_changed)
+        self.enabneEmbedOption.setSizePolicy(sizePolicy)
+        buttonsLayout.addWidget(self.enabneEmbedOption, alignment=Qt.AlignLeft)
+
+        self.tipsLabel = QtWidgets.QLabel(embedWidget)
+        self.tipsLabel.setFont(getWRYHFontStyle())
+        self.tipsLabel.setText("(嵌入模式若出现键盘无法控制远程设备的情况,请点击一下此处红色文本.)")
+        self.tipsLabel.setStyleSheet("color: #bf200b")
         self.tipsLabel.setSizePolicy(sizePolicy)
+
         buttonsLayout.addWidget(self.tipsLabel, alignment=Qt.AlignLeft)
+
 
         self.verticalLayout.addWidget(btnsWidgets, alignment=Qt.AlignTop)
         self.myhwnd = int(self.winId())
+
+    def embed_state_changed(self, state):
+        """
+        当复选框状态改变时触发此函数。
+        :param state: ，0表示未选中，2表示已选中。
+        :return:
+        """
+        if state == 0:
+            self.isEnableEmbed = False
+        elif state == 2:
+            self.isEnableEmbed = True
 
     def tryConnectScrcpy(self):
         checker = Dependencies.ScrcpyChecker()
@@ -118,7 +143,7 @@ class ScrcpyEmbedWidget(QWidget):
                 【说明】scrcpy 的操作是右键点击返回。
                 """)
                 return False
-            startCMD = f'scrcpy -s {self.mainWindow.current_device_addr} --window-title {self.windowTitle}'
+            startCMD = f'scrcpy -s {self.mainWindow.current_device_addr} --window-title \"{self.windowTitle}\"'
             self.mainWindow.adbTools.async_exec_adb_cmd([startCMD])
             self.timerWaitScrcpy.start(2000)
 
@@ -140,7 +165,9 @@ class ScrcpyEmbedWidget(QWidget):
         if self.scrcpy_hwnd == -1:
             z_logger.warn(f"远程设备未连接！")
             return
-        self.verticalLayout.removeWidget(self.container)
+
+        if self.isEnableEmbed:
+            self.verticalLayout.removeWidget(self.container)
 
         # 结束Scrcpy进程
         try:
@@ -152,6 +179,7 @@ class ScrcpyEmbedWidget(QWidget):
         self.scrcpy_hwnd = -1
         self.startScrcpyBtn.setEnabled(True)
         self.stopScrcpyBtn.setEnabled(False)
+        self.enabneEmbedOption.setEnabled(True)
 
     def onTimerFinish(self):
         self.findAndInflateScrcpy()
@@ -169,20 +197,23 @@ class ScrcpyEmbedWidget(QWidget):
         if self.scrcpy_hwnd > 0:
             self.search_conunt = 0
             self.startScrcpyBtn.setEnabled(False)
+            self.enabneEmbedOption.setEnabled(False)
             self.stopScrcpyBtn.setEnabled(True)
-            # 找到scrcpy的窗口
-            native_window: QWindow = QWindow.fromWinId(self.scrcpy_hwnd)
-            # window.setFlags(Qt.WindowType.CustomizeWindowHint)
-            # 创建一个QWidget并将QWindow添加到其中
 
-            self.container: QWidget = QWidget.createWindowContainer(native_window)
-            self.container.setWindowFlags(Qt.Window | Qt.WindowTitleHint | Qt.WindowMinMaxButtonsHint)
-            self.container.setFocusPolicy(Qt.StrongFocus)
-            sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
-            sizePolicy.setHeightForWidth(self.container.sizePolicy().hasHeightForWidth())
-            self.container.setSizePolicy(sizePolicy)
-            self.verticalLayout.addWidget(self.container)
-            self.verticalLayout.setStretch(1, 2)
+            if self.isEnableEmbed:
+                # 找到scrcpy的窗口
+                native_window: QWindow = QWindow.fromWinId(self.scrcpy_hwnd)
+                # window.setFlags(Qt.WindowType.CustomizeWindowHint)
+                # 创建一个QWidget并将QWindow添加到其中
+
+                self.container: QWidget = QWidget.createWindowContainer(native_window)
+                self.container.setWindowFlags(Qt.Window | Qt.WindowTitleHint | Qt.WindowMinMaxButtonsHint)
+                self.container.setFocusPolicy(Qt.StrongFocus)
+                sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+                sizePolicy.setHeightForWidth(self.container.sizePolicy().hasHeightForWidth())
+                self.container.setSizePolicy(sizePolicy)
+                self.verticalLayout.addWidget(self.container)
+                self.verticalLayout.setStretch(1, 2)
 
             # 设置事件过滤器
             # filter = EventFilter(self, native_window)
