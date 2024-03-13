@@ -695,9 +695,9 @@ class MainWindow(BaseWindow):
                 if not exist:
                     z_logger.debug(f"[Refresh Devices] Find new device {device_name}, save to database.")
                     _port = "0"
-                    if any(char.isalpha() for char in device_name):
-                        # 检查是否包含任意字母字符
-                        z_logger.debug("[Refresh Devices] 设备信息包含字符, 不做处理")
+                    if not device_name.contains("."):
+                        # 不包含ip格式的点,则说明是设备名称，可能纯数字，也可能是字符和数据混杂
+                        z_logger.debug("[Refresh Devices] 设备标识为名称，非ip格式, 不做处理")
                     elif ":" not in device_name:
                         _port = "5555"
 
