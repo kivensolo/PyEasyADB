@@ -62,6 +62,10 @@ EasyADB会自动调用tool/scrcpy-win64/scrcpy.exe；
 
 
 # 更新记录
+## v 1.0.4
+1. [x] [优化] 修复真机通过有线连接时出现的连接问题。
+2. [] [功能] 🔥 增加frida支持;
+
 ## v 1.0.3
 1. [x] [功能] 增加android platform-tools 的依赖，提供独立的ADB环境支撑;
 2. [x] [功能] 🔥 增加设备自动检测功能，自动同步设备状态;
@@ -95,20 +99,24 @@ EasyADB会自动调用tool/scrcpy-win64/scrcpy.exe；
 
 # 发布说明
 `pyinstaller --onefile EasyADB.py`<br>
+`pyinstaller EasyADB.py`<br>
 参数说明：<br>
 --noconsole : 指定不要命令行窗口，否则程序运行的时候，还会多一个黑窗口。但是在执行命令操作时，会闪现，体验不好。
+--onefile: 生成单个exe文件;
 
 打包完成后，会生成dist目录，打包后的文件夹在此目录。但是打包时不会打包资源文件，
 所以需要手动复制资源文件至打包目录。
 
 ## 关于CA证书文件的说明
-v1.0.3开始，使用了requests库，通过PyInstaller打包后的程序会出现:<br>
+v1.0.3开始，使用了requests库，通过PyInstaller打包独立文件后的程序会出现:<br>
 OSError: Could not find a suitable TLS CA certificate bundle, invalid path:。
 原因是在打包时，requests 库释放在用户临时文件夹内的 CA 证书没有被一起打包，所以运行时无法找到。
 
 解决方案就是将证书手动加入代码内,将本地 CA 证书的路径临时地写入系统环境变量中。我们这里指定的路径为'.\certifi\cacert.pem'<br>
 
 cacert.pem 文件可以从 https://curl.se/docs/caextract.html 下载到;
+
+打包成非独立文件时，此证书文件就会被打包进去，所以不需要再手动复制了。
 
 ## TODO
 - [ ] 保存apk到电脑
