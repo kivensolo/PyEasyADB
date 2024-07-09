@@ -25,7 +25,7 @@ class PackageManager:
         self.dbManager = DBManager()
         self.adbTools = ADBTools()
 
-    def updateSelectedRunningProcessInfo(self, process_info):
+    def updateSelectedRunningProcessInfo(self, process_info: str):
         """
         设置选中的进程信息
         :param process_info: processName(pid)
@@ -36,6 +36,9 @@ class PackageManager:
             self.__selectedProcessPid = ""
             return
         z_logger.debug("Set selected process:" + process_info)
+        if "atfwd-daemon" in process_info.lower():
+            z_logger.debug("Ignore daemon process.")
+            return
         result = re.match(r'^([.:\w]+)\((\d+)\)$', process_info)
         if result:
             pid_name_info, pid_number = result.groups()
