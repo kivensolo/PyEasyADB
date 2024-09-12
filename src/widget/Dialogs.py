@@ -1,16 +1,20 @@
+import os
 import sys
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog
+from PyQt5.QtGui import QDropEvent
+from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog, QTextEdit, QGroupBox
 
 from src.logcat.log import z_logger
 from src.settings import APP_VERSION
 from src.widget.ScreenRecord import Record_Dialog
 from src.DataBase import DBManager
-from src.widget.BaseDialog import BaseDialog
+from src.widget.BaseDialog import BaseDialog, DragDialog
 from src.widget.CustomWidgets import DraggableLineEdit
 from utils import Tools
+from utils.Utils import FileUtils
+from utils.Tools import getSimpleFontStyle, getWRYHFontStyle, getSongFontStyle
 from utils.UITools import IconTool
 
 
@@ -368,9 +372,176 @@ class TextInputDialog(BaseDialog):
             self.mainWindow.adbTools.exec_adb_cmd(f"adb -s {self.mainWindow.current_device_addr} shell input text {_text}")
 
 
+class APKHelperDialog(DragDialog):
+    """
+    APK 解析器弹窗
+    """
+    def __init__(self,  window=None):
+        super().__init__("APK Helper")
+        self.mainWindow = window
+        self.initWindow()
+
+        # 弹窗整体垂直
+        self.rootVLayout = QtWidgets.QVBoxLayout(self)
+        self.rootVLayout.setObjectName("v_apkhelper_root")
+
+        # apk信息的GroupBox
+        self.apkInfoGroupBox = QtWidgets.QGroupBox()
+        # 文件信息的GroupBox
+        self.fileInfoGroupBox = QtWidgets.QGroupBox()
+        self.initViews()
+
+    def initWindow(self):
+        super().initWindow()
+        # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
+        self.setWindowFlags(Qt.WindowFullscreenButtonHint)
+        screen = QtWidgets.QApplication.primaryScreen()
+        dpi = screen.physicalDotsPerInch()
+
+        # self.setFixedSize(int(558 * dpi / 96), int(710 * dpi / 96))
+        self.setFixedSize(558,710)
+
+    def initViews(self):
+        self.initApkInfoView()
+        self.initFileInfoView()
+
+    def initApkInfoView(self):
+        """
+        创建APK信息的分组Box
+        :return:
+        """
+        self.apkInfoGroupBox.setFont(getSimpleFontStyle())
+        self.apkInfoGroupBox.setObjectName("app_info_group")
+        self.apkInfoGroupBox.setTitle("APK信息(拖文件到窗口即可检查apk信息)")
+        self.apkInfoGroupBox.setStyleSheet(
+            "QGroupBox { "
+            "background-color:rgb(255,255,255);"
+            "font-weight: bold; "
+            "} "
+        )
+
+        self.appInfoGridLayout = QtWidgets.QGridLayout(self.apkInfoGroupBox)
+        self.appInfoGridLayout.setObjectName("grid_layout_of_app_info")
+        # 顶部包名、名称、证书MD5布局
+        topLines = ['包名', '名称', "证书MD5",
+                    '版本号', '内部版本号', 'Min.SDK',
+                    '权限要求']
+        for index, name in enumerate(topLines):
+            labelView: QLabel = self.getInfoLabel(name, f"apkinfo_{index}", self.apkInfoGroupBox)
+            lineEdit: QLineEdit = QtWidgets.QLineEdit(self.apkInfoGroupBox)
+            lineEdit.setObjectName(f"obj_appInfo_at_{index}")
+            lineEdit.setPlaceholderText(f"占位数据_{name}")
+            lineEdit.setFont(getSongFontStyle(10))
+            lineEdit.setReadOnly(True)
+
+            self.appInfoGridLayout.addWidget(labelView, index, 0)
+            if name == '版本号' or name == '内部版本号' or name == 'Min.SDK':
+                self.appInfoGridLayout.addWidget(lineEdit, index, 1, 1, 3)
+                if name == '版本号':
+                    logoImage: QLabel = self.getInfoLabel("logo", "obj_logo", self.apkInfoGroupBox)
+                    # 添加logo控件，行数同'版本号'(在index行, 第5列, 跨3行, 占1列，居中)
+                    self.appInfoGridLayout.addWidget(logoImage, index, 4, 3, 1, Qt.AlignmentFlag.AlignCenter)
+            elif name == '权限要求':
+                # TODO 改为滚动的View
+                sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+                sizePolicy.setHorizontalStretch(0)
+                sizePolicy.setVerticalStretch(0)
+                sizePolicy.setHeightForWidth(lineEdit.sizePolicy().hasHeightForWidth())
+                lineEdit.setSizePolicy(sizePolicy)
+                self.appInfoGridLayout.addWidget(lineEdit, index, 1, 2, 4)
+            else:
+                self.appInfoGridLayout.addWidget(lineEdit, index, 1, 1, 4)
+
+        self.apkInfoGroupBox.setLayout(self.appInfoGridLayout)
+        self.rootVLayout.addWidget(self.apkInfoGroupBox)
+
+    def initFileInfoView(self):
+        """
+        创建文件信息的分组Box
+        :return:
+        """
+        self.fileInfoGroupBox.setFont(getSimpleFontStyle())
+        self.fileInfoGroupBox.setObjectName("file_info_group")
+        self.fileInfoGroupBox.setTitle("文件信息")
+        self.fileInfoGroupBox.setStyleSheet(
+            "QGroupBox { "
+            "background-color:rgb(255,255,255);"
+            "font-weight: bold; "
+            "} "
+        )
+
+        fileInfoGridLayout = QtWidgets.QGridLayout(self.fileInfoGroupBox)
+        fileInfoGridLayout.setObjectName("grid_layout_of_app_info")
+
+        rows = ['文件名', 'MD5', '大小', '日期']
+        for index, name in enumerate(rows):
+            labelView: QLabel = self.getInfoLabel(name, f"fileinfo_{index}", self.fileInfoGroupBox)
+            lineEdit: QLineEdit = QtWidgets.QLineEdit(self.fileInfoGroupBox)
+            lineEdit.setObjectName(f"obj_fileInfo_at_{index}")
+            lineEdit.setPlaceholderText(f"占位数据_{name}")
+            lineEdit.setFont(getSongFontStyle(10))
+            lineEdit.setReadOnly(True)
+            fileInfoGridLayout.addWidget(labelView, index, 0)
+            fileInfoGridLayout.addWidget(lineEdit, index, 1, 1, 4)
+
+        self.fileInfoGroupBox.setLayout(fileInfoGridLayout)
+        self.rootVLayout.addWidget(self.fileInfoGroupBox)
+        self.rootVLayout.addStretch(1)
+
+    def getInfoLabel(self, name: str, objName:str, parent: QGroupBox):
+        """
+        获取统一UI样式的Label控件
+        :param name:  文字
+        :param parent:  所在的
+        :return:
+        """
+        labelView = QtWidgets.QLabel(parent)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(labelView.sizePolicy().hasHeightForWidth())
+        labelView.setSizePolicy(sizePolicy)
+        labelView.setObjectName(objName)
+        labelView.setAlignment(QtCore.Qt.AlignCenter)
+        labelView.setText(name)
+        labelView.setFont(getWRYHFontStyle())
+        return labelView
+
+    def dropEvent(self, event: QDropEvent):
+        super().dropEvent(event)
+
+        # 获取拖放的文件(QUrl)列表
+        urls = event.mimeData().urls()
+        if urls:
+            # 遍历所有拖入的文件 QUrl对象
+            for url in urls:
+                # 本地文件路径
+                file_path = url.toLocalFile()
+                fileInfo = FileUtils.get_file_info(file_path)
+
+                fileNameView = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_0")
+                fileMd5View = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_1")
+                fileSizeView = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_2")
+                fileDateView = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_3")
+                if fileNameView:
+                    fileNameView.setText(fileInfo['file_name'])
+
+                if fileMd5View:
+                    fileMd5View.setText(fileInfo['file_md5'].upper())
+
+                file_size = fileInfo['file_bytes']
+                file_size_mb = file_size / 1024 / 1024
+                file_size_bytes_format = "{:,}".format(file_size)
+                if fileSizeView:
+                    fileSizeView.setText(f"{file_size_bytes_format} 字节({file_size_mb:.2f} MB)")
+
+                if fileDateView:
+                    fileDateView.setText(fileInfo['last_modified'])
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    dialog = screen_record_dialog()
+    dialog = APKHelperDialog()
     # 设置窗口的属性为ApplicationModal模态，用户只有关闭弹窗后，才能关闭主界面
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.show()

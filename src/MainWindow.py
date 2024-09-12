@@ -16,7 +16,7 @@ from src.CenterWindow import CommonFunctionalWidget
 from src.ToolBar import Ui_ToolBar
 from src.logcat.log import z_logger
 from src.settings import APP_SCREEN_RQTIO
-from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog
+from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog, APKHelper, APKHelperDialog
 from src.widget.win32Wrapper import ScrcpyEmbedWidget
 from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
@@ -214,6 +214,16 @@ class MainWindow(BaseWindow):
         aboutDialog = AboutDialog(self)
         aboutDialog.setWindowModality(Qt.ApplicationModal)
         aboutDialog.exec()
+
+    @pyqtSlot()
+    def show_apk_helper_dialog(self):
+        """
+        展示APK Helper 弹窗
+        :return:
+        """
+        apkHelperDialog = APKHelperDialog(self)
+        apkHelperDialog.setWindowModality(Qt.ApplicationModal)
+        apkHelperDialog.exec()
 
     def initWindow(self):
         self.resize(

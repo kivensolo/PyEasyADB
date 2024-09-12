@@ -69,6 +69,8 @@ class MenuActions(object):
             self.open_log_folder()
         elif cmd == "m_open_about_page":
             self.mainWindow.show_about_dialog()
+        elif cmd == "m_show_apk_helper_dialog":
+            self.mainWindow.show_apk_helper_dialog()
         else:
             z_logger.error(f"该命令还未实现:{cmd}")
 

@@ -13,7 +13,11 @@
         </action>
     </menu>
     <menu name="工具">
-        <action></action>
+        <action name="APK Hepler">
+            <attr name="shortcut">Alt+H</attr>
+            <attr name="icon">./res/icons/add_new.png</attr>
+            <attr name="action">m_show_apk_helper_dialog</attr>
+        </action>
     </menu>
     <menu name="帮助">
         <action name="查看日志">

@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser, QAction, QMenu, 
 
 from src.logcat.log import z_logger
 from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
-from utils.UITools import IconTool
+from utils.UITools import IconTool, ActionJudge
 
 
 class CustomLineEdit(QLineEdit):
@@ -151,14 +151,8 @@ class DraggableLineEdit(QLineEdit):
         self.setFont(getWRYHFontStyle())
 
     def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            url = event.mimeData().urls()[0]
-            if url.scheme() == "file":
-                path = url.toLocalFile()
-                if path.endswith('.apk'):  # 检查文件是否是 .apk 文件
-                    event.accept()
-                else:
-                    event.ignore()
+        if ActionJudge.isAcceptDrag(event):
+            event.accept()
         else:
             event.ignore()
 

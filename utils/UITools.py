@@ -1,7 +1,7 @@
 import os
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QIcon, QPixmap, QPainter
+from PyQt5.QtGui import QIcon, QPixmap, QPainter, QDragEnterEvent
 from PyQt5.QtSvg import QSvgRenderer
 
 
@@ -35,3 +35,14 @@ class IconTool:
         join = os.path.join('.', 'res', dir, pixmapName)
         return QPixmap(join)
 
+
+class ActionJudge(object):
+    @staticmethod
+    def isAcceptDrag(event: QDragEnterEvent, endswith: str = ".apk"):
+        if event.mimeData().hasUrls():
+            url = event.mimeData().urls()[0]
+            if url.scheme() == "file":
+                path = url.toLocalFile()
+                # 检查文件是否是 .apk 文件
+                return path.endswith(endswith)
+        return False

@@ -1,9 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
-
+import datetime
+import hashlib
 import logging
+import os
 import sqlite3
+
+from src.logcat.log import z_logger
+
 
 # import xmltodict
 # from PyQt5.QtWebEngineWidgets import QWebEngineScript
@@ -171,3 +175,64 @@ class LogUtils(object):
                 preS = "<a href=\"" + url + "\">" + url + "</a>"
                 text = text.replace(url, preS)
         return text
+
+
+class FileUtils(object):
+    @staticmethod
+    def get_file_info(file_path):
+        """
+        获取文件信息
+        :param file_path:
+        :return:
+        """
+        try:
+            # 文件名称
+            file_name  = os.path.basename(file_path)
+            # 文件大小(字节)
+            file_size = os.stat(file_path).st_size
+
+            # 获取文件的最后修改时间
+            last_modified_time = os.path.getmtime(file_path)
+            last_modified_date = datetime.datetime.fromtimestamp(last_modified_time)
+
+            # 获取文件的创建时间
+            creation_time = os.path.getctime(file_path)
+            creation_date = datetime.datetime.fromtimestamp(creation_time)
+
+            md5 = FileUtils.calculate_md5(file_path)
+
+            return {
+                "file_name": file_name,
+                "file_bytes":  file_size,
+                "file_md5": md5,
+                "last_modified": last_modified_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "creation": creation_date.strftime("%Y-%m-%d %H:%M:%S")
+            }
+        except Exception as e:
+            z_logger.error(f'文件信息读取失败,{file_name}:{str(e)}')
+            return {
+                    "file_name": "",
+                    "file_bytes": 0,
+                    "file_md5": "",
+                    "last_modified": "",
+                    "creation": ""
+                }
+    @staticmethod
+    def calculate_md5(file_path, chunk_size=4096):
+        """
+        计算文件的 MD5 值。
+
+        :param file_path: 文件路径
+        :param chunk_size: 读取文件的块大小，默认为 4096 字节
+        :return: 文件的 MD5 值
+        """
+        md5_hash = hashlib.md5()
+
+        with open(file_path, 'rb') as file:
+            while True:
+                data = file.read(chunk_size)
+                if not data:
+                    break
+                md5_hash.update(data)
+
+        return md5_hash.hexdigest()
