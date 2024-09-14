@@ -4,7 +4,9 @@ import datetime
 import hashlib
 import logging
 import os
+import re
 import sqlite3
+import subprocess
 
 from src.logcat.log import z_logger
 
@@ -178,45 +180,7 @@ class LogUtils(object):
 
 
 class FileUtils(object):
-    @staticmethod
-    def get_file_info(file_path):
-        """
-        获取文件信息
-        :param file_path:
-        :return:
-        """
-        try:
-            # 文件名称
-            file_name  = os.path.basename(file_path)
-            # 文件大小(字节)
-            file_size = os.stat(file_path).st_size
 
-            # 获取文件的最后修改时间
-            last_modified_time = os.path.getmtime(file_path)
-            last_modified_date = datetime.datetime.fromtimestamp(last_modified_time)
-
-            # 获取文件的创建时间
-            creation_time = os.path.getctime(file_path)
-            creation_date = datetime.datetime.fromtimestamp(creation_time)
-
-            md5 = FileUtils.calculate_md5(file_path)
-
-            return {
-                "file_name": file_name,
-                "file_bytes":  file_size,
-                "file_md5": md5,
-                "last_modified": last_modified_date.strftime("%Y-%m-%d %H:%M:%S"),
-                "creation": creation_date.strftime("%Y-%m-%d %H:%M:%S")
-            }
-        except Exception as e:
-            z_logger.error(f'文件信息读取失败,{file_name}:{str(e)}')
-            return {
-                    "file_name": "",
-                    "file_bytes": 0,
-                    "file_md5": "",
-                    "last_modified": "",
-                    "creation": ""
-                }
     @staticmethod
     def calculate_md5(file_path, chunk_size=4096):
         """
@@ -236,3 +200,122 @@ class FileUtils(object):
                 md5_hash.update(data)
 
         return md5_hash.hexdigest()
+
+    @staticmethod
+    def parse_apk(file_path: str):
+
+        """
+        解析APK文件并获取相关信息。
+
+        :param file_path: APK文件路径
+        :return: 包含应用包名、应用名称、证书MD5、版本号、图标路径和权限列表的字典
+        """
+        try:
+            # 文件名称
+            file_name  = os.path.basename(file_path)
+            # 文件大小(字节)
+            file_size = os.stat(file_path).st_size
+
+            # 获取文件的最后修改时间
+            last_modified_time = os.path.getmtime(file_path)
+            last_modified_date = datetime.datetime.fromtimestamp(last_modified_time)
+            last_modified_format = last_modified_date.strftime("%Y-%m-%d %H:%M:%S")
+
+            # 获取文件的创建时间
+            creation_time = os.path.getctime(file_path)
+            creation_date = datetime.datetime.fromtimestamp(creation_time)
+            creation_format = creation_date.strftime("%Y-%m-%d %H:%M:%S")
+            md5 = FileUtils.calculate_md5(file_path)
+        except Exception as e:
+            z_logger.error(f'文件信息读取失败,{file_name}:{str(e)}')
+            return {
+                "file_name": "",
+            }
+
+        # 获取当前操作系统
+        current_os = os.name
+        # 根据当前操作系统选择换行符
+        if current_os == 'nt':  # Windows系统
+            line_break = '\r\n'
+        elif current_os == 'posix':  # Linux、Unix-like系统
+            line_break = '\n'
+        else:  # 其他操作系统，默认使用换行符'\n'
+            line_break = '\n'
+
+        package_name = ""
+        version_code = ""
+        version_name = ""
+        cert_md5 = ""
+        cert_md5_version = []
+        icon_path = ""
+        min_sdk = ""
+        # 获取权限列表
+        permissions = []
+
+        commands = [
+            ['aapt', 'dump', 'badging', file_path],
+            ['apksigner.bat', 'verify', '--print-certs', '-v', file_path]
+        ]
+        # 使用aapt命令获取APK信息
+        command = commands[0]
+        try:
+            result = subprocess.run(command, capture_output=True)
+            output = result.stdout.decode('utf-8', 'ignore')
+            lines = output.split(line_break)
+            for line in lines:
+                if line.startswith("package:"):
+                    package_name = re.search(r"package: name='(.*?)'", line).group(1)
+                    # 获取版本号
+                    version_code = re.search(r"versionCode='(.*?)'", line).group(1)
+                    # 获取版本名称
+                    version_name = re.search(r"versionName='(.*?)'", line).group(1)
+                elif line.startswith("sdkVersion:"):
+                    min_sdk = re.search(r"sdkVersion:'(.*?)'", line).group(1)
+                elif line.startswith("application: label="):
+                    package_name = re.search(r"application: label='(.*?)'", line).group(1)
+                elif line.startswith("uses-permission:"):
+                    permissions.append(re.search(r"uses-permission: name='(.*?)'", line).group(1))
+        except Exception as e:
+            z_logger.debug(f"Error running AAPT command: {e}")
+
+        # 使用apksigner命令获取APK签名信息 注意，这里只能使用“apksigner.bat”
+        command = commands[1]
+        try:
+            # process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE,
+            #                                 stderr=subprocess.PIPE, bufsize=-1, encoding='utf-8')
+            # stdout_data, stderr_data = process.communicate(input=None, timeout=None)
+            result = subprocess.run(command, capture_output=True)
+            stdout_data = result.stdout.decode('utf-8', 'ignore')
+            if stdout_data:
+                lines = stdout_data.split('\n')
+                for line in lines:
+                    if line.startswith("Signer #1 certificate MD5 digest:"):
+                        cert_md5 = re.search(r"Signer #1 certificate MD5 digest: (.*)", line).group(1).upper()
+                    elif line.startswith("Verified using v"):
+                        matches = re.findall(r"Verified using v(\d+) scheme.*: (\w+)", line)
+                        for match in matches:
+                            version, value = match
+                            if value == "true":
+                                cert_md5_version.append(f"v{version}")
+        except Exception as e:
+            z_logger.debug(f"Error running ApkSigner command: {e}")
+            cert_md5 = f"解析失败:{e}"
+            cert_md5_version = ["N/A"]
+
+        return {
+            "package_name": package_name,
+            "app_name": version_name,
+            "sign_md5": cert_md5,
+            "sign_md5_version": cert_md5_version,
+            "version_code": version_code,
+            "version_name": version_name,
+            "min_sdk": min_sdk,
+            "icon_path": icon_path,
+            "permissions": permissions,
+
+            "file_name": file_name,
+            "file_bytes":  file_size,
+            "file_md5": md5,
+            "last_modified": last_modified_format,
+            "creation": creation_format
+        }

@@ -6,6 +6,7 @@ from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
     QAbstractItemView, QWidget, QStyleFactory, QFileSystemModel, QTreeWidget, QDesktopWidget, QMessageBox
 
+from ConfigManager import AppConfigManager
 from src import TreeItemType
 from src.BaseWindow import BaseWindow
 from src.DataBase import DBManager
@@ -16,7 +17,7 @@ from src.CenterWindow import CommonFunctionalWidget
 from src.ToolBar import Ui_ToolBar
 from src.logcat.log import z_logger
 from src.settings import APP_SCREEN_RQTIO
-from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog, APKHelper, APKHelperDialog
+from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog, APKHelperDialog
 from src.widget.win32Wrapper import ScrcpyEmbedWidget
 from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
@@ -59,6 +60,9 @@ def is_device_root_node(item: QStandardItem):
     :return:
     """
     return item and item.type == TreeItemType.TYPE_ROOT_DEVICE
+
+
+config_manager = AppConfigManager('./config/AppConfig.ini')
 
 
 class MainWindow(BaseWindow):

@@ -3,7 +3,7 @@ import typing
 from PyQt5 import QtWidgets, QtGui
 from PyQt5.QtCore import Qt, QRegExp
 from PyQt5.QtGui import QIcon, QRegExpValidator, QFont, QTextCursor
-from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser, QAction, QMenu, QPushButton
+from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser, QAction, QMenu, QPushButton, QTextEdit
 
 from src.logcat.log import z_logger
 from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
@@ -258,4 +258,92 @@ class StatePushButton(QPushButton):
                 self.setStyleSheet("background-color: #d4d4d4;")
                 self.isPressed = True
         return super().mousePressEvent(event)
+
+
+class HoverQLineEdit(QLineEdit):
+    """
+    悬浮时border会发光的自定义控件
+    """
+    def __init__(self, parent=None):
+        super(HoverQLineEdit, self).__init__(parent)
+        self._hover = False  # 默认不处于悬停状态
+        self.setStyleSheet(self.styleSheet() + self.base_style())
+
+    def enterEvent(self, event):
+        self._hover = True
+        self.update()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self._hover = False
+        self.update()
+        super().leaveEvent(event)
+
+    def base_style(self):
+        """
+        设置样式
+        transition属性：用于定义当某个属性改变时应该发生的效果，
+                    这里设置了 box-shadow 的变化会在0.3秒内平滑过渡。
+
+        box-shadow 的语法是：
+        horizontal-offset vertical-offset blur-radius  color
+          水平偏移          垂直偏移         模糊半径     RGBA 颜色模式，其中最后一个值表示透明度
+        :return:
+        """
+        return """
+            QLineEdit {
+                border: 1px solid #ccc;
+                padding: 3px;
+                background-color: white;
+                transition: box-shadow 0.3s ease;  /* 平滑过渡 */
+            }
+            QLineEdit:hover {
+                border: 2px solid rgb(131, 212, 252);
+                box-shadow: 0 0 10px rgba(0, 0, 252, 0.5);  /* 扩散效果 */
+            }
+        """
+
+
+class HoverQTextEdit(QTextEdit):
+    """
+    悬浮时border会发光的自定义控件
+    """
+    def __init__(self, parent=None):
+        super(HoverQTextEdit, self).__init__(parent)
+        self._hover = False  # 默认不处于悬停状态
+        self.setStyleSheet(self.styleSheet() + self.base_style())
+
+    def enterEvent(self, event):
+        self._hover = True
+        self.update()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self._hover = False
+        self.update()
+        super().leaveEvent(event)
+
+    def base_style(self):
+        """
+        设置样式
+        transition属性：用于定义当某个属性改变时应该发生的效果，
+                    这里设置了 box-shadow 的变化会在0.3秒内平滑过渡。
+
+        box-shadow 的语法是：
+        horizontal-offset vertical-offset blur-radius  color
+          水平偏移          垂直偏移         模糊半径     RGBA 颜色模式，其中最后一个值表示透明度
+        :return:
+        """
+        return """
+            QTextEdit {
+                border: 1px solid #ccc;
+                padding: 3px;
+                background-color: white;
+                transition: box-shadow 0.3s ease;  /* 平滑过渡 */
+            }
+            QTextEdit:hover {
+                border: 2px solid rgb(131, 212, 252);
+                box-shadow: 0 0 10px rgba(0, 0, 252, 0.5);  /* 扩散效果 */
+            }
+        """
 
