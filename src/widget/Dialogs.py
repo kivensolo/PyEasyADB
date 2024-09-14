@@ -1,13 +1,15 @@
 import os
 import sys
 import threading
+import zipfile
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
-from PyQt5.QtGui import QDropEvent
+from PyQt5.QtGui import QDropEvent, QPixmap
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog, QTextEdit, QGroupBox
 
 from AppConfigManager import AppConfigManager
+from src import settings
 from src.logcat.log import z_logger
 from src.settings import APP_VERSION
 from src.widget.ScreenRecord import Record_Dialog
@@ -385,6 +387,13 @@ class APKHelperDialog(DragDialog):
     """
     def __init__(self,  window=None):
         super().__init__("APK Helper")
+        self.setStyleSheet("""
+            DragDialog {
+                "background-color: rgb(245, 245, 245);"
+            }
+            """
+        )
+
         self.thread = threading.Thread(target=self.__startApkParse)
         self.thread.name = 'parseApkFilr'
         self.parseFinished.connect(self.updateUIOnParsed)
@@ -395,6 +404,7 @@ class APKHelperDialog(DragDialog):
         # 弹窗整体垂直
         self.rootVLayout = QtWidgets.QVBoxLayout(self)
         self.rootVLayout.setObjectName("v_apkhelper_root")
+        self.rootVLayout.setContentsMargins(6, 6, 6, 6)
 
         self.file_path = ""
         # apk信息的GroupBox
@@ -410,8 +420,8 @@ class APKHelperDialog(DragDialog):
         screen = QtWidgets.QApplication.primaryScreen()
         dpi = screen.physicalDotsPerInch()
 
-        # self.setFixedSize(int(558 * dpi / 96), int(710 * dpi / 96))
-        self.setFixedSize(558, 710)
+        # self.setFixedSize(int(320 * dpi / 96), int(400 * dpi / 96))
+        self.setFixedSize(558, 750)
 
     def initViews(self):
         self.initApkInfoView()
@@ -425,12 +435,17 @@ class APKHelperDialog(DragDialog):
         self.apkInfoGroupBox.setFont(getSimpleFontStyle())
         self.apkInfoGroupBox.setObjectName("app_info_group")
         self.apkInfoGroupBox.setTitle("APK信息(拖文件到窗口即可检查apk信息)")
-        self.apkInfoGroupBox.setStyleSheet(
-            "QGroupBox { "
-            "background-color:rgb(255,255,255);"
-            "font-weight: bold; "
-            "} "
-        )
+        self.apkInfoGroupBox.setStyleSheet("""
+            QGroupBox {
+                background-color: white;
+                font-weight: bold; 
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 8px;
+                padding: 0 3px 0 3px;
+            }
+        """)
 
         self.appInfoGridLayout = QtWidgets.QGridLayout(self.apkInfoGroupBox)
         self.appInfoGridLayout.setObjectName("grid_layout_of_app_info")
@@ -448,7 +463,7 @@ class APKHelperDialog(DragDialog):
                 lineEdit: QLineEdit = HoverQLineEdit(self.apkInfoGroupBox)
             lineEdit.setObjectName(f"obj_appInfo_at_{index}")
             # lineEdit.setPlaceholderText(f"占_{name}")
-            lineEdit.setFont(getSongFontStyle(10))
+            lineEdit.setFont(getWRYHFontStyle(9))
             lineEdit.setReadOnly(True)
 
             self.appInfoGridLayout.addWidget(labelView, index, 0)
@@ -456,10 +471,23 @@ class APKHelperDialog(DragDialog):
                 self.appInfoGridLayout.addWidget(lineEdit, index, 1, 1, 3)
                 if name == 'App版本号':
                     logoImage: QLabel = self.getInfoLabel("logo", "obj_logo", self.apkInfoGroupBox)
-                    # 添加logo控件，行数同'App版本号'(在index行, 第5列, 跨3行, 占1列，居中)
-                    self.appInfoGridLayout.addWidget(logoImage, index, 4, 3, 1, Qt.AlignmentFlag.AlignCenter)
+                    logoImage.setFixedSize(64, 64)
+                    logoImage.setStyleSheet(
+                        """
+                        padding: 2px;
+                        min-height: 64px;
+                        min-width: 64px;
+                        alignment: bottom center;  /* 底部居中 */
+                        """
+                    )
+                    # 添加logo控件，行数同'App版本号'          (在index行, 第5列, 跨2行, 占1列，居中)
+                    self.appInfoGridLayout.addWidget(logoImage, index, 4, 2, 1, Qt.AlignmentFlag.AlignCenter)
+                elif name == 'Min.SDK':
+                    logoInfo: QLabel = self.getInfoLabel("", "obj_logo_info", self.apkInfoGroupBox)
+                    self.appInfoGridLayout.addWidget(logoInfo, index, 4, 1, 1, Qt.AlignmentFlag.AlignCenter)
+
             elif name == '权限要求':
-                lineEdit.setFont(getSongFontStyle(9))
+                lineEdit.setFont(getWRYHFontStyle(9))
                 sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
                 sizePolicy.setHorizontalStretch(0)
                 sizePolicy.setVerticalStretch(0)
@@ -480,11 +508,17 @@ class APKHelperDialog(DragDialog):
         self.fileInfoGroupBox.setFont(getSimpleFontStyle())
         self.fileInfoGroupBox.setObjectName("file_info_group")
         self.fileInfoGroupBox.setTitle("文件信息")
-        self.fileInfoGroupBox.setStyleSheet(
-            "QGroupBox { "
-            "background-color:rgb(255,255,255);"
-            "font-weight: bold; "
-            "} "
+        self.fileInfoGroupBox.setStyleSheet("""
+            QGroupBox {
+                background-color: white;
+                font-weight: bold; 
+            }
+            QGroupBox::title {
+                subcontrol-origin: margin;
+                left: 8px;
+                padding: 0 3px 0 3px;
+            }
+        """
         )
 
         fileInfoGridLayout = QtWidgets.QGridLayout(self.fileInfoGroupBox)
@@ -496,7 +530,7 @@ class APKHelperDialog(DragDialog):
             lineEdit: QLineEdit = HoverQLineEdit(self.fileInfoGroupBox)
             lineEdit.setObjectName(f"obj_fileInfo_at_{index}")
             # lineEdit.setPlaceholderText(f"占位数据_{name}")
-            lineEdit.setFont(getSongFontStyle(10))
+            lineEdit.setFont(getWRYHFontStyle(9))
             lineEdit.setReadOnly(True)
             fileInfoGridLayout.addWidget(labelView, index, 0)
             fileInfoGridLayout.addWidget(lineEdit, index, 1, 1, 4)
@@ -516,13 +550,14 @@ class APKHelperDialog(DragDialog):
             result['sign_md5_version'] = (",".join(result['sign_md5_version']))
         if len(result['permissions']) > 0:
             permission_chinese = []
-            for item in result['permissions']:
-                if not item.startswith("android.permission"):  # 过滤自定义权限
+            for p in result['permissions']:
+                if not p.startswith("android.permission"):  # 过滤自定义权限
                     continue
-                chn_permission = self.config_manager.permissions(item)
-                permission_chinese.append(chn_permission)
+                permission_name = p.split('.')[-1]
+                # permission_name = self.config_manager.permissions(item)
+                permission_chinese.append(permission_name)
 
-            result['permissions'] = ('\r\n- '.join(permission_chinese))
+            result['permissions'] = "- " + ('\r\n- '.join(permission_chinese))
 
         result['file_md5'] = result['file_md5'].upper()
         # 处理文件大小显示
@@ -531,8 +566,26 @@ class APKHelperDialog(DragDialog):
         file_size_bytes_format = "{:,}".format(file_size)
         result['file_bytes'] = f"{file_size_bytes_format} 字节({file_size_mb:.2f} MB)"
 
+        # 解析图片icon
+        icon = self.extract_icon(result['icon_path'])
+        result['icon_path'] = icon
+
         # 通过信号机制发出数据
         self.parseFinished.emit(result)
+
+    def extract_icon(self, icon_path):
+        tem_icon_root_path = os.path.join(settings.appTempPath, "icon")
+        # 清除icon目录下的缓存图片
+        if os.path.exists(tem_icon_root_path):
+            FileUtils.clear_directory(tem_icon_root_path)
+
+        # 打开 APK 文件，释放出目标文件
+        with zipfile.ZipFile(self.file_path, 'r') as zip_ref:
+            zip_ref.extract(icon_path, tem_icon_root_path)  # 提取图标文件
+
+        extract_icon_path = os.path.join(tem_icon_root_path, icon_path)
+        z_logger.info(f"Extract icon to :{extract_icon_path}")
+        return extract_icon_path
 
     @pyqtSlot(dict)
     def updateUIOnParsed(self, apkFileInfo):
@@ -553,6 +606,18 @@ class APKHelperDialog(DragDialog):
         apkVersionCodeView.setText(apkFileInfo['version_code'])
         apkMinSDKView.setText(apkFileInfo['min_sdk'])
         apkPermissionsView.setText(apkFileInfo['permissions'])
+
+        appLogoView = self.apkInfoGroupBox.findChild(QLabel, "obj_logo")
+        appLogoInfoView = self.apkInfoGroupBox.findChild(QLabel, "obj_logo_info")
+        pixMap = QPixmap(apkFileInfo['icon_path'])
+        # 获取图片的原始尺寸
+        original_width = pixMap.width()
+        original_height = pixMap.height()
+        size_info = f'{original_width}x{original_height}'
+        z_logger.info(f"Original size: ${size_info}")
+        pixMap = pixMap.scaled(64, 64, Qt.KeepAspectRatio)
+        appLogoView.setPixmap(pixMap)
+        appLogoInfoView.setText(size_info)
 
         fileNameView = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_0")
         fileMd5View = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_1")

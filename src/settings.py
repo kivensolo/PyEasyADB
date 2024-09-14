@@ -14,6 +14,11 @@ if not os.path.exists(localAppDataOfEasyADB):
 platformToolsPath = os.path.join(localAppDataOfEasyADB, "platform-tools")
 toolsPath = os.path.join(localAppDataOfEasyADB, "tools")
 
+# 临时数据路径
+appTempPath = os.path.join(localAppDataOfEasyADB, "tmp")
+if not os.path.exists(appTempPath):
+    os.mkdir(appTempPath)
+
 # 应用数据路径
 APP_DATA_PATH = os.path.join(localAppDataOfEasyADB, 'data')
 if not os.path.exists(APP_DATA_PATH):

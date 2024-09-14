@@ -64,7 +64,8 @@ EasyADB会自动调用tool/scrcpy-win64/scrcpy.exe；
 # 更新记录
 ## v 1.0.4
 1. [x] [优化] 修复真机通过有线连接时出现的连接问题。
-2. [] [功能] 🔥 增加frida支持;
+2. [x] [功能] 🔥 增加apk文件的签名信息、图标信息等的查看;
+3. [] [功能] 🔥 增加frida支持;
 
 ## v 1.0.3
 1. [x] [功能] 增加android platform-tools 的依赖，提供独立的ADB环境支撑;
