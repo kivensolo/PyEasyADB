@@ -656,7 +656,7 @@ class APKHelperDialog(DragDialog):
         return labelView
 
     def showIconContextMenu(self, pos):
-        if self.apkPkgView:
+        if self.apkPkgView and (len(self.apkPkgView.text()) > 0):
             # 创建一个右键菜单
             menu = QMenu(self)
             saveAction = QAction('保存图标', self)
