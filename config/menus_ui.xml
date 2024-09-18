@@ -15,7 +15,7 @@
     <menu name="工具">
         <action name="APK Hepler">
             <attr name="shortcut">Alt+H</attr>
-            <attr name="icon">./res/icons/add_new.png</attr>
+            <attr name="icon">./res/icons/apk_64x64_09a413.png</attr>
             <attr name="action">m_show_apk_helper_dialog</attr>
         </action>
     </menu>

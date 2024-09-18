@@ -1,3 +1,4 @@
+import concurrent.futures
 import os
 import sys
 import threading
@@ -395,8 +396,7 @@ class APKHelperDialog(DragDialog):
             """
         )
 
-        self.thread = threading.Thread(target=self.__startApkParse)
-        self.thread.name = 'parseApkFilr'
+        self.apkParsePool = concurrent.futures.ThreadPoolExecutor(max_workers=2)
         self.parseFinished.connect(self.updateUIOnParsed)
 
         self.mainWindow = window
@@ -417,14 +417,16 @@ class APKHelperDialog(DragDialog):
         self.initViews()
 
     def initWindow(self):
-        super().initWindow()
+        self.setWindowTitle(self.title)
+        self.setWindowIcon(IconTool.buildQIcon("apk_64x64_09a413.png", dir="icons"))
         # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
         self.setWindowFlags(Qt.WindowFullscreenButtonHint)
         screen = QtWidgets.QApplication.primaryScreen()
         dpi = screen.physicalDotsPerInch()
 
         # self.setFixedSize(int(320 * dpi / 96), int(400 * dpi / 96))
-        self.setFixedSize(558, 750)
+        self.resize(558, 750)
+        self.center()
 
     def initViews(self):
         self.initApkInfoView()
@@ -548,6 +550,7 @@ class APKHelperDialog(DragDialog):
         self.rootVLayout.addStretch(1)
 
     def __startApkParse(self):
+        z_logger.info(f"Start parse apk: {self.file_path}")
         """
         开始进行APK解析，并处理数据格式的转换
         :return:
@@ -582,6 +585,12 @@ class APKHelperDialog(DragDialog):
         self.parseFinished.emit(result)
 
     def extract_icon(self, icon_path):
+        """
+        从APK文件中抽离图标
+        :param icon_path: /res/drawable/ic_launcher.png
+                        注意，是反斜杠的路径
+        :return:
+        """
         tem_icon_root_path = os.path.join(settings.appTempPath, "icon")
         # 清除icon目录下的缓存图片
         if os.path.exists(tem_icon_root_path):
@@ -591,12 +600,13 @@ class APKHelperDialog(DragDialog):
         with zipfile.ZipFile(self.file_path, 'r') as zip_ref:
             zip_ref.extract(icon_path, tem_icon_root_path)  # 提取图标文件
 
-        extract_icon_path = os.path.join(tem_icon_root_path, icon_path)
-        z_logger.info(f"Extract icon to :{extract_icon_path}")
+        extract_icon_path = os.path.join(tem_icon_root_path, icon_path.replace("/", "\\"))
+        # z_logger.info(f"Extract icon to :{extract_icon_path}")
         return extract_icon_path
 
     @pyqtSlot(dict)
     def updateUIOnParsed(self, apkFileInfo):
+        z_logger.info("Parsed success! updateU")
         self.apkPkgView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_0")
         apkNameView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_1")
         signMd5View = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_2")
@@ -622,8 +632,6 @@ class APKHelperDialog(DragDialog):
         original_width = pixMap.width()
         original_height = pixMap.height()
         size_info = f'{original_width}x{original_height}'
-        z_logger.info(f"Original size: ${size_info}")
-        # pixMap = pixMap.scaled(64, 64, Qt.KeepAspectRatio)
         appLogoView.setPixmap(pixMap)
         appLogoInfoView.setText(size_info)
 
@@ -675,10 +683,10 @@ class APKHelperDialog(DragDialog):
         directory_path = os.path.join(downloads_path, f"{pkgName}_icon_{pixmap.width()}x{pixmap.height()}")
 
         options = QFileDialog.Options()
-        fileName, _ = QFileDialog.getSaveFileName(self, "保存图片", directory_path, "图片文件 (*.png *.jpg *.bmp)", options=options)
-        if fileName:
+        selectedFile, _ = QFileDialog.getSaveFileName(self, "保存图片", directory_path, "图片文件 (*.png *.jpg *.bmp)", options=options)
+        if selectedFile:
             # 保存图片
-            self.logoImage.pixmap().save(fileName)
+            self.logoImage.pixmap().save(selectedFile)
 
     def dropEvent(self, event: QDropEvent):
         super().dropEvent(event)
@@ -686,10 +694,10 @@ class APKHelperDialog(DragDialog):
         # 获取拖放的文件(QUrl)列表
         urls = event.mimeData().urls()
         if urls:
-            # 遍历所有拖入的文件 QUrl对象
-            for url in urls:
-                self.file_path = url.toLocalFile() # 本地文件路径
-                self.thread.start()
+            # # 遍历所有拖入的文件 QUrl对象
+            # for url in urls:
+            self.file_path = urls[0].toLocalFile() # 本地文件路径
+            self.apkParsePool.submit(self.__startApkParse)
 
 
 if __name__ == "__main__":

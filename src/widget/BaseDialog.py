@@ -36,6 +36,13 @@ class DragDialog(BaseDialog):
         self.setAcceptDrops(True)
 
     def dragEnterEvent(self, event: QDragEnterEvent):
+        """
+        文件被拖进来的事件回调， 用于判断是否接收此文件，
+        目前统一用ActionJudge.isAcceptDrag判断,
+        子类可以自定义复写此逻辑。
+        :param event:
+        :return:
+        """
         if ActionJudge.isAcceptDrag(event):
             event.accept()
         else:

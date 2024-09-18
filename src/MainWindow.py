@@ -4,16 +4,16 @@ from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSettings
 from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
-    QAbstractItemView, QWidget, QStyleFactory, QFileSystemModel, QTreeWidget, QDesktopWidget, QMessageBox
+    QAbstractItemView, QWidget, QStyleFactory, QMessageBox
 
-from ConfigManager import AppConfigManager
+from AppConfigManager import AppConfigManager
 from src import TreeItemType
 from src.BaseWindow import BaseWindow
+from src.BottomWindow import BottomTabWidget
+from src.CenterWindow import CommonFunctionalWidget
 from src.DataBase import DBManager
 from src.DevicesWatcher import DevicesWatcher
 from src.MenuBar import MenuActions
-from src.BottomWindow import BottomTabWidget
-from src.CenterWindow import CommonFunctionalWidget
 from src.ToolBar import Ui_ToolBar
 from src.logcat.log import z_logger
 from src.settings import APP_SCREEN_RQTIO
