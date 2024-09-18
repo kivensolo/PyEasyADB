@@ -431,6 +431,13 @@ class APKHelperDialog(DragDialog):
         self.setFixedSize(558, 750)
         self.center()
 
+    def center(self):
+        """将对话框居中在其父窗口所在的屏幕上"""
+        qr = self.frameGeometry()
+        cp = self.mainWindow.window().screen().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
     def initViews(self):
         self.initApkInfoView()
         self.initFileInfoView()
