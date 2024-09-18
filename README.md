@@ -46,7 +46,7 @@ EasyADB是基于PyQt5框架实现的一款便捷进行ADB操作的软件，包�
 └─ requriements.txt requriements文件<br>
 
 ## 主要功能说明
-### 远程文件操作管理
+### 远程文件操作管理（TODO）
 对于经常使用的目录，可以进行收藏，或者直接编辑 ./bin/favorite.txt 文件，一行一个目录路径，这个功能比较方便实用。
 支持pull下载远程文件到本地。
 上传文件直接拖放即可，方便快捷。
@@ -58,7 +58,8 @@ EasyADB是基于PyQt5框架实现的一款便捷进行ADB操作的软件，包�
 EasyADB会自动调用tool/scrcpy-win64/scrcpy.exe；
 如果要升级替换 scrcpy 的版本，只需要替换 scrcpy-win64 目录下的文件即可，实现无缝升级；
 
-# FIXME 弹窗位置要优化，多屏设备的时候，在屏幕2点击，会展示在屏幕1中心.
+# FIXME
+- [ ] [BUG]弹窗位置要优化，多屏设备的时候，在屏幕2点击，会展示在屏幕1中心.
 
 
 # 更新记录
@@ -99,6 +100,9 @@ EasyADB会自动调用tool/scrcpy-win64/scrcpy.exe；
 10.[修复] 修复已知bugs;<br>
 
 # 发布说明
+## 打包说明
+1. 确保不在`虚拟环境`下，如果处于虚拟环境下，则进入`Scripts`目录，执行`deactivate`退出。
+2. 执行以下命令打包(建议不带参数)：
 `pyinstaller --onefile EasyADB.py`<br>
 `pyinstaller EasyADB.py`<br>
 参数说明：<br>
@@ -111,13 +115,12 @@ EasyADB会自动调用tool/scrcpy-win64/scrcpy.exe；
 ## 关于CA证书文件的说明
 v1.0.3开始，使用了requests库，通过PyInstaller打包独立文件后的程序会出现:<br>
 OSError: Could not find a suitable TLS CA certificate bundle, invalid path:。
-原因是在打包时，requests 库释放在用户临时文件夹内的 CA 证书没有被一起打包，所以运行时无法找到。
+原因是使用`--onefile`打包时，requests 库释放在用户临时文件夹内的 CA 证书没有被一起打包，所以运行时无法找到。
 
-解决方案就是将证书手动加入代码内,将本地 CA 证书的路径临时地写入系统环境变量中。我们这里指定的路径为'.\certifi\cacert.pem'<br>
-
+解决方案就是将证书手动加入代码内,将本地 CA 证书的路径临时地写入系统环境变量中。我这里指定的路径为'.\certifi\cacert.pem'<br>
 cacert.pem 文件可以从 https://curl.se/docs/caextract.html 下载到;
 
-打包成非独立文件时，此证书文件就会被打包进去，所以不需要再手动复制了。
+【注意】: 打包成非独立文件时，此证书文件就会被打包进去，所以不需要再手动复制了。
 
 ## TODO
 - [ ] 保存apk到电脑

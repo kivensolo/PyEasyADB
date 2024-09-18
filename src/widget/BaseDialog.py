@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from PyQt5.QtGui import QDragEnterEvent, QDropEvent
-from PyQt5.QtWidgets import QDesktopWidget, QDialog
+from PyQt5.QtWidgets import QDesktopWidget, QDialog, QApplication
 
 from utils.UITools import ActionJudge, IconTool
 
@@ -20,6 +20,7 @@ class BaseDialog(QDialog):
 
     # 设置窗口居中
     def center(self):
+        #FIXME 弹窗位置要优化，多屏设备的时候，在屏幕2点击，会展示在屏幕1中心.
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
