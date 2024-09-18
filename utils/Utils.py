@@ -204,7 +204,6 @@ class FileUtils(object):
 
     @staticmethod
     def parse_apk(file_path: str):
-
         """
         解析APK文件并获取相关信息。
 
@@ -229,9 +228,7 @@ class FileUtils(object):
             md5 = FileUtils.calculate_md5(file_path)
         except Exception as e:
             z_logger.error(f'文件信息读取失败,{file_name}:{str(e)}')
-            return {
-                "file_name": "",
-            }
+            return {"success": False, "reason": "文件信息读取失败！请检查文件完整性！"}
 
         # 获取当前操作系统
         current_os = os.name
@@ -281,6 +278,7 @@ class FileUtils(object):
                     icon_path = re.search(r"application-icon-(\d+):'(.*?)'", line).group(2)
         except Exception as e:
             z_logger.debug(f"Error running AAPT command: {e}")
+            return {"success": False, "reason": "解析失败！请检查AAPT环境配置是否正确！"}
 
         # 使用apksigner命令获取APK签名信息 注意，这里只能使用“apksigner.bat”
         command = commands[1]
@@ -303,10 +301,10 @@ class FileUtils(object):
                                 cert_md5_version.append(f"v{version}")
         except Exception as e:
             z_logger.debug(f"Error running ApkSigner command: {e}")
-            cert_md5 = f"解析失败:{e}"
-            cert_md5_version = ["N/A"]
+            return {"success": False, "reason": "解析失败！请检查AAPT环境配置是否正确！"}
 
         return {
+            "success": True,
             "package_name": package_name,
             "app_name": app_name,
             "sign_md5": cert_md5,

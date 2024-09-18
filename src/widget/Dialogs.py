@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QDropEvent, QPixmap
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog, QTextEdit, \
-    QGroupBox, QMenu, QAction
+    QGroupBox, QMenu, QAction, QStatusBar
 
 from AppConfigManager import AppConfigManager
 from src import settings
@@ -406,12 +406,15 @@ class APKHelperDialog(DragDialog):
         self.rootVLayout = QtWidgets.QVBoxLayout(self)
         self.rootVLayout.setObjectName("v_apkhelper_root")
         self.rootVLayout.setContentsMargins(6, 6, 6, 6)
+        self.rootVLayout.setSpacing(3)
 
         self.file_path = ""
         # apk信息的GroupBox
         self.apkInfoGroupBox = QtWidgets.QGroupBox()
         # apk包名View
         self.apkPkgView = None
+        # 状态信息提示
+        self.status_label = None
         # 文件信息的GroupBox
         self.fileInfoGroupBox = QtWidgets.QGroupBox()
         self.initViews()
@@ -425,12 +428,19 @@ class APKHelperDialog(DragDialog):
         dpi = screen.physicalDotsPerInch()
 
         # self.setFixedSize(int(320 * dpi / 96), int(400 * dpi / 96))
-        self.resize(558, 750)
+        self.setFixedSize(558, 750)
         self.center()
 
     def initViews(self):
         self.initApkInfoView()
         self.initFileInfoView()
+
+        # 状态栏
+        self.status_label = QLabel('拖文件到窗口即可检查apk信息')
+        self.status_label.setAlignment(Qt.AlignCenter)
+        # self.status_label.setStyleSheet("padding: 2px;")
+        self.rootVLayout.addWidget(self.status_label)
+
 
     def initApkInfoView(self):
         """
@@ -439,11 +449,12 @@ class APKHelperDialog(DragDialog):
         """
         self.apkInfoGroupBox.setFont(getSimpleFontStyle())
         self.apkInfoGroupBox.setObjectName("app_info_group")
-        self.apkInfoGroupBox.setTitle("APK信息(拖文件到窗口即可检查apk信息)")
+        self.apkInfoGroupBox.setTitle("APK信息")
         self.apkInfoGroupBox.setStyleSheet("""
             QGroupBox {
                 background-color: white;
                 font-weight: bold; 
+                border: 2px solid rgb(231, 231, 231);
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -522,6 +533,7 @@ class APKHelperDialog(DragDialog):
             QGroupBox {
                 background-color: white;
                 font-weight: bold; 
+                border: 2px solid rgb(231, 231, 231);
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
@@ -556,6 +568,11 @@ class APKHelperDialog(DragDialog):
         :return:
         """
         result = FileUtils.parse_apk(self.file_path)
+        if not result["success"]:
+            # Fast failure
+            self.parseFinished.emit(result)
+            return
+
         # 拼接签名版本
         if len(result['sign_md5_version']) > 0:
             result['sign_md5_version'] = (",".join(result['sign_md5_version']))
@@ -606,6 +623,12 @@ class APKHelperDialog(DragDialog):
 
     @pyqtSlot(dict)
     def updateUIOnParsed(self, apkFileInfo):
+        if not apkFileInfo["success"]:
+            self.status_label.setStyleSheet("QLabel {color: red; }")
+            self.status_label.setText(apkFileInfo["reason"])
+            return
+        self.status_label.setStyleSheet("QLabel {color: black; }")
+        self.status_label.setText("拖文件到窗口即可检查apk信息")
         z_logger.info("Parsed success! updateU")
         self.apkPkgView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_0")
         apkNameView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_1")
@@ -696,6 +719,7 @@ class APKHelperDialog(DragDialog):
         if urls:
             # # 遍历所有拖入的文件 QUrl对象
             # for url in urls:
+            self.status_label.setText("解析中....")
             self.file_path = urls[0].toLocalFile() # 本地文件路径
             self.apkParsePool.submit(self.__startApkParse)
 
