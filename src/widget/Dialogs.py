@@ -6,7 +6,8 @@ import zipfile
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QDropEvent, QPixmap
-from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog, QTextEdit, QGroupBox
+from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog, QTextEdit, \
+    QGroupBox, QMenu, QAction
 
 from AppConfigManager import AppConfigManager
 from src import settings
@@ -409,6 +410,8 @@ class APKHelperDialog(DragDialog):
         self.file_path = ""
         # apk信息的GroupBox
         self.apkInfoGroupBox = QtWidgets.QGroupBox()
+        # apk包名View
+        self.apkPkgView = None
         # 文件信息的GroupBox
         self.fileInfoGroupBox = QtWidgets.QGroupBox()
         self.initViews()
@@ -470,9 +473,10 @@ class APKHelperDialog(DragDialog):
             if name == 'App版本号' or name == '代码版本号' or name == 'Min.SDK':
                 self.appInfoGridLayout.addWidget(lineEdit, index, 1, 1, 3)
                 if name == 'App版本号':
-                    logoImage: QLabel = self.getInfoLabel("logo", "obj_logo", self.apkInfoGroupBox)
-                    logoImage.setFixedSize(64, 64)
-                    logoImage.setStyleSheet(
+                    self.logoImage: QLabel = self.getInfoLabel("logo", "obj_logo", self.apkInfoGroupBox)
+                    self.logoImage.setFixedSize(64, 64)
+                    self.logoImage.setScaledContents(True)  # 图片自适应QLabel大小
+                    self.logoImage.setStyleSheet(
                         """
                         padding: 2px;
                         min-height: 64px;
@@ -480,8 +484,12 @@ class APKHelperDialog(DragDialog):
                         alignment: bottom center;  /* 底部居中 */
                         """
                     )
+                    # 添加自定义上下文菜单
+                    self.logoImage.setContextMenuPolicy(Qt.CustomContextMenu)
+                    self.logoImage.customContextMenuRequested.connect(self.showIconContextMenu)
+
                     # 添加logo控件，行数同'App版本号'          (在index行, 第5列, 跨2行, 占1列，居中)
-                    self.appInfoGridLayout.addWidget(logoImage, index, 4, 2, 1, Qt.AlignmentFlag.AlignCenter)
+                    self.appInfoGridLayout.addWidget(self.logoImage, index, 4, 2, 1, Qt.AlignmentFlag.AlignCenter)
                 elif name == 'Min.SDK':
                     logoInfo: QLabel = self.getInfoLabel("", "obj_logo_info", self.apkInfoGroupBox)
                     self.appInfoGridLayout.addWidget(logoInfo, index, 4, 1, 1, Qt.AlignmentFlag.AlignCenter)
@@ -589,7 +597,7 @@ class APKHelperDialog(DragDialog):
 
     @pyqtSlot(dict)
     def updateUIOnParsed(self, apkFileInfo):
-        apkPkgView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_0")
+        self.apkPkgView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_0")
         apkNameView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_1")
         signMd5View = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_2")
         signMd5VerView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_3")
@@ -598,7 +606,7 @@ class APKHelperDialog(DragDialog):
         apkMinSDKView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_6")
         apkPermissionsView = self.apkInfoGroupBox.findChild(QTextEdit, "obj_appInfo_at_7")
 
-        apkPkgView.setText(apkFileInfo['package_name'])
+        self.apkPkgView.setText(apkFileInfo['package_name'])
         apkNameView.setText(apkFileInfo['app_name'])
         signMd5View.setText(apkFileInfo['sign_md5'])
         signMd5VerView.setText(apkFileInfo['sign_md5_version'])
@@ -615,7 +623,7 @@ class APKHelperDialog(DragDialog):
         original_height = pixMap.height()
         size_info = f'{original_width}x{original_height}'
         z_logger.info(f"Original size: ${size_info}")
-        pixMap = pixMap.scaled(64, 64, Qt.KeepAspectRatio)
+        # pixMap = pixMap.scaled(64, 64, Qt.KeepAspectRatio)
         appLogoView.setPixmap(pixMap)
         appLogoInfoView.setText(size_info)
 
@@ -646,6 +654,31 @@ class APKHelperDialog(DragDialog):
         labelView.setText(name)
         labelView.setFont(getWRYHFontStyle())
         return labelView
+
+    def showIconContextMenu(self, pos):
+        if self.apkPkgView:
+            # 创建一个右键菜单
+            menu = QMenu(self)
+            saveAction = QAction('保存图标', self)
+            saveAction.triggered.connect(self.saveIconImage)
+            menu.addAction(saveAction)
+            # 显示菜单
+            menu.exec_(self.logoImage.mapToGlobal(pos))
+
+    def saveIconImage(self):
+        # 获取用户的下载目录
+        downloads_path = os.path.join(os.environ['USERPROFILE'], 'Downloads')
+        if not os.path.exists(downloads_path): # 若不存在，则获取桌面路径
+            downloads_path = os.path.join(os.environ['USERPROFILE'], 'Desktop')
+        pkgName = self.apkPkgView.text()
+        pixmap = self.logoImage.pixmap()
+        directory_path = os.path.join(downloads_path, f"{pkgName}_icon_{pixmap.width()}x{pixmap.height()}")
+
+        options = QFileDialog.Options()
+        fileName, _ = QFileDialog.getSaveFileName(self, "保存图片", directory_path, "图片文件 (*.png *.jpg *.bmp)", options=options)
+        if fileName:
+            # 保存图片
+            self.logoImage.pixmap().save(fileName)
 
     def dropEvent(self, event: QDropEvent):
         super().dropEvent(event)

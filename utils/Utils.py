@@ -244,6 +244,7 @@ class FileUtils(object):
             line_break = '\n'
 
         package_name = ""
+        app_name = ""
         version_code = ""
         version_name = ""
         cert_md5 = ""
@@ -273,7 +274,7 @@ class FileUtils(object):
                 elif line.startswith("sdkVersion:"):
                     min_sdk = re.search(r"sdkVersion:'(.*?)'", line).group(1)
                 elif line.startswith("application: label="):
-                    package_name = re.search(r"application: label='(.*?)'", line).group(1)
+                    app_name = re.search(r"application: label='(.*?)'", line).group(1)
                 elif line.startswith("uses-permission:"):
                     permissions.append(re.search(r"uses-permission: name='(.*?)'", line).group(1))
                 elif line.startswith("application-icon-"):
@@ -307,7 +308,7 @@ class FileUtils(object):
 
         return {
             "package_name": package_name,
-            "app_name": version_name,
+            "app_name": app_name,
             "sign_md5": cert_md5,
             "sign_md5_version": cert_md5_version,
             "version_code": version_code,
