@@ -2,7 +2,7 @@ import xml.dom.minidom
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import QVersionNumber, Qt, QT_VERSION_STR, pyqtSlot, QModelIndex, QSettings
-from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor
+from PyQt5.QtGui import QFont, QStandardItemModel, QStandardItem, QCursor, QBrush, QColor
 from PyQt5.QtWidgets import QApplication, QMenu, QStatusBar, QToolTip, QVBoxLayout, QSplitter, QTreeView, \
     QAbstractItemView, QWidget, QStyleFactory, QMessageBox
 
@@ -280,6 +280,7 @@ class MainWindow(BaseWindow):
         all_device = self.dbManager.get_all_device()
 
         device_item = QStandardItem("设备列表")
+        device_item.setBackground(QBrush(QColor("#f0f0f0")))
         # self.tree_model.setItem(0, 1, device_item2)
         device_item.type = TreeItemType.TYPE_ROOT_DEVICE
         device_item.removeRows(0, device_item.rowCount())
@@ -336,6 +337,7 @@ class MainWindow(BaseWindow):
 
     def __loadAdbCmds(self):
         root_adb_node = QStandardItem("命令列表")
+        root_adb_node.setBackground(QBrush(QColor("#f0f0f0")))
         dom = xml.dom.minidom.parse("./config/cmdConfig.xml")
         root = dom.documentElement
         childNodes = root.getElementsByTagName("group")
