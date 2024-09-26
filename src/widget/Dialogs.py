@@ -479,6 +479,10 @@ class APKHelperDialog(DragDialog):
                 padding: 0 3px 0 3px;
             }
         """)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(100)
+        self.apkInfoGroupBox.setSizePolicy(sizePolicy)
 
         self.appInfoGridLayout = QtWidgets.QGridLayout(self.apkInfoGroupBox)
         self.appInfoGridLayout.setObjectName("grid_layout_of_app_info")
@@ -560,8 +564,7 @@ class APKHelperDialog(DragDialog):
                 lineEdit.setFont(getWRYHFontStyle(9))
                 sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
                 sizePolicy.setHorizontalStretch(0)
-                sizePolicy.setVerticalStretch(0)
-                sizePolicy.setHeightForWidth(lineEdit.sizePolicy().hasHeightForWidth())
+                sizePolicy.setVerticalStretch(20)
                 lineEdit.setSizePolicy(sizePolicy)
                 self.appInfoGridLayout.addWidget(lineEdit, index, 1, 2, 4)
             else:
