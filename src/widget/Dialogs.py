@@ -23,6 +23,8 @@ from utils.Utils import FileUtils
 from utils.Tools import getSimpleFontStyle, getWRYHFontStyle, getSongFontStyle
 from utils.UITools import IconTool
 
+isModuleTest = False
+
 
 class NewConnectDialog(BaseDialog):
     """
@@ -395,7 +397,6 @@ class APKHelperDialog(DragDialog):
             }
             """
         )
-
         self.apkParsePool = concurrent.futures.ThreadPoolExecutor(max_workers=2)
         self.parseFinished.connect(self.updateUIOnParsed)
 
@@ -406,7 +407,7 @@ class APKHelperDialog(DragDialog):
         self.rootVLayout = QtWidgets.QVBoxLayout(self)
         self.rootVLayout.setObjectName("v_apkhelper_root")
         self.rootVLayout.setContentsMargins(6, 6, 6, 6)
-        self.rootVLayout.setSpacing(3)
+        self.rootVLayout.setSpacing(5)
 
         self.file_path = ""
         # apk信息的GroupBox
@@ -452,9 +453,9 @@ class APKHelperDialog(DragDialog):
         self.initFileInfoView()
 
         # 状态栏
-        self.status_label = QLabel('拖文件到窗口即可检查apk信息')
+        self.status_label = QLabel('拖文件到窗口即可检查apk信息\n\r(注意:文件路径及文件名不可包含中文！)')
         self.status_label.setAlignment(Qt.AlignCenter)
-        # self.status_label.setStyleSheet("padding: 2px;")
+        self.status_label.setWordWrap(True)
         self.rootVLayout.addWidget(self.status_label)
 
 
@@ -474,7 +475,7 @@ class APKHelperDialog(DragDialog):
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
-                left: 8px;
+                left: 5px;
                 padding: 0 3px 0 3px;
             }
         """)
@@ -500,11 +501,11 @@ class APKHelperDialog(DragDialog):
             if name == "@应用特征信息@":
                 hRootWidget = QWidget()
                 layout = QHBoxLayout(hRootWidget)
-                layout.setContentsMargins(0, 0, 0, 0)
+                layout.setContentsMargins(2, 0, 2, 0)
                 layout.setSpacing(5)
 
                 _attrs = ['Launcher应用', 'Icon展示', '系统应用']
-                questionIcon = IconTool.buildQPixmap(path='../..', pixmapName="help.png")
+                questionIcon = IconTool.buildQPixmap(path='../..' if isModuleTest else '.', pixmapName="help.png")
                 for attr in _attrs:
                     labelView: QLabel = self.getInfoLabel(f"{attr}:", f"apkAtts_of_{attr}", self.apkInfoGroupBox)
                     value_Label: QLabel = QLabel()
@@ -585,7 +586,7 @@ class APKHelperDialog(DragDialog):
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
-                left: 8px;
+                left: 5px;
                 padding: 0 3px 0 3px;
             }
         """
@@ -675,19 +676,22 @@ class APKHelperDialog(DragDialog):
     @pyqtSlot(dict)
     def updateUIOnParsed(self, apkFileInfo):
         if not apkFileInfo["success"]:
+            self.status_label.setAlignment(Qt.AlignLeft)
             self.status_label.setStyleSheet("QLabel {color: red; }")
             self.status_label.setText(apkFileInfo["reason"])
             return
+        self.status_label.setAlignment(Qt.AlignCenter)
         self.status_label.setStyleSheet("QLabel {color: black; }")
-        self.status_label.setText("拖文件到窗口即可检查apk信息")
+        self.status_label.setText("拖文件到窗口即可检查apk信息\n\r(注意:文件路径及文件名不可包含中文！)")
         z_logger.info("Parsed success! updateUI")
 
         # App 特征属性
         isLauncherAppView = self.apkInfoGroupBox.findChild(QLabel, "obj_appAttrs_of_Launcher应用")
         isShowIconView = self.apkInfoGroupBox.findChild(QLabel, "obj_appAttrs_of_Icon展示")
         isSystemAppView = self.apkInfoGroupBox.findChild(QLabel, "obj_appAttrs_of_系统应用")
-        _greenPixMap = IconTool.buildQPixmap(path='../..', pixmapName="state_connect_normal.png")
-        _redPixMap = IconTool.buildQPixmap(path='../..', pixmapName="state_disconnect.png")
+        _state_pic_path = '../..' if isModuleTest else '.'
+        _greenPixMap = IconTool.buildQPixmap(path=_state_pic_path, pixmapName="state_connect_normal.png")
+        _redPixMap = IconTool.buildQPixmap(path=_state_pic_path, pixmapName="state_disconnect.png")
         isLauncherAppView.setPixmap(_greenPixMap if apkFileInfo['is_launcher_app'] else _redPixMap)
         isShowIconView.setPixmap(_greenPixMap if apkFileInfo['is_show_launch_icon'] else _redPixMap)
         isSystemAppView.setPixmap(_greenPixMap if apkFileInfo['is_sys_app'] else _redPixMap)
@@ -795,6 +799,7 @@ class APKHelperDialog(DragDialog):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    isModuleTest = True
     dialog = APKHelperDialog()
     # 设置窗口的属性为ApplicationModal模态，用户只有关闭弹窗后，才能关闭主界面
     dialog.setWindowModality(Qt.ApplicationModal)
