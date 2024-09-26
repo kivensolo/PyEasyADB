@@ -656,6 +656,9 @@ class APKHelperDialog(DragDialog):
                         注意，是反斜杠的路径
         :return:
         """
+        if len(icon_path) == 0:
+            return ""
+
         tem_icon_root_path = os.path.join(settings.appTempPath, "icon")
         # 清除icon目录下的缓存图片
         if os.path.exists(tem_icon_root_path):
@@ -708,18 +711,20 @@ class APKHelperDialog(DragDialog):
         apkVersionNameView.setText(apkFileInfo['version_name'])
         apkVersionCodeView.setText(apkFileInfo['version_code'])
         apkMinSDKView.setText(apkFileInfo['min_sdk'])
-        apkPermissionsView.setText(apkFileInfo['permissions'])
+        if len(apkFileInfo['permissions']) > 0:
+            apkPermissionsView.setText(apkFileInfo['permissions'])
 
         # App Icon Logo
         appLogoView = self.apkInfoGroupBox.findChild(QLabel, "obj_logo")
         appLogoInfoView = self.apkInfoGroupBox.findChild(QLabel, "obj_logo_info")
-        pixMap = QPixmap(apkFileInfo['icon_path'])
-        # 获取图片的原始尺寸
-        original_width = pixMap.width()
-        original_height = pixMap.height()
-        size_info = f'{original_width}x{original_height}'
-        appLogoView.setPixmap(pixMap)
-        appLogoInfoView.setText(size_info)
+        _iconPath = apkFileInfo['icon_path']
+        if _iconPath and _iconPath.strip():
+            pixMap = QPixmap(_iconPath)
+            original_width = pixMap.width() # 获取图片的原始尺寸
+            original_height = pixMap.height()
+            size_info = f'{original_width}x{original_height}'
+            appLogoView.setPixmap(pixMap)
+            appLogoInfoView.setText(size_info)
 
         # 文件信息
         fileNameView = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_0")

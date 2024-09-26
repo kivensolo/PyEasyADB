@@ -267,6 +267,10 @@ class FileUtils(object):
         command = commands[0]
         try:
             result = subprocess.run(command, capture_output=True)
+            errorOutput = result.stderr.decode('utf-8', 'ignore')
+            if errorOutput:
+                z_logger.error(f'AAPT命令执行失败,{file_name}:{errorOutput}')
+                return {"success": False, "reason": f"{errorOutput}"}
             output = result.stdout.decode('utf-8', 'ignore')
             lines = output.split(line_break)
             for line in lines:
