@@ -35,6 +35,11 @@ class IconTool:
         join = os.path.join('.', 'res', dir, pixmapName)
         return QPixmap(join)
 
+    @staticmethod
+    def buildQPixmap(path='.', pixmapName='', dir="img"):
+        join = os.path.join(path, 'res', dir, pixmapName)
+        return QPixmap(join)
+
 
 class ActionJudge(object):
     @staticmethod

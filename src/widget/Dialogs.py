@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QDropEvent, QPixmap
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog, QTextEdit, \
-    QGroupBox, QMenu, QAction, QStatusBar
+    QGroupBox, QMenu, QAction, QDesktopWidget, QWidget
 
 from AppConfigManager import AppConfigManager
 from src import settings
@@ -474,9 +474,41 @@ class APKHelperDialog(DragDialog):
         self.appInfoGridLayout.setObjectName("grid_layout_of_app_info")
 
         # 包名、名称、证书MD5布局
-        topLines = ['包名', '名称', "证书MD5", "签名版本", 'App版本号', '代码版本号', 'Min.SDK', '权限要求']
+        topLines = ['包名',
+                    '名称',
+                    '@应用特征信息@',
+                    '启动入口',
+                    '证书MD5',
+                    '签名版本',
+                    'App版本号',
+                    '代码版本号',
+                    'Min.SDK',
+                    '权限要求'
+                    ]
 
         for index, name in enumerate(topLines):
+
+            if name == "@应用特征信息@":
+                hRootWidget = QWidget()
+                layout = QHBoxLayout(hRootWidget)
+                layout.setContentsMargins(0, 0, 0, 0)
+                layout.setSpacing(5)
+
+                _attrs = ['Launcher应用', 'Icon展示', '系统应用']
+                questionIcon = IconTool.buildQPixmap(path='../..', pixmapName="help.png")
+                for attr in _attrs:
+                    labelView: QLabel = self.getInfoLabel(f"{attr}:", f"apkAtts_of_{attr}", self.apkInfoGroupBox)
+                    value_Label: QLabel = QLabel()
+                    value_Label.setObjectName(f"obj_appAttrs_of_{attr}")
+                    value_Label.setFixedSize(20, 20)
+                    value_Label.setScaledContents(True)
+                    value_Label.setPixmap(questionIcon)
+                    layout.addWidget(labelView)
+                    layout.addWidget(value_Label)
+                layout.addStretch()
+                self.appInfoGridLayout.addWidget(hRootWidget, index, 0, 1, 4)
+                continue
+
             labelView: QLabel = self.getInfoLabel(name, f"apkinfo_{index}", self.apkInfoGroupBox)
             self.appInfoGridLayout.addWidget(labelView, index, 0)
 
@@ -484,7 +516,7 @@ class APKHelperDialog(DragDialog):
                 lineEdit: QTextEdit = HoverQTextEdit(self.apkInfoGroupBox)
             else:
                 lineEdit: QLineEdit = HoverQLineEdit(self.apkInfoGroupBox)
-            lineEdit.setObjectName(f"obj_appInfo_at_{index}")
+            lineEdit.setObjectName(f"obj_appInfo_at_{name}")
             # lineEdit.setPlaceholderText(f"占_{name}")
             lineEdit.setFont(getWRYHFontStyle(9))
             lineEdit.setReadOnly(True)
@@ -636,18 +668,32 @@ class APKHelperDialog(DragDialog):
             return
         self.status_label.setStyleSheet("QLabel {color: black; }")
         self.status_label.setText("拖文件到窗口即可检查apk信息")
-        z_logger.info("Parsed success! updateU")
-        self.apkPkgView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_0")
-        apkNameView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_1")
-        signMd5View = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_2")
-        signMd5VerView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_3")
-        apkVersionNameView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_4")
-        apkVersionCodeView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_5")
-        apkMinSDKView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_6")
-        apkPermissionsView = self.apkInfoGroupBox.findChild(QTextEdit, "obj_appInfo_at_7")
+        z_logger.info("Parsed success! updateUI")
+
+        # App 特征属性
+        isLauncherAppView = self.apkInfoGroupBox.findChild(QLabel, "obj_appAttrs_of_Launcher应用")
+        isShowIconView = self.apkInfoGroupBox.findChild(QLabel, "obj_appAttrs_of_Icon展示")
+        isSystemAppView = self.apkInfoGroupBox.findChild(QLabel, "obj_appAttrs_of_系统应用")
+        _greenPixMap = IconTool.buildQPixmap(path='../..', pixmapName="state_connect_normal.png")
+        _redPixMap = IconTool.buildQPixmap(path='../..', pixmapName="state_disconnect.png")
+        isLauncherAppView.setPixmap(_greenPixMap if apkFileInfo['is_launcher_app'] else _redPixMap)
+        isShowIconView.setPixmap(_greenPixMap if apkFileInfo['is_show_launch_icon'] else _redPixMap)
+        isSystemAppView.setPixmap(_greenPixMap if apkFileInfo['is_sys_app'] else _redPixMap)
+
+        # App 常用信息
+        self.apkPkgView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_包名")
+        apkNameView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_名称")
+        entryActivityView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_启动入口")
+        signMd5View = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_证书MD5")
+        signMd5VerView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_签名版本")
+        apkVersionNameView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_App版本号")
+        apkVersionCodeView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_代码版本号")
+        apkMinSDKView = self.apkInfoGroupBox.findChild(QLineEdit, "obj_appInfo_at_Min.SDK")
+        apkPermissionsView = self.apkInfoGroupBox.findChild(QTextEdit, "obj_appInfo_at_权限要求")
 
         self.apkPkgView.setText(apkFileInfo['package_name'])
         apkNameView.setText(apkFileInfo['app_name'])
+        entryActivityView.setText(apkFileInfo['launchable_activity'])
         signMd5View.setText(apkFileInfo['sign_md5'])
         signMd5VerView.setText(apkFileInfo['sign_md5_version'])
         apkVersionNameView.setText(apkFileInfo['version_name'])
@@ -655,6 +701,7 @@ class APKHelperDialog(DragDialog):
         apkMinSDKView.setText(apkFileInfo['min_sdk'])
         apkPermissionsView.setText(apkFileInfo['permissions'])
 
+        # App Icon Logo
         appLogoView = self.apkInfoGroupBox.findChild(QLabel, "obj_logo")
         appLogoInfoView = self.apkInfoGroupBox.findChild(QLabel, "obj_logo_info")
         pixMap = QPixmap(apkFileInfo['icon_path'])
@@ -665,6 +712,7 @@ class APKHelperDialog(DragDialog):
         appLogoView.setPixmap(pixMap)
         appLogoInfoView.setText(size_info)
 
+        # 文件信息
         fileNameView = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_0")
         fileMd5View = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_1")
         fileSizeView = self.fileInfoGroupBox.findChild(QLineEdit, "obj_fileInfo_at_2")

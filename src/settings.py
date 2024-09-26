@@ -4,7 +4,7 @@ import os
 # BASE_PATH = sys.argv[0]   xxxx/PyQt5Demo/App.py
 import time
 
-APP_VERSION = '1.0.3'
+APP_VERSION = '1.0.4'
 
 # 依赖环境检测配置
 appdata_local = os.environ['LOCALAPPDATA']

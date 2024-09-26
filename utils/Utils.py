@@ -240,6 +240,7 @@ class FileUtils(object):
         else:  # 其他操作系统，默认使用换行符'\n'
             line_break = '\n'
 
+        # APK包信息
         package_name = ""
         app_name = ""
         version_code = ""
@@ -248,11 +249,18 @@ class FileUtils(object):
         cert_md5_version = []
         icon_path = ""
         min_sdk = ""
+        launchable_activity = "N/A"
         # 获取权限列表
         permissions = []
 
+        # 应用特定属性信息
+        isSystemApp = False
+        isLauncherApp = False
+        isShowLaunchIcon = False
+
         commands = [
             ['aapt', 'dump', 'badging', file_path],
+            ['aapt', 'dump', 'xmltree', file_path, 'AndroidManifest.xml'],
             ['apksigner.bat', 'verify', '--print-certs', '-v', file_path]
         ]
         # 使用aapt命令获取APK信息
@@ -276,12 +284,40 @@ class FileUtils(object):
                     permissions.append(re.search(r"uses-permission: name='(.*?)'", line).group(1))
                 elif line.startswith("application-icon-"):
                     icon_path = re.search(r"application-icon-(\d+):'(.*?)'", line).group(2)
+                elif line.startswith("launchable-activity:"):
+                    # launchable-activity: name='com.starcor.terminal.activity.MainActivity'  label='' icon=''
+                    launchable_activity = re.search(r"name='([^']*)'", line).group(1)
+        except Exception as e:
+            z_logger.debug(f"Error running AAPT command: {e}")
+            return {"success": False, "reason": "解析失败！请检查AAPT环境配置是否正确！"}
+
+        command = commands[1]
+        # 使用aapt查看APK清单信息
+        try:
+            result = subprocess.run(command, capture_output=True)
+            output = result.stdout.decode('utf-8', 'ignore')
+            lines = output.split(line_break)
+            for line in lines:
+                line = line.lstrip()
+                if line.startswith("A: android:sharedUserId"):
+                    _sharedUserId = re.search(r'="([^"]+)"', line).group(1)
+                    z_logger.debug(f"Taeget apk is sys-app, sharedUserId = {_sharedUserId}")
+                    if _sharedUserId == "android.uid.system":
+                        isSystemApp = True
+                elif line.startswith("A: android:name(0x01010003)="):
+                    _name = re.search(r'="([^"]+)"', line).group(1)
+                    if _name == "android.intent.category.LAUNCHER":
+                        z_logger.debug(f"Taeget apk has launcher entry.")
+                        isShowLaunchIcon = True
+                    elif _name == "android.intent.category.HOME":
+                        z_logger.debug(f"Taeget apk is launcher App.")
+                        isLauncherApp = True
         except Exception as e:
             z_logger.debug(f"Error running AAPT command: {e}")
             return {"success": False, "reason": "解析失败！请检查AAPT环境配置是否正确！"}
 
         # 使用apksigner命令获取APK签名信息 注意，这里只能使用“apksigner.bat”
-        command = commands[1]
+        command = commands[2]
         try:
             # process = subprocess.Popen(command, shell=False, stdout=subprocess.PIPE,
             #                                 stderr=subprocess.PIPE, bufsize=-1, encoding='utf-8')
@@ -314,6 +350,10 @@ class FileUtils(object):
             "min_sdk": min_sdk,
             "icon_path": icon_path,
             "permissions": permissions,
+            "is_sys_app": isSystemApp,
+            "is_launcher_app": isLauncherApp,
+            "is_show_launch_icon": isShowLaunchIcon,
+            "launchable_activity": launchable_activity,
 
             "file_name": file_name,
             "file_bytes":  file_size,
