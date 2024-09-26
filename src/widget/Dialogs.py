@@ -424,19 +424,28 @@ class APKHelperDialog(DragDialog):
         self.setWindowIcon(IconTool.buildQIcon("apk_64x64_09a413.png", dir="icons"))
         # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
         self.setWindowFlags(Qt.WindowFullscreenButtonHint)
-        screen = QtWidgets.QApplication.primaryScreen()
-        dpi = screen.physicalDotsPerInch()
+        # 获取屏幕大小
+        screen = QDesktopWidget().screenGeometry()
+        screen_width = screen.width()
+        screen_height = screen.height()
 
-        # self.setFixedSize(int(320 * dpi / 96), int(400 * dpi / 96))
-        self.setFixedSize(558, 750)
+        # 自定义新窗口大小
+        dialog_width = int(screen_width * 0.28)
+        dialog_height = int(screen_height * 0.65)
+
+        self.setMinimumSize(dialog_width, dialog_height)
+        self.setMaximumSize(int(dialog_width * 1.5), int(dialog_height * 1.5))
+        self.resize(dialog_width, dialog_height)
         self.center()
 
     def center(self):
         """将对话框居中在其父窗口所在的屏幕上"""
+        # Dialog整体形状对象
         qr = self.frameGeometry()
-        cp = self.mainWindow.window().screen().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
+        if self.mainWindow is not None:
+            cp = self.mainWindow.window().screen().availableGeometry().center()
+            qr.moveCenter(cp)
+            self.move(qr.topLeft())
 
     def initViews(self):
         self.initApkInfoView()
