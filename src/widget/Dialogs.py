@@ -506,12 +506,12 @@ class APKHelperDialog(DragDialog):
                 hRootWidget = QWidget()
                 layout = QHBoxLayout(hRootWidget)
                 layout.setContentsMargins(2, 0, 2, 0)
-                layout.setSpacing(5)
+                layout.setSpacing(2)
 
                 _attrs = ['Launcher应用', 'Icon展示', '系统应用']
                 questionIcon = IconTool.buildQPixmap(path='../..' if isModuleTest else '.', pixmapName="help.png")
                 for attr in _attrs:
-                    labelView: QLabel = self.getInfoLabel(f"{attr}:", f"apkAtts_of_{attr}", self.apkInfoGroupBox)
+                    labelView: QLabel = self.getInfoLabel(f"{attr}", f"apkAtts_of_{attr}", self.apkInfoGroupBox)
                     value_Label: QLabel = QLabel()
                     value_Label.setObjectName(f"obj_appAttrs_of_{attr}")
                     value_Label.setFixedSize(20, 20)
@@ -519,6 +519,7 @@ class APKHelperDialog(DragDialog):
                     value_Label.setPixmap(questionIcon)
                     layout.addWidget(labelView)
                     layout.addWidget(value_Label)
+                    layout.addStretch()
                 layout.addStretch()
                 self.appInfoGridLayout.addWidget(hRootWidget, index, 0, 1, 4)
                 continue
