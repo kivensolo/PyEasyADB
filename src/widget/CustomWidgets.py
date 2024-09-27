@@ -282,12 +282,20 @@ class HoverQLineEdit(QLineEdit):
     def base_style(self):
         """
         设置样式
-        transition属性：用于定义当某个属性改变时应该发生的效果，
-                    这里设置了 box-shadow 的变化会在0.3秒内平滑过渡。
+        transition属性：
+        transition: box-shadow 0.3s ease;  /* 平滑过渡 */
+        用于定义当某个属性改变时应该发生的效果，
 
+        这里设置了 box-shadow 的变化会在0.3秒内平滑过渡。
+        box-shadow: 0 0 10px rgba(0, 0, 252, 0.5)
         box-shadow 的语法是：
         horizontal-offset vertical-offset blur-radius  color
           水平偏移          垂直偏移         模糊半径     RGBA 颜色模式，其中最后一个值表示透明度
+
+        但是会报错：
+        Unknown property transition
+        Unknown property box-shadow
+        所以删除。
         :return:
         """
         return """
@@ -295,11 +303,9 @@ class HoverQLineEdit(QLineEdit):
                 border: 1px solid #ccc;
                 padding: 3px;
                 background-color: white;
-                transition: box-shadow 0.3s ease;  /* 平滑过渡 */
             }
             QLineEdit:hover {
                 border: 2px solid rgb(131, 212, 252);
-                box-shadow: 0 0 10px rgba(0, 0, 252, 0.5);  /* 扩散效果 */
             }
         """
 
