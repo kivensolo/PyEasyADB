@@ -563,6 +563,7 @@ class APKHelperDialog(DragDialog):
 
             elif name == '权限要求':
                 lineEdit.setFont(getWRYHFontStyle(9))
+                lineEdit.setLineWrapMode(QTextEdit.NoWrap)
                 sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
                 sizePolicy.setHorizontalStretch(0)
                 sizePolicy.setVerticalStretch(20)
@@ -632,13 +633,10 @@ class APKHelperDialog(DragDialog):
         if len(result['permissions']) > 0:
             permission_chinese = []
             for p in result['permissions']:
-                if not p.startswith("android.permission"):  # 过滤自定义权限
-                    continue
-                permission_name = p.split('.')[-1]
                 # permission_name = self.config_manager.permissions(item)
-                permission_chinese.append(permission_name)
+                permission_chinese.append(p)
 
-            result['permissions'] = "- " + ('\r\n- '.join(permission_chinese))
+            result['permissions'] = "● " + ('\r\n● '.join(permission_chinese))
 
         result['file_md5'] = result['file_md5'].upper()
         # 处理文件大小显示
