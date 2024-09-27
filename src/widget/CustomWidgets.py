@@ -345,11 +345,9 @@ class HoverQTextEdit(QTextEdit):
                 border: 1px solid #ccc;
                 padding: 3px;
                 background-color: white;
-                transition: box-shadow 0.3s ease;  /* 平滑过渡 */
             }
             QTextEdit:hover {
                 border: 2px solid rgb(131, 212, 252);
-                box-shadow: 0 0 10px rgba(0, 0, 252, 0.5);  /* 扩散效果 */
             }
         """
 
