@@ -4,7 +4,7 @@ import os
 # BASE_PATH = sys.argv[0]   xxxx/PyQt5Demo/App.py
 import time
 
-APP_VERSION = '1.0.4'
+APP_VERSION = '1.0.5'
 
 # 依赖环境检测配置
 appdata_local = os.environ['LOCALAPPDATA']
@@ -60,3 +60,19 @@ LIVE_LOG_DEFAULT_FILTER_PID = False
 # 日志上限条数
 LIVE_LOG_CONUTS_LIMITS = 3000
 
+"""
+应用动态UI配置
+"""
+# UI模板配置文件路径
+PATH_CONFIG_OF_MENUS_UI = os.path.join(BASE_PATH, 'res', 'config', 'menus_ui.xml')
+
+# UI模板配置文件路径
+PATH_CONFIG_OF_TEMPLATE_UI = os.path.join(BASE_PATH, 'res', 'config', 'function_templates.xml')
+# 每个ui模板一行的元素个数
+CTNTER_WINDOW_EVERY_ROW_SIZE = 5
+
+# 左侧命令列表配置文件
+PATH_CONFIG_OF_ADB_CMDS = os.path.join(BASE_PATH, 'res', 'config', 'cmdConfig.xml')
+
+# 应用通用配置文件
+COMMON_CONFIG_FILE_PATH = os.path.join(BASE_PATH, 'res', 'config', 'AppConfig.ini')

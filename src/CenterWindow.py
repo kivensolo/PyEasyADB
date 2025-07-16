@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QWidget, QApplication, QFileDialog, QMessageBox
 
 from src import MainWindow, settings
 from src.logcat.log import z_logger
+from src.settings import PATH_CONFIG_OF_TEMPLATE_UI, CTNTER_WINDOW_EVERY_ROW_SIZE
 from src.widget.CustomWidgets import DeleteableComboBox
 from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
 from utils.ADBTools import ActionCmdParams
@@ -30,10 +31,8 @@ class CommonFunctionalWidget(QWidget):
         convenient_area.setUpUi(self)
 
 
-# UI模板配置文件路径
-template_ui_config_file_path = "./config/function_templates.xml"
 # 每个ui模板一行的元素个数
-every_row_size = 5
+every_row_size = CTNTER_WINDOW_EVERY_ROW_SIZE
 
 
 class Ui_ConvenientArea(object):
@@ -208,9 +207,9 @@ class Ui_ConvenientArea(object):
     def _setUpUIDynamic(self):
         # 【setUpUiDynamic】
         # if __name__ == "__main__":
-        #     template_ui_config_file_path = "../../config/function_templates.xml"
+        #     PATH_CONFIG_OF_TEMPLATE_UI = "../../config/function_templates.xml"
         # 动态设置groupView
-        dom = xml.dom.minidom.parse(template_ui_config_file_path)
+        dom = xml.dom.minidom.parse(PATH_CONFIG_OF_TEMPLATE_UI)
         root = dom.documentElement
         template_list = root.getElementsByTagName("template")
         for template in template_list:

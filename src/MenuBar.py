@@ -7,10 +7,7 @@ from src import settings
 from src.logcat.log import z_logger
 import xml.dom.minidom
 
-from src.widget.Dialogs import AboutDialog
-
-# UI模板配置文件路径
-menus_ui_config_file_path = "./config/menus_ui.xml"
+from src.settings import PATH_CONFIG_OF_MENUS_UI
 
 
 class MenuActions(object):
@@ -31,7 +28,7 @@ class MenuActions(object):
 
         z_logger.debug('initMenuBar :: actions')
 
-        dom = xml.dom.minidom.parse(menus_ui_config_file_path)
+        dom = xml.dom.minidom.parse(PATH_CONFIG_OF_MENUS_UI)
         root = dom.documentElement
         menu_list = root.getElementsByTagName("menu")
         for menu in menu_list:

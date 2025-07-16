@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxL
 from AppConfigManager import AppConfigManager
 from src import settings
 from src.logcat.log import z_logger
-from src.settings import APP_VERSION
+from src.settings import APP_VERSION, COMMON_CONFIG_FILE_PATH
 from src.widget.ScreenRecord import Record_Dialog
 from src.DataBase import DBManager
 from src.widget.BaseDialog import BaseDialog, DragDialog
@@ -382,7 +382,7 @@ class APKHelperDialog(DragDialog):
     # 解析完毕的信号
     parseFinished = pyqtSignal(dict)
 
-    config_manager = AppConfigManager('../../config/AppConfig.ini')
+    config_manager = AppConfigManager(COMMON_CONFIG_FILE_PATH)
 
     """
     APK 解析器弹窗

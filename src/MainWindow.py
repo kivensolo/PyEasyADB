@@ -16,7 +16,7 @@ from src.DevicesWatcher import DevicesWatcher
 from src.MenuBar import MenuActions
 from src.ToolBar import Ui_ToolBar
 from src.logcat.log import z_logger
-from src.settings import APP_SCREEN_RQTIO
+from src.settings import APP_SCREEN_RQTIO, PATH_CONFIG_OF_ADB_CMDS, COMMON_CONFIG_FILE_PATH
 from src.widget.Dialogs import NewConnectDialog, AboutDialog, device_alis_edit_dialog, APKHelperDialog
 from src.widget.win32Wrapper import ScrcpyEmbedWidget
 from utils.ADBTools import ADBTools, ActionCmdParams
@@ -62,7 +62,7 @@ def is_device_root_node(item: QStandardItem):
     return item and item.type == TreeItemType.TYPE_ROOT_DEVICE
 
 
-config_manager = AppConfigManager('./config/AppConfig.ini')
+config_manager = AppConfigManager(COMMON_CONFIG_FILE_PATH)
 
 
 class MainWindow(BaseWindow):
@@ -338,7 +338,7 @@ class MainWindow(BaseWindow):
     def __loadAdbCmds(self):
         root_adb_node = QStandardItem("命令列表")
         root_adb_node.setBackground(QBrush(QColor("#f0f0f0")))
-        dom = xml.dom.minidom.parse("./config/cmdConfig.xml")
+        dom = xml.dom.minidom.parse(PATH_CONFIG_OF_ADB_CMDS)
         root = dom.documentElement
         childNodes = root.getElementsByTagName("group")
         print("****所有分组信息****")
