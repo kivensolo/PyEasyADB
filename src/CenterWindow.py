@@ -283,6 +283,8 @@ class Ui_ConvenientArea(object):
                             actionParams.custom_action = _value
                         elif _key == "isNeedPkgName":
                             actionParams.needDstPkg = (_value.lower() == "true")
+                        elif _key == "isNeedDeviceOnline":
+                            actionParams.needDeviceOnline = (_value.lower() == "true")
 
                     """
                     https://blog.csdn.net/PixelNovaO/article/details/132727483
@@ -327,6 +329,11 @@ class Ui_ConvenientArea(object):
         :param actionParams:
         :return:
         """
+        # 【配置化设备连接检查】根据配置判断是否需要设备在线
+        if actionParams.needDeviceOnline:
+            if not self.mainWindow.has_any_connected_devices():
+                return
+
         # 检查自定义行为需不需要指定目标应用包名
         if actionParams.needDstPkg:
             actionParams.target_app = self.mainWindow.pkgManager.getSelectedPackageName()
@@ -336,8 +343,6 @@ class Ui_ConvenientArea(object):
 
         custom_act = actionParams.custom_action
         if custom_act == "m_show_install_app_dialog":
-            if not self.mainWindow.has_any_connected_devices():
-                return
             install_apk_dialog = installApkDialog(self.mainWindow)
             install_apk_dialog.setWindowModality(Qt.ApplicationModal)
             install_apk_dialog.exec()
@@ -357,8 +362,6 @@ class Ui_ConvenientArea(object):
             self.restart_app()
         elif custom_act == "m_pull_apk":
             # 提取应用
-            if not self.mainWindow.has_any_connected_devices():
-                return
             self.pull_apk_dialog = PullApkDialog(self.mainWindow)
             # self.pull_apk_dialog.setWindowModality(Qt.ApplicationModal)
             # self.pull_apk_dialog.exec() # 模态显示，阻塞主窗口直到对话框关闭
@@ -457,8 +460,6 @@ class Ui_ConvenientArea(object):
         执行屏幕截图，并保存至本地
         :return:
         """
-        if not self.mainWindow.has_any_connected_devices():
-            return
         z_logger.info_with_stamp("Screenshot saving..........")
         chooseDialog = QFileDialog
         default_file_name = QDateTime.currentDateTime().toString("yyyyMMdd_hhmmss")

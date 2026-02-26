@@ -26,6 +26,7 @@ isNeedPkgName: 操作是否需要依赖应用包名, 默认为false
             <attr name="icon">./res/img/app_install_256x256.png</attr>
             <attr name="text">安装应用</attr>
             <attr name="act">m_show_install_app_dialog</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_stop_256x256.png</attr>
@@ -73,16 +74,19 @@ isNeedPkgName: 操作是否需要依赖应用包名, 默认为false
             <attr name="icon">./res/img/screen_capture_256x256.png</attr>
             <attr name="text">屏幕截图</attr>
             <attr name="act">m_screenshot</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
         </item>
         <item>
             <attr name="icon">./res/img/screen_record_256x256.png</attr>
             <attr name="text">视频录制</attr>
             <attr name="act">m_screen_record</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_install_256x256.png</attr>
             <attr name="text">APK提取</attr>
             <attr name="act">m_pull_apk</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
         </item>
     </template>
     <template name="按键模拟" layout="grid">
