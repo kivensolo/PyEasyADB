@@ -572,44 +572,66 @@ class TextInputDialog(BaseDialog):
         super().initWindow()
         # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
         self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.setObjectName("self")
-        self.resize(650, 35)
-        self.setMaximumHeight(40)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-        self.setSizePolicy(sizePolicy)
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self)
-        self.horizontalLayout.setObjectName("horizontalLayout")
-        self.lineedit_text = QtWidgets.QLineEdit(self)
-        self.lineedit_text.setObjectName("lineedit_text")
-        self.horizontalLayout.addWidget(self.lineedit_text)
-        self.btn_input_text = QtWidgets.QPushButton(self)
-        self.btn_input_text.clicked.connect(self.doTextInput)
+        self.setObjectName("TextInputDialog")
+        self.resize(500, 140)
 
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.btn_input_text.sizePolicy().hasHeightForWidth())
-        self.btn_input_text.setSizePolicy(sizePolicy)
+        # 主垂直布局
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout.setObjectName("verticalLayout")
+        self.verticalLayout.setSpacing(10)
+
+        # 使用 QPlainTextEdit 替代 QLineEdit，支持多行输入
+        self.text_edit = QtWidgets.QPlainTextEdit(self)
+        self.text_edit.setObjectName("text_edit")
+        self.text_edit.setPlaceholderText("请输入要发送到设备的文本...")
+        self.text_edit.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.verticalLayout.addWidget(self.text_edit)
+
+        # 按钮区域水平布局
+        button_layout = QtWidgets.QHBoxLayout()
+        button_layout.setObjectName("button_layout")
+        button_layout.setSpacing(10)
+
+        # 清空按钮
+        self.btn_clear = QtWidgets.QPushButton(self)
+        self.btn_clear.setObjectName("btn_clear")
+        self.btn_clear.clicked.connect(self._on_clear_clicked)
+        button_layout.addWidget(self.btn_clear)
+
+        # 弹性空间
+        button_layout.addStretch()
+
+        # 输入按钮
+        self.btn_input_text = QtWidgets.QPushButton(self)
         self.btn_input_text.setObjectName("btn_input_text")
-        self.horizontalLayout.addWidget(self.btn_input_text)
-        self.horizontalLayout.setStretch(0, 4)
-        self.horizontalLayout.setStretch(1, 1)
+        self.btn_input_text.clicked.connect(self.doTextInput)
+        button_layout.addWidget(self.btn_input_text)
+
+        self.verticalLayout.addLayout(button_layout)
 
         self.retranslateUi()
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        # self.setWindowTitle(_translate("self", "Dialog"))
-        self.btn_input_text.setText(_translate("self", "输入"))
+        self.btn_input_text.setText(_translate("TextInputDialog", "输入"))
+        self.btn_clear.setText(_translate("TextInputDialog", "清空"))
+
+    def _on_clear_clicked(self):
+        """清空输入框内容"""
+        self.text_edit.clear()
 
     def doTextInput(self):
-        _text = self.lineedit_text.text()
+        """执行文本输入到设备"""
+        _text = self.text_edit.toPlainText()
         if _text:
+            # 处理换行符，将换行转换为空格
+            _text = _text.replace('\n', ' ')
+            # 处理空格（ADB input text 中空格需要用 %s 替代）
+            _text = _text.replace(' ', '%s')
             self.mainWindow.adbTools.exec_adb_cmd(f"adb -s {self.mainWindow.current_device_addr} shell input text {_text}")
+            # 执行成功后清空输入框
+            self.text_edit.clear()
 
 
 class APKHelperDialog(DragDialog):
