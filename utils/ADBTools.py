@@ -367,6 +367,74 @@ class AsyncAdbThread(QThread):
         os.kill(self.process.pid, signal.SIGINT)
 
 
+class GetAppListThread(QThread):
+    """
+    异步获取应用列表的后台线程
+    """
+    app_list_loaded = pyqtSignal(list)  # 信号: 返回应用列表 [(包名, APK路径, 类型), ...]
+    load_failed = pyqtSignal(str)  # 信号: 加载失败时返回错误信息
+    name = "GetAppList_thread"
+
+    def __init__(self, device_ip):
+        super().__init__()
+        self.device_ip = device_ip
+        self.isRunning = False
+
+    def run(self):
+        self.isRunning = True
+        z_logger.info("正在后台进行应用列表数据获取，请稍等...")
+        try:
+            app_list = []
+            # 使用 -f 参数一次性获取所有包名和APK路径
+            # 输出格式: package:/data/app/.../base.apk=com.package.name
+            cmd = f"adb -s {self.device_ip} shell pm list packages -f"
+            result = subprocess.run(cmd, shell=True, capture_output=True, text=True, encoding='utf-8')
+
+            # 解析包名和路径
+            for line in result.stdout.splitlines():
+                line = line.strip()
+                if line.startswith("package:") and "=" in line:
+                    # 去掉 "package:" 前缀
+                    line = line[8:]
+                    # 从右向左分离路径和包名（因为路径中可能包含=字符）
+                    apk_path, package_name = line.rsplit("=", 1)
+
+                    # 根据APK路径判断应用类型
+                    if apk_path.startswith("/data/app/"):
+                        app_type = "第三方"
+                    elif apk_path.startswith(("/system/", "/vendor/", "/product/", "/system_ext/")):
+                        app_type = "系统"
+                    else:
+                        app_type = "未知"
+
+                    # 存储格式: (包名, APK路径, 类型)
+                    app_list.append((package_name, apk_path, app_type))
+
+            # 排序：第三方应用在前，系统应用在后，同类按包名字母顺序排列
+            def sort_key(item):
+                package_name, apk_path, app_type = item
+                # 类型优先级：第三方=0, 系统=1, 未知=2
+                type_priority = {"第三方": 0, "系统": 1, "未知": 2}
+                return (type_priority.get(app_type, 2), package_name.lower())
+
+            app_list.sort(key=sort_key)
+
+            # 发送成功信号
+            self.app_list_loaded.emit(app_list)
+            z_logger.info(f"应用列表加载完成，共 {len(app_list)} 个应用")
+
+        except Exception as e:
+            # 发送失败信号
+            self.load_failed.emit(str(e))
+            z_logger.error(f"获取应用列表失败: {e}")
+        finally:
+            self.isRunning = False
+            self.exit()
+
+    def stop(self):
+        self.isRunning = False
+
+
 class ADBTools:
 
     def __init__(self):
@@ -403,6 +471,24 @@ class ADBTools:
             self.thread.start()
         except Exception as e:
             print(e)
+
+    def get_installed_apps(self, device_ip, on_loaded_callback, on_failed_callback=None):
+        """
+        异步获取设备已安装的应用列表（包括系统和第三方应用）
+        :param device_ip: 设备IP地址
+        :param on_loaded_callback: 加载完成回调函数，接收应用列表参数 [(包名, APK路径, 类型), ...]
+        :param on_failed_callback: 加载失败回调函数，接收错误信息参数（可选）
+        """
+        try:
+            self.getAppListThread = GetAppListThread(device_ip)
+            self.getAppListThread.app_list_loaded.connect(on_loaded_callback)
+            if on_failed_callback:
+                self.getAppListThread.load_failed.connect(on_failed_callback)
+            self.getAppListThread.start()
+        except Exception as e:
+            z_logger.error(f"启动应用列表获取线程失败: {e}")
+            if on_failed_callback:
+                on_failed_callback(str(e))
 
     def start_app_page(self, ip, class_path, block):
         """

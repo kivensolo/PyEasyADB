@@ -328,6 +328,240 @@ class AboutDialog(BaseDialog):
         self.label.setText(_translate("Dialog", f"v{APP_VERSION}"))
 
 
+class PullApkDialog(BaseDialog):
+    """
+    提取设备已安装应用 APK 的对话框
+    """
+    def __init__(self, window=None):
+        super().__init__("提取应用")
+        self.mainWindow = window
+        self.app_list = []  # 存储应用信息 (包名, APK路径)
+        self.initWindow()
+        # 加载应用列表
+        self._load_app_list()
+
+    def initWindow(self):
+        super().initWindow()
+        self.setWindowFlags(Qt.WindowCloseButtonHint)
+        self.setFixedSize(700, 500)
+
+        self.root_layout = QtWidgets.QVBoxLayout(self)
+        self.root_layout.setObjectName("root_layout")
+
+        # 搜索区域
+        self.search_layout = QtWidgets.QHBoxLayout()
+        self.search_layout.setObjectName("search_layout")
+
+        self.search_label = QtWidgets.QLabel(self)
+        self.search_label.setObjectName("search_label")
+        self.search_label.setText("搜索:")
+
+        self.search_edit = QtWidgets.QLineEdit(self)
+        self.search_edit.setObjectName("search_edit")
+        self.search_edit.setPlaceholderText("输入包名或应用名进行筛选...")
+        self.search_edit.textChanged.connect(self._on_search_text_changed)
+
+        # 应用类型筛选下拉框
+        self.filter_combo = QtWidgets.QComboBox(self)
+        self.filter_combo.setObjectName("filter_combo")
+        self.filter_combo.addItem("全部应用")
+        self.filter_combo.addItem("第三方应用")
+        self.filter_combo.addItem("系统应用")
+        self.filter_combo.currentIndexChanged.connect(self._on_filter_changed)
+
+        self.refresh_btn = QtWidgets.QPushButton(self)
+        self.refresh_btn.setObjectName("refresh_btn")
+        self.refresh_btn.setText("刷新")
+        self.refresh_btn.clicked.connect(self._load_app_list)
+
+        self.search_layout.addWidget(self.search_label)
+        self.search_layout.addWidget(self.search_edit)
+        self.search_layout.addWidget(self.filter_combo)
+        self.search_layout.addWidget(self.refresh_btn)
+        self.search_layout.setStretch(0, 0)
+        self.search_layout.setStretch(1, 1)
+        self.search_layout.setStretch(2, 0)
+        self.search_layout.setStretch(3, 0)
+
+        # 应用列表表格
+        self.app_table = QtWidgets.QTableWidget(self)
+        self.app_table.setObjectName("app_table")
+        self.app_table.setColumnCount(3)
+        self.app_table.setHorizontalHeaderLabels(["包名", "APK路径", "类型"])
+        self.app_table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.app_table.verticalHeader().setVisible(True)  # 显示垂直表头（行号）
+        self.app_table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        # 禁用自动换行(解决在Stretch 模式下，Qt为"可能的换行"预留额外空间，导致省略号现在在距离右侧的一定距离的问题)
+        self.app_table.setWordWrap(False)
+        # 设置列宽: 包名(固定) : APK路径(拉伸) : 类型(固定)
+        # 包名列保持固定宽度 180px
+        self.app_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.Interactive)
+        self.app_table.setColumnWidth(0, 180)
+        # APK路径列自动拉伸填充
+        self.app_table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        # 类型列固定宽度 70px
+        self.app_table.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.Interactive)
+        self.app_table.setColumnWidth(2, 70)
+        self.app_table.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
+
+        # 按钮区域
+        self.button_layout = QtWidgets.QHBoxLayout()
+        self.button_layout.setObjectName("button_layout")
+
+        self.pull_btn = QtWidgets.QPushButton(self)
+        self.pull_btn.setObjectName("pull_btn")
+        self.pull_btn.setText("提取选中应用")
+        self.pull_btn.setEnabled(False)
+        self.pull_btn.clicked.connect(self._on_pull_clicked)
+
+        self.close_btn = QtWidgets.QPushButton(self)
+        self.close_btn.setObjectName("close_btn")
+        self.close_btn.setText("关闭")
+        self.close_btn.clicked.connect(self.close)
+
+        self.button_layout.addStretch()
+        self.button_layout.addWidget(self.pull_btn)
+        self.button_layout.addWidget(self.close_btn)
+
+        # 添加到主布局
+        self.root_layout.addLayout(self.search_layout)
+        self.root_layout.addWidget(self.app_table)
+        self.root_layout.addLayout(self.button_layout)
+
+        # 表格选择变化监听
+        self.app_table.itemSelectionChanged.connect(self._on_selection_changed)
+
+    def _on_selection_changed(self):
+        """当表格选择变化时"""
+        has_selection = len(self.app_table.selectedItems()) > 0
+        self.pull_btn.setEnabled(has_selection)
+
+    def _on_search_text_changed(self, text):
+        """搜索框文本变化时过滤列表"""
+        self._apply_filters()
+
+    def _on_filter_changed(self, index):
+        """筛选下拉框变化时过滤列表"""
+        self._apply_filters()
+
+    def _apply_filters(self):
+        """应用所有筛选条件（搜索框 + 类型筛选）"""
+        filter_text = self.search_edit.text().lower()
+        filter_type = self.filter_combo.currentIndex()  # 0=全部, 1=第三方, 2=系统
+
+        visible_index = 1  # 可见行的索引计数器
+        for row in range(self.app_table.rowCount()):
+            package_item = self.app_table.item(row, 0)
+            type_item = self.app_table.item(row, 2)
+
+            if package_item and type_item:
+                package_name = package_item.text().lower()
+                app_type = type_item.text()
+                # 检查搜索文本匹配
+                text_match = filter_text in package_name
+                # 检查类型匹配
+                type_match = False
+                if filter_type == 0:  # 全部
+                    type_match = True
+                elif filter_type == 1 and app_type == "第三方":  # 第三方
+                    type_match = True
+                elif filter_type == 2 and app_type == "系统":  # 系统
+                    type_match = True
+
+                # 同时满足文本和类型条件才显示
+                should_show = text_match and type_match
+                self.app_table.setRowHidden(row, not should_show)
+
+                # 更新垂直表头标签
+                if should_show:
+                    self.app_table.setVerticalHeaderItem(row, QtWidgets.QTableWidgetItem(str(visible_index)))
+                    visible_index += 1
+                else:
+                    self.app_table.setVerticalHeaderItem(row, QtWidgets.QTableWidgetItem(""))
+
+    def _load_app_list(self):
+        """加载设备已安装的所有应用列表（包括系统和第三方）"""
+        if not self.mainWindow.has_any_connected_devices():
+            z_logger.error("没有已连接的设备")
+            return
+
+        self.app_table.setRowCount(0)
+        self.app_list.clear()
+        self.search_edit.clear()
+
+        device_ip = self.mainWindow.current_device_addr
+        z_logger.info("开始获取应用列表：")
+
+        # 使用 ADBTools 的异步方法获取应用列表
+        self.mainWindow.adbTools.get_installed_apps(
+            device_ip,
+            on_loaded_callback=self._on_app_list_loaded,
+            on_failed_callback=self._on_app_list_load_failed
+        )
+
+    def _on_app_list_loaded(self, app_list):
+        """应用列表加载完成回调"""
+        self.app_list = app_list
+        self._populate_table()
+
+    def _on_app_list_load_failed(self, error_msg):
+        """应用列表加载失败回调"""
+        z_logger.error(f"获取应用列表失败: {error_msg}")
+
+    def _populate_table(self):
+        """填充应用列表表格"""
+        self.app_table.setRowCount(0)
+        for package, apk_path, app_type in self.app_list:
+            row = self.app_table.rowCount()
+            self.app_table.insertRow(row)
+
+            # 包名
+            package_item = QtWidgets.QTableWidgetItem(package)
+            package_item.setToolTip(package)  # 设置悬浮提示显示完整包名
+            package_item.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+            self.app_table.setItem(row, 0, package_item)
+
+            # APK 路径
+            path_item = QtWidgets.QTableWidgetItem(apk_path)
+            path_item.setToolTip(apk_path)  # 设置悬浮提示显示完整路径
+            path_item.setTextAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+            self.app_table.setItem(row, 1, path_item)
+
+            # 类型
+            type_item = QtWidgets.QTableWidgetItem(app_type)
+            type_item.setTextAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.app_table.setItem(row, 2, type_item)
+
+    def _on_pull_clicked(self):
+        """点击提取按钮"""
+        selected_rows = self.app_table.selectionModel().selectedRows()
+        if not selected_rows:
+            return
+
+        row = selected_rows[0].row()
+        package = self.app_table.item(row, 0).text()
+        apk_path = self.app_table.item(row, 1).text()
+
+        # 弹出保存文件对话框
+        default_filename = f"{package.replace('.', '_')}.apk"
+        save_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "保存 APK 文件",
+            default_filename,
+            "APK Files (*.apk);;All Files (*)"
+        )
+
+        if save_path:
+            self._pull_apk(apk_path, save_path)
+
+    def _pull_apk(self, remote_path, local_path):
+        """执行 adb pull 命令提取 APK"""
+        device_ip = self.mainWindow.current_device_addr
+        cmd = f"adb -s {device_ip} pull \"{remote_path}\" \"{local_path}\""
+        z_logger.info(f"正在提取 APK: {remote_path} -> {local_path}")
+        self.mainWindow.adbTools.async_exec_adb_cmd([cmd])
+
+
 class TextInputDialog(BaseDialog):
     def __init__(self,  window = None):
         super().__init__("文本输入")

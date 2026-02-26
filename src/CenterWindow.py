@@ -9,7 +9,7 @@ from src import MainWindow, settings
 from src.logcat.log import z_logger
 from src.settings import PATH_CONFIG_OF_TEMPLATE_UI, CTNTER_WINDOW_EVERY_ROW_SIZE
 from src.widget.CustomWidgets import DeleteableComboBox
-from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog
+from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog, PullApkDialog
 from utils.ADBTools import ActionCmdParams
 from utils.Tools import getWRYHFontStyle, getSongFontStyle, getSimpleFontStyle
 
@@ -355,6 +355,14 @@ class Ui_ConvenientArea(object):
         elif custom_act == "m_restart_app":
             # 重启应用
             self.restart_app()
+        elif custom_act == "m_pull_apk":
+            # 提取应用
+            if not self.mainWindow.has_any_connected_devices():
+                return
+            self.pull_apk_dialog = PullApkDialog(self.mainWindow)
+            # self.pull_apk_dialog.setWindowModality(Qt.ApplicationModal)
+            # self.pull_apk_dialog.exec() # 模态显示，阻塞主窗口直到对话框关闭
+            self.pull_apk_dialog.show()
         elif custom_act == "m_input_text":
             if not self.mainWindow.is_current_device_connect():
                 return
