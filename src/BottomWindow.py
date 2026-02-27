@@ -17,7 +17,7 @@ from src.widget.CustomWidgets import LiveLogTextBrowser, StatePushButton
 from utils.ADBTools import ADBTools, LiveLogAdbThread
 from utils.PackageManager import PackageManager
 from utils.Tools import getSongFontStyle, getSimpleFontStyle
-from utils.UITools import IconTool
+from utils.UITools import IconTool, UiUtils
 from utils.Utils import Utils, LogUtils, _nameToLevel, _filterOptions
 
 adb_tool = ADBTools()
@@ -59,7 +59,7 @@ class BottomTabWidget(QTabWidget):
         self.addTab(self.liveLogView, IconTool.buildQIcon("logcat.png"), "Live Log")
 
         # self.setFixedHeight(Utils.getItemHeight())
-        self.setMaximumHeight(Utils.getWindowHeight())
+        self.setMaximumHeight(UiUtils.getWindowHeight())
 
         self.setStyleSheet(
             """
@@ -95,10 +95,10 @@ class BottomTabWidget(QTabWidget):
         if _widgetView.isVisible():
             _widgetView.setVisible(False)
             self.preHeight = self.width()
-            self.setFixedHeight(Utils.getItemHeight())
+            self.setFixedHeight(UiUtils.getItemHeight())
         else:
             _widgetView.setVisible(True)
-            self.setMaximumHeight(Utils.getWindowHeight())
+            self.setMaximumHeight(UiUtils.getWindowHeight())
 
     def on_tab_toggle(self):
         _index = self.tabBar.currentIndex()

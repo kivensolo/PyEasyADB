@@ -2,12 +2,13 @@ import os
 import sys
 import traceback
 
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QDesktopWidget
 
 from Dependencies import AndroidDependencies
 from src.MainWindow import MainWindow
 from src.logcat.log import z_logger
-from utils.Utils import Utils
+from utils.UITools import UiUtils
 
 
 def exception_handler(exc_type, exc_value, exc_traceback):
@@ -29,11 +30,13 @@ class App:
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    # 开启 Qt 的自动高 DPI 缩放支持
+    # app.setAttribute(Qt.AA_EnableHighDpiScaling)  # 自动缩放
+    # app.setAttribute(Qt.AA_UseHighDpiPixmaps)  # 高清图标支持
+    #  PassThrough 表示禁用自动缩放，由手动控制窗口和控件尺寸为物理像素单位。
+    # app.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
-    # 获取当前屏幕信息
-    desktop = QDesktopWidget()
-    screen = desktop.screenGeometry()
-    Utils.init(screen)
+    UiUtils.init(app.primaryScreen())
 
     try:
         AndroidDependencies().Check()

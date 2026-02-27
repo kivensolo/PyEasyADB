@@ -23,7 +23,7 @@ from utils.ADBTools import ADBTools, ActionCmdParams
 from utils.CmdExecutor import CmdExecutor
 from utils.PackageManager import PackageManager
 from utils.Tools import getSongFontStyle
-from utils.UITools import IconTool
+from utils.UITools import IconTool, UiUtils
 from utils.Utils import Utils
 
 
@@ -231,8 +231,8 @@ class MainWindow(BaseWindow):
 
     def initWindow(self):
         self.resize(
-            int(Utils.getWindowWidth() * APP_SCREEN_RQTIO),
-            int(Utils.getWindowHeight() * APP_SCREEN_RQTIO)
+            int(UiUtils.getWindowWidth() * APP_SCREEN_RQTIO),
+            int(UiUtils.getWindowHeight() * APP_SCREEN_RQTIO)
         )
         self.statusBar().showMessage('ready')
         super(MainWindow, self).initWindow()

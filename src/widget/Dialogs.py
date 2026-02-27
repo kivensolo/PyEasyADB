@@ -1,27 +1,26 @@
 import concurrent.futures
 import os
 import sys
-import threading
 import zipfile
 
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QEvent
 from PyQt5.QtGui import QDropEvent, QPixmap
 from PyQt5.QtWidgets import QLineEdit, QApplication, QLabel, QPushButton, QHBoxLayout, QFileDialog, QTextEdit, \
     QGroupBox, QMenu, QAction, QDesktopWidget, QWidget
 
 from AppConfigManager import AppConfigManager
 from src import settings
+from src.DataBase import DBManager
 from src.logcat.log import z_logger
 from src.settings import APP_VERSION, COMMON_CONFIG_FILE_PATH
-from src.widget.ScreenRecord import Record_Dialog
-from src.DataBase import DBManager
 from src.widget.BaseDialog import BaseDialog, DragDialog
 from src.widget.CustomWidgets import DraggableLineEdit, HoverQLineEdit, HoverQTextEdit
+from src.widget.ScreenRecord import Record_Dialog
 from utils import Tools
+from utils.Tools import getSimpleFontStyle, getWRYHFontStyle
+from utils.UITools import IconTool, UiUtils
 from utils.Utils import FileUtils
-from utils.Tools import getSimpleFontStyle, getWRYHFontStyle, getSongFontStyle
-from utils.UITools import IconTool
 
 
 class NewConnectDialog(BaseDialog):
@@ -39,6 +38,17 @@ class NewConnectDialog(BaseDialog):
         self.ipLabel = QLabel(self)
 
         self.initWindow()
+
+    def changeEvent(self, event):
+        event_type = event.type()
+            # self.adjustSizeForCurrentScreen()
+        super().changeEvent(event)
+
+    def adjustSizeForCurrentScreen(self):
+        screen = self.screen()
+        dpi = screen.logicalDotsPerInch()
+        scale_factor = dpi / 96.0
+        self.resize(int(460 * scale_factor), int(460 * scale_factor))
 
     def initWindow(self):
         super().initWindow()
@@ -59,12 +69,38 @@ class NewConnectDialog(BaseDialog):
         self.inputEdit.setPlaceholderText("目标设备ip")
         self.inputEdit.resize(290, 25)
 
+        self.connectButton.move(150, 90)
         self.connectButton.setText('connect')
         self.connectButton.clicked.connect(self.onConnectClick)
-        self.connectButton.setGeometry(150, 90, 120, 25)
+        self.connectButton.resize(120, 25)
         # root_layout.addLayout()
         # root_layout.addWidget(self.inputEdit)
         # self.setLayout(root_layout)
+        # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
+        # self.setWindowFlags(Qt.WindowCloseButtonHint)
+        # self.setFixedSize(UiUtils.getScaleWidth(460), UiUtils.getScaleHeight(150))
+        # # ip icon
+        # self.ipLabel.setPixmap(IconTool.buildQPixmap('ip.png'))
+        # self.ipLabel.move(UiUtils.getScaleWidth(40), UiUtils.getScaleHeight(28))
+        #
+        # self.helpLabel.setPixmap(IconTool.buildQPixmap('help.png'))
+        # self.helpLabel.move(UiUtils.getScaleWidth(380), UiUtils.getScaleHeight(28))
+        # self.helpLabel.setToolTip('''格式: ip[:adb port]
+        # default adb port is 5555
+        # EX: 192.168.200.2:5555''')
+        #
+        # self.inputEdit.move(UiUtils.getScaleWidth(80), UiUtils.getScaleHeight(30))
+        # self.inputEdit.setPlaceholderText("目标设备ip")
+        # self.inputEdit.resize(UiUtils.getScaleWidth(290), UiUtils.getScaleHeight(25))
+        #
+        # self.connectButton.setText('connect')
+        # self.connectButton.clicked.connect(self.onConnectClick)
+        # self.connectButton.setGeometry(
+        #     UiUtils.getScaleWidth(150),
+        #     UiUtils.getScaleHeight(90),
+        #     UiUtils.getScaleWidth(120),
+        #     UiUtils.getScaleHeight(25)
+        # )
 
     @pyqtSlot()
     def onConnectClick(self):
@@ -1051,7 +1087,7 @@ class APKHelperDialog(DragDialog):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    dialog = APKHelperDialog()
+    dialog = NewConnectDialog()
     # 设置窗口的属性为ApplicationModal模态，用户只有关闭弹窗后，才能关闭主界面
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.show()

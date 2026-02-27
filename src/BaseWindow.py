@@ -7,7 +7,7 @@ last edited: 2022.03.19
 """
 from PyQt5.QtWidgets import QMainWindow, QDesktopWidget, QApplication
 
-from utils.UITools import IconTool
+from utils.UITools import IconTool, UiUtils
 from utils.Utils import Utils
 
 
@@ -32,8 +32,8 @@ class BaseWindow(QMainWindow):
     def _init_windows_size():
         __desktop = QApplication.desktop()
         qRect = __desktop.screenGeometry()
-        Utils.setWindowWidth(qRect.width())
-        Utils.setWindowHeight(qRect.height())
+        UiUtils.setWindowWidth(qRect.width())
+        UiUtils.setWindowHeight(qRect.height())
 
     # 设置窗口居中
     def center(self):
