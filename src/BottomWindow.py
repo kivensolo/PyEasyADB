@@ -543,7 +543,7 @@ class LogCatWindow(QMainWindow):
             self.clearAction.setIcon((IconTool.buildQIcon("clear_small.png","icons")))
             self.clearAction.triggered.connect(self.onSearchEditTextClear)
             linEdit.addAction(logAction, QLineEdit.LeadingPosition)
-            linEdit.setFont(getSimpleFontStyle())
+            linEdit.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(10)))
             linEdit.setStyleSheet(
                 """
                 QLineEdit:focus {  
@@ -605,7 +605,7 @@ class LogCatWindow(QMainWindow):
             comboBox.setMinimumSize(QSize(200, 31))
             comboBox.setMaximumSize(QSize(350, 40))
             comboBox.setObjectName("filterOptionsComBox")
-            comboBox.setFont(getSimpleFontStyle(size=11))
+            comboBox.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(11)))
             comboBox.setView(QListView())
             for name in _filterOptions:
                 comboBox.addItem(name)
@@ -635,7 +635,7 @@ class LogCatWindow(QMainWindow):
             self.device_info_desc = QLabel()
             self.device_info_desc.setObjectName("device_prop")
             self.device_info_desc.setToolTip("设备名称信息")
-            self.device_info_desc.setFont(getSimpleFontStyle(size=11))
+            self.device_info_desc.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(11)))
             self.device_info_desc.setMaximumWidth(320)
             self.device_info_desc.setStyleSheet("border: 1px solid #d7d7d7;")
             self.device_info_desc.setSizePolicy(self.sizePolicy)
@@ -654,7 +654,7 @@ class LogCatWindow(QMainWindow):
             # comboBox.setMinimumSize(QSize(350, 31))
             comboBox.setMaximumSize(QSize(350, 40))
             comboBox.setObjectName("pkgComboBoxView")
-            comboBox.setFont(getSimpleFontStyle(size=11))
+            comboBox.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(11)))
             # Sets the view to be used in the combobox popup to the given itemView.
             comboBox.setView(QListView())
             comboBox.currentIndexChanged.connect(self.onPackageSelectedChanged)
@@ -722,7 +722,7 @@ class LogCatWindow(QMainWindow):
             # comboBox.setMinimumSize(QSize(120, 31))
             comboBox.setMaximumSize(QSize(120, 40))
             comboBox.setObjectName("logLevelComboBox")
-            comboBox.setFont(getSimpleFontStyle(size=11))
+            comboBox.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(11)))
             comboBox.setSizePolicy(self.sizePolicy)
             # Sets the view to be used in the combobox popup to the given itemView.
             comboBox.setView(QListView())

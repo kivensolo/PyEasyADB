@@ -69,6 +69,10 @@ class UiUtils(object):
     def getScaleHeight(height):
         return int(UiUtils.y_scale_factor * height)
 
+    @staticmethod
+    def getScaleValue(value):
+        return int(UiUtils.scale_factor * value)
+
 
 class IconTool:
     def __init__(self):

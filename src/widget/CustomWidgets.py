@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QLineEdit, QComboBox, QTextBrowser, QAction, QMenu, 
 
 from src.logcat.log import z_logger
 from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
-from utils.UITools import IconTool, ActionJudge
+from utils.UITools import IconTool, ActionJudge, UiUtils
 
 
 class CustomLineEdit(QLineEdit):
@@ -20,7 +20,7 @@ class CustomLineEdit(QLineEdit):
         self.enterAccept = None
         validator = QRegExpValidator(QRegExp("^[a-z][a-z0-9_.]*$"), self)
         self.setValidator(validator)
-        self.setFont(getSimpleFontStyle(9))
+        self.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(9)))
 
     def setEnterAccept(self, block):
         self.enterAccept = block
@@ -45,7 +45,7 @@ class DeleteableComboBox(QComboBox):
         self.currentChooseApp = ''
         # 先设置10个, 减少bug出现的几率。此bug为: 添加数据项超过可视范围数量后，再添加两个，删除按钮就不见了。
         self.setMaxVisibleItems(10)
-        self.setFont(getWRYHFontStyle())
+        self.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
         self.view().setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -83,7 +83,7 @@ class DeleteableComboBox(QComboBox):
                 z_logger.info_with_stamp(f"添加应用成功:{text}")
                 item_widget: QtWidgets.QWidget = self._deleteBtn(text)
                 item_wrap = QtWidgets.QListWidgetItem()
-                item_wrap.setFont(getWRYHFontStyle())
+                item_wrap.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
                 item_wrap.setText(text)
                 # 在第一行插入item_wrap和item_widget
                 self.listWidget.insertItem(0, item_wrap)
@@ -99,7 +99,7 @@ class DeleteableComboBox(QComboBox):
                 self.mainWindow.pkgManager.setSelectedPackageName(device[0])
             item_widget: QtWidgets.QWidget = self._deleteBtn(device[0])
             item_wrap = QtWidgets.QListWidgetItem(self.listWidget)
-            item_wrap.setFont(getWRYHFontStyle())
+            item_wrap.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
             item_wrap.setText(device[0])
             self.listWidget.setItemWidget(item_wrap, item_widget)
 
@@ -148,7 +148,7 @@ class DraggableLineEdit(QLineEdit):
         super(DraggableLineEdit, self).__init__(parent)
         self.block = None
         self.setAcceptDrops(True)
-        self.setFont(getWRYHFontStyle())
+        self.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
 
     def dragEnterEvent(self, event):
         if ActionJudge.isAcceptDrag(event):
@@ -189,7 +189,7 @@ class LiveLogTextBrowser(QTextBrowser):
         self.setOpenExternalLinks(True)
         self.setReadOnly(True)
         self.unsetCursor()
-        font = QFont("Microsofy YaHei Light", 11)
+        font = QFont("Microsofy YaHei Light", UiUtils.getScaleValue(11))
         self.setFont(font)
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)

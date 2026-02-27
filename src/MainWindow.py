@@ -29,7 +29,8 @@ from utils.Utils import Utils
 
 def initBtnTips():
     # 这种静态的方法设置一个用于显示工具提示的字体。这里使用10px滑体字体。
-    QToolTip.setFont(QFont('SansSerif', 10))
+    from utils.UITools import UiUtils
+    QToolTip.setFont(QFont('SansSerif', UiUtils.getScaleValue(10)))
 
 
 # 未使用
@@ -177,7 +178,7 @@ class MainWindow(BaseWindow):
         :return:
         """
         self.center_panel = QtWidgets.QTabWidget(self)
-        self.center_panel.setFont(getSongFontStyle(size=10))
+        self.center_panel.setFont(getSongFontStyle(size=UiUtils.getScaleValue(10)))
         self.center_panel.setObjectName("center_widget")
         # App操作页面
         appOprateArea = CommonFunctionalWidget(self)

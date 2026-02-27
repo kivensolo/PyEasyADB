@@ -347,7 +347,7 @@ class AboutDialog(BaseDialog):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.label = QtWidgets.QLabel(self)
         font = QtGui.QFont()
-        font.setPointSize(22)
+        font.setPointSize(UiUtils.getScaleValue(22))
         font.setBold(True)
         font.setWeight(75)
         self.label.setFont(font)
@@ -755,7 +755,7 @@ class APKHelperDialog(DragDialog):
         创建APK信息的分组Box
         :return: None
         """
-        self.apkInfoGroupBox.setFont(getSimpleFontStyle())
+        self.apkInfoGroupBox.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(10)))
         self.apkInfoGroupBox.setObjectName("app_info_group")
         self.apkInfoGroupBox.setTitle("APK信息")
         self.apkInfoGroupBox.setStyleSheet("""
@@ -819,7 +819,7 @@ class APKHelperDialog(DragDialog):
                 lineEdit: QLineEdit = HoverQLineEdit(self.apkInfoGroupBox)
             lineEdit.setObjectName(f"obj_appInfo_at_{name}")
             # lineEdit.setPlaceholderText(f"占_{name}")
-            lineEdit.setFont(getWRYHFontStyle(9))
+            lineEdit.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(9)))
             lineEdit.setReadOnly(True)
 
             self.appInfoGridLayout.addWidget(labelView, index, 0)
@@ -848,7 +848,7 @@ class APKHelperDialog(DragDialog):
                     self.appInfoGridLayout.addWidget(logoInfo, index, 4, 1, 1, Qt.AlignmentFlag.AlignCenter)
 
             elif name == '权限要求':
-                lineEdit.setFont(getWRYHFontStyle(9))
+                lineEdit.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(9)))
                 sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
                 sizePolicy.setHorizontalStretch(0)
                 sizePolicy.setVerticalStretch(0)
@@ -866,7 +866,7 @@ class APKHelperDialog(DragDialog):
         创建文件信息的分组Box
         :return:
         """
-        self.fileInfoGroupBox.setFont(getSimpleFontStyle())
+        self.fileInfoGroupBox.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(10)))
         self.fileInfoGroupBox.setObjectName("file_info_group")
         self.fileInfoGroupBox.setTitle("文件信息")
         self.fileInfoGroupBox.setStyleSheet("""
@@ -892,7 +892,7 @@ class APKHelperDialog(DragDialog):
             lineEdit: QLineEdit = HoverQLineEdit(self.fileInfoGroupBox)
             lineEdit.setObjectName(f"obj_fileInfo_at_{index}")
             # lineEdit.setPlaceholderText(f"占位数据_{name}")
-            lineEdit.setFont(getWRYHFontStyle(9))
+            lineEdit.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(9)))
             lineEdit.setReadOnly(True)
             fileInfoGridLayout.addWidget(labelView, index, 0)
             fileInfoGridLayout.addWidget(lineEdit, index, 1, 1, 4)
@@ -1044,7 +1044,7 @@ class APKHelperDialog(DragDialog):
         labelView.setObjectName(objName)
         labelView.setAlignment(QtCore.Qt.AlignCenter)
         labelView.setText(name)
-        labelView.setFont(getWRYHFontStyle())
+        labelView.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
         return labelView
 
     def showIconContextMenu(self, pos):

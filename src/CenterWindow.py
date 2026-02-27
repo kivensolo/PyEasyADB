@@ -12,6 +12,7 @@ from src.widget.CustomWidgets import DeleteableComboBox
 from src.widget.Dialogs import installApkDialog, screen_record_dialog, TextInputDialog, PullApkDialog
 from utils.ADBTools import ActionCmdParams
 from utils.Tools import getWRYHFontStyle, getSongFontStyle, getSimpleFontStyle
+from utils.UITools import UiUtils
 
 
 class CommonFunctionalWidget(QWidget):
@@ -51,7 +52,7 @@ class Ui_ConvenientArea(object):
         :return:
         """
         self.groupBox = QtWidgets.QGroupBox(self.scrollAreaWidgetContents)
-        self.groupBox.setFont(getSimpleFontStyle())
+        self.groupBox.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(10)))
         self.groupBox.setObjectName("app_custom_action_group")
         self.group_vertical_layout = QtWidgets.QVBoxLayout(self.groupBox)
         self.group_vertical_layout.setObjectName("group_vertical_layout")
@@ -69,7 +70,7 @@ class Ui_ConvenientArea(object):
         self.label_app.setSizePolicy(sizePolicy)
         self.label_app.setObjectName("label_app")
         self.label_app.setText("package:")
-        self.label_app.setFont(getWRYHFontStyle())
+        self.label_app.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
         self.package_layout.addWidget(self.label_app)
         # 自定义QComboBox
         self.packagesCombobox = DeleteableComboBox()
@@ -133,7 +134,7 @@ class Ui_ConvenientArea(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(labelView.sizePolicy().hasHeightForWidth())
         labelView.setSizePolicy(sizePolicy)
-        labelView.setFont(getWRYHFontStyle())
+        labelView.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
         h_layout.addWidget(labelView)
 
         if isTextEdit:
@@ -145,7 +146,7 @@ class Ui_ConvenientArea(object):
             lineEdit.textChanged.connect(lambda: self.onEditTextValueChanged(lineEdit.objectName(), lineEdit.text()))
         lineEdit.setObjectName(objName)
         lineEdit.setPlaceholderText(holderText)
-        lineEdit.setFont(getSongFontStyle(10))
+        lineEdit.setFont(getSongFontStyle(size=UiUtils.getScaleValue(10)))
         _cachedText = self.mainWindow.settings.value(objName)
         if _cachedText != "" and _cachedText is not None:
             lineEdit.setText(_cachedText)
@@ -226,7 +227,7 @@ class Ui_ConvenientArea(object):
             _groupBox.setCheckable(False)
             _groupBox.setObjectName(template_name)
             _groupBox.setTitle(template_name)
-            _groupBox.setFont(getSimpleFontStyle())
+            _groupBox.setFont(getSimpleFontStyle(size=UiUtils.getScaleValue(10)))
 
             item_list = template.getElementsByTagName("item")
 
@@ -266,7 +267,7 @@ class Ui_ConvenientArea(object):
                         _value = attr.firstChild.nodeValue
                         if _key == "text":
                             font = QtGui.QFont()
-                            font.setPointSize(10)
+                            font.setPointSize(UiUtils.getScaleValue(10))
                             item_tool_button.setText(_value)
                             item_tool_button.setFont(font)
                         elif _key == "icon":

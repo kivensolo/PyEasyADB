@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import QSizePolicy, QWidget, QMainWindow
 import Dependencies
 from src.logcat.log import z_logger
 from utils.Tools import getWRYHFontStyle, getSimpleFontStyle
+from utils.UITools import UiUtils
 
 
 class ScrcpyEmbedWidget(QWidget):
@@ -66,7 +67,7 @@ class ScrcpyEmbedWidget(QWidget):
         buttonsLayout.setContentsMargins(5, 5, 5, 0)
         self.startScrcpyBtn = QtWidgets.QPushButton(embedWidget)
         self.startScrcpyBtn.setText("开启实时预览")
-        self.startScrcpyBtn.setFont(getWRYHFontStyle())
+        self.startScrcpyBtn.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
         self.startScrcpyBtn.clicked.connect(self.tryConnectScrcpy)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -78,7 +79,7 @@ class ScrcpyEmbedWidget(QWidget):
 
         self.stopScrcpyBtn = QtWidgets.QPushButton(embedWidget)
         self.stopScrcpyBtn.setText("关闭实时预览")
-        self.stopScrcpyBtn.setFont(getWRYHFontStyle())
+        self.stopScrcpyBtn.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
         self.stopScrcpyBtn.setEnabled(False)
         self.stopScrcpyBtn.clicked.connect(self.__killScrcpy)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
@@ -95,7 +96,7 @@ class ScrcpyEmbedWidget(QWidget):
         # sizePolicy.setHeightForWidth(self.tipsLabel.sizePolicy().hasHeightForWidth())
 
         self.enabneEmbedOption = QtWidgets.QCheckBox()
-        self.enabneEmbedOption.setFont(getWRYHFontStyle())
+        self.enabneEmbedOption.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
         self.enabneEmbedOption.setText("嵌入模式")
         self.enabneEmbedOption.setChecked(self.isEnableEmbed)
         self.enabneEmbedOption.stateChanged.connect(self.embed_state_changed)
@@ -103,7 +104,7 @@ class ScrcpyEmbedWidget(QWidget):
         buttonsLayout.addWidget(self.enabneEmbedOption, alignment=Qt.AlignLeft)
 
         self.tipsLabel = QtWidgets.QLabel(embedWidget)
-        self.tipsLabel.setFont(getWRYHFontStyle())
+        self.tipsLabel.setFont(getWRYHFontStyle(size=UiUtils.getScaleValue(10)))
         self.tipsLabel.setText("(嵌入模式若出现键盘无法控制远程设备的情况,请点击一下此处红色文本.)")
         self.tipsLabel.setStyleSheet("color: #bf200b")
         self.tipsLabel.setSizePolicy(sizePolicy)
