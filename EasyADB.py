@@ -29,13 +29,13 @@ class App:
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    # 开启 Qt 的自动高 DPI 缩放支持
-    # app.setAttribute(Qt.AA_EnableHighDpiScaling)  # 自动缩放
-    # app.setAttribute(Qt.AA_UseHighDpiPixmaps)  # 高清图标支持
-    #  PassThrough 表示禁用自动缩放，由手动控制窗口和控件尺寸为物理像素单位。
-    # app.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)  # 自动缩放
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)  # 高清图标支持
+    # 开启 Qt 的自动高 DPI 缩放支持 (必须在创建QApplication之前调用)
+    # HighDpiScaleFactorRoundingPolicy: PassThrough 禁用自动缩放，由手动控制窗口和控件尺寸为物理像素单位
+    QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
+    app = QApplication(sys.argv)
     UiUtils.init(app.primaryScreen())
 
     try:
