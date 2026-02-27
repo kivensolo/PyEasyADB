@@ -20,8 +20,10 @@ def exception_handler(exc_type, exc_value, exc_traceback):
 sys.excepthook = exception_handler
 
 # requests库需要的CA证书设置
-os.environ['REQUESTS_CA_BUNDLE'] = os.path.join(os.path.dirname(sys.argv[0]), os.path.join('certifi', 'cacert.pem'))
-
+os.environ['REQUESTS_CA_BUNDLE'] = os.path.join(
+    os.path.dirname(sys.argv[0]),  # sys.argv[0] 指向 exe 文件位置
+    os.path.join('certifi', 'cacert.pem')
+)
 
 class App:
     def __init__(self):

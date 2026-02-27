@@ -107,15 +107,21 @@ EasyADB会自动调用tool/scrcpy-win64/scrcpy.exe；
 # 发布说明
 ## 打包说明
 1. 确保不在`虚拟环境`下，如果处于虚拟环境下，则进入`Scripts`目录，执行`deactivate`退出。
-2. 执行以下命令打包(建议不带参数)：
-`pyinstaller --onefile EasyADB.py`<br>
-`pyinstaller EasyADB.py`<br>
+2. 执行以下命令打包(目前仅支持目录模式)：
+目录模式：
+```shell
+pyinstaller EasyADB.spec
+```
+单个文件模式:
+`pyinstaller --onefile EasyADB.py` <br>
 参数说明：<br>
---noconsole : 指定不要命令行窗口，否则程序运行的时候，还会多一个黑窗口。但是在执行命令操作时，会闪现，体验不好。
---onefile: 生成单个exe文件;
+--noconsole : 指定不要命令行窗口，否则程序运行的时候，还会多一个黑窗口。但是在执行命令操作时，会闪现，体验不好。<br>
+--onefile: 生成单个exe文件;<br>
+【注意】：单文件打包后程序运行时会被解压到临时目录：`C:\Users\YourName\AppData\Local\Temp\_MEI12345\`
+certifi证书文件就被是放在临时目录中了。会导致REQUESTS_CA_BUNDLE环境变量无效，导致requests库无法找到证书文件。<br>
+后续要支持的话，就要修改代码来自动定位 certifi 文件。
 
-打包完成后，会生成dist目录，打包后的文件夹在此目录。但是打包时不会打包资源文件，
-所以需要手动复制资源文件至打包目录。
+打包完成后，会生成dist目录，打包后的文件夹在此目录。
 
 ## 关于CA证书文件的说明
 v1.0.3开始，使用了requests库，通过PyInstaller打包独立文件后的程序会出现:<br>
@@ -128,4 +134,3 @@ cacert.pem 文件可以从 https://curl.se/docs/caextract.html 下载到;
 【注意】: 打包成非独立文件时，此证书文件就会被打包进去，所以不需要再手动复制了。
 
 ## TODO
-- [ ] 保存apk到电脑
