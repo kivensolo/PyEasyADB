@@ -17,6 +17,7 @@ class ActionCmdParams:
     def __init__(self, isShell=True, needPackage=False):
         self.isShellMode = isShell
         self.needDstPkg = needPackage
+        self.needDeviceOnline = False
         # ADB行为命令
         self.cmd = ""
         # 自定义行为
