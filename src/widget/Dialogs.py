@@ -1,6 +1,7 @@
 import concurrent.futures
 import os
 import sys
+import webbrowser
 import zipfile
 
 from PyQt5 import QtWidgets, QtCore, QtGui
@@ -333,7 +334,14 @@ class device_alis_edit_dialog(BaseDialog):
 
 
 class AboutDialog(BaseDialog):
-    def __init__(self,  window = None):
+    """
+    关于对话框
+    """
+    # 项目信息配置
+    PROJECT_NAME = "EasyADB"
+    GITHUB_URL = "https://github.com/kivensolo/PyEasyADB"
+
+    def __init__(self, window=None):
         super().__init__("关于")
         self.mainWindow = window
         self.initWindow()
@@ -342,26 +350,115 @@ class AboutDialog(BaseDialog):
         super().initWindow()
         # 只显示关闭按钮, 不显示最大化, 最小化, 并且固定窗口大小
         self.setWindowFlags(Qt.WindowCloseButtonHint)
-        self.setFixedSize(300, 100)
-        self.verticalLayout_2 = QtWidgets.QVBoxLayout(self)
-        self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.label = QtWidgets.QLabel(self)
+
+        # 根据 DPI 缩放调整窗口宽度（高度自适应）
+        base_width = 400
+        window_width = min(UiUtils.getScaleWidth(base_width), 500)
+        self.setFixedWidth(window_width)
+
+        # 创建主布局
+        self.mainLayout = QtWidgets.QVBoxLayout(self)
+        self.mainLayout.setContentsMargins(
+            UiUtils.getScaleWidth(20),
+            UiUtils.getScaleHeight(20),
+            UiUtils.getScaleWidth(20),
+            UiUtils.getScaleHeight(20)
+        )
+
+        # 按顺序从上往下添加组件
+        self.initAppTitle()
+        self.initVersionNumber()
+        self.initBuildInfo()
+        self.initGithubLink()
+
+        # 设置背景样式
+        self.setStyleSheet("QDialog{background: white;}")
+
+        # 调整窗口大小以适应内容
+        self.adjustSize()
+
+    def initAppTitle(self):
+        """应用标题"""
+        self.titleLabel = QtWidgets.QLabel()
+        self.titleLabel.setAlignment(Qt.AlignCenter)
+        self.titleLabel.setStyleSheet("QLabel{background: black; color: white; padding: 10px;}")
+        self.titleLabel.setText(self.PROJECT_NAME)
+
+        # 字体设置
         font = QtGui.QFont()
-        font.setPointSize(UiUtils.getScaleValue(22))
+        font.setPointSize(UiUtils.getScaleValue(26))
         font.setBold(True)
-        font.setWeight(75)
-        self.label.setFont(font)
-        self.label.setAlignment(QtCore.Qt.AlignCenter)
-        self.label.setObjectName("label")
-        self.verticalLayout_2.addWidget(self.label)
+        self.titleLabel.setFont(font)
 
-        self.retranslateUi(self)
-        QtCore.QMetaObject.connectSlotsByName(self)
+        # 标题保留固定高度（因为有黑色背景样式）
+        self.titleLabel.setFixedHeight(UiUtils.getScaleHeight(70))
+        self.mainLayout.addWidget(self.titleLabel)
 
-    def retranslateUi(self, Dialog):
-        _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "关于"))
-        self.label.setText(_translate("Dialog", f"v{APP_VERSION}"))
+    def initVersionNumber(self):
+        """版本号"""
+        self.versionLabel = QtWidgets.QLabel()
+        self.versionLabel.setAlignment(Qt.AlignCenter)
+        self.versionLabel.setText(f"版本号：v{APP_VERSION}")
+
+        # 字体设置
+        font = QtGui.QFont()
+        font.setPointSize(UiUtils.getScaleValue(10))
+        self.versionLabel.setFont(font)
+
+        self.mainLayout.addWidget(self.versionLabel)
+
+    def initGithubLink(self):
+        """GitHub 链接按钮"""
+        self.githubButton = QtWidgets.QPushButton()
+        self.githubButton.setCursor(Qt.PointingHandCursor)
+        self.githubButton.setStyleSheet("""
+            QPushButton {
+                background: transparent;
+                color: blue;
+                border: none;
+                text-align: center;
+            }
+            QPushButton:hover {
+                text-decoration: underline;
+            }
+        """)
+        self.githubButton.setText("GitHub/EasyPyADB")
+        self.githubButton.clicked.connect(self.openGithubUrl)
+
+        # 字体设置
+        font = QtGui.QFont()
+        font.setPointSize(UiUtils.getScaleValue(10))
+        self.githubButton.setFont(font)
+
+        self.mainLayout.addWidget(self.githubButton)
+
+    def initBuildInfo(self):
+        """编译信息"""
+        # 获取当前可执行文件的修改时间作为编译时间
+        import os
+        import time
+        build_time = "Unknown"
+        if hasattr(sys, 'frozen'):
+            # 打包后的exe
+            build_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(sys.executable)))
+        else:
+            # 开发环境
+            build_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(os.path.getmtime(__file__)))
+
+        self.buildInfoLabel = QtWidgets.QLabel()
+        self.buildInfoLabel.setAlignment(Qt.AlignCenter)
+        self.buildInfoLabel.setText(f"编译时间：{build_time}")
+
+        # 字体设置（稍小一些）
+        font = QtGui.QFont()
+        font.setPointSize(UiUtils.getScaleValue(8))
+        self.buildInfoLabel.setFont(font)
+
+        self.mainLayout.addWidget(self.buildInfoLabel)
+
+    def openGithubUrl(self):
+        """打开 GitHub 链接"""
+        webbrowser.open(self.GITHUB_URL)
 
 
 class PullApkDialog(BaseDialog):
@@ -1087,7 +1184,7 @@ class APKHelperDialog(DragDialog):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    dialog = NewConnectDialog()
+    dialog = AboutDialog()
     # 设置窗口的属性为ApplicationModal模态，用户只有关闭弹窗后，才能关闭主界面
     dialog.setWindowModality(Qt.ApplicationModal)
     dialog.show()
