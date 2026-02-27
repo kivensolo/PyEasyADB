@@ -119,12 +119,13 @@ class AndroidDependencies:
 class ScrcpyChecker(QObject):
     # 默认自动下载的scrcpy 版本(released on Dec 2, 2023)
     # 最新版本查看 https://github.com/Genymobile/scrcpy/releases/latest
-    _version = 'v2.3.1'
+    _version = 'v3.3.4'
     toolsPath = settings.toolsPath
 
     downloadedZipFile = os.path.join(toolsPath, f"scrcpy-win64-{_version}.zip")
     scrcpyPath = os.path.join(toolsPath, "scrcpy-win64")
     scrcpyExeFilePath = os.path.join(scrcpyPath, "scrcpy.exe")
+    # https://github.com/Genymobile/scrcpy/releases/download/v3.3.4/scrcpy-win64-v3.3.4.zip
     downloadUrl = f'https://github.com/Genymobile/scrcpy/releases/download/{_version}/scrcpy-win64-{_version}.zip'
 
     checkFinished = pyqtSignal(tuple)
