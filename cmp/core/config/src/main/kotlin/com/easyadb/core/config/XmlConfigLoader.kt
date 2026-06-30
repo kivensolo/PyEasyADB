@@ -6,8 +6,8 @@ import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * Loader for XML configuration files using javax.xml.parsers.DocumentBuilder.
- * Maps to XML loading logic from res/config/ in Python.
+ * 使用 javax.xml.parsers.DocumentBuilder 的 XML 配置文件加载器。
+ * 对应 Python 中从 res/config/ 加载 XML 的逻辑。
  */
 object XmlConfigLoader {
 
@@ -19,7 +19,7 @@ object XmlConfigLoader {
     }
 
     /**
-     * Load cmdConfig.xml into CmdGroup list.
+     * 加载 cmdConfig.xml 到 CmdGroup 列表。
      */
     fun loadCmdConfig(file: File): List<CmdGroup> {
         if (!file.exists()) {
@@ -57,7 +57,7 @@ object XmlConfigLoader {
     }
 
     /**
-     * Load function_templates.xml into FunctionTemplate list.
+     * 加载 function_templates.xml 到 FunctionTemplate 列表。
      */
     fun loadFunctionTemplates(file: File): List<FunctionTemplate> {
         if (!file.exists()) {
@@ -98,7 +98,7 @@ object XmlConfigLoader {
     }
 
     /**
-     * Load menus_ui.xml into MenuConfig list.
+     * 加载 menus_ui.xml 到 MenuConfig 列表。
      */
     fun loadMenuConfig(file: File): List<MenuConfig> {
         if (!file.exists()) {
@@ -141,7 +141,7 @@ object XmlConfigLoader {
         val text = element.textContent?.trim() ?: ""
         val desc = element.getAttribute("desc")
         val dstPkg = element.getAttribute("dst_pkg").toBoolean()
-        // shell attribute on <item> defaults to true if not "false"
+        // <item> 上的 shell 属性，非 "false" 时默认为 true
         val shell = element.getAttribute("shell") != "false"
         return CmdItem(name = name, cmd = text, shell = shell, needDstPkg = dstPkg, description = desc)
     }

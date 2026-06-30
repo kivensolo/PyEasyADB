@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Monitors device connection status via `adb devices`.
- * Maps to Python DevicesWatcher in src/DevicesWatcher.py
- * Replaces threading.Thread + pyqtSignal with coroutine + Flow.
+ * 通过 `adb devices` 监控设备连接状态。
+ * 对应 Python 中的 DevicesWatcher（位于 src/DevicesWatcher.py）
+ * 将 threading.Thread + pyqtSignal 替换为协程 + Flow。
  */
 class DevicesWatcher {
 
@@ -21,7 +21,7 @@ class DevicesWatcher {
     val devices: Flow<List<DeviceInfo>> = _devices.asStateFlow()
 
     /**
-     * Start watching devices at the given interval.
+     * 以指定间隔开始监控设备。
      */
     fun start(intervalSeconds: Long = 2, scope: CoroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())) {
         if (job?.isActive == true) return
@@ -44,7 +44,7 @@ class DevicesWatcher {
     }
 
     /**
-     * Stop watching devices.
+     * 停止监控设备。
      */
     fun stop() {
         job?.cancel()
@@ -53,10 +53,10 @@ class DevicesWatcher {
     }
 
     /**
-     * Force refresh on next poll (e.g., after device deletion).
+     * 强制在下次轮询时刷新（例如删除设备后）。
      */
     fun onDeviceDeleted() {
-        // Force re-trigger by emitting empty first
+        // 先发送空列表以强制重新触发
         _devices.value = emptyList()
     }
 

@@ -5,7 +5,7 @@ import com.easyadb.core.util.ExecResult
 import com.easyadb.core.util.ExecUtils
 
 /**
- * Process information data class.
+ * 进程信息数据类。
  */
 data class ProcessInfo(
     val user: String,
@@ -14,8 +14,8 @@ data class ProcessInfo(
 )
 
 /**
- * Parse filtered process list from `adb shell ps` output.
- * Maps to Python get_filter_processes() in utils/ADBTools.py
+ * 解析并过滤 `adb shell ps` 的输出。
+ * 对应 Python 中的 get_filter_processes()（位于 utils/ADBTools.py）
  */
 object ProcessUtils {
 
@@ -25,7 +25,7 @@ object ProcessUtils {
     private val FILTER_PREFIXES = listOf("[", "android.", "/system", "com.android", "sysyem_server", "libcpu", "/data/")
 
     /**
-     * Parse and filter `adb shell ps` output.
+     * 解析并过滤 `adb shell ps` 的输出。
      */
     fun getFilteredProcesses(output: String): List<ProcessInfo> {
         val processes = mutableListOf<ProcessInfo>()
@@ -44,10 +44,10 @@ object ProcessUtils {
 
             val name = columns.last()
 
-            // Filter specific names
+            // 过滤特定名称
             if (name in FILTER_NAMES) continue
 
-            // Filter by prefix
+            // 按前缀过滤
             if (FILTER_PREFIXES.any { name.startsWith(it) }) continue
 
             processes.add(ProcessInfo(user = user, pid = pid, name = name))
@@ -57,8 +57,8 @@ object ProcessUtils {
     }
 
     /**
-     * Check if the user should be included.
-     * Maps to Python process_user_name_check()
+     * 检查用户是否应包含在内。
+     * 对应 Python 中的 process_user_name_check()
      */
     fun processUserNameCheck(user: String): Boolean {
         return user.startsWith("u0_") || user == "system" || user == "bluetooth"

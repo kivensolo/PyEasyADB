@@ -11,8 +11,8 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 /**
- * Continuous logcat stream with filtering.
- * Maps to Python LiveLogAdbThread + LogCatFilter in utils/ADBTools.py
+ * 带过滤功能的持续 logcat 流。
+ * 对应 Python 中的 LiveLogAdbThread + LogCatFilter（位于 utils/ADBTools.py）
  */
 
 data class LogcatEntry(
@@ -63,13 +63,13 @@ class LogcatFilter {
 
         val level = LogLevel.fromShortName(levelName)
 
-        // Level 1: log level filter
+        // 级别 1：日志级别过滤
         if (level.value < filteredLevel.value) return Triple(true, pid, level)
 
-        // Level 2: process filter
+        // 级别 2：进程过滤
         if (onlyShowSelectedApp && pid != selectedPid) return Triple(true, pid, level)
 
-        // Level 3: keyword filter
+        // 级别 3：关键字过滤
         if (filterContent.isNotEmpty() && filterContent !in logMsg) return Triple(true, pid, level)
 
         return Triple(false, pid, level)
@@ -99,8 +99,8 @@ class LogcatFilter {
 }
 
 /**
- * Continuous logcat stream using coroutine Flow.
- * Maps to Python LiveLogAdbThread in utils/ADBTools.py
+ * 使用协程 Flow 的持续 logcat 流。
+ * 对应 Python 中的 LiveLogAdbThread（位于 utils/ADBTools.py）
  */
 class LogcatStream {
 
@@ -133,21 +133,21 @@ class LogcatStream {
             val msg = line!!
             if (msg.isEmpty()) continue
 
-            // Record raw data
+            // 记录原始数据
             filter.record(msg)
 
-            // Apply filters
+            // 应用过滤
             val (isFiltered, pid, level) = filter.filter(msg)
             if (isFiltered) continue
 
-            // Format for UI
+            // 格式化用于 UI 显示
             val highlighted = LogUtils.highlightLinkAddr(msg)
             val uiLog = LogUtils.changeLogColor(appendPrefix = false, level = level, log = highlighted)
 
             trySend(LogcatEntry(raw = msg, pid = pid, level = level, formatted = uiLog))
         }
 
-        // Read stderr
+        // 读取 stderr
         val errReader = BufferedReader(InputStreamReader(proc.errorStream, "utf-8"))
         if (errReader.ready()) {
             val err = errReader.readText()

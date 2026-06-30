@@ -1,7 +1,7 @@
 package com.easyadb.core.device
 
 /**
- * Encapsulates IP:port, emulator-xxxx, or serial device address.
+ * 封装 IP:端口、emulator-xxxx 或序列号设备地址。
  */
 sealed class DeviceAddress {
     abstract val raw: String

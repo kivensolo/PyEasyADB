@@ -7,8 +7,8 @@ import java.security.MessageDigest
 object FileUtils {
 
     /**
-     * Calculate MD5 hash of a file.
-     * Maps to Python FileUtils.calculate_md5() in utils/Utils.py
+     * 计算文件的 MD5 哈希值。
+     * 对应 Python 中的 FileUtils.calculate_md5()（位于 utils/Utils.py）
      */
     fun calculateMd5(file: File, chunkSize: Int = 4096): String {
         val digest = MessageDigest.getInstance("MD5")
@@ -23,8 +23,8 @@ object FileUtils {
     }
 
     /**
-     * Recursively delete directory contents.
-     * Maps to Python FileUtils.clear_directory() in utils/Utils.py
+     * 递归删除目录内容。
+     * 对应 Python 中的 FileUtils.clear_directory()（位于 utils/Utils.py）
      */
     fun clearDirectory(directory: File) {
         directory.listFiles()?.forEach { file ->

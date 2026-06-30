@@ -9,8 +9,8 @@ import java.util.concurrent.TimeUnit
 object ExecUtils {
 
     /**
-     * Execute a command and return its output.
-     * Maps to Python exec_cmd() in utils/Tools.py
+     * 执行命令并返回输出结果。
+     * 对应 Python 中的 exec_cmd()（位于 utils/Tools.py）
      */
     suspend fun execCmd(
         command: String,

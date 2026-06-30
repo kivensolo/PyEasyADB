@@ -11,15 +11,15 @@ import java.io.BufferedReader
 import java.io.InputStreamReader
 
 /**
- * ADB command executor wrapping process execution.
- * Maps to Python CmdExecutor in utils/CmdExecutor.py
+ * ADB 命令执行器，包装进程执行。
+ * 对应 Python 中的 CmdExecutor（位于 utils/CmdExecutor.py）
  */
 class CmdExecutor {
 
     private val logger = AppLogger.getLogger(CmdExecutor::class.java)
 
     /**
-     * Execute a single ADB command and return the result.
+     * 执行单个 ADB 命令并返回结果。
      */
     suspend fun execute(
         cmd: String,
@@ -35,8 +35,8 @@ class CmdExecutor {
     }
 
     /**
-     * Execute a command and emit output lines via Flow.
-     * Maps to AsyncAdbThread behavior in Python.
+     * 执行命令并通过 Flow 发送输出行。
+     * 对应 Python 中的 AsyncAdbThread 行为。
      */
     fun executeFlow(cmd: String, useShell: Boolean = true): Flow<String> = callbackFlow {
         try {
@@ -52,7 +52,7 @@ class CmdExecutor {
             val process = processBuilder.start()
             val reader = BufferedReader(InputStreamReader(process.inputStream, "utf-8"))
 
-            // Emit the input command marker
+            // 发送输入命令标记
             trySend("input: $cmd")
 
             var line: String?

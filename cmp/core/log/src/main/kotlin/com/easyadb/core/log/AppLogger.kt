@@ -47,7 +47,7 @@ class AppLogger(config: LogConfig = LogConfig()) {
 
     companion object {
         /**
-         * Create a lightweight logger for a class, writing to log directory.
+         * 为类创建轻量级日志记录器，写入日志目录。
          */
         fun getLogger(clazz: Class<*>): AppLogger {
             val logDir = System.getProperty("easyadb.log.dir", "")
@@ -55,7 +55,7 @@ class AppLogger(config: LogConfig = LogConfig()) {
         }
 
         /**
-         * Create a logger with custom config.
+         * 使用自定义配置创建日志记录器。
          */
         fun getLogger(name: String, logDir: String = ""): AppLogger {
             return AppLogger(LogConfig(name = name, logDir = logDir))

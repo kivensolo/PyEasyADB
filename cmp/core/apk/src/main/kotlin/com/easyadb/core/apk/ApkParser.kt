@@ -7,15 +7,15 @@ import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
- * Parse APK files using aapt and apksigner.
- * Maps to Python FileUtils.parse_apk().
+ * 使用 aapt 和 apksigner 解析 APK 文件。
+ * 对应 Python 中的 FileUtils.parse_apk()。
  */
 object ApkParser {
 
     private val logger = AppLogger.getLogger(ApkParser::class.java)
 
     /**
-     * Parse APK file and return ApkInfo.
+     * 解析 APK 文件并返回 ApkInfo。
      */
     suspend fun parse(filePath: String): ApkInfo = withContext(Dispatchers.IO) {
         val file = File(filePath)

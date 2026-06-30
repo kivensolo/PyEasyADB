@@ -8,9 +8,9 @@ import java.sql.Connection
 import java.sql.DriverManager
 
 /**
- * SQLite database manager.
- * Maps to Python DataBase.py in src/.
- * Table structures preserved from Python:
+ * SQLite 数据库管理器。
+ * 对应 Python 中的 DataBase.py（位于 src/）。
+ * 表结构保持与 Python 一致：
  *   device(ip VARCHAR(20) PK, port VARCHAR(10) DEFAULT 0, alias VARCHAR(50), device_info VARCHAR(50), active INTEGER DEFAULT 0)
  *   package(name VARCHAR(50) PK)
  */
@@ -58,7 +58,7 @@ object DbManager {
     private fun getConnection(): Connection =
         connection ?: throw IllegalStateException("Database not initialized")
 
-    // ── Device CRUD ──
+    // ── 设备 CRUD ──
 
     suspend fun insertDevice(device: DeviceRecord): DbResult<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -184,7 +184,7 @@ object DbManager {
         }
     }
 
-    // ── Package CRUD ──
+    // ── 包名 CRUD ──
 
     suspend fun insertPackage(name: String): DbResult<Unit> = withContext(Dispatchers.IO) {
         try {

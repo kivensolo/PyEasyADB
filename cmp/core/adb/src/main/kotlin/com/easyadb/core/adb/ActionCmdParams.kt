@@ -1,8 +1,8 @@
 package com.easyadb.core.adb
 
 /**
- * ADB command action parameters.
- * Maps to Python ActionCmdParams in utils/ADBTools.py
+ * ADB 命令动作参数。
+ * 对应 Python 中的 ActionCmdParams（位于 utils/ADBTools.py）
  */
 class ActionCmdParams(
     var isShellMode: Boolean = true,
@@ -16,7 +16,7 @@ class ActionCmdParams(
     fun hasCustomAction(): Boolean = customAction.isNotEmpty()
 
     /**
-     * Assemble the full ADB command string with macro replacement.
+     * 组装完整的 ADB 命令字符串，并进行宏替换。
      */
     fun getAdbCmd(): String {
         val resolvedCmd = cmd.replace("{0}", targetApp)
@@ -28,7 +28,7 @@ class ActionCmdParams(
     }
 
     /**
-     * Verify whether the target app package name is needed and provided.
+     * 验证目标应用包名是否需要且已提供。
      */
     fun verifyTargetApp(): Boolean {
         if (needDstPkg && targetApp.isEmpty()) {

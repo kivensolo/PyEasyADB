@@ -1,8 +1,8 @@
 package com.easyadb.core.apk
 
 /**
- * Parsed APK information data class.
- * Maps to Python FileUtils.parse_apk() return dict.
+ * 解析后的 APK 信息数据类。
+ * 对应 Python 中 FileUtils.parse_apk() 返回的字典。
  */
 data class ApkInfo(
     val packageName: String = "",

@@ -7,13 +7,13 @@ object NetworkUtils {
     )
 
     /**
-     * Validate IP address format (with optional port).
-     * Maps to Python isIpMatches() in utils/Tools.py
+     * 验证 IP 地址格式（支持可选端口）。
+     * 对应 Python 中的 isIpMatches()（位于 utils/Tools.py）
      */
     fun isIpMatches(ip: String): Boolean = IP_REGEX.matches(ip)
 
     /**
-     * Parse IP:port string into pair.
+     * 将 IP:端口 字符串解析为对。
      */
     fun parseIpPort(addr: String): Pair<String, String> {
         if (!addr.contains(":")) return Pair(addr, "5555")

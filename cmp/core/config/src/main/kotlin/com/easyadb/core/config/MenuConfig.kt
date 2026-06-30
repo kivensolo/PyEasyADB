@@ -1,8 +1,8 @@
 package com.easyadb.core.config
 
 /**
- * Data classes for menus_ui.xml structure.
- * Maps to XML in res/config/menus_ui.xml
+ * menus_ui.xml 结构的数据类。
+ * 对应 res/config/menus_ui.xml 中的 XML 结构
  */
 data class MenuConfig(
     val name: String,

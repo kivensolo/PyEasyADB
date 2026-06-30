@@ -1,8 +1,8 @@
 package com.easyadb.core.config
 
 /**
- * Data classes for cmdConfig.xml structure.
- * Maps to XML in res/config/cmdConfig.xml
+ * cmdConfig.xml 结构的数据类。
+ * 对应 res/config/cmdConfig.xml 中的 XML 结构
  */
 data class CmdGroup(
     val name: String,

@@ -1,8 +1,8 @@
 package com.easyadb.core.device
 
 /**
- * Device state enum.
- * Maps to Python DeviceInfo.state in src/DevicesWatcher.py
+ * 设备状态枚举。
+ * 对应 Python 中的 DeviceInfo.state（位于 src/DevicesWatcher.py）
  */
 enum class DeviceState(val value: String) {
     DEVICE("device"),
@@ -17,20 +17,20 @@ enum class DeviceState(val value: String) {
 }
 
 /**
- * Device information data class.
- * Maps to Python DeviceInfo in src/DevicesWatcher.py
+ * 设备信息数据类。
+ * 对应 Python 中的 DeviceInfo（位于 src/DevicesWatcher.py）
  */
 data class DeviceInfo(
     val name: String,
     val state: DeviceState
 ) {
     /**
-     * Whether the device is connected (device or offline).
+     * 设备是否已连接（device 或 offline 状态）。
      */
     fun isConnected(): Boolean = state == DeviceState.DEVICE || state == DeviceState.OFFLINE
 
     /**
-     * Check if device state is normal.
+     * 检查设备状态是否正常。
      */
     fun isDeviceStateNormal(): Pair<Boolean, String> {
         val normal = state == DeviceState.DEVICE

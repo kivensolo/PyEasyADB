@@ -5,8 +5,8 @@ import java.io.File
 import java.io.FileReader
 
 /**
- * Custom INI parser supporting [Section] headers and key=value pairs.
- * Maps to Python configparser in AppConfigManager.py
+ * 自定义 INI 解析器，支持 [Section] 标题和 key=value 键值对。
+ * 对应 Python 中的 configparser（位于 AppConfigManager.py）
  */
 class IniParser {
 

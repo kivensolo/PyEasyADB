@@ -4,8 +4,8 @@ import com.easyadb.core.log.AppLogger
 import java.io.File
 
 /**
- * Singleton managing AppConfig.ini configuration.
- * Maps to Python AppConfigManager in AppConfigManager.py
+ * 单例管理 AppConfig.ini 配置。
+ * 对应 Python 中的 AppConfigManager（位于 AppConfigManager.py）
  */
 object AppConfigManager {
 

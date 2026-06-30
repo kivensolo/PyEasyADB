@@ -6,15 +6,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Load installed app list from a device.
- * Maps to Python GetAppListThread in utils/ADBTools.py
+ * 从设备加载已安装的应用列表。
+ * 对应 Python 中的 GetAppListThread（位于 utils/ADBTools.py）
  */
 object AppListLoader {
 
     private val logger = AppLogger.getLogger(AppListLoader::class.java)
 
     /**
-     * App info data class.
+     * 应用信息数据类。
      */
     data class AppInfo(
         val packageName: String,
@@ -23,7 +23,7 @@ object AppListLoader {
     )
 
     /**
-     * Load installed apps from the given device.
+     * 从指定设备加载已安装的应用。
      */
     suspend fun loadAppList(deviceIp: String): List<AppInfo> = withContext(Dispatchers.IO) {
         logger.info { "Loading app list from $deviceIp..." }
@@ -59,7 +59,7 @@ object AppListLoader {
                 apps.add(AppInfo(packageName = packageName, apkPath = apkPath, type = type))
             }
 
-            // Sort: 3rd-party first, then system, then unknown
+            // 排序：第三方优先，然后是系统，最后是未知
             val typePriority = mapOf("第三方" to 0, "系统" to 1, "未知" to 2)
             apps.sortWith(compareBy({ typePriority[it.type] ?: 2 }, { it.packageName.lowercase() }))
 

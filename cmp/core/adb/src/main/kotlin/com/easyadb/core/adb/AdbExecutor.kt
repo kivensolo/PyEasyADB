@@ -6,8 +6,8 @@ import com.easyadb.core.util.ExecUtils
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Core ADB operations wrapper.
- * Maps to Python ADBTools in utils/ADBTools.py
+ * 核心 ADB 操作封装。
+ * 对应 Python 中的 ADBTools（位于 utils/ADBTools.py）
  */
 class AdbExecutor {
 
@@ -16,7 +16,7 @@ class AdbExecutor {
     var currentCmd: String = ""
 
     /**
-     * Execute an ADB command and return the result.
+     * 执行 ADB 命令并返回结果。
      */
     suspend fun execAdbCmd(
         cmd: String,
@@ -29,12 +29,12 @@ class AdbExecutor {
     }
 
     /**
-     * Execute ADB commands asynchronously via Flow.
+     * 通过 Flow 异步执行 ADB 命令。
      */
     fun asyncExecAdbCmd(cmds: List<String>): Flow<String> = executor.executeFlow(cmds.joinToString(" && "))
 
     /**
-     * Connect to a device.
+     * 连接到设备。
      */
     suspend fun connectDevice(deviceIp: String): ExecResult {
         val cmd = "adb connect $deviceIp"
@@ -42,7 +42,7 @@ class AdbExecutor {
     }
 
     /**
-     * Disconnect a device.
+     * 断开设备连接。
      */
     suspend fun disconnectDevice(deviceIp: String): ExecResult {
         val cmd = "adb disconnect $deviceIp"
@@ -50,7 +50,7 @@ class AdbExecutor {
     }
 
     /**
-     * Get device properties.
+     * 获取设备属性。
      */
     suspend fun getDeviceInfo(ip: String): ExecResult {
         val cmd = "adb -s $ip shell getprop"
@@ -58,7 +58,7 @@ class AdbExecutor {
     }
 
     /**
-     * Capture screenshot.
+     * 截取屏幕截图。
      */
     suspend fun getScreenShoot(deviceIp: String, savePath: String): ExecResult {
         val cmd = "adb -s $deviceIp exec-out screencap -p > $savePath"
@@ -66,7 +66,7 @@ class AdbExecutor {
     }
 
     /**
-     * Start an app page via class path.
+     * 通过类路径启动应用页面。
      */
     suspend fun startAppPage(ip: String, classPath: String): ExecResult {
         val cmd = "adb -s $ip shell am start $classPath"
@@ -75,7 +75,7 @@ class AdbExecutor {
     }
 
     /**
-     * Get running processes from a device.
+     * 获取设备上正在运行的进程列表。
      */
     suspend fun getRunningProcesses(deviceName: String): List<ProcessInfo> {
         val cmd = "adb -s $deviceName shell ps"
@@ -88,7 +88,7 @@ class AdbExecutor {
     }
 
     /**
-     * Start screen recording (returns commands list for async execution).
+     * 开始屏幕录制（返回用于异步执行的命令列表）。
      */
     fun getScreenRecordCommands(deviceIp: String, recordCmd: String, tmpPath: String, pullPath: String): List<String> {
         return listOf(
@@ -103,9 +103,9 @@ class AdbExecutor {
         fun onScreenShotFinished(code: String) {
             val logger = AppLogger.getLogger(AdbExecutor::class.java)
             if (code == "0") {
-                logger.info { "Screenshot captured successfully!" }
+                logger.info { "截图已成功捕获！" }
             } else {
-                logger.error { "Failed to capture screenshot." }
+                logger.error { "截图捕获失败。" }
             }
         }
     }
