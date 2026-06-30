@@ -6,6 +6,8 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.easyadb.core.config.AppConfigManager
@@ -14,11 +16,11 @@ import com.easyadb.core.database.DbManager
 import com.easyadb.core.device.DevicesWatcher
 import com.easyadb.core.log.AppLogger
 import com.easyadb.core.log.LogConfig
-import com.easyadb.core.log.LogLevel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.jetbrains.skia.Image
 import java.io.File
 
 fun main() {
@@ -60,6 +62,12 @@ fun main() {
     watcher.start(intervalSeconds = 2, scope = scope)
     appLogger.info { "DevicesWatcher started" }
 
+    // ── Icon ──
+    val iconPainter = try {
+        val stream = Thread.currentThread().contextClassLoader.getResourceAsStream("logo.png")
+        stream?.use { BitmapPainter(Image.makeFromEncoded(it.readBytes()).toComposeImageBitmap()) }
+    } catch (_: Exception) { null }
+
     // ── UI ──
     application {
         Window(
@@ -69,7 +77,8 @@ fun main() {
                 appLogger.close()
                 exitApplication()
             },
-            title = "EasyADB"
+            title = "EasyADB",
+            icon = iconPainter
         ) {
             MaterialTheme {
                 Box(
