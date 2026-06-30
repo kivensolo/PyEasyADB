@@ -18,6 +18,7 @@ dependencies {
     implementation(project(":core:adb"))
     implementation(project(":core:device"))
     implementation(project(":core:apk"))
+    implementation(project(":ui:designsystem"))
 }
 
 compose.desktop {

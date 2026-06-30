@@ -2,7 +2,6 @@ package com.easyadb.desktop
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -16,6 +15,7 @@ import com.easyadb.core.database.DbManager
 import com.easyadb.core.device.DevicesWatcher
 import com.easyadb.core.log.AppLogger
 import com.easyadb.core.log.LogConfig
+import com.easyadb.ui.designsystem.EasyAdbTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -80,12 +80,12 @@ fun main() {
             title = "EasyADB",
             icon = iconPainter
         ) {
-            MaterialTheme {
+            EasyAdbTheme {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("EasyADB CMP v2.0.0 - P1 Core Layer active")
+                    Text("EasyADB CMP v2.0.0 - P2 Theme ready")
                 }
             }
         }
