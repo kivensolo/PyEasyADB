@@ -11,6 +11,13 @@ dependencies {
     runtimeOnly(libs.slf4j.simple)
 
     implementation(project(":platform"))
+    implementation(project(":core:log"))
+    implementation(project(":core:util"))
+    implementation(project(":core:config"))
+    implementation(project(":core:database"))
+    implementation(project(":core:adb"))
+    implementation(project(":core:device"))
+    implementation(project(":core:apk"))
 }
 
 compose.desktop {
