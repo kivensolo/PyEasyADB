@@ -3,14 +3,15 @@ package com.easyadb.ui.designsystem
 import androidx.compose.ui.graphics.Color
 
 /**
- * 日志级别颜色 —— 映射自 Python LogUtils.changeLogColor() in utils/Utils.py。
+ * 日志级别颜色 —— 映射自 Python LogUtils.changeLogColor()。
+ * 按 Material Design 规范微调色值，保持可辨识度。
  */
 object LogColor {
-    val Debug = Color(0xFF388E3C)
-    val Info = Color(0xFF263238)
-    val Warn = Color(0xFFB07805)
-    val Error = Color(0xFFBF360C)
-    val Stamp = Color(0xFF005AC7)
+    val Debug = Color(0xFF2E7D32)   // Green 800
+    val Info = Color(0xFF424242)     // Grey 800
+    val Warn = Color(0xFFF57F17)     // Yellow 900
+    val Error = Color(0xFFD32F2F)    // Red 700
+    val Stamp = Color(0xFF1565C0)    // Blue 800
 
     fun byLevel(level: Int): Color = when (level) {
         0 -> Debug
@@ -24,58 +25,33 @@ object LogColor {
 }
 
 /**
- * 应用调色板 —— 从 Python QSS 样式中提取。
+ * Material Design 调色板。
+ * 按桌面工具类应用的风格配色，移除 PyQt QSS 遗留色值。
  */
 object EasyAdbColors {
-    // 主色
-    val Primary = Color(0xFF1976D2)
-    val PrimaryLight = Color(0xFF42A5F5)
-    val PrimaryDark = Color(0xFF1565C0)
+    // ── 主色 ──
+    val Primary = Color(0xFF1565C0)         // Blue 800
+    val PrimaryDark = Color(0xFF0D47A1)     // Blue 900
+    val PrimaryLight = Color(0xFF42A5F5)    // Blue 400
 
-    // 表面与背景
+    // ── 表面与背景 ──
     val Surface = Color(0xFFFFFFFF)
-    val Background = Color(0xFFF5F5F5)
-    val BackgroundDark = Color(0xFFE0E0E0)
+    val Background = Color(0xFFFAFAFA)      // Grey 50
 
-    // 设备树
-    val DeviceRootBg = Color(0xFFF0F0F0)
-    val TreeItemSelected = Color(0xFF90CAF9)
-    val TreeItemHover = Color(0xFFBBDEFB)
+    // ── 状态颜色 ──
+    val StatusOnline = Color(0xFF2E7D32)    // Green 800
+    val StatusOffline = Color(0xFF757575)   // Grey 600
+    val StatusUnauthorized = Color(0xFFE65100) // Orange 900
 
-    // 输入框
-    val InputBorder = Color(0xFFCCCCCC)
-    val InputBorderHover = Color(0xFF83D4FC)
-    val InputBg = Color(0xFFFFFFFF)
-
-    // 按钮
-    val ButtonHoverBg = Color(0xFFB3D7F3)
-    val ButtonHoverBorder = Color(0xFF1E88DC)
-    val ButtonPressedBg = Color(0xFF80BCEB)
-    val ButtonPressedBorder = Color(0xFF2D8FDC)
-
-    // 状态
-    val StatusOnline = Color(0xFF4CAF50)
-    val StatusOffline = Color(0xFF9E9E9E)
-    val StatusUnauthorized = Color(0xFFFF9800)
-
-    // 下拉框
-    val ComboBoxBorder = Color(0xFFC4C4C4)
-    val ComboBoxSelectedBorder = Color(0xFF2A89F6)
-    val ComboBoxSelectedBg = Color(0xFF2A89F6)
-
-    // 状态栏
-    val StatusBarBg = Color(0xFFF2F2F2)
-
-    // 文字
-    val TextPrimary = Color(0xFF212121)
-    val TextSecondary = Color(0xFF757575)
+    // ── 文字 ──
+    val TextPrimary = Color(0xFF212121)     // Grey 900
+    val TextSecondary = Color(0xFF757575)   // Grey 600
     val TextOnPrimary = Color(0xFFFFFFFF)
 
-    // 对话框
-    val DialogTitleBg = Color(0xFF000000)
-    val DialogTitleText = Color(0xFFFFFFFF)
-    val DialogBg = Color(0xFFFFFFFF)
+    // ── 面板底色（桌面低对比度场景） ──
+    val SurfaceVariant = Color(0xFFF5F5F5)  // Grey 100，用于侧栏/面板
+    val PanelHeader = Color(0xFFEEEEEE)     // Grey 200，用于表头/标签栏
 
-    // 分割线
-    val Divider = Color(0xFFD7D7D7)
+    // ── 分割线 ──
+    val Divider = Color(0xFFE0E0E0)         // Grey 300
 }

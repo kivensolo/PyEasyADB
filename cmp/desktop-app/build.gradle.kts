@@ -19,6 +19,7 @@ dependencies {
     implementation(project(":core:device"))
     implementation(project(":core:apk"))
     implementation(project(":ui:designsystem"))
+    implementation(project(":ui:home"))
 }
 
 compose.desktop {

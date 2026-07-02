@@ -25,13 +25,13 @@ private val DarkColorPalette = darkColors(
     primary = EasyAdbColors.PrimaryLight,
     primaryVariant = EasyAdbColors.Primary,
     secondary = EasyAdbColors.PrimaryLight,
-    background = EasyAdbColors.TextPrimary,
-    surface = Color(0xFF37474F),
+    background = Color(0xFF121212),
+    surface = Color(0xFF1E1E1E),
     error = LogColor.Error,
     onPrimary = EasyAdbColors.TextOnPrimary,
     onSecondary = EasyAdbColors.TextOnPrimary,
-    onBackground = EasyAdbColors.Surface,
-    onSurface = EasyAdbColors.Surface,
+    onBackground = Color(0xFFE0E0E0),
+    onSurface = Color(0xFFE0E0E0),
     onError = EasyAdbColors.TextOnPrimary
 )
 
