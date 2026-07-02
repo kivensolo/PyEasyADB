@@ -68,15 +68,19 @@ private fun CustomMenuBar(
                             ) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(text = action.name, fontSize = 12.sp)
+                                    Text(
+                                        text = action.name,
+                                        fontSize = 12.sp,
+                                        modifier = Modifier.weight(1f)
+                                    )
                                     if (action.shortcut.isNotBlank()) {
                                         Text(
                                             text = action.shortcut,
                                             fontSize = 10.sp,
-                                            color = EasyAdbColors.TextSecondary
+                                            color = EasyAdbColors.TextSecondary,
+                                            modifier = Modifier.padding(start = 24.dp)
                                         )
                                     }
                                 }
@@ -125,7 +129,7 @@ private fun ToolBar(
                 ) {
                     action.icon()
                     Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = action.label, fontSize = 12.sp)
+                    Text(text = action.label, fontSize = 12.sp, fontWeight = FontWeight.Normal)
                 }
             }
         }
