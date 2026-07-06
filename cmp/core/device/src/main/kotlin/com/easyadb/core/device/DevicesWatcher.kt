@@ -16,8 +16,13 @@ class DevicesWatcher {
 
     private val logger = AppLogger.getLogger(DevicesWatcher::class.java)
     private var job: Job? = null
-    private var _devices = MutableStateFlow<List<DeviceInfo>>(emptyList())
+    private val _devices = MutableStateFlow<List<DeviceInfo>>(emptyList())
 
+    /**
+     * 设备列表 Flow。
+     * StateFlow 本身按 `==` 做内容去重——DeviceInfo 是 data class，
+     * 即使每次轮询都构造新 List，只要内容相同就不会推送给下游。
+     */
     val devices: Flow<List<DeviceInfo>> = _devices.asStateFlow()
 
     /**
@@ -32,8 +37,9 @@ class DevicesWatcher {
                 try {
                     val result = ExecUtils.execCmd("adb devices", timeoutMs = 25000)
                     if (result.success) {
-                        val devicesList = parseDevicesOutput(result.output)
-                        _devices.value = devicesList
+                        // MutableStateFlow 赋值时自动用 `==` 比较，DeviceInfo 是 data class，
+                        // 内容未变时不会触发下游 collectAsState 重组。
+                        _devices.value = parseDevicesOutput(result.output)
                     }
                 } catch (e: Exception) {
                     logger.error { "[DeviceWatcher] error: ${e.message}" }

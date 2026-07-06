@@ -9,6 +9,9 @@ dependencies {
     implementation(compose.materialIconsExtended)
     implementation(libs.kotlinx.coroutines.core)
     implementation(project(":ui:designsystem"))
+    implementation(project(":ui:devicelist"))
     implementation(project(":core:config"))
     implementation(project(":core:log"))
+    implementation(project(":core:device"))
+    implementation(project(":core:database"))
 }

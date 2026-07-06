@@ -12,10 +12,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.easyadb.core.config.CmdGroup
 import com.easyadb.core.config.MenuAction
 import com.easyadb.core.config.MenuConfig
+import com.easyadb.core.database.DeviceRecord
+import com.easyadb.core.device.DeviceInfo
 import com.easyadb.ui.designsystem.AppIcons
 import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.devicelist.DeviceListCallbacks
+import com.easyadb.ui.devicelist.DeviceListPanel
 import com.easyadb.ui.home.components.BottomTab
 import com.easyadb.ui.home.components.BottomTabHost
 import com.easyadb.ui.home.components.SplitPane
@@ -137,24 +142,8 @@ private fun ToolBar(
 }
 
 // ─────────────────────────────────────────────────────────
-// 占位面板
+// 占位面板（功能区/底部 Tab P5/P6 阶段替换）
 // ─────────────────────────────────────────────────────────
-
-@Composable
-private fun DeviceListPanel(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.background(EasyAdbColors.SurfaceVariant),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        Text(
-            text = "设备列表",
-            modifier = Modifier.padding(top = 16.dp),
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Bold,
-            color = EasyAdbColors.TextSecondary
-        )
-    }
-}
 
 @Composable
 private fun FunctionPanel(modifier: Modifier = Modifier) {
@@ -200,6 +189,11 @@ fun MainWindowScreen(
     toolBarActions: List<ToolBarAction> = emptyList(),
     menuConfigs: List<MenuConfig> = emptyList(),
     onMenuAction: (MenuAction) -> Unit = {},
+    dbDevices: List<DeviceRecord> = emptyList(),
+    onlineDevices: List<DeviceInfo> = emptyList(),
+    cmdGroups: List<CmdGroup> = emptyList(),
+    selectedDeviceIp: String? = null,
+    deviceListCallbacks: DeviceListCallbacks = DeviceListCallbacks(),
     bottomTabDefaultHeight: Dp = 200.dp
 ) {
     val bottomTabs = remember {
@@ -221,12 +215,21 @@ fun MainWindowScreen(
         // 工具栏
         ToolBar(actions = toolBarActions, modifier = Modifier.wrapContentHeight())
 
-        // 水平分割面板
+        // 水平分割面板：设备树 | 功能面板
         SplitPane(
             modifier = Modifier.fillMaxWidth().weight(1f),
             initialFraction = 0.2f,
-            leftPanel = { modifier -> DeviceListPanel(modifier = modifier) },
-            rightPanel = { modifier -> FunctionPanel(modifier = modifier) }
+            leftPanel = { m ->
+                DeviceListPanel(
+                    dbDevices = dbDevices,
+                    onlineDevices = onlineDevices,
+                    cmdGroups = cmdGroups,
+                    selectedDeviceIp = selectedDeviceIp,
+                    callbacks = deviceListCallbacks,
+                    modifier = m
+                )
+            },
+            rightPanel = { m -> FunctionPanel(modifier = m) }
         )
 
         // 底部 Tab

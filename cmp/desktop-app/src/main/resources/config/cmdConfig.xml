@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CMD>
+    <group name="Packages">
+        <item name="All Packages">pm list packages -f</item>
+        <item name="Libraries" desc="系统支持的库文件">pm list libraries</item>
+        <item name="Features" desc="硬件相关信息">pm list features | cut -c9- | sort -u</item>
+        <item name="Install and uninstall"/>
+        <item name="Path of app" dst_pkg="true">pm path {0}</item>
+        <item name="Version of app" dst_pkg="true">dumpsys package {0} |grep version</item>
+    </group>
+    <group name="Display">
+        <item name="Screen Shot">m_screenshot</item>
+        <item name="Screen Record">m_screen_record</item>
+        <item name="Density">wm density</item>
+        <item name="CurrentFocus">dumpsys window |grep mCurrentFocus</item>
+    </group>
+    <group name="System，">
+        <sub_group name="Prop">
+            <item name="Get">getprop</item>
+            <item name="Set">TODO</item>
+        </sub_group>
+        <sub_group name="Disk">
+            <item name="Disk Stats">dumpsys diskstats</item>
+            <item name="Disk Free">df -h</item>
+        </sub_group>
+        <sub_group name="Memory">
+            <item name="All Meminfo">dumpsys meminfo</item>
+            <item name="App Meminfo" dst_pkg="true">dumpsys meminfo {0}</item>
+            <item name="Top 1">top -n 1</item>
+        </sub_group>
+        <item name="Process">ps</item>
+        <item name="CPU Processor">cat /proc/cpuinfo</item>
+        <item name="CPU Info">dumpsys cpuinfo</item>
+        <item name="uptime">uptime</item>
+    </group>
+    <group name="NetwWork">
+        <item name="IP">ifconfig</item>
+        <item name="MAC">cat /sys/class/net/eth0/address</item>
+        <item name="Hosts">cat /etc/hosts</item>
+    </group>
+    <group name="About">
+        <sub_group name="ADB">
+            <item name="Help" shell="false">help</item>
+            <item name="Version" shell="false">version</item>
+        </sub_group>
+    </group>
+
+</CMD>
