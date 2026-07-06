@@ -4,11 +4,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -95,8 +100,14 @@ fun DeviceListPanel(
         // 顶部 header：对应 Python setHeaderData 的 "功能区"
         SectionHeader(text = "功能区")
 
-        // 单一可滚动树
-        LazyColumn(modifier = Modifier.fillMaxSize()) {
+        // 单一可滚动树 + 滚动条
+        val listState = rememberLazyListState()
+        // 最外层为Box，用于显示滚动条
+        Box(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState, // 用于最终滚动位置
+                modifier = Modifier.fillMaxSize()
+            ) {
             // ── 设备列表根节点（可双击折叠） ──
             item(key = deviceRootId) {
                 val root = TreeNode.DeviceGroupRootNode()
@@ -216,6 +227,16 @@ fun DeviceListPanel(
                     }
                 }
             }
+            }
+            // 滚动条
+            VerticalScrollbar(
+                //与 LazyColumn 共享 listState，用于跟踪滚动位置
+                adapter = rememberScrollbarAdapter(listState),
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .fillMaxHeight()
+                    .width(5.dp)
+            )
         }
     }
 }
