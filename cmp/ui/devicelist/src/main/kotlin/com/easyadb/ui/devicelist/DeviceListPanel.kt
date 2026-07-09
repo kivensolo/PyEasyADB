@@ -137,6 +137,32 @@ fun DeviceListPanel(
                     }
                 } else {
                     items(deviceNodes, key = { it.id }) { node ->
+                        // 对齐 Python MainWindow.on_ip_menu_show：
+                        // 设备在线 → "删除设备"禁用、"断开连接"可用；
+                        // 设备离线 → "删除设备"可用、"断开连接"禁用。
+                        val isOnline = node.isOnline
+                        val contextMenuItems = remember(node.id, isOnline, node.record.alias) {
+                            listOf(
+                                ContextMenuItem(
+                                    id = "alias_edit",
+                                    name = "备注设置",
+                                    enabled = true,
+                                    onClick = { callbacks.onDeviceAliasEdit(node.record) }
+                                ),
+                                ContextMenuItem(
+                                    id = "disconnect",
+                                    name = "断开连接",
+                                    enabled = isOnline,
+                                    onClick = { callbacks.onDeviceDisconnect(node.record) }
+                                ),
+                                ContextMenuItem(
+                                    id = "remove_device",
+                                    name = "删除设备",
+                                    enabled = !isOnline,
+                                    onClick = { callbacks.onDeviceRemove(node.record) }
+                                )
+                            )
+                        }
                         TreeItem(
                             node = node,
                             isSelected = selectedDeviceIp == node.record.ip,
@@ -146,7 +172,8 @@ fun DeviceListPanel(
                             onDoubleClick = { callbacks.onDeviceDoubleClick(node.record) },
                             onToggleExpand = {},
                             supportsDoubleClick = false,
-                            deviceStateIcons = deviceStateIcons
+                            deviceStateIcons = deviceStateIcons,
+                            contextMenuItems = contextMenuItems
                         )
                     }
                 }
@@ -180,7 +207,8 @@ fun DeviceListPanel(
                             hasChildren = children.isNotEmpty(),
                             onClick = { toggle(groupNode.id) },
                             onDoubleClick = { toggle(groupNode.id) },
-                            onToggleExpand = { toggle(groupNode.id) }
+                            onToggleExpand = { toggle(groupNode.id) },
+                            supportsDoubleClick = false
                         )
                     }
                     if (isExpanded(groupNode.id)) {
@@ -195,7 +223,8 @@ fun DeviceListPanel(
                                             hasChildren = child.subGroup.items.isNotEmpty(),
                                             onClick = { toggle(child.id) },
                                             onDoubleClick = { toggle(child.id) },
-                                            onToggleExpand = { toggle(child.id) }
+                                            onToggleExpand = { toggle(child.id) },
+                                            supportsDoubleClick = false
                                         )
                                     }
                                     if (isExpanded(child.id)) {

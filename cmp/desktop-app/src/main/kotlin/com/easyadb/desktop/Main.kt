@@ -25,6 +25,7 @@ import com.easyadb.core.log.LogConfig
 import com.easyadb.ui.designsystem.EasyAdbTheme
 import com.easyadb.ui.home.MainWindowScreen
 import com.easyadb.ui.home.rememberDefaultToolBarActions
+import com.easyadb.ui.devicelist.DeviceAliasEditDialog
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +94,8 @@ fun main() {
         val onlineDevices by watcher.devices.collectAsState(initial = emptyList())
         val dbDevices by dbDevicesFlow.asStateFlow().collectAsState()
         var selectedDeviceIp by remember { mutableStateOf<String?>(null) }
+        // 右键"备注设置"要编辑的目标设备；非 null 时弹出 DeviceAliasEditDialog。
+        var aliasEditTarget by remember { mutableStateOf<com.easyadb.core.database.DeviceRecord?>(null) }
 
         Window(
             onCloseRequest = {
@@ -121,6 +124,7 @@ fun main() {
                         },
                         onDeviceAliasEdit = { record ->
                             appLogger.info { "Device alias edit: ${record.ip}" }
+                            aliasEditTarget = record
                         },
                         onDeviceDisconnect = { record ->
                             appLogger.info { "Device disconnect: ${record.ip}" }
@@ -156,6 +160,26 @@ fun main() {
                     deviceListCallbacks = deviceListCallbacks,
                     bottomTabDefaultHeight = 200.dp
                 )
+
+                // 备注设置弹窗（对齐 Python device_alis_edit_dialog）
+                aliasEditTarget?.let { target ->
+                    DeviceAliasEditDialog(
+                        device = target,
+                        onDismiss = { aliasEditTarget = null },
+                        onConfirm = { newAlias ->
+                            scope.launch {
+                                val r = DbManager.updateDeviceAlias(target.ip, newAlias)
+                                if (r.success) {
+                                    appLogger.info { "Alias updated: ${target.ip} -> $newAlias" }
+                                    reloadDevices(dbDevicesFlow, appLogger)
+                                } else {
+                                    appLogger.error { "Alias update failed: ${r.error}" }
+                                }
+                            }
+                            aliasEditTarget = null
+                        }
+                    )
+                }
             }
         }
     }
