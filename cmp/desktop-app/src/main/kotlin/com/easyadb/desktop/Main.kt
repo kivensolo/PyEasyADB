@@ -15,6 +15,8 @@ import androidx.compose.ui.window.application
 import com.easyadb.core.config.AppConfigManager
 import com.easyadb.core.config.AppPathsConfig
 import com.easyadb.core.config.CmdGroup
+import com.easyadb.core.config.FunctionItem
+import com.easyadb.core.config.FunctionTemplate
 import com.easyadb.core.config.MenuAction
 import com.easyadb.core.config.MenuConfig
 import com.easyadb.core.config.XmlConfigLoader
@@ -22,7 +24,10 @@ import com.easyadb.core.database.DbManager
 import com.easyadb.core.device.DevicesWatcher
 import com.easyadb.core.log.AppLogger
 import com.easyadb.core.log.LogConfig
+import com.easyadb.core.adb.AdbExecutor
 import com.easyadb.ui.designsystem.EasyAdbTheme
+import com.easyadb.ui.functions.AppParamState
+import com.easyadb.ui.functions.CustomActionHandler
 import com.easyadb.ui.home.MainWindowScreen
 import com.easyadb.ui.home.rememberDefaultToolBarActions
 import com.easyadb.ui.devicelist.DeviceAliasEditDialog
@@ -64,11 +69,20 @@ fun main() {
     // ── Step 3: Database ──
     val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     val dbDevicesFlow = MutableStateFlow<List<com.easyadb.core.database.DeviceRecord>>(emptyList())
+    val packageFlow = MutableStateFlow<List<String>>(emptyList())
     scope.launch {
         val result = DbManager.initialize(AppPathsConfig.dbFile)
         if (result.success) {
             appLogger.info { "Database initialized at ${AppPathsConfig.dbFile}" }
             reloadDevices(dbDevicesFlow, appLogger)
+            // 数据库初始化完成后，再加载包名数据（避免异步竞争导致查不到）
+            val pkgResult = DbManager.getAllPackages()
+            if (pkgResult.success) {
+                packageFlow.value = pkgResult.data ?: emptyList()
+                appLogger.info { "Loaded ${packageFlow.value.size} packages from DB" }
+            } else {
+                appLogger.error { "Failed to load packages: ${pkgResult.error}" }
+            }
         } else {
             appLogger.error { "Database init failed: ${result.error}" }
         }
@@ -79,9 +93,13 @@ fun main() {
     watcher.start(intervalSeconds = 2, scope = scope)
     appLogger.info { "DevicesWatcher started" }
 
-    // ── Step 5: Load menu & cmd configs (优先从 classpath 加载) ──
+    // ── Step 5: Load menu & cmd & function configs (优先从 classpath 加载) ──
     val menuConfigs = loadMenuConfigFromClasspath(appLogger)
     val cmdGroups = loadCmdConfigFromClasspath(appLogger)
+    val functionTemplates = loadFunctionTemplatesFromClasspath(appLogger)
+
+    // ── Step 6: AdbExecutor ──
+    val adbExecutor = AdbExecutor()
 
     // ── Icon ──
     val iconPainter = try {
@@ -93,6 +111,7 @@ fun main() {
     application {
         val onlineDevices by watcher.devices.collectAsState(initial = emptyList())
         val dbDevices by dbDevicesFlow.asStateFlow().collectAsState()
+        val dbPackages by packageFlow.asStateFlow().collectAsState(initial = emptyList())
         var selectedDeviceIp by remember { mutableStateOf<String?>(null) }
         // 右键"备注设置"要编辑的目标设备；非 null 时弹出 DeviceAliasEditDialog。
         var aliasEditTarget by remember { mutableStateOf<com.easyadb.core.database.DeviceRecord?>(null) }
@@ -158,7 +177,41 @@ fun main() {
                     cmdGroups = cmdGroups,
                     selectedDeviceIp = selectedDeviceIp,
                     deviceListCallbacks = deviceListCallbacks,
-                    bottomTabDefaultHeight = 200.dp
+                    bottomTabDefaultHeight = 200.dp,
+                    // P5 功能区参数
+                    functionTemplates = functionTemplates,
+                    dbPackages = dbPackages,
+                    onPackageAdd = { pkg ->
+                        scope.launch {
+                            DbManager.insertPackage(pkg)
+                            val r = DbManager.getAllPackages()
+                            if (r.success) packageFlow.value = r.data ?: emptyList()
+                        }
+                    },
+                    onPackageDelete = { pkg ->
+                        scope.launch {
+                            DbManager.deletePackage(pkg)
+                            val r = DbManager.getAllPackages()
+                            if (r.success) packageFlow.value = r.data ?: emptyList()
+                        }
+                    },
+                    onFunctionItemClick = { item: FunctionItem, state: AppParamState ->
+                        scope.launch {
+                            CustomActionHandler.handle(
+                                item = item,
+                                deviceIp = selectedDeviceIp ?: "",
+                                appParams = state,
+                                executor = adbExecutor,
+                                onUninstallConfirm = { pkg: String ->
+                                    appLogger.info { "Uninstall confirmation for: $pkg" }
+                                    true // 暂时默认确认
+                                },
+                                onResult = { msg: String ->
+                                    appLogger.info { "[P5] $msg" }
+                                }
+                            )
+                        }
+                    }
                 )
 
                 // 备注设置弹窗（对齐 Python device_alis_edit_dialog）
@@ -258,6 +311,91 @@ private fun loadCmdConfigFromClasspath(logger: AppLogger): List<CmdGroup> {
 
     logger.warn { "cmdConfig.xml not found (classpath nor " + cmdFile.absolutePath + ")" }
     return emptyList()
+}
+
+/**
+ * 从 classpath 加载功能模板配置（config/function_templates.xml）。
+ */
+private fun loadFunctionTemplatesFromClasspath(logger: AppLogger): List<FunctionTemplate> {
+    val classLoader = Thread.currentThread().contextClassLoader
+    val stream = classLoader.getResourceAsStream("config/function_templates.xml")
+    if (stream != null) {
+        return try {
+            val templates = parseFunctionTemplateXml(stream)
+            logger.info { "function_templates.xml loaded from classpath: ${templates.size} templates" }
+            templates
+        } catch (e: Exception) {
+            logger.error { "Failed to parse function_templates.xml from classpath: ${e.message}" }
+            emptyList()
+        }
+    }
+
+    val funcFile = File(AppPathsConfig.functionTemplatesFile)
+    if (funcFile.exists()) {
+        return XmlConfigLoader.loadFunctionTemplates(funcFile).also {
+            logger.info { "function_templates.xml loaded from file: ${it.size} templates (path: ${funcFile.absolutePath})" }
+        }
+    }
+
+    logger.warn { "function_templates.xml not found (classpath nor " + funcFile.absolutePath + ")" }
+    return emptyList()
+}
+
+/**
+ * 解析 function_templates.xml 的 InputStream 为 FunctionTemplate 列表。
+ */
+private fun parseFunctionTemplateXml(stream: InputStream): List<FunctionTemplate> {
+    val factory = DocumentBuilderFactory.newInstance().apply {
+        isIgnoringComments = true
+        isIgnoringElementContentWhitespace = true
+    }
+    val db = factory.newDocumentBuilder()
+    val doc = db.parse(stream)
+    val templateNodes = doc.documentElement.getElementsByTagName("template")
+    val result = mutableListOf<FunctionTemplate>()
+
+    for (i in 0 until templateNodes.length) {
+        val templateElement = templateNodes.item(i) as org.w3c.dom.Element
+        val name = templateElement.getAttribute("name")
+        val layout = templateElement.getAttribute("layout").ifEmpty { "grid" }
+        val items = mutableListOf<com.easyadb.core.config.FunctionItem>()
+
+        val itemNodes = templateElement.getElementsByTagName("item")
+        for (j in 0 until itemNodes.length) {
+            val itemElement = itemNodes.item(j) as org.w3c.dom.Element
+            val state = itemElement.getAttribute("state")
+            val attrs = parseFunctionTemplateAttrs(itemElement)
+            items.add(
+                com.easyadb.core.config.FunctionItem(
+                    icon = attrs["icon"] ?: "",
+                    text = attrs["text"] ?: "",
+                    cmd = attrs["cmd"] ?: "",
+                    action = attrs["act"] ?: "",
+                    shell = attrs["shell"]?.toBoolean() ?: true,
+                    needPkgName = attrs["isNeedPkgName"]?.toBoolean() ?: false,
+                    needDeviceOnline = attrs["isNeedDeviceOnline"]?.toBoolean() ?: false,
+                    state = state
+                )
+            )
+        }
+        result.add(FunctionTemplate(name = name, layout = layout, items = items))
+    }
+    stream.close()
+    return result
+}
+
+private fun parseFunctionTemplateAttrs(element: org.w3c.dom.Element): Map<String, String> {
+    val attrs = mutableMapOf<String, String>()
+    val attrNodes = element.getElementsByTagName("attr")
+    for (i in 0 until attrNodes.length) {
+        val attrElement = attrNodes.item(i) as org.w3c.dom.Element
+        val attrName = attrElement.getAttribute("name")
+        val attrValue = attrElement.textContent?.trim() ?: ""
+        if (attrName.isNotBlank()) {
+            attrs[attrName] = attrValue
+        }
+    }
+    return attrs
 }
 
 /**

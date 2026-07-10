@@ -13,6 +13,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.config.CmdGroup
+import com.easyadb.core.config.FunctionItem
+import com.easyadb.core.config.FunctionTemplate
 import com.easyadb.core.config.MenuAction
 import com.easyadb.core.config.MenuConfig
 import com.easyadb.core.database.DeviceRecord
@@ -21,6 +23,8 @@ import com.easyadb.ui.designsystem.AppIcons
 import com.easyadb.ui.designsystem.EasyAdbColors
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.devicelist.DeviceListPanel
+import com.easyadb.ui.functions.AppParamState
+import com.easyadb.ui.functions.FunctionPanel
 import com.easyadb.ui.home.components.BottomTab
 import com.easyadb.ui.home.components.BottomTabHost
 import com.easyadb.ui.home.components.SplitPane
@@ -142,22 +146,8 @@ private fun ToolBar(
 }
 
 // ─────────────────────────────────────────────────────────
-// 占位面板（功能区/底部 Tab P5/P6 阶段替换）
+// 占位面板（底部 Tab P6 阶段替换）
 // ─────────────────────────────────────────────────────────
-
-@Composable
-private fun FunctionPanel(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.background(MaterialTheme.colors.surface),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "功能面板",
-            fontSize = 14.sp,
-            color = EasyAdbColors.TextSecondary
-        )
-    }
-}
 
 @Composable
 private fun ConsolePanelPlaceholder() {
@@ -194,7 +184,13 @@ fun MainWindowScreen(
     cmdGroups: List<CmdGroup> = emptyList(),
     selectedDeviceIp: String? = null,
     deviceListCallbacks: DeviceListCallbacks = DeviceListCallbacks(),
-    bottomTabDefaultHeight: Dp = 200.dp
+    bottomTabDefaultHeight: Dp = 200.dp,
+    // P5 功能区参数
+    functionTemplates: List<FunctionTemplate> = emptyList(),
+    dbPackages: List<String> = emptyList(),
+    onPackageAdd: (String) -> Unit = {},
+    onPackageDelete: (String) -> Unit = {},
+    onFunctionItemClick: (FunctionItem, AppParamState) -> Unit = { _, _ -> }
 ) {
     val bottomTabs = remember {
         listOf(
@@ -229,7 +225,17 @@ fun MainWindowScreen(
                     modifier = m
                 )
             },
-            rightPanel = { m -> FunctionPanel(modifier = m) }
+            rightPanel = { m ->
+                FunctionPanel(
+                    functionTemplates = functionTemplates,
+                    deviceIp = selectedDeviceIp,
+                    dbPackages = dbPackages,
+                    onPackageAdd = onPackageAdd,
+                    onPackageDelete = onPackageDelete,
+                    onItemClick = { item, state -> onFunctionItemClick(item, state) },
+                    modifier = m
+                )
+            }
         )
 
         // 底部 Tab
