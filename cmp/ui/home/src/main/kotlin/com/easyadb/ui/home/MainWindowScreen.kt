@@ -12,6 +12,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.easyadb.ui.console.ConsolePanel
+import com.easyadb.ui.console.LogEntry
+import com.easyadb.ui.logcat.LogcatPanel
+import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.config.CmdGroup
 import com.easyadb.core.config.FunctionItem
 import com.easyadb.core.config.FunctionTemplate
@@ -28,6 +32,7 @@ import com.easyadb.ui.functions.FunctionPanel
 import com.easyadb.ui.home.components.BottomTab
 import com.easyadb.ui.home.components.BottomTabHost
 import com.easyadb.ui.home.components.SplitPane
+import kotlinx.coroutines.flow.MutableStateFlow
 
 // ─────────────────────────────────────────────────────────
 // 自定义菜单栏
@@ -146,33 +151,46 @@ private fun ToolBar(
 }
 
 // ─────────────────────────────────────────────────────────
-// 占位面板（底部 Tab P6 阶段替换）
-// ─────────────────────────────────────────────────────────
-
-@Composable
-private fun ConsolePanelPlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize().padding(8.dp),
-        contentAlignment = Alignment.TopStart
-    ) {
-        Text(text = "控制台", fontSize = 12.sp, color = EasyAdbColors.TextSecondary)
-    }
-}
-
-@Composable
-private fun LogcatPanelPlaceholder() {
-    Box(
-        modifier = Modifier.fillMaxSize().padding(8.dp),
-        contentAlignment = Alignment.TopStart
-    ) {
-        Text(text = "实时日志", fontSize = 12.sp, color = EasyAdbColors.TextSecondary)
-    }
-}
-
-// ─────────────────────────────────────────────────────────
 // 主窗口布局
 // ─────────────────────────────────────────────────────────
 
+/**
+ * 主窗口布局 —— 整个应用的根级 UI 组合。
+ *
+ * ## 布局结构
+ * ```
+ * Column
+ * ├── CustomMenuBar     (菜单栏，仅 menuConfigs 非空时显示)
+ * ├── ToolBar           (工具栏：新建设备连接 / Shell / Root / Unroot)
+ * ├── SplitPane         (水平拖拽分割面板)
+ * │     ├── DeviceListPanel  (左栏：设备树 + 命令树)
+ * │     └── FunctionPanel    (右栏：功能模板按钮网格) — P5
+ * └── BottomTabHost     (底部标签栏，可拖拽调整高度)
+ *       ├── ConsolePanel     (控制台：应用自身日志) — P6
+ *       └── LogcatPanel      (实时日志：设备 logcat) — P6
+ * ```
+ *
+ * @param toolBarActions 工具栏按钮列表，每个按钮含 id / label / icon / onClick
+ * @param menuConfigs 菜单栏配置（从 menus_ui.xml 加载）
+ * @param onMenuAction 菜单项点击回调
+ * @param dbDevices 数据库中的设备列表（含离线设备）
+ * @param onlineDevices DeviceWatcher 实时推送的在线设备列表
+ * @param cmdGroups 命令树配置（从 cmdConfig.xml 加载）
+ * @param selectedDeviceIp 当前选中的设备 IP（高亮显示）
+ * @param deviceListCallbacks 设备/命令树的交互回调集合（单击/双击/右键菜单）
+ * @param bottomTabDefaultHeight 底部控制台标签栏的初始高度（dp），如 200.dp
+ *
+ * ### P5 功能区参数
+ * @param functionTemplates 功能模板列表（从 function_templates.xml 加载）
+ * @param dbPackages 数据库中的已保存包名列表（供下拉选择）
+ * @param onPackageAdd 用户新增包名时的回调（写入 package 表）
+ * @param onPackageDelete 用户删除包名时的回调
+ * @param onFunctionItemClick 功能按钮点击回调：(FunctionItem, AppParamState) -> Unit
+ *
+ * ### P6 控制台 + Logcat 参数
+ * @param consoleLogFlow 控制台日志流（MutableStateFlow，支持清空操作）
+ * @param logcatStream 设备 logcat 流管理器（控制启动/停止/过滤）
+ */
 @Composable
 fun MainWindowScreen(
     modifier: Modifier = Modifier,
@@ -190,12 +208,26 @@ fun MainWindowScreen(
     dbPackages: List<String> = emptyList(),
     onPackageAdd: (String) -> Unit = {},
     onPackageDelete: (String) -> Unit = {},
-    onFunctionItemClick: (FunctionItem, AppParamState) -> Unit = { _, _ -> }
+    onFunctionItemClick: (FunctionItem, AppParamState) -> Unit = { _, _ -> },
+    // P6 控制台 + Logcat 参数
+    consoleLogFlow: MutableStateFlow<List<LogEntry>> = MutableStateFlow(emptyList()),
+    logcatStream: LogcatStream = LogcatStream()
 ) {
     val bottomTabs = remember {
         listOf(
-            BottomTab(id = "console", title = "控制台") { ConsolePanelPlaceholder() },
-            BottomTab(id = "logcat", title = "实时日志") { LogcatPanelPlaceholder() }
+            BottomTab(id = "console", title = "控制台") {
+                ConsolePanel(
+                    logFlow = consoleLogFlow,
+                    modifier = Modifier.fillMaxSize()
+                )
+            },
+            BottomTab(id = "logcat", title = "实时日志") {
+                LogcatPanel(
+                    deviceIp = selectedDeviceIp,
+                    logcatStream = logcatStream,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         )
     }
 

@@ -22,6 +22,8 @@ dependencies {
     implementation(project(":ui:home"))
     implementation(project(":ui:devicelist"))
     implementation(project(":ui:functions"))
+    implementation(project(":ui:console"))
+    implementation(project(":ui:logcat"))
 }
 
 compose.desktop {

@@ -25,6 +25,7 @@ import com.easyadb.core.device.DevicesWatcher
 import com.easyadb.core.log.AppLogger
 import com.easyadb.core.log.LogConfig
 import com.easyadb.core.adb.AdbExecutor
+import com.easyadb.core.adb.LogcatStream
 import com.easyadb.ui.designsystem.EasyAdbTheme
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CustomActionHandler
@@ -32,6 +33,7 @@ import com.easyadb.ui.home.MainWindowScreen
 import com.easyadb.ui.home.rememberDefaultToolBarActions
 import com.easyadb.ui.devicelist.DeviceAliasEditDialog
 import com.easyadb.ui.devicelist.DeviceListCallbacks
+import com.easyadb.ui.console.createLogFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -100,6 +102,10 @@ fun main() {
 
     // ── Step 6: AdbExecutor ──
     val adbExecutor = AdbExecutor()
+
+    // ── Step 7: 日志桥接 + Logcat ──
+    val (consoleLogFlow, logAppender) = createLogFlow()
+    val logcatStream = LogcatStream()
 
     // ── Icon ──
     val iconPainter = try {
@@ -204,14 +210,18 @@ fun main() {
                                 executor = adbExecutor,
                                 onUninstallConfirm = { pkg: String ->
                                     appLogger.info { "Uninstall confirmation for: $pkg" }
-                                    true // 暂时默认确认
+                                    true
                                 },
                                 onResult = { msg: String ->
                                     appLogger.info { "[P5] $msg" }
+                                    logAppender("[P5] $msg", 2)
                                 }
                             )
                         }
-                    }
+                    },
+                    // P6 控制台 + Logcat 参数
+                    consoleLogFlow = consoleLogFlow,
+                    logcatStream = logcatStream
                 )
 
                 // 备注设置弹窗（对齐 Python device_alis_edit_dialog）
