@@ -1,9 +1,12 @@
 package com.easyadb.ui.logcat
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +30,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
@@ -49,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.easyadb.core.adb.LogcatEntry
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.log.LogLevel
+import com.easyadb.ui.designsystem.EasyAdbColors
 import com.easyadb.ui.designsystem.LogColor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -227,33 +232,6 @@ fun LogcatPanel(
 
                     Spacer(modifier = Modifier.width(4.dp))
 
-                    // 自动滚动按钮
-                    Button(
-                        onClick = { autoScroll = !autoScroll },
-                        modifier = Modifier.height(24.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = if (autoScroll) Color(0xFF1565C0) else Color(0xFFE0E0E0),
-                            contentColor = Color.White
-                        ),
-                        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                        shape = RoundedCornerShape(4.dp)
-                    ) {
-                        Text(if (autoScroll) "自动" else "手动", fontSize = 10.sp)
-                    }
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    // 清空按钮
-                    IconButton(
-                        onClick = {
-                            logEntries = emptyList()
-                            logcatStream.clearFilter()
-                        },
-                        modifier = Modifier.width(24.dp).height(24.dp)
-                    ) {
-                        Icon(Icons.Default.Delete, "清空", modifier = Modifier.width(16.dp).height(16.dp))
-                    }
-
                     // 启动/停止按钮
                     if (isRunning) {
                         IconButton(
@@ -292,35 +270,75 @@ fun LogcatPanel(
             }
         }
 
-        // ── 日志列表 ──
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
-        ) {
-            items(logEntries, key = { "${it.pid}-${it.raw.hashCode()}" }) { entry ->
-                Text(
-                    text = entry.raw,
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace,
-                    color = LogColor.byLevel(entry.level.value),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(vertical = 1.dp)
-                )
-            }
-        }
-
-        // 未选中设备时显示提示
-        if (deviceIp == null) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+        // ── 左侧工具栏 + 右侧内容区 ──
+        Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            // 左侧垂直工具栏（始终可见，对齐 ConsolePanel 风格）
+            Column(
+                modifier = Modifier
+                    .width(36.dp)
+                    .fillMaxHeight()
+                    .background(EasyAdbColors.PanelHeader),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Top
             ) {
-                Text(
-                    text = "请先在左侧设备列表中选择一个设备",
-                    fontSize = 12.sp,
-                    color = Color(0xFFBDBDBD)
-                )
+                // 自动滚动图标
+                IconButton(
+                    onClick = { autoScroll = !autoScroll },
+                    modifier = Modifier.width(32.dp).height(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.ArrowDownward,
+                        contentDescription = if (autoScroll) "自动滚动" else "手动滚动",
+                        tint = if (autoScroll) EasyAdbColors.Primary else Color(0xFF757575),
+                        modifier = Modifier.width(18.dp).height(18.dp)
+                    )
+                }
+                // 清空图标
+                IconButton(
+                    onClick = {
+                        logEntries = emptyList()
+                        logcatStream.clearFilter()
+                    },
+                    modifier = Modifier.width(32.dp).height(32.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = "清空",
+                        tint = Color(0xFF757575),
+                        modifier = Modifier.width(18.dp).height(18.dp)
+                    )
+                }
+            }
+
+            // 右侧内容区：未选中设备显示提示，选中设备显示日志列表
+            if (deviceIp == null) {
+                Box(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "请先在左侧设备列表中选择一个设备",
+                        fontSize = 12.sp,
+                        color = Color(0xFFBDBDBD)
+                    )
+                }
+            } else {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f).fillMaxHeight().padding(horizontal = 4.dp)
+                ) {
+                    items(logEntries, key = { "${it.pid}-${it.raw.hashCode()}" }) { entry ->
+                        Text(
+                            text = entry.raw,
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = LogColor.byLevel(entry.level.value),
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(vertical = 1.dp)
+                        )
+                    }
+                }
             }
         }
     }
