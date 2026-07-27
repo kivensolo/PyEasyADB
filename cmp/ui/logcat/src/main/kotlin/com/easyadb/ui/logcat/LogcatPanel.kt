@@ -171,10 +171,16 @@ fun LogcatPanel(
                         ) {
                             levelOptions.forEach { level ->
                                 DropdownMenuItem(onClick = {
-                                    selectedLevel = level
-                                    logcatStream.getFilter().changeFilterLevelByName(level.shortName)
-                                    levelDropdownExpanded = false
-                                }) {
+                                        selectedLevel = level
+                                        logcatStream.getFilter().changeFilterLevelByName(level.shortName)
+                                        levelDropdownExpanded = false
+                                    },
+                                    modifier = Modifier.height(28.dp),
+                                    contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                                        horizontal = 12.dp,
+                                        vertical = 1.dp
+                                    )
+                                ) {
                                     Text(
                                         "${level.name} (${level.shortName})",
                                         fontSize = 12.sp,
