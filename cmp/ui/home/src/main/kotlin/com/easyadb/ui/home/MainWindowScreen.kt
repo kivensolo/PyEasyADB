@@ -213,7 +213,7 @@ fun MainWindowScreen(
     consoleLogFlow: MutableStateFlow<List<LogEntry>> = MutableStateFlow(emptyList()),
     logcatStream: LogcatStream = LogcatStream()
 ) {
-    val bottomTabs = remember {
+    val bottomTabs = remember(selectedDeviceIp) {
         listOf(
             BottomTab(id = "console", title = "控制台") {
                 ConsolePanel(
