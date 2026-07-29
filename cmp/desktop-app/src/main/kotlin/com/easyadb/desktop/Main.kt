@@ -134,10 +134,22 @@ fun main() {
         ) {
             EasyAdbTheme {
                 val toolBarActions = rememberDefaultToolBarActions(
-                    onAddDevice = { appLogger.info { "ToolBar: 新建设备连接" } },
-                    onOpenShell = { appLogger.info { "ToolBar: 打开 Shell" } },
-                    onRoot = { appLogger.info { "ToolBar: Root" } },
-                    onUnroot = { appLogger.info { "ToolBar: Unroot" } }
+                    onAddDevice = {
+                        appLogger.info { "ToolBar: 新建设备连接" }
+                        logAppender("[未实现] 新建设备连接", 3)
+                    },
+                    onOpenShell = {
+                        appLogger.info { "ToolBar: 打开 Shell" }
+                        logAppender("[未实现] 打开 Shell", 3)
+                    },
+                    onRoot = {
+                        appLogger.info { "ToolBar: Root" }
+                        logAppender("[未实现] Root", 3)
+                    },
+                    onUnroot = {
+                        appLogger.info { "ToolBar: Unroot" }
+                        logAppender("[未实现] Unroot", 3)
+                    }
                 )
 
                 val deviceListCallbacks = remember(scope, dbDevicesFlow) {
@@ -145,22 +157,52 @@ fun main() {
                         onDeviceClick = { record -> selectedDeviceIp = record.ip },
                         onDeviceDoubleClick = { record ->
                             appLogger.info { "Device double-click: ${record.ip} (connect)" }
+                            logAppender("双击设备: ${record.ip}", 2)
                             selectedDeviceIp = record.ip
+                            // 如果设备离线，执行连接
+                            val isOnline = onlineDevices.any { it.name == record.ip }
+                            if (!isOnline) {
+                                scope.launch {
+                                    logAppender("> adb connect ${record.ip}", 2)
+                                    val result = adbExecutor.connectDevice(record.ip)
+                                    if (result.success) {
+                                        appLogger.info { "Connected to ${record.ip}" }
+                                        logAppender("[连接成功] ${record.ip}", 2)
+                                    } else {
+                                        appLogger.error { "Connect failed: ${result.output}" }
+                                        logAppender("[连接失败] ${record.ip}: ${result.output.take(200)}", 4)
+                                    }
+                                }
+                            }
                         },
                         onDeviceAliasEdit = { record ->
                             appLogger.info { "Device alias edit: ${record.ip}" }
+                            logAppender("修改备注: ${record.ip}", 2)
                             aliasEditTarget = record
                         },
                         onDeviceDisconnect = { record ->
                             appLogger.info { "Device disconnect: ${record.ip}" }
+                            logAppender("> adb disconnect ${record.ip}", 2)
+                            scope.launch {
+                                val result = adbExecutor.disconnectDevice(record.ip)
+                                if (result.success) {
+                                    logAppender("[断开成功] ${record.ip}", 2)
+                                } else {
+                                    logAppender("[断开失败] ${record.ip}: ${result.output.take(200)}", 4)
+                                }
+                            }
                         },
                         onDeviceRemove = { record ->
                             appLogger.info { "Device remove: ${record.ip}" }
+                            logAppender("删除设备: ${record.ip}", 2)
                             scope.launch {
                                 val r = DbManager.deleteDevice(record.ip)
                                 if (r.success) {
+                                    logAppender("[删除成功] ${record.ip}", 2)
                                     watcher.onDeviceDeleted()
                                     reloadDevices(dbDevicesFlow, appLogger)
+                                } else {
+                                    logAppender("[删除失败] ${record.ip}: ${r.error}", 4)
                                 }
                             }
                         },
@@ -169,6 +211,30 @@ fun main() {
                         },
                         onCommandDoubleClick = { item ->
                             appLogger.info { "Command double-click: ${item.name} cmd=${item.cmd}" }
+                            logAppender("执行命令: ${item.name}", 2)
+                            val deviceIp = selectedDeviceIp
+                            if (deviceIp == null) {
+                                logAppender("[错误] 未选中设备，请先双击设备连接", 4)
+                                return@DeviceListCallbacks
+                            }
+                            scope.launch {
+                                val params = com.easyadb.core.adb.ActionCmdParams(
+                                    isShellMode = item.shell,
+                                    needDstPkg = item.needDstPkg,
+                                    cmd = item.cmd,
+                                    targetDeviceIp = deviceIp
+                                )
+                                val fullCmd = params.getAdbCmd()
+                                logAppender("> $fullCmd", 2)
+                                val result = adbExecutor.execAdbCmd(fullCmd)
+                                val output = result.output.take(500)
+                                if (output.isNotEmpty()) {
+                                    logAppender(output, 2)
+                                }
+                                if (!result.success) {
+                                    logAppender("[错误] 命令执行失败 (exitCode=${result.exitCode})", 4)
+                                }
+                            }
                         }
                     )
                 }
@@ -177,7 +243,7 @@ fun main() {
                     modifier = Modifier.fillMaxSize(),
                     toolBarActions = toolBarActions,
                     menuConfigs = menuConfigs,
-                    onMenuAction = { action -> handleMenuAction(action, appLogger) },
+                    onMenuAction = { action -> handleMenuAction(action, appLogger, logAppender) },
                     dbDevices = dbDevices,
                     onlineDevices = onlineDevices,
                     cmdGroups = cmdGroups,
@@ -234,9 +300,10 @@ fun main() {
                                 val r = DbManager.updateDeviceAlias(target.ip, newAlias)
                                 if (r.success) {
                                     appLogger.info { "Alias updated: ${target.ip} -> $newAlias" }
+                                    logAppender("[备注已更新] ${target.ip} -> $newAlias", 2)
                                     reloadDevices(dbDevicesFlow, appLogger)
                                 } else {
-                                    appLogger.error { "Alias update failed: ${r.error}" }
+                                    logAppender("[备注更新失败] ${target.ip}: ${r.error}", 4)
                                 }
                             }
                             aliasEditTarget = null
@@ -519,10 +586,10 @@ private fun parseCmdSubGroup(element: org.w3c.dom.Element): com.easyadb.core.con
  * 处理菜单栏操作。
  * P4 阶段仅记录日志，后续阶段实现具体操作（P5/P7）。
  */
-private fun handleMenuAction(action: MenuAction, logger: AppLogger) {
+private fun handleMenuAction(action: MenuAction, logger: AppLogger, logAppender: (String, Int) -> Unit) {
     logger.info { "Menu action: ${action.name} (action=${action.action})" }
     when (action.action) {
         "m_close_app" -> logger.info { "Exit requested via menu" }
-        else -> logger.info { "Menu action ${action.action} not yet implemented" }
+        else -> logAppender("[未实现] 菜单操作: ${action.name}", 3)
     }
 }

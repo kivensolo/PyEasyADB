@@ -171,7 +171,7 @@ fun DeviceListPanel(
                             onClick = { callbacks.onDeviceClick(node.record) },
                             onDoubleClick = { callbacks.onDeviceDoubleClick(node.record) },
                             onToggleExpand = {},
-                            supportsDoubleClick = false,
+                            supportsDoubleClick = true,
                             deviceStateIcons = deviceStateIcons,
                             contextMenuItems = contextMenuItems
                         )
@@ -290,7 +290,7 @@ private fun CommandLeafItem(
         onClick = onClick,
         onDoubleClick = onDoubleClick,
         onToggleExpand = {},
-        supportsDoubleClick = false  // 命令项叶子节点零延迟单击
+        supportsDoubleClick = true
     )
 }
 

@@ -106,29 +106,27 @@ fun TreeItem(
         }
     } else Modifier
 
-    val rowModifier = if (supportsDoubleClick) {
-        modifier
-            .fillMaxWidth()
-            .background(backgroundColor)
-            .pointerInput(node.id) {
-                detectTapGestures(
-                    onTap = { onClick() },
-                    onDoubleTap = { onDoubleClick() }
-                )
+    // 双击检测：用 clickable 保证单击零延迟，通过时间戳判断双击。
+    // supportsDoubleClick=true 时，300ms 内再次点击额外触发 onDoubleClick。
+    // supportsDoubleClick=false 时，仅响应单击。
+    var lastClickTimeMs by remember(node.id) { mutableStateOf(0L) }
+    val doubleTapTimeoutMs = 300L
+    val rowModifier = modifier
+        .fillMaxWidth()
+        .background(backgroundColor)
+        .clickable(
+            interactionSource = hoverSource,
+            indication = null
+        ) {
+            val now = System.currentTimeMillis()
+            onClick()
+            if (supportsDoubleClick && now - lastClickTimeMs < doubleTapTimeoutMs) {
+                onDoubleClick()
             }
-            .then(secondaryTapModifier)
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-    } else {
-        modifier
-            .fillMaxWidth()
-            .background(backgroundColor)
-            .clickable(
-                interactionSource = hoverSource,
-                indication = null
-            ) { onClick() }
-            .then(secondaryTapModifier)
-            .padding(horizontal = 4.dp, vertical = 2.dp)
-    }
+            lastClickTimeMs = now
+        }
+        .then(secondaryTapModifier)
+        .padding(horizontal = 4.dp, vertical = 2.dp)
 
     Box(modifier = Modifier.fillMaxWidth()) {
         Row(
