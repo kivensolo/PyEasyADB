@@ -34,6 +34,7 @@ import com.easyadb.ui.home.rememberDefaultToolBarActions
 import com.easyadb.ui.devicelist.DeviceAliasEditDialog
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.console.createLogFlow
+import com.easyadb.ui.dialogs.NewConnectDialog
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -121,6 +122,8 @@ fun main() {
         var selectedDeviceIp by remember { mutableStateOf<String?>(null) }
         // 右键"备注设置"要编辑的目标设备；非 null 时弹出 DeviceAliasEditDialog。
         var aliasEditTarget by remember { mutableStateOf<com.easyadb.core.database.DeviceRecord?>(null) }
+        // 新建连接对话框；true 时弹出 NewConnectDialog。
+        var showNewConnectDialog by remember { mutableStateOf(false) }
 
         Window(
             onCloseRequest = {
@@ -136,7 +139,7 @@ fun main() {
                 val toolBarActions = rememberDefaultToolBarActions(
                     onAddDevice = {
                         appLogger.info { "ToolBar: 新建设备连接" }
-                        logAppender("[未实现] 新建设备连接", 3)
+                        showNewConnectDialog = true
                     },
                     onOpenShell = {
                         appLogger.info { "ToolBar: 打开 Shell" }
@@ -307,6 +310,42 @@ fun main() {
                                 }
                             }
                             aliasEditTarget = null
+                        }
+                    )
+                }
+
+                // 新建连接对话框（对齐 Python NewConnectDialog）
+                if (showNewConnectDialog) {
+                    NewConnectDialog(
+                        onDismiss = { showNewConnectDialog = false },
+                        onConnect = { deviceIp ->
+                            showNewConnectDialog = false
+                            scope.launch {
+                                logAppender("> adb connect $deviceIp", 2)
+                                val connectResult = adbExecutor.connectDevice(deviceIp)
+                                if (connectResult.success) {
+                                    appLogger.info { "Connected to $deviceIp" }
+                                    logAppender("[连接成功] $deviceIp", 2)
+                                    // 写入数据库
+                                    val (ip, port) = com.easyadb.core.util.NetworkUtils.parseIpPort(deviceIp)
+                                    val deviceRecord = com.easyadb.core.database.DeviceRecord(
+                                        ip = ip,
+                                        port = port,
+                                        alias = "",
+                                        deviceInfo = "",
+                                        active = 1
+                                    )
+                                    val insertResult = DbManager.insertDevice(deviceRecord)
+                                    if (insertResult.success) {
+                                        appLogger.info { "Device added to DB: $deviceIp" }
+                                        reloadDevices(dbDevicesFlow, appLogger)
+                                    } else {
+                                        logAppender("[设备入库失败] ${insertResult.error}", 4)
+                                    }
+                                } else {
+                                    logAppender("[连接失败] $deviceIp: ${connectResult.output}", 4)
+                                }
+                            }
                         }
                     )
                 }

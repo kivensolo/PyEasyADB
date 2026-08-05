@@ -24,6 +24,7 @@ dependencies {
     implementation(project(":ui:functions"))
     implementation(project(":ui:console"))
     implementation(project(":ui:logcat"))
+    implementation(project(":ui:dialogs"))
 }
 
 compose.desktop {
