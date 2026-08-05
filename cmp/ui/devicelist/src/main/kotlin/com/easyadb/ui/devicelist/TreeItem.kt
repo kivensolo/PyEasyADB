@@ -1,6 +1,7 @@
 package com.easyadb.ui.devicelist
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -26,12 +27,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -171,7 +176,7 @@ fun TreeItem(
                     DeviceState.UNAUTHORIZED -> deviceStateIcons.disconnected
                     else -> deviceStateIcons.disconnected
                 }
-                androidx.compose.foundation.Image(
+                Image(
                     painter = statePainter,
                     contentDescription = "设备状态 ${node.state?.value ?: "unknown"}",
                     modifier = Modifier
@@ -231,12 +236,39 @@ fun TreeItem(
                                 },
                             contentAlignment = Alignment.CenterStart
                         ) {
-                            Text(
-                                text = item.name,
-                                fontSize = 12.sp,
-                                color = if (item.enabled) EasyAdbColors.TextPrimary
-                                else EasyAdbColors.TextSecondary
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                if (item.icon != null) {
+                                    Image(
+                                        painter = item.icon,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Fit,
+                                        modifier = Modifier
+                                            .size(21.dp)
+                                            .then(if (item.enabled) Modifier else Modifier.alpha(0.4f)),
+                                        // 禁用时把彩色图标转为灰度（对齐 Qt QIcon 的 Disabled mode）
+                                        colorFilter = if (item.enabled) null
+                                        else ColorFilter.colorMatrix(
+                                            ColorMatrix(
+                                                floatArrayOf(
+                                                    0.299f, 0.587f, 0.114f, 0f, 0f,
+                                                    0.299f, 0.587f, 0.114f, 0f, 0f,
+                                                    0.299f, 0.587f, 0.114f, 0f, 0f,
+                                                    0f, 0f, 0f, 1f, 0f
+                                                )
+                                            )
+                                        )
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                }
+                                Text(
+                                    text = item.name,
+                                    fontSize = 12.sp,
+                                    color = if (item.enabled) EasyAdbColors.TextPrimary
+                                    else EasyAdbColors.TextSecondary
+                                )
+                            }
                         }
                     }
                 }
@@ -247,11 +279,15 @@ fun TreeItem(
 
 /**
  * 通用右键菜单项。对应 Python QMenu 的一个 QAction。
+ *
+ * @param icon 图标 painter（对齐 Python addAction(icon, text) 的第一个参数），
+ *             null 时不显示图标。
  */
 data class ContextMenuItem(
     val id: String,
     val name: String,
     val enabled: Boolean = true,
+    val icon: Painter? = null,
     val onClick: () -> Unit
 )
 

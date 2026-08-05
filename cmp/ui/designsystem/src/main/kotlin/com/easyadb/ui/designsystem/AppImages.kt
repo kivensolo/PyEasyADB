@@ -26,6 +26,16 @@ object AppImages {
     @Composable
     fun deviceDisconnected(): Painter = painterResource("img/state_disconnect.png")
 
+    // ── 设备右键菜单图标 ──
+
+    /** 备注编辑。对应 Python edit.png */
+    @Composable
+    fun edit(): Painter = painterResource("img/edit.png")
+
+    /** 警告 / 删除设备。对应 Python warning.png */
+    @Composable
+    fun warning(): Painter = painterResource("img/warning.png")
+
     // ── 功能模板图标（对应 function_templates.xml 中的 icon 属性） ──
 
     /** 卸载应用 */

@@ -33,6 +33,7 @@ import com.easyadb.core.config.CmdGroup
 import com.easyadb.core.config.CmdItem
 import com.easyadb.core.database.DeviceRecord
 import com.easyadb.core.device.DeviceInfo
+import com.easyadb.ui.designsystem.AppImages
 import com.easyadb.ui.designsystem.EasyAdbColors
 
 /**
@@ -83,6 +84,11 @@ fun DeviceListPanel(
     val deviceNodes = remember(dbDevices, onlineDevices) { buildDeviceNodes(dbDevices, onlineDevices) }
     val commandTree = remember(cmdGroups) { buildCommandNodes(cmdGroups) }
     val deviceStateIcons = rememberDeviceStateIcons()
+
+    // 右键菜单图标（对应 Python MainWindow icon_edit / icon_disconnect / icon_warning）
+    val aliasEditIcon = AppImages.edit()
+    val disconnectIcon = AppImages.deviceDisconnected()
+    val warningIcon = AppImages.warning()
 
     // 展开/折叠状态：默认所有节点全展开（对齐 Python expandAll）
     val expandedStates = remember { mutableStateMapOf<String, Boolean>() }
@@ -145,20 +151,23 @@ fun DeviceListPanel(
                             listOf(
                                 ContextMenuItem(
                                     id = "alias_edit",
-                                    name = "备注设置",
+                                    name = "| 备注设置",
                                     enabled = true,
+                                    icon = aliasEditIcon,
                                     onClick = { callbacks.onDeviceAliasEdit(node.record) }
                                 ),
                                 ContextMenuItem(
                                     id = "disconnect",
-                                    name = "断开连接",
+                                    name = "| 断开连接",
                                     enabled = isOnline,
+                                    icon = disconnectIcon,
                                     onClick = { callbacks.onDeviceDisconnect(node.record) }
                                 ),
                                 ContextMenuItem(
                                     id = "remove_device",
-                                    name = "删除设备",
+                                    name = "| 删除设备",
                                     enabled = !isOnline,
+                                    icon = warningIcon,
                                     onClick = { callbacks.onDeviceRemove(node.record) }
                                 )
                             )
