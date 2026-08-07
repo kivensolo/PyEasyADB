@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(project(":ui:designsystem"))
     implementation(project(":core:adb"))
+    implementation(project(":core:apk"))
     implementation(project(":core:log"))
     implementation(project(":core:device"))
     implementation(project(":core:database"))

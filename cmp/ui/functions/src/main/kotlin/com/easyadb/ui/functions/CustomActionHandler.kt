@@ -17,8 +17,8 @@ import java.time.format.DateTimeFormatter
  * 对应 Python `src/CenterWindow.py::doCustomAction`（line 327-384）：
  * 根据 [FunctionItem] 的类型（cmd 或 act）执行对应的 ADB 操作。
  *
- * 对于 P7 才实现的对话框（安装/录屏/文本输入/APK提取），
- * 暂时仅记录日志（"P7 实现"）。
+ * 对于对话框类行为（安装/录屏/文本输入/APK提取），由宿主在 onFunctionItemClick
+ * 中拦截弹出对应对话框，不进入本 handler。
  */
 object CustomActionHandler {
 
@@ -122,10 +122,6 @@ object CustomActionHandler {
             "m_restart_app" -> doRestartApp(deviceIp, appParams, executor, onResult)
             "m_send_broadcast" -> doSendBroadcast(deviceIp, appParams, executor, onResult)
             "m_query_contentprovider" -> doQueryContentProvider(deviceIp, appParams, executor, onResult)
-            "m_show_install_app_dialog" -> onResult("[P7] 安装应用对话框，待实现")
-            "m_screen_record" -> onResult("[P7] 视频录制对话框，待实现")
-            "m_pull_apk" -> onResult("[P7] APK提取对话框，待实现")
-            "m_input_text" -> onResult("[P7] 文本输入对话框，待实现")
             else -> {
                 onResult("[错误] 未知的自定义行为: ${item.action}")
                 logger.warn { "P5 unknown action: ${item.action}" }

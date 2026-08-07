@@ -35,6 +35,18 @@ import com.easyadb.ui.devicelist.DeviceAliasEditDialog
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.console.createLogFlow
 import com.easyadb.ui.dialogs.NewConnectDialog
+import com.easyadb.ui.dialogs.AboutDialog
+import com.easyadb.ui.dialogs.TextInputDialog
+import com.easyadb.ui.dialogs.InstallApkDialog
+import com.easyadb.ui.dialogs.InstallOptions
+import com.easyadb.ui.dialogs.ScreenRecordDialog
+import com.easyadb.ui.dialogs.ScreenRecordOptions
+import com.easyadb.ui.dialogs.PullApkDialog
+import com.easyadb.ui.dialogs.PullableApp
+import com.easyadb.ui.dialogs.ApkHelperDialog
+import com.easyadb.core.apk.ApkParser
+import com.easyadb.core.apk.ApkInfo
+import com.easyadb.core.adb.AppListLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -124,6 +136,22 @@ fun main() {
         var aliasEditTarget by remember { mutableStateOf<com.easyadb.core.database.DeviceRecord?>(null) }
         // 新建连接对话框；true 时弹出 NewConnectDialog。
         var showNewConnectDialog by remember { mutableStateOf(false) }
+        // P7 对话框显示状态
+        var showAboutDialog by remember { mutableStateOf(false) }
+        var showTextInputDialog by remember { mutableStateOf(false) }
+        var showInstallApkDialog by remember { mutableStateOf(false) }
+        var showScreenRecordDialog by remember { mutableStateOf(false) }
+        var showPullApkDialog by remember { mutableStateOf(false) }
+        var showApkHelperDialog by remember { mutableStateOf(false) }
+        // 屏幕录制状态
+        var isRecording by remember { mutableStateOf(false) }
+        var remainingSeconds by remember { mutableStateOf(0) }
+        // APK Helper 解析状态
+        var parsedApkInfo by remember { mutableStateOf<ApkInfo?>(null) }
+        var isParsingApk by remember { mutableStateOf(false) }
+        // PullApk 应用列表
+        var pullableApps by remember { mutableStateOf<List<PullableApp>>(emptyList()) }
+        var isLoadingApps by remember { mutableStateOf(false) }
 
         Window(
             onCloseRequest = {
@@ -246,7 +274,16 @@ fun main() {
                     modifier = Modifier.fillMaxSize(),
                     toolBarActions = toolBarActions,
                     menuConfigs = menuConfigs,
-                    onMenuAction = { action -> handleMenuAction(action, appLogger, logAppender) },
+                    onMenuAction = { action ->
+                        when (action.action) {
+                            "m_open_about_page" -> showAboutDialog = true
+                            "m_show_apk_helper_dialog" -> {
+                                parsedApkInfo = null
+                                showApkHelperDialog = true
+                            }
+                            else -> handleMenuAction(action, appLogger, logAppender)
+                        }
+                    },
                     dbDevices = dbDevices,
                     onlineDevices = onlineDevices,
                     cmdGroups = cmdGroups,
@@ -271,21 +308,47 @@ fun main() {
                         }
                     },
                     onFunctionItemClick = { item: FunctionItem, state: AppParamState ->
-                        scope.launch {
-                            CustomActionHandler.handle(
-                                item = item,
-                                deviceIp = selectedDeviceIp ?: "",
-                                appParams = state,
-                                executor = adbExecutor,
-                                onUninstallConfirm = { pkg: String ->
-                                    appLogger.info { "Uninstall confirmation for: $pkg" }
-                                    true
-                                },
-                                onResult = { msg: String ->
-                                    appLogger.info { "[P5] $msg" }
-                                    logAppender("[P5] $msg", 2)
+                        // P7 对话框类 action 拦截：不走 CustomActionHandler，直接弹对话框
+                        when (item.action) {
+                            "m_input_text" -> showTextInputDialog = true
+                            "m_show_install_app_dialog" -> showInstallApkDialog = true
+                            "m_screen_record" -> showScreenRecordDialog = true
+                            "m_pull_apk" -> {
+                                pullableApps = emptyList()
+                                showPullApkDialog = true
+                                val deviceIp = selectedDeviceIp
+                                if (deviceIp != null) {
+                                    isLoadingApps = true
+                                    scope.launch {
+                                        val apps = AppListLoader.loadAppList(deviceIp)
+                                        pullableApps = apps.map {
+                                            PullableApp(
+                                                packageName = it.packageName,
+                                                apkPath = it.apkPath,
+                                                isSystem = it.type == "系统"
+                                            )
+                                        }
+                                        isLoadingApps = false
+                                        logAppender("[应用列表] 加载 ${apps.size} 个应用", 2)
+                                    }
                                 }
-                            )
+                            }
+                            else -> scope.launch {
+                                CustomActionHandler.handle(
+                                    item = item,
+                                    deviceIp = selectedDeviceIp ?: "",
+                                    appParams = state,
+                                    executor = adbExecutor,
+                                    onUninstallConfirm = { pkg: String ->
+                                        appLogger.info { "Uninstall confirmation for: $pkg" }
+                                        true
+                                    },
+                                    onResult = { msg: String ->
+                                        appLogger.info { "[P5] $msg" }
+                                        logAppender("[P5] $msg", 2)
+                                    }
+                                )
+                            }
                         }
                     },
                     // P6 控制台 + Logcat 参数
@@ -345,6 +408,210 @@ fun main() {
                                 } else {
                                     logAppender("[连接失败] $deviceIp: ${connectResult.output}", 4)
                                 }
+                            }
+                        }
+                    )
+                }
+
+                // 关于对话框（菜单「关于」触发）
+                if (showAboutDialog) {
+                    AboutDialog(onDismiss = { showAboutDialog = false })
+                }
+
+                // APK Helper 对话框（菜单「APK Helper」触发）
+                if (showApkHelperDialog) {
+                    ApkHelperDialog(
+                        apkInfo = parsedApkInfo,
+                        isParsing = isParsingApk,
+                        onDismiss = {
+                            showApkHelperDialog = false
+                            parsedApkInfo = null
+                        },
+                        onParse = { apkPath ->
+                            isParsingApk = true
+                            parsedApkInfo = null
+                            scope.launch {
+                                val info = ApkParser.parse(apkPath)
+                                parsedApkInfo = info
+                                isParsingApk = false
+                                logAppender("[APK解析] ${info.packageName.ifBlank { "未知包名" }}", 2)
+                            }
+                        }
+                    )
+                }
+
+                // 文本输入对话框（m_input_text 触发）
+                if (showTextInputDialog) {
+                    TextInputDialog(
+                        onDismiss = { showTextInputDialog = false },
+                        onInput = { text ->
+                            showTextInputDialog = false
+                            val deviceIp = selectedDeviceIp
+                            if (deviceIp != null) {
+                                scope.launch {
+                                    // 转义：换行→空格，空格→%s（对齐 Python doTextInput）
+                                    val escaped = text.replace("\n", " ").replace(" ", "%s")
+                                    val cmd = "adb -s $deviceIp shell input text $escaped"
+                                    logAppender("> $cmd", 2)
+                                    val result = adbExecutor.execAdbCmd(cmd)
+                                    if (!result.success) {
+                                        logAppender("[输入失败] ${result.output.take(200)}", 4)
+                                    }
+                                }
+                            } else {
+                                logAppender("[错误] 未选中设备", 4)
+                            }
+                        }
+                    )
+                }
+
+                // 安装应用对话框（m_show_install_app_dialog 触发）
+                if (showInstallApkDialog) {
+                    InstallApkDialog(
+                        onDismiss = { showInstallApkDialog = false },
+                        onInstall = { apkPath, options ->
+                            showInstallApkDialog = false
+                            val deviceIp = selectedDeviceIp
+                            if (deviceIp != null) {
+                                scope.launch {
+                                    val cmd = StringBuilder("adb -s $deviceIp install ")
+                                    if (options.replace) cmd.append("-r ")
+                                    if (options.testApp) cmd.append("-t ")
+                                    if (options.downgrade) cmd.append("-d ")
+                                    cmd.append(apkPath)
+                                    logAppender("> $cmd", 2)
+                                    val result = adbExecutor.execAdbCmd(cmd.toString())
+                                    logAppender(result.output.take(500), 2)
+                                    if (!result.success) {
+                                        logAppender("[安装失败] exitCode=${result.exitCode}", 4)
+                                    }
+                                }
+                            } else {
+                                logAppender("[错误] 未选中设备", 4)
+                            }
+                        }
+                    )
+                }
+
+                // 屏幕录制对话框（m_screen_record 触发）
+                if (showScreenRecordDialog) {
+                    ScreenRecordDialog(
+                        isRecording = isRecording,
+                        remainingSeconds = remainingSeconds,
+                        onDismiss = { showScreenRecordDialog = false },
+                        onRecordStart = { options ->
+                            val deviceIp = selectedDeviceIp
+                            if (deviceIp != null) {
+                                val saveDialog = java.awt.FileDialog(null as java.awt.Frame?, "保存视频", java.awt.FileDialog.SAVE)
+                                saveDialog.file = "screenrecord.mp4"
+                                saveDialog.isVisible = true
+                                val savePath = if (saveDialog.directory != null && saveDialog.file != null) {
+                                    java.io.File(saveDialog.directory, saveDialog.file).absolutePath
+                                } else null
+                                if (savePath != null) {
+                                    isRecording = true
+                                    remainingSeconds = options.timeLimit
+                                    scope.launch {
+                                        // 构建 screenrecord 命令
+                                        val cmd = StringBuilder("screenrecord --verbose --time-limit ${options.timeLimit}")
+                                        if (options.bitRate != null) cmd.append(" --bit-rate ${options.bitRate}")
+                                        if (options.customResolution.isNotBlank()) cmd.append(" --size ${options.customResolution}")
+                                        if (options.rotate) cmd.append(" --rotate")
+                                        val tmpPath = "/sdcard/easy_screenrecord.mp4"
+                                        cmd.append(" $tmpPath")
+
+                                        logAppender("[录屏] 开始录制 ${options.timeLimit} 秒", 2)
+                                        // 倒计时显示
+                                        for (i in options.timeLimit downTo 1) {
+                                            remainingSeconds = i
+                                            kotlinx.coroutines.delay(1000)
+                                        }
+                                        // 录制结束后 pull + rm
+                                        adbExecutor.execAdbCmd("adb -s $deviceIp exec-out $cmd")
+                                        adbExecutor.execAdbCmd("adb -s $deviceIp pull $tmpPath \"$savePath\"")
+                                        adbExecutor.execAdbCmd("adb -s $deviceIp shell rm $tmpPath")
+                                        isRecording = false
+                                        logAppender("[录屏] 已保存到 $savePath", 2)
+                                    }
+                                }
+                            } else {
+                                logAppender("[错误] 未选中设备", 4)
+                            }
+                        },
+                        onRecordStop = {
+                            isRecording = false
+                            logAppender("[录屏] 已请求终止（等待 pull）", 3)
+                        },
+                        onPull = {
+                            val deviceIp = selectedDeviceIp
+                            if (deviceIp != null) {
+                                val saveDialog = java.awt.FileDialog(null as java.awt.Frame?, "保存视频", java.awt.FileDialog.SAVE)
+                                saveDialog.file = "screenrecord.mp4"
+                                saveDialog.isVisible = true
+                                if (saveDialog.directory != null && saveDialog.file != null) {
+                                    val savePath = java.io.File(saveDialog.directory, saveDialog.file).absolutePath
+                                    scope.launch {
+                                        val tmpPath = "/sdcard/easy_screenrecord.mp4"
+                                        val cmd = "adb -s $deviceIp pull $tmpPath \"$savePath\""
+                                        logAppender("> $cmd", 2)
+                                        val result = adbExecutor.execAdbCmd(cmd)
+                                        if (result.success) {
+                                            logAppender("[拉取成功] $savePath", 2)
+                                        } else {
+                                            logAppender("[拉取失败] ${result.output.take(200)}", 4)
+                                        }
+                                    }
+                                }
+                            } else {
+                                logAppender("[错误] 未选中设备", 4)
+                            }
+                        }
+                    )
+                }
+
+                // 提取 APK 对话框（m_pull_apk 触发）
+                if (showPullApkDialog) {
+                    PullApkDialog(
+                        apps = pullableApps,
+                        isLoading = isLoadingApps,
+                        onDismiss = { showPullApkDialog = false },
+                        onRefresh = {
+                            val deviceIp = selectedDeviceIp
+                            if (deviceIp != null) {
+                                isLoadingApps = true
+                                scope.launch {
+                                    val apps = AppListLoader.loadAppList(deviceIp)
+                                    pullableApps = apps.map {
+                                        PullableApp(it.packageName, it.apkPath, it.type == "系统")
+                                    }
+                                    isLoadingApps = false
+                                    logAppender("[应用列表] 加载 ${apps.size} 个应用", 2)
+                                }
+                            } else {
+                                logAppender("[错误] 未选中设备", 4)
+                            }
+                        },
+                        onPull = { app ->
+                            val deviceIp = selectedDeviceIp
+                            if (deviceIp != null) {
+                                val saveDialog = java.awt.FileDialog(null as java.awt.Frame?, "保存 APK", java.awt.FileDialog.SAVE)
+                                saveDialog.file = "${app.packageName.replace('.', '_')}.apk"
+                                saveDialog.isVisible = true
+                                if (saveDialog.directory != null && saveDialog.file != null) {
+                                    val savePath = java.io.File(saveDialog.directory, saveDialog.file).absolutePath
+                                    scope.launch {
+                                        val cmd = "adb -s $deviceIp pull \"${app.apkPath}\" \"$savePath\""
+                                        logAppender("> $cmd", 2)
+                                        val result = adbExecutor.execAdbCmd(cmd)
+                                        if (result.success) {
+                                            logAppender("[提取成功] $savePath", 2)
+                                        } else {
+                                            logAppender("[提取失败] ${result.output.take(200)}", 4)
+                                        }
+                                    }
+                                }
+                            } else {
+                                logAppender("[错误] 未选中设备", 4)
                             }
                         }
                     )
