@@ -34,6 +34,20 @@ class AdbExecutor {
     fun asyncExecAdbCmd(cmds: List<String>): Flow<String> = executor.executeFlow(cmds.joinToString(" && "))
 
     /**
+     * 以无超时 Flow 执行单条长时间运行的命令（如 screenrecord）。
+     *
+     * screenrecord 最长 180s，远超 [execAdbCmd] 的 20s 超时，故录制必须走此入口。
+     * 协程取消时，[CmdExecutor.executeFlow] 内部会 destroyForcibly 子进程，
+     * 借此实现录制的“终止”语义（对齐 Python 原版中断 adb 进程的行为）。
+     */
+    fun screenRecordFlow(deviceIp: String, recordCmd: String): Flow<String> {
+        val cmd = "adb -s $deviceIp exec-out $recordCmd"
+        currentCmd = cmd
+        logger.infoWithStamp(cmd)
+        return executor.executeFlow(cmd)
+    }
+
+    /**
      * 连接到设备。
      */
     suspend fun connectDevice(deviceIp: String): ExecResult {
@@ -85,18 +99,6 @@ class AdbExecutor {
             return emptyList()
         }
         return ProcessUtils.getFilteredProcesses(result.output)
-    }
-
-    /**
-     * 开始屏幕录制（返回用于异步执行的命令列表）。
-     */
-    fun getScreenRecordCommands(deviceIp: String, recordCmd: String, tmpPath: String, pullPath: String): List<String> {
-        return listOf(
-            "adb -s $deviceIp exec-out $recordCmd",
-            "adb -s $deviceIp shell sleep 5",
-            "adb pull $tmpPath $pullPath",
-            "adb shell rm $tmpPath"
-        )
     }
 
     companion object {

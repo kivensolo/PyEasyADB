@@ -43,9 +43,10 @@ import java.awt.Frame
  *
  * @param apkInfo 解析结果（null 表示未解析或解析中）
  * @param isParsing 是否正在解析
- * @param onParse 选择文件后回调，宿主负责调用 ApkParser 解析
+ * @param onParse 选择/拖入文件后回调，宿主负责调用 ApkParser 解析
  *
- * 注意：拖拽 APK 功能待后续用 Swing interop（DropTarget）实现。
+ * APK 拖拽：通过 [apkDropTarget] 接收外部 `.apk` 文件并立即触发 [onParse]
+ * （对齐 Python `APKHelperDialog.dropEvent` 的立即解析行为）；也可点「浏览」按钮选择。
  */
 @Composable
 fun ApkHelperDialog(
@@ -63,7 +64,7 @@ fun ApkHelperDialog(
         resizable = false
     ) {
         Surface(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().apkDropTarget { onParse(it) },
             color = MaterialTheme.colors.background
         ) {
             Column(

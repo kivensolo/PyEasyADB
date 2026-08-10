@@ -27,6 +27,8 @@ import com.easyadb.ui.designsystem.EasyAdbColors
 
 /**
  * 添加新应用对话框。
+ * AppParamPanel 已有完整的内联包名添加（输入框+回车添加+下拉选已存+下拉内逐项删除），AddPackageDialog
+ * 功能与之重复,未接入,后续如果有批量添加的时候，可以使用。
  *
  * 对齐 Python `src/widget/Dialogs.py::AddPackageDialog`：
  * - 标题："添加新应用"

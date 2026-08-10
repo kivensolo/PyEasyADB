@@ -51,8 +51,8 @@ data class InstallOptions(
  * - 三个安装模式复选框：替换安装 / Test包 / 降级安装
  * - 确认后回调 [onInstall]，宿主负责执行 `adb install` 命令。
  *
- * 注意：拖拽 APK 功能待后续用 Swing interop（DropTarget）实现，
- * 当前通过「浏览」按钮选择文件。
+ * APK 拖拽：通过 [apkDropTarget] 接收外部 `.apk` 文件（填入路径，不自动安装，
+ * 对齐 Python `DraggableLineEdit`）；也可点「浏览」按钮选择。
  */
 @Composable
 fun InstallApkDialog(
@@ -70,7 +70,7 @@ fun InstallApkDialog(
         resizable = false
     ) {
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().apkDropTarget { apkPath = it },
             color = MaterialTheme.colors.surface
         ) {
             Column(

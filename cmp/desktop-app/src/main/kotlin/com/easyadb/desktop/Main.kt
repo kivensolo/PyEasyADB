@@ -49,6 +49,7 @@ import com.easyadb.core.apk.ApkInfo
 import com.easyadb.core.adb.AppListLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -146,6 +147,8 @@ fun main() {
         // 屏幕录制状态
         var isRecording by remember { mutableStateOf(false) }
         var remainingSeconds by remember { mutableStateOf(0) }
+        // 当前录制协程：用于"终止"按钮和关闭对话框时取消（cancel 会杀 adb 进程，对齐原版 SIGINT）
+        var recordJob by remember { mutableStateOf<Job?>(null) }
         // APK Helper 解析状态
         var parsedApkInfo by remember { mutableStateOf<ApkInfo?>(null) }
         var isParsingApk by remember { mutableStateOf(false) }
@@ -498,49 +501,53 @@ fun main() {
                     ScreenRecordDialog(
                         isRecording = isRecording,
                         remainingSeconds = remainingSeconds,
-                        onDismiss = { showScreenRecordDialog = false },
+                        onDismiss = {
+                            recordJob?.cancel()
+                            recordJob = null
+                            isRecording = false
+                            showScreenRecordDialog = false
+                        },
                         onRecordStart = { options ->
                             val deviceIp = selectedDeviceIp
                             if (deviceIp != null) {
-                                val saveDialog = java.awt.FileDialog(null as java.awt.Frame?, "保存视频", java.awt.FileDialog.SAVE)
-                                saveDialog.file = "screenrecord.mp4"
-                                saveDialog.isVisible = true
-                                val savePath = if (saveDialog.directory != null && saveDialog.file != null) {
-                                    java.io.File(saveDialog.directory, saveDialog.file).absolutePath
-                                } else null
-                                if (savePath != null) {
-                                    isRecording = true
-                                    remainingSeconds = options.timeLimit
-                                    scope.launch {
-                                        // 构建 screenrecord 命令
-                                        val cmd = StringBuilder("screenrecord --verbose --time-limit ${options.timeLimit}")
-                                        if (options.bitRate != null) cmd.append(" --bit-rate ${options.bitRate}")
-                                        if (options.customResolution.isNotBlank()) cmd.append(" --size ${options.customResolution}")
-                                        if (options.rotate) cmd.append(" --rotate")
-                                        val tmpPath = "/sdcard/easy_screenrecord.mp4"
-                                        cmd.append(" $tmpPath")
-
-                                        logAppender("[录屏] 开始录制 ${options.timeLimit} 秒", 2)
-                                        // 倒计时显示
+                                isRecording = true
+                                remainingSeconds = options.timeLimit
+                                recordJob = scope.launch {
+                                    val tmpPath = "/sdcard/easy_screenrecord.mp4"
+                                    val cmd = buildString {
+                                        append("screenrecord --verbose --time-limit ${options.timeLimit}")
+                                        if (options.bitRate != null) append(" --bit-rate ${options.bitRate}")
+                                        if (options.customResolution.isNotBlank()) append(" --size ${options.customResolution}")
+                                        if (options.rotate) append(" --rotate")
+                                        append(" $tmpPath")
+                                    }
+                                    // 并发倒计时：仅 UI 显示，录制靠 --time-limit 自结束
+                                    val countdown = launch {
                                         for (i in options.timeLimit downTo 1) {
                                             remainingSeconds = i
                                             kotlinx.coroutines.delay(1000)
                                         }
-                                        // 录制结束后 pull + rm
-                                        adbExecutor.execAdbCmd("adb -s $deviceIp exec-out $cmd")
-                                        adbExecutor.execAdbCmd("adb -s $deviceIp pull $tmpPath \"$savePath\"")
-                                        adbExecutor.execAdbCmd("adb -s $deviceIp shell rm $tmpPath")
-                                        isRecording = false
-                                        logAppender("[录屏] 已保存到 $savePath", 2)
                                     }
+                                    logAppender("[录屏] 开始录制 ${options.timeLimit} 秒（存到设备 $tmpPath）", 2)
+                                    try {
+                                        // 无超时 flow；协程 cancel 时 executeFlow 自动 destroyForcibly 终止 adb 进程
+                                        adbExecutor.screenRecordFlow(deviceIp, cmd).collect { /* 忽略 screenrecord verbose 输出 */ }
+                                    } finally {
+                                        countdown.cancel()
+                                    }
+                                    // 录制自然结束：临时文件留设备，不自动拉取；由「拉取」按钮选保存地址并 pull
+                                    logAppender("[录屏] 录制完成，点「拉取」保存到本地", 2)
+                                    isRecording = false
                                 }
                             } else {
                                 logAppender("[错误] 未选中设备", 4)
                             }
                         },
                         onRecordStop = {
+                            recordJob?.cancel()
+                            recordJob = null
                             isRecording = false
-                            logAppender("[录屏] 已请求终止（等待 pull）", 3)
+                            logAppender("[录屏] 已终止，点「拉取」保存到本地", 3)
                         },
                         onPull = {
                             val deviceIp = selectedDeviceIp
