@@ -279,6 +279,9 @@ fun main() {
                     menuConfigs = menuConfigs,
                     onMenuAction = { action ->
                         when (action.action) {
+                            "m_connect_new_device" -> showNewConnectDialog = true
+                            "m_close_app" -> exitApplication()
+                            "m_open_log_page" -> openLogsFolder(appLogger, logAppender)
                             "m_open_about_page" -> showAboutDialog = true
                             "m_show_apk_helper_dialog" -> {
                                 parsedApkInfo = null
@@ -893,6 +896,22 @@ private fun parseCmdSubGroup(element: org.w3c.dom.Element): com.easyadb.core.con
         if (item != null) items.add(item)
     }
     return com.easyadb.core.config.CmdSubGroup(name = name, items = items)
+}
+
+/**
+ * 用系统资源管理器打开日志目录（菜单「查看日志」）。
+ * 对齐 Python MenuBar.open_log_folder() 的 QDesktopServices.openUrl(QUrl.fromLocalFile(LOGS_PATH))。
+ */
+private fun openLogsFolder(logger: AppLogger, logAppender: (String, Int) -> Unit) {
+    try {
+        val logsDir = File(AppPathsConfig.logsPath)
+        if (!logsDir.exists()) logsDir.mkdirs()
+        java.awt.Desktop.getDesktop().open(logsDir)
+        logger.info { "Opened logs folder: ${logsDir.absolutePath}" }
+    } catch (e: Exception) {
+        logger.error { "Open logs folder failed: ${e.message}" }
+        logAppender("[错误] 打开日志目录失败: ${e.message}", 4)
+    }
 }
 
 /**
