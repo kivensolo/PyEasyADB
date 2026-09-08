@@ -7,6 +7,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.dp
@@ -156,6 +164,27 @@ fun main() {
         var pullableApps by remember { mutableStateOf<List<PullableApp>>(emptyList()) }
         var isLoadingApps by remember { mutableStateOf(false) }
 
+        // 菜单快捷键映射：解析 menus_ui.xml 中各 action 的 shortcut（如 "Ctrl+N"、"Alt+H"）。
+        // 快捷键此前仅在菜单项右侧作文本展示，未注册按键监听；现配合 Window.onKeyEvent 实现。
+        val shortcutActions = remember(menuConfigs) {
+            menuConfigs.flatMap { it.actions }
+                .mapNotNull { action -> parseShortcut(action.shortcut)?.let { spec -> spec to action } }
+        }
+        // 菜单 action 统一处理入口（菜单项点击与全局快捷键共用）
+        val handleAction: (MenuAction) -> Unit = { action ->
+            when (action.action) {
+                "m_connect_new_device" -> showNewConnectDialog = true
+                "m_close_app" -> exitApplication()
+                "m_open_log_page" -> openLogsFolder(appLogger, logAppender)
+                "m_open_about_page" -> showAboutDialog = true
+                "m_show_apk_helper_dialog" -> {
+                    apkHelperResult = null
+                    showApkHelperDialog = true
+                }
+                else -> handleMenuAction(action, appLogger, logAppender)
+            }
+        }
+
         Window(
             onCloseRequest = {
                 watcher.stop()
@@ -164,7 +193,24 @@ fun main() {
                 exitApplication()
             },
             title = "EasyADB",
-            icon = iconPainter
+            icon = iconPainter,
+            onKeyEvent = { event ->
+                // 全局菜单快捷键（如 Alt+H 打开 APK Helper）：
+                // 在 KeyUp 时匹配一次，避免按住按键时重复触发
+                if (event.type != KeyEventType.KeyUp) {
+                    false
+                } else {
+                    val matched = shortcutActions
+                        .firstOrNull { (spec, _) -> matchesShortcut(event, spec) }?.second
+                    if (matched != null) {
+                        appLogger.info { "Shortcut triggered: ${matched.shortcut}" }
+                        handleAction(matched)
+                        true
+                    } else {
+                        false
+                    }
+                }
+            }
         ) {
             EasyAdbTheme {
                 val toolBarActions = rememberDefaultToolBarActions(
@@ -277,19 +323,7 @@ fun main() {
                     modifier = Modifier.fillMaxSize(),
                     toolBarActions = toolBarActions,
                     menuConfigs = menuConfigs,
-                    onMenuAction = { action ->
-                        when (action.action) {
-                            "m_connect_new_device" -> showNewConnectDialog = true
-                            "m_close_app" -> exitApplication()
-                            "m_open_log_page" -> openLogsFolder(appLogger, logAppender)
-                            "m_open_about_page" -> showAboutDialog = true
-                            "m_show_apk_helper_dialog" -> {
-                                apkHelperResult = null
-                                showApkHelperDialog = true
-                            }
-                            else -> handleMenuAction(action, appLogger, logAppender)
-                        }
-                    },
+                    onMenuAction = handleAction,
                     dbDevices = dbDevices,
                     onlineDevices = onlineDevices,
                     cmdGroups = cmdGroups,
@@ -795,6 +829,49 @@ private fun parseFunctionTemplateAttrs(element: org.w3c.dom.Element): Map<String
     }
     return attrs
 }
+
+/** 快捷键组合描述（由 menus_ui.xml 的 shortcut 属性解析而来，如 "Ctrl+N"、"Alt+H"） */
+private data class ShortcutSpec(
+    val ctrl: Boolean,
+    val alt: Boolean,
+    val shift: Boolean,
+    val key: Key
+)
+
+/** shortcut 字母键名到 Compose Key 的映射（覆盖 A-Z，新增字母快捷键无需改代码） */
+private val SHORTCUT_KEY_MAP: Map<String, Key> = mapOf(
+    "A" to Key.A, "B" to Key.B, "C" to Key.C, "D" to Key.D, "E" to Key.E,
+    "F" to Key.F, "G" to Key.G, "H" to Key.H, "I" to Key.I, "J" to Key.J,
+    "K" to Key.K, "L" to Key.L, "M" to Key.M, "N" to Key.N, "O" to Key.O,
+    "P" to Key.P, "Q" to Key.Q, "R" to Key.R, "S" to Key.S, "T" to Key.T,
+    "U" to Key.U, "V" to Key.V, "W" to Key.W, "X" to Key.X, "Y" to Key.Y,
+    "Z" to Key.Z
+)
+
+/**
+ * 解析 XML 中的 shortcut 描述为 [ShortcutSpec]。
+ * 格式约定为「修饰键+字母」的加号分隔（Ctrl+N / Alt+H / Shift+S），最后一个段为字母键；
+ * 空串或无法识别的键名返回 null（该快捷键不参与按键匹配）。
+ */
+private fun parseShortcut(spec: String): ShortcutSpec? {
+    if (spec.isBlank()) return null
+    val parts = spec.uppercase().split("+").map { it.trim() }.filter { it.isNotEmpty() }
+    if (parts.isEmpty()) return null
+    val key = SHORTCUT_KEY_MAP[parts.last()] ?: return null
+    return ShortcutSpec(
+        ctrl = "CTRL" in parts,
+        alt = "ALT" in parts,
+        shift = "SHIFT" in parts,
+        key = key
+    )
+}
+
+/** 判断按键事件是否命中 [spec] 描述的组合键（调用方负责按 KeyUp 过滤避免重复触发） */
+private fun matchesShortcut(event: KeyEvent, spec: ShortcutSpec): Boolean =
+    event.isCtrlPressed == spec.ctrl &&
+        event.isAltPressed == spec.alt &&
+        event.isShiftPressed == spec.shift &&
+        event.key == spec.key
 
 /**
  * 直接解析 menus_ui.xml 的 InputStream 为 MenuConfig 列表。
