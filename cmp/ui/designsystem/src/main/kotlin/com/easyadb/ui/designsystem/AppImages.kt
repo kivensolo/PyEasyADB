@@ -36,6 +36,10 @@ object AppImages {
     @Composable
     fun warning(): Painter = painterResource("img/warning.png")
 
+    /** 疑问提示。对应 Python help.png（APK Helper 应用特征信息行，未解析时的占位图标） */
+    @Composable
+    fun help(): Painter = painterResource("img/help.png")
+
     // ── 功能模板图标（对应 function_templates.xml 中的 icon 属性） ──
 
     /** 卸载应用 */

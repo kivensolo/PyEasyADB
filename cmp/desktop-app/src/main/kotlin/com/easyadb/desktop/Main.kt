@@ -45,7 +45,7 @@ import com.easyadb.ui.dialogs.PullApkDialog
 import com.easyadb.ui.dialogs.PullableApp
 import com.easyadb.ui.dialogs.ApkHelperDialog
 import com.easyadb.core.apk.ApkParser
-import com.easyadb.core.apk.ApkInfo
+import com.easyadb.core.apk.ApkParseResult
 import com.easyadb.core.adb.AppListLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -149,8 +149,8 @@ fun main() {
         var remainingSeconds by remember { mutableStateOf(0) }
         // 当前录制协程：用于"终止"按钮和关闭对话框时取消（cancel 会杀 adb 进程，对齐原版 SIGINT）
         var recordJob by remember { mutableStateOf<Job?>(null) }
-        // APK Helper 解析状态
-        var parsedApkInfo by remember { mutableStateOf<ApkInfo?>(null) }
+        // APK Helper 解析结果（null 表示未解析）
+        var apkHelperResult by remember { mutableStateOf<ApkParseResult?>(null) }
         var isParsingApk by remember { mutableStateOf(false) }
         // PullApk 应用列表
         var pullableApps by remember { mutableStateOf<List<PullableApp>>(emptyList()) }
@@ -284,7 +284,7 @@ fun main() {
                             "m_open_log_page" -> openLogsFolder(appLogger, logAppender)
                             "m_open_about_page" -> showAboutDialog = true
                             "m_show_apk_helper_dialog" -> {
-                                parsedApkInfo = null
+                                apkHelperResult = null
                                 showApkHelperDialog = true
                             }
                             else -> handleMenuAction(action, appLogger, logAppender)
@@ -427,20 +427,25 @@ fun main() {
                 // APK Helper 对话框（菜单「APK Helper」触发）
                 if (showApkHelperDialog) {
                     ApkHelperDialog(
-                        apkInfo = parsedApkInfo,
+                        parseResult = apkHelperResult,
                         isParsing = isParsingApk,
                         onDismiss = {
                             showApkHelperDialog = false
-                            parsedApkInfo = null
+                            apkHelperResult = null
                         },
                         onParse = { apkPath ->
                             isParsingApk = true
-                            parsedApkInfo = null
+                            apkHelperResult = null
                             scope.launch {
-                                val info = ApkParser.parse(apkPath)
-                                parsedApkInfo = info
+                                val result = ApkParser.parse(apkPath)
+                                apkHelperResult = result
                                 isParsingApk = false
-                                logAppender("[APK解析] ${info.packageName.ifBlank { "未知包名" }}", 2)
+                                when (result) {
+                                    is ApkParseResult.Success ->
+                                        logAppender("[APK解析] ${result.info.packageName.ifBlank { "未知包名" }}", 2)
+                                    is ApkParseResult.Failure ->
+                                        logAppender("[APK解析失败] ${result.reason.take(200)}", 4)
+                                }
                             }
                         }
                     )
