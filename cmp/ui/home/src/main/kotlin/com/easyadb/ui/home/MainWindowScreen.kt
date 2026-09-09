@@ -7,9 +7,9 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.ui.console.ConsolePanel
@@ -31,13 +31,14 @@ import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.FunctionPanel
 import com.easyadb.ui.home.components.BottomTab
 import com.easyadb.ui.home.components.BottomTabHost
+import com.easyadb.ui.home.components.MenuBarDropdown
 import com.easyadb.ui.home.components.SplitPane
 import kotlinx.coroutines.flow.MutableStateFlow
 
-// ─────────────────────────────────────────────────────────
-// 自定义菜单栏
-// ─────────────────────────────────────────────────────────
-
+/**
+ * 自定义菜单栏
+ * 主窗口顶部的菜单栏区域，横向铺满
+ */
 @Composable
 private fun CustomMenuBar(
     menuConfigs: List<MenuConfig>,
@@ -57,26 +58,32 @@ private fun CustomMenuBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             menuConfigs.forEach { config ->
-                var expanded by remember { mutableStateOf(false) }
+                //TODO 学习remeber的使用
+                var showMenu by remember { mutableStateOf(false) }
                 Box {
                     Text(
                         text = config.name,
                         modifier = Modifier
                             .padding(horizontal = 6.dp, vertical = 4.dp)
-                            .clickable { expanded = true },
+                            .clickable { showMenu = true },
                         fontSize = 12.sp,
                         color = EasyAdbColors.TextPrimary
                     )
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
+                    MenuBarDropdown(
+                        // 表示菜单是否可见
+                        expanded = showMenu,
+                        //用于处理菜单关闭
+                        onDismissRequest = { showMenu = false }
                     ) {
                         config.actions.forEach { action ->
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(24.dp)
-                                    .clickable { expanded = false; onMenuAction(action) }
+                                    .clickable {  // 响应点击行为，并隐藏menu展示
+                                        showMenu = false;
+                                        onMenuAction(action)
+                                    }
                                     .padding(horizontal = 12.dp),
                                 contentAlignment = Alignment.CenterStart
                             ) {
