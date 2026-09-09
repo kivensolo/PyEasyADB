@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import com.easyadb.core.device.DeviceState
 import com.easyadb.ui.designsystem.AppImages
 import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.hoverBackground
 
 /**
  * 单行树节点视图。
@@ -91,8 +92,8 @@ fun TreeItem(
     val density = LocalDensity.current
 
     val backgroundColor = when {
-        isSelected -> MaterialTheme.colors.primary.copy(alpha = 0.18f)
-        isHovered -> MaterialTheme.colors.onSurface.copy(alpha = 0.06f)
+        isSelected -> EasyAdbColors.Selected
+        isHovered -> EasyAdbColors.Hover
         else -> Color.Transparent
     }
 
@@ -226,11 +227,16 @@ fun TreeItem(
                                     if (item.enabled) Color.Transparent
                                     else MaterialTheme.colors.onSurface.copy(alpha = 0.04f)
                                 )
+                                .then(if (item.enabled) Modifier.hoverBackground() else Modifier)
                                 .then(
                                     if (item.enabled) Modifier.padding(horizontal = 16.dp)
                                     else Modifier.padding(horizontal = 16.dp)
                                 )
-                                .clickable(enabled = item.enabled) {
+                                .clickable(
+                                    interactionSource = null,
+                                    indication = null,
+                                    enabled = item.enabled
+                                ) {
                                     showContextMenu = false
                                     item.onClick()
                                 },

@@ -29,6 +29,7 @@ import com.easyadb.core.database.DeviceRecord
 import com.easyadb.core.device.DeviceInfo
 import com.easyadb.ui.designsystem.AppIcons
 import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.hoverBackground
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.devicelist.DeviceListPanel
 import com.easyadb.ui.functions.AppParamState
@@ -105,7 +106,8 @@ private fun CustomMenuBar(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(24.dp)
-                                    .clickable {  // 响应点击行为，并隐藏menu展示
+                                    .hoverBackground()
+                                    .clickable(interactionSource = null, indication = null) {  // 响应点击行为，并隐藏menu展示
                                         activeMenuIndex = null;
                                         onMenuAction(action)
                                     }

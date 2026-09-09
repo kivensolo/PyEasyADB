@@ -43,6 +43,12 @@ object EasyAdbColors {
     val StatusOffline = Color(0xFF757575)   // Grey 600
     val StatusUnauthorized = Color(0xFFE65100) // Orange 900
 
+    // ── 交互状态底色（菜单项 / 列表行，全局统一） ──
+    /** 鼠标悬浮底色：品牌蓝 8% 透明度，弱于选中态，形成 hover < selected 的视觉层次 */
+    val Hover = Primary.copy(alpha = 0.08f)
+    /** 选中底色：品牌蓝 18% 透明度 */
+    val Selected = Primary.copy(alpha = 0.18f)
+
     // ── 文字 ──
     val TextPrimary = Color(0xFF212121)     // Grey 900
     val TextSecondary = Color(0xFF757575)   // Grey 600
