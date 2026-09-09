@@ -2,11 +2,15 @@ package com.easyadb.ui.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
@@ -38,6 +42,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 /**
  * 自定义菜单栏
  * 主窗口顶部的菜单栏区域，横向铺满
+ *
+ * 交互为「菜单模式」：点击标题展开菜单后，鼠标悬浮其他标题实时切换菜单（无需再点击）；
+ * 点击菜单项 / 弹层外区域 / Esc / 再次点击当前标题则收起。
  */
 @Composable
 private fun CustomMenuBar(
@@ -45,6 +52,11 @@ private fun CustomMenuBar(
     onMenuAction: (MenuAction) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    //TODO 学习remeber的使用
+    // 当前展开的菜单下标，null 表示全部收起；提升到菜单栏一级由各标题共享，
+    // 才能实现“已有菜单展开时，悬浮其他标题即切换”
+    var activeMenuIndex by remember { mutableStateOf<Int?>(null) }
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         elevation = 0.dp,
@@ -57,23 +69,36 @@ private fun CustomMenuBar(
                 .padding(start = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            menuConfigs.forEach { config ->
-                //TODO 学习remeber的使用
-                var showMenu by remember { mutableStateOf(false) }
-                Box {
+            menuConfigs.forEachIndexed { index, config ->
+                val interactionSource = remember { MutableInteractionSource() }
+                val hovered by interactionSource.collectIsHoveredAsState()
+                // 菜单模式下悬浮即切换到该菜单
+                LaunchedEffect(hovered) {
+                    if (hovered && activeMenuIndex != null) activeMenuIndex = index
+                }
+                val isActive = activeMenuIndex == index
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .hoverable(interactionSource)
+                        .background(
+                            if (isActive) EasyAdbColors.SurfaceVariant else Color.Transparent
+                        )
+                        .clickable { activeMenuIndex = if (isActive) null else index }
+                ) {
                     Text(
                         text = config.name,
                         modifier = Modifier
-                            .padding(horizontal = 6.dp, vertical = 4.dp)
-                            .clickable { showMenu = true },
+                            .align(Alignment.CenterStart)
+                            .padding(horizontal = 6.dp, vertical = 4.dp),
                         fontSize = 12.sp,
                         color = EasyAdbColors.TextPrimary
                     )
                     MenuBarDropdown(
                         // 表示菜单是否可见
-                        expanded = showMenu,
+                        expanded = isActive,
                         //用于处理菜单关闭
-                        onDismissRequest = { showMenu = false }
+                        onDismissRequest = { activeMenuIndex = null }
                     ) {
                         config.actions.forEach { action ->
                             Box(
@@ -81,7 +106,7 @@ private fun CustomMenuBar(
                                     .fillMaxWidth()
                                     .height(24.dp)
                                     .clickable {  // 响应点击行为，并隐藏menu展示
-                                        showMenu = false;
+                                        activeMenuIndex = null;
                                         onMenuAction(action)
                                     }
                                     .padding(horizontal = 12.dp),

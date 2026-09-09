@@ -54,8 +54,12 @@ private class MenuBarDropdownPositionProvider : PopupPositionProvider {
 /**
  * 菜单栏下拉菜单容器。
  *
- * 展开时渲染为 focusable 弹层：点击外部自动回调 [onDismissRequest]，Esc 键关闭；
- * 内容列以最宽项为准对齐（IntrinsicSize.Max），保证快捷键列右对齐于一列。
+ * 展开时渲染为主窗口内的非 focusable 叠加弹层：focusable 弹层是独立 OS 窗口，
+ * 打开期间主窗口收不到其他菜单标题的 hover Enter 事件（实测 Exit 可达、Enter 被
+ * 吞），悬浮切换会失效；非 focusable 弹层与主窗口共用输入管线，hover 正常分发。
+ * 点击弹层外由 dismissOnClickOutside 回调 [onDismissRequest]；Esc 经 Popup 的
+ * onKeyEvent 层级回调关闭；内容列以最宽项为准对齐（IntrinsicSize.Max），保证
+ * 快捷键列右对齐于一列。
  */
 @Composable
 fun MenuBarDropdown(
@@ -68,23 +72,22 @@ fun MenuBarDropdown(
     Popup(
         popupPositionProvider = MenuBarDropdownPositionProvider(),
         onDismissRequest = onDismissRequest,
-        properties = PopupProperties(focusable = true)
+        properties = PopupProperties(focusable = false),
+        onKeyEvent = { event ->
+            if (event.key == Key.Escape && event.type == KeyEventType.KeyDown) {
+                onDismissRequest()
+                true
+            } else {
+                false
+            }
+        }
     ) {
         Surface(
             shape = MaterialTheme.shapes.medium,
             elevation = 8.dp
         ) {
             Column(
-                modifier = Modifier
-                    .width(IntrinsicSize.Max)
-                    .onPreviewKeyEvent { event ->
-                        if (event.key == Key.Escape && event.type == KeyEventType.KeyDown) {
-                            onDismissRequest()
-                            true
-                        } else {
-                            false
-                        }
-                    }
+                modifier = Modifier.width(IntrinsicSize.Max)
             ) {
                 content()
             }
