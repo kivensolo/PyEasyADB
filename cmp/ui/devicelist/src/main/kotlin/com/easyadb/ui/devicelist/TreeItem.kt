@@ -45,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.device.DeviceState
 import com.easyadb.ui.designsystem.AppImages
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.hoverBackground
 
 /**
@@ -92,8 +92,8 @@ fun TreeItem(
     val density = LocalDensity.current
 
     val backgroundColor = when {
-        isSelected -> EasyAdbColors.Selected
-        isHovered -> EasyAdbColors.Hover
+        isSelected -> easyAdbColors.Selected
+        isHovered -> easyAdbColors.Hover
         else -> Color.Transparent
     }
 
@@ -161,7 +161,7 @@ fun TreeItem(
                     Text(
                         text = if (isExpanded) "-" else "+",
                         fontSize = 14.sp,
-                        color = EasyAdbColors.TextSecondary,
+                        color = easyAdbColors.TextSecondary,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -202,7 +202,7 @@ fun TreeItem(
             Text(
                 text = displayText,
                 fontSize = 12.sp,
-                color = EasyAdbColors.TextPrimary,
+                color = easyAdbColors.TextPrimary,
                 fontWeight = fontWeight,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -271,8 +271,8 @@ fun TreeItem(
                                 Text(
                                     text = item.name,
                                     fontSize = 12.sp,
-                                    color = if (item.enabled) EasyAdbColors.TextPrimary
-                                    else EasyAdbColors.TextSecondary
+                                    color = if (item.enabled) easyAdbColors.TextPrimary
+                                    else easyAdbColors.TextSecondary
                                 )
                             }
                         }

@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.core.database.DeviceRecord
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 
 /**
  * 设备备注（别名）编辑对话框。
@@ -66,7 +66,7 @@ fun DeviceAliasEditDialog(
                 Text(
                     text = "请输入设备别名，便于识别（${device.ip}）：",
                     fontSize = 12.sp,
-                    color = EasyAdbColors.TextPrimary
+                    color = easyAdbColors.TextPrimary
                 )
                 OutlinedTextField(
                     value = aliasText,

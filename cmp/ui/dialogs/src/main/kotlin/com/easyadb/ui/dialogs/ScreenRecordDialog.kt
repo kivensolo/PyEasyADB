@@ -32,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.GroupBox
 import kotlin.math.roundToInt
 
@@ -157,7 +157,7 @@ fun ScreenRecordDialog(
                     Text(
                         "录制时间(秒)：${timeLimit.roundToInt()}",
                         fontSize = 11.sp,
-                        color = EasyAdbColors.TextPrimary
+                        color = easyAdbColors.TextPrimary
                     )
                     Slider(
                         modifier = Modifier.height(24.dp),
@@ -245,7 +245,7 @@ private fun CompactCheckbox(
             imageVector = if (checked) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = if (enabled) MaterialTheme.colors.primary else EasyAdbColors.TextSecondary
+            tint = if (enabled) MaterialTheme.colors.primary else easyAdbColors.TextSecondary
         )
     }
 }

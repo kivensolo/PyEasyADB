@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.config.FunctionItem
 import com.easyadb.core.config.FunctionTemplate
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 
 /**
  * 功能模板按钮网格。
@@ -71,7 +71,7 @@ fun TemplateGrid(
                         text = template.name,
                         fontSize = 13.sp,
                         fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                        color = EasyAdbColors.TextPrimary,
+                        color = easyAdbColors.TextPrimary,
                         modifier = Modifier.padding(bottom = 6.dp)
                     )
 
@@ -148,7 +148,7 @@ private fun FunctionButton(
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                color = if (!isDisabled) EasyAdbColors.TextPrimary else Color(0xFFBDBDBD),
+                color = if (!isDisabled) easyAdbColors.TextPrimary else Color(0xFFBDBDBD),
                 modifier = Modifier.padding(horizontal = 2.dp)
             )
         }

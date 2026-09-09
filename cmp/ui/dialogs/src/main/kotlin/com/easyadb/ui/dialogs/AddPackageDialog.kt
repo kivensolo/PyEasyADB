@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 
 /**
  * 添加新应用对话框。
@@ -63,7 +63,7 @@ fun AddPackageDialog(
                 Text(
                     text = "请输入应用包名：",
                     fontSize = 12.sp,
-                    color = EasyAdbColors.TextPrimary
+                    color = easyAdbColors.TextPrimary
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),

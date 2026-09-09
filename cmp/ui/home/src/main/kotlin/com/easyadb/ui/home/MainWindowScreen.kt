@@ -28,7 +28,7 @@ import com.easyadb.core.config.MenuConfig
 import com.easyadb.core.database.DeviceRecord
 import com.easyadb.core.device.DeviceInfo
 import com.easyadb.ui.designsystem.AppIcons
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.hoverBackground
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.devicelist.DeviceListPanel
@@ -83,7 +83,7 @@ private fun CustomMenuBar(
                         .fillMaxHeight()
                         .hoverable(interactionSource)
                         .background(
-                            if (isActive) EasyAdbColors.SurfaceVariant else Color.Transparent
+                            if (isActive) easyAdbColors.SurfaceVariant else Color.Transparent
                         )
                         .clickable { activeMenuIndex = if (isActive) null else index }
                 ) {
@@ -93,7 +93,7 @@ private fun CustomMenuBar(
                             .align(Alignment.CenterStart)
                             .padding(horizontal = 6.dp, vertical = 4.dp),
                         fontSize = 12.sp,
-                        color = EasyAdbColors.TextPrimary
+                        color = easyAdbColors.TextPrimary
                     )
                     MenuBarDropdown(
                         // 表示菜单是否可见
@@ -127,7 +127,7 @@ private fun CustomMenuBar(
                                         Text(
                                             text = action.shortcut,
                                             fontSize = 10.sp,
-                                            color = EasyAdbColors.TextSecondary,
+                                            color = easyAdbColors.TextSecondary,
                                             modifier = Modifier.padding(start = 24.dp)
                                         )
                                     }
@@ -160,7 +160,7 @@ private fun ToolBar(
     Surface(
         modifier = modifier.fillMaxWidth(),
         elevation = 2.dp,
-        color = EasyAdbColors.SurfaceVariant
+        color = easyAdbColors.SurfaceVariant
     ) {
         Row(
             modifier = Modifier
@@ -173,7 +173,7 @@ private fun ToolBar(
                 TextButton(
                     onClick = action.onClick,
                     modifier = Modifier.height(32.dp),
-                    colors = ButtonDefaults.textButtonColors(contentColor = EasyAdbColors.TextPrimary)
+                    colors = ButtonDefaults.textButtonColors(contentColor = easyAdbColors.TextPrimary)
                 ) {
                     action.icon()
                     Spacer(modifier = Modifier.width(4.dp))
@@ -270,7 +270,7 @@ fun MainWindowScreen(
         if (menuConfigs.isNotEmpty()) {
             Column {
                 CustomMenuBar(menuConfigs = menuConfigs, onMenuAction = onMenuAction)
-                Divider(color = EasyAdbColors.Divider, thickness = 1.dp)
+                Divider(color = easyAdbColors.Divider, thickness = 1.dp)
             }
         }
 

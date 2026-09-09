@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import java.awt.Desktop
 import java.net.URI
 
@@ -84,21 +84,22 @@ fun AboutDialog(
                 Text(
                     text = "版本号：v2.0.0",
                     fontSize = 12.sp,
-                    color = EasyAdbColors.TextPrimary
+                    color = easyAdbColors.TextPrimary
                 )
 
                 // ── 编译时间 ──
                 Text(
                     text = "Compose Multiplatform 版本",
                     fontSize = 10.sp,
-                    color = EasyAdbColors.TextSecondary
+                    color = easyAdbColors.TextSecondary
                 )
 
                 // ── GitHub 链接（可点击） ──
+                val linkColor = easyAdbColors.Primary
                 val linkText = buildAnnotatedString {
                     withStyle(
                         SpanStyle(
-                            color = Color(0xFF1565C0),
+                            color = linkColor,
                             textDecoration = TextDecoration.Underline
                         )
                     ) {

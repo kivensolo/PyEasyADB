@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.config.FunctionItem
 import com.easyadb.core.config.FunctionTemplate
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 
 /**
  * 功能面板：组合 [AppParamPanel]（应用参数配置）和 [TemplateGrid]（功能按钮网格）。
@@ -62,7 +62,7 @@ fun FunctionPanel(
 
         // 分隔线
         Divider(
-            color = EasyAdbColors.Divider,
+            color = easyAdbColors.Divider,
             thickness = 1.dp,
             modifier = Modifier.fillMaxWidth()
         )
@@ -78,7 +78,7 @@ fun FunctionPanel(
                 Text(
                     text = "加载功能模板中...",
                     fontSize = 14.sp,
-                    color = EasyAdbColors.TextSecondary
+                    color = easyAdbColors.TextSecondary
                 )
             }
         } else {

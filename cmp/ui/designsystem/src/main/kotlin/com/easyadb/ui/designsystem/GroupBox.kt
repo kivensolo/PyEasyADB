@@ -45,7 +45,7 @@ fun GroupBox(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp)
-                .border(1.dp, EasyAdbColors.Divider, RoundedCornerShape(4.dp))
+                .border(1.dp, easyAdbColors.Divider, RoundedCornerShape(4.dp))
                 .padding(8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
@@ -55,7 +55,7 @@ fun GroupBox(
         Text(
             text = title,
             fontSize = 12.sp,
-            color = EasyAdbColors.TextPrimary,
+            color = easyAdbColors.TextPrimary,
             modifier = Modifier
                 .padding(start = 8.dp)
                 .background(MaterialTheme.colors.surface)

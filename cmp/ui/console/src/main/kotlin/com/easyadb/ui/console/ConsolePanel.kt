@@ -34,7 +34,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.LogColor
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.LocalTime
@@ -89,7 +89,7 @@ fun ConsolePanel(
             modifier = Modifier
                 .width(36.dp)
                 .fillMaxHeight()
-                .background(EasyAdbColors.PanelHeader),
+                .background(easyAdbColors.PanelHeader),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
@@ -101,7 +101,7 @@ fun ConsolePanel(
                 Icon(
                     Icons.Default.ArrowDownward,
                     contentDescription = if (autoScroll) "自动滚动" else "手动滚动",
-                    tint = if (autoScroll) EasyAdbColors.Primary else Color(0xFF757575),
+                    tint = if (autoScroll) easyAdbColors.Primary else Color(0xFF757575),
                     modifier = Modifier.width(18.dp).height(18.dp)
                 )
             }

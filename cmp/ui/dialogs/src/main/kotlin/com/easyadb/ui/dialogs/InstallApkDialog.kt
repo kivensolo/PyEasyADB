@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.FilenameFilter
@@ -83,7 +83,7 @@ fun InstallApkDialog(
                 Text(
                     text = "安装应用",
                     fontSize = 13.sp,
-                    color = EasyAdbColors.TextPrimary
+                    color = easyAdbColors.TextPrimary
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -128,19 +128,19 @@ fun InstallApkDialog(
                         checked = options.replace,
                         onCheckedChange = { options = options.copy(replace = it) }
                     )
-                    Text("替换安装", fontSize = 12.sp, color = EasyAdbColors.TextPrimary)
+                    Text("替换安装", fontSize = 12.sp, color = easyAdbColors.TextPrimary)
                     Box(modifier = Modifier.width(16.dp))
                     Checkbox(
                         checked = options.testApp,
                         onCheckedChange = { options = options.copy(testApp = it) }
                     )
-                    Text("Test包", fontSize = 12.sp, color = EasyAdbColors.TextPrimary)
+                    Text("Test包", fontSize = 12.sp, color = easyAdbColors.TextPrimary)
                     Box(modifier = Modifier.width(16.dp))
                     Checkbox(
                         checked = options.downgrade,
                         onCheckedChange = { options = options.copy(downgrade = it) }
                     )
-                    Text("降级安装", fontSize = 12.sp, color = EasyAdbColors.TextPrimary)
+                    Text("降级安装", fontSize = 12.sp, color = easyAdbColors.TextPrimary)
                 }
             }
         }

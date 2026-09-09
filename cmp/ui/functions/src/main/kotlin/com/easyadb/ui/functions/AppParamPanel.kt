@@ -39,7 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import java.util.prefs.Preferences
 
 /**
@@ -70,7 +70,7 @@ private fun CompactTextField(
     trailingIcon: @Composable (() -> Unit)? = null
 ) {
     val borderColor = Color(0xFFBDBDBD)
-    val focusedBorderColor = Color(0xFF1565C0) // EasyAdbColors.Primary
+    val focusedBorderColor = easyAdbColors.Primary
 
     Box(
         modifier = modifier
@@ -94,7 +94,7 @@ private fun CompactTextField(
                     maxLines = maxLines,
                     textStyle = TextStyle(
                         fontSize = 11.sp,
-                        color = EasyAdbColors.TextPrimary
+                        color = easyAdbColors.TextPrimary
                     ),
                     cursorBrush = SolidColor(focusedBorderColor),
                     keyboardOptions = keyboardOptions,
@@ -177,7 +177,7 @@ fun AppParamPanel(
                 text = "应用参数配置",
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
-                color = EasyAdbColors.TextPrimary
+                color = easyAdbColors.TextPrimary
             )
             Spacer(modifier = Modifier.height(6.dp))
 
@@ -186,7 +186,7 @@ fun AppParamPanel(
                 Text(
                     text = "包名:",
                     fontSize = 11.sp,
-                    color = EasyAdbColors.TextSecondary,
+                    color = easyAdbColors.TextSecondary,
                     modifier = Modifier.padding(end = labelEndPadding)
                 )
                 Box(modifier = Modifier.weight(1f)) {
@@ -274,7 +274,7 @@ fun AppParamPanel(
                 Text(
                     text = "Activity:",
                     fontSize = 11.sp,
-                    color = EasyAdbColors.TextSecondary,
+                    color = easyAdbColors.TextSecondary,
                     modifier = Modifier.padding(end = labelEndPadding)
                 )
                 CompactTextField(
@@ -293,7 +293,7 @@ fun AppParamPanel(
                 Text(
                     text = "Action:",
                     fontSize = 11.sp,
-                    color = EasyAdbColors.TextSecondary,
+                    color = easyAdbColors.TextSecondary,
                     modifier = Modifier.padding(end = labelEndPadding)
                 )
                 CompactTextField(
@@ -315,7 +315,7 @@ fun AppParamPanel(
                 Text(
                     text = "Extend:",
                     fontSize = 11.sp,
-                    color = EasyAdbColors.TextSecondary,
+                    color = easyAdbColors.TextSecondary,
                     modifier = Modifier.padding(end = labelEndPadding, top = 5.dp)
                 )
                 CompactTextField(

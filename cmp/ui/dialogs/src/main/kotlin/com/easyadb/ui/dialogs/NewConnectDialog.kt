@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.core.util.NetworkUtils
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 
 /**
  * 新建连接对话框。
@@ -63,7 +63,7 @@ fun NewConnectDialog(
                 Text(
                     text = "请输入设备 IP 地址：",
                     fontSize = 12.sp,
-                    color = EasyAdbColors.TextPrimary
+                    color = easyAdbColors.TextPrimary
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),

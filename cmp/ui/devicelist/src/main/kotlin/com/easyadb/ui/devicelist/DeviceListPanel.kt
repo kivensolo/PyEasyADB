@@ -34,7 +34,7 @@ import com.easyadb.core.config.CmdItem
 import com.easyadb.core.database.DeviceRecord
 import com.easyadb.core.device.DeviceInfo
 import com.easyadb.ui.designsystem.AppImages
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 
 /**
  * 一次完整的「设备 + 命令」树面板交互回调集合。
@@ -101,7 +101,7 @@ fun DeviceListPanel(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(EasyAdbColors.SurfaceVariant)
+            .background(easyAdbColors.SurfaceVariant)
     ) {
         // 顶部 header：对应 Python setHeaderData 的 "功能区"
         SectionHeader(text = "功能区")
@@ -137,7 +137,7 @@ fun DeviceListPanel(
                             Text(
                                 text = "暂无设备，点击「新建设备连接」",
                                 fontSize = 11.sp,
-                                color = EasyAdbColors.TextSecondary
+                                color = easyAdbColors.TextSecondary
                             )
                         }
                     }
@@ -190,7 +190,7 @@ fun DeviceListPanel(
 
             // 根节点之间的细分隔线（轻量）
             item(key = "divider.between") {
-                Divider(color = EasyAdbColors.Divider, thickness = 1.dp, modifier = Modifier.fillMaxWidth())
+                Divider(color = easyAdbColors.Divider, thickness = 1.dp, modifier = Modifier.fillMaxWidth())
             }
 
             // ── 命令列表根节点（可双击折叠） ──
@@ -308,13 +308,13 @@ private fun SectionHeader(text: String) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(EasyAdbColors.PanelHeader)
+            .background(easyAdbColors.PanelHeader)
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text = text,
             fontSize = 12.sp,
-            color = EasyAdbColors.TextPrimary
+            color = easyAdbColors.TextPrimary
         )
     }
 }

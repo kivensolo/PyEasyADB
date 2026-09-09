@@ -53,7 +53,7 @@ import androidx.compose.ui.unit.sp
 import com.easyadb.core.adb.LogcatEntry
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.log.LogLevel
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.LogColor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -277,7 +277,7 @@ fun LogcatPanel(
                 modifier = Modifier
                     .width(36.dp)
                     .fillMaxHeight()
-                    .background(EasyAdbColors.PanelHeader),
+                    .background(easyAdbColors.PanelHeader),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
@@ -289,7 +289,7 @@ fun LogcatPanel(
                     Icon(
                         Icons.Default.ArrowDownward,
                         contentDescription = if (autoScroll) "自动滚动" else "手动滚动",
-                        tint = if (autoScroll) EasyAdbColors.Primary else Color(0xFF757575),
+                        tint = if (autoScroll) easyAdbColors.Primary else Color(0xFF757575),
                         modifier = Modifier.width(18.dp).height(18.dp)
                     )
                 }

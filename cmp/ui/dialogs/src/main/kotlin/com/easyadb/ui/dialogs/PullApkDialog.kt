@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 
 /**
  * 可提取的应用信息。
@@ -132,7 +132,7 @@ fun PullApkDialog(
                     Box {
                         Surface(
                             modifier = Modifier.clickable { filterExpanded = true },
-                            color = EasyAdbColors.PanelHeader,
+                            color = easyAdbColors.PanelHeader,
                             elevation = 0.dp
                         ) {
                             Row(
@@ -166,12 +166,12 @@ fun PullApkDialog(
                 // ── 表头 ──
                 Row(
                     modifier = Modifier.fillMaxWidth()
-                        .background(EasyAdbColors.PanelHeader)
+                        .background(easyAdbColors.PanelHeader)
                         .padding(horizontal = 8.dp, vertical = 6.dp)
                 ) {
-                    Text("包名", modifier = Modifier.weight(1f), fontSize = 11.sp, color = EasyAdbColors.TextSecondary)
-                    Text("APK路径", modifier = Modifier.weight(1.5f), fontSize = 11.sp, color = EasyAdbColors.TextSecondary)
-                    Text("类型", modifier = Modifier.weight(0.4f), fontSize = 11.sp, color = EasyAdbColors.TextSecondary)
+                    Text("包名", modifier = Modifier.weight(1f), fontSize = 11.sp, color = easyAdbColors.TextSecondary)
+                    Text("APK路径", modifier = Modifier.weight(1.5f), fontSize = 11.sp, color = easyAdbColors.TextSecondary)
+                    Text("类型", modifier = Modifier.weight(0.4f), fontSize = 11.sp, color = easyAdbColors.TextSecondary)
                 }
 
                 // ── 应用列表 ──
@@ -181,7 +181,7 @@ fun PullApkDialog(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("正在加载应用列表...", color = EasyAdbColors.TextSecondary)
+                            Text("正在加载应用列表...", color = easyAdbColors.TextSecondary)
                         }
                     } else if (filteredApps.isEmpty()) {
                         Box(
@@ -190,7 +190,7 @@ fun PullApkDialog(
                         ) {
                             Text(
                                 if (apps.isEmpty()) "暂无数据，请点击刷新" else "无匹配结果",
-                                color = EasyAdbColors.TextSecondary
+                                color = easyAdbColors.TextSecondary
                             )
                         }
                     } else {
@@ -205,7 +205,7 @@ fun PullApkDialog(
                                     Row(
                                         modifier = Modifier.fillMaxWidth()
                                             .background(
-                                                if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.18f)
+                                                if (isSelected) easyAdbColors.Selected
                                                 else Color.Transparent
                                             )
                                             .clickable { selectedIndex = index }
@@ -218,7 +218,7 @@ fun PullApkDialog(
                                             overflow = TextOverflow.Ellipsis,
                                             fontFamily = FontFamily.Monospace,
                                             fontSize = 11.sp,
-                                            color = EasyAdbColors.TextPrimary
+                                            color = easyAdbColors.TextPrimary
                                         )
                                         Text(
                                             app.apkPath,
@@ -227,13 +227,13 @@ fun PullApkDialog(
                                             overflow = TextOverflow.Ellipsis,
                                             fontFamily = FontFamily.Monospace,
                                             fontSize = 11.sp,
-                                            color = EasyAdbColors.TextPrimary
+                                            color = easyAdbColors.TextPrimary
                                         )
                                         Text(
                                             if (app.isSystem) "系统" else "第三方",
                                             modifier = Modifier.weight(0.4f),
                                             fontSize = 11.sp,
-                                            color = EasyAdbColors.TextPrimary
+                                            color = easyAdbColors.TextPrimary
                                         )
                                     }
                                 }
@@ -259,7 +259,7 @@ fun PullApkDialog(
                     Text(
                         "共${filteredApps.size}条",
                         fontSize = 12.sp,
-                        color = EasyAdbColors.TextSecondary
+                        color = easyAdbColors.TextSecondary
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Button(

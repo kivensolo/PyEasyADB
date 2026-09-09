@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.ui.designsystem.AppIcons
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
 import java.awt.Cursor
 
 data class BottomTab(
@@ -112,7 +112,7 @@ private fun BottomTabHeader(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth().height(32.dp)
-            .background(EasyAdbColors.PanelHeader),
+            .background(easyAdbColors.PanelHeader),
         verticalAlignment = Alignment.CenterVertically
     ) {
         tabs.forEach { tab ->
@@ -126,7 +126,7 @@ private fun BottomTabHeader(
                 Text(
                     text = tab.title, fontSize = 12.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) MaterialTheme.colors.primary else EasyAdbColors.TextSecondary
+                    color = if (isSelected) MaterialTheme.colors.primary else easyAdbColors.TextSecondary
                 )
             }
         }
@@ -135,7 +135,7 @@ private fun BottomTabHeader(
             imageVector = if (isExpanded) AppIcons.ArrowDown else AppIcons.ArrowUp,
             contentDescription = if (isExpanded) "折叠" else "展开",
             modifier = Modifier.padding(horizontal = 8.dp).clickable { onToggleClick() },
-            tint = EasyAdbColors.TextSecondary
+            tint = easyAdbColors.TextSecondary
         )
     }
 }
