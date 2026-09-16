@@ -34,6 +34,8 @@ import com.easyadb.core.log.AppLogger
 import com.easyadb.core.log.LogConfig
 import com.easyadb.core.adb.AdbExecutor
 import com.easyadb.core.adb.LogcatStream
+import com.easyadb.core.adb.MirrorStartResult
+import com.easyadb.core.adb.ScrcpyLauncher
 import com.easyadb.ui.designsystem.EasyAdbTheme
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CustomActionHandler
@@ -163,6 +165,10 @@ fun main() {
         // PullApk 应用列表
         var pullableApps by remember { mutableStateOf<List<PullableApp>>(emptyList()) }
         var isLoadingApps by remember { mutableStateOf(false) }
+        // P8: Scrcpy 独立窗口镜像（状态由 launcher 的 StateFlow 推送，
+        // 用户直接关 scrcpy 窗口也会经 onExit 回置 Idle）
+        val scrcpyLauncher = remember { ScrcpyLauncher() }
+        val mirrorState by scrcpyLauncher.state.collectAsState()
 
         // 菜单快捷键映射：解析 menus_ui.xml 中各 action 的 shortcut（如 "Ctrl+N"、"Alt+H"）。
         // 快捷键此前仅在菜单项右侧作文本展示，未注册按键监听；现配合 Window.onKeyEvent 实现。
@@ -393,7 +399,40 @@ fun main() {
                     },
                     // P6 控制台 + Logcat 参数
                     consoleLogFlow = consoleLogFlow,
-                    logcatStream = logcatStream
+                    logcatStream = logcatStream,
+                    // P8 实时预览参数
+                    mirrorState = mirrorState,
+                    mirrorBinaryReady = scrcpyLauncher.isBinaryReady(),
+                    mirrorBinaryPath = scrcpyLauncher.primaryScrcpyExe.absolutePath,
+                    onMirrorStart = {
+                        val deviceIp = selectedDeviceIp
+                        if (deviceIp == null) {
+                            logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+                        } else {
+                            scope.launch {
+                                when (val result = scrcpyLauncher.start(deviceIp)) {
+                                    is MirrorStartResult.Success ->
+                                        logAppender("[镜像] scrcpy 已启动：$deviceIp（独立窗口「${ScrcpyLauncher.WINDOW_TITLE}」）", 2)
+                                    is MirrorStartResult.BinaryMissing -> {
+                                        logAppender("[镜像] 系统找不到 scrcpy：${result.expectedPath}", 4)
+                                        logAppender(
+                                            "[镜像] 请从 https://github.com/Genymobile/scrcpy/releases 下载 win64 版本" +
+                                                "（如 scrcpy-win64-v3.3.4.zip），解压后将文件夹改名为 scrcpy-win64，放入程序数据目录的 tool/ 下" +
+                                                "或运行目录的 tool/ 下；后续升级只需替换 scrcpy-win64 目录内的文件。", 4
+                                        )
+                                    }
+                                    is MirrorStartResult.StartFailed ->
+                                        logAppender("[镜像] 启动失败：${result.reason}（请确认设备 adb 连接正常、scrcpy 版本可用）", 4)
+                                    MirrorStartResult.AlreadyRunning ->
+                                        logAppender("[镜像] 实时预览已在运行中", 3)
+                                }
+                            }
+                        }
+                    },
+                    onMirrorStop = {
+                        scrcpyLauncher.stop()
+                        logAppender("[镜像] 已请求关闭实时预览", 2)
+                    }
                 )
 
                 // 备注设置弹窗（对齐 Python device_alis_edit_dialog）

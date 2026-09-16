@@ -19,7 +19,9 @@ import androidx.compose.ui.unit.sp
 import com.easyadb.ui.console.ConsolePanel
 import com.easyadb.ui.console.LogEntry
 import com.easyadb.ui.logcat.LogcatPanel
+import com.easyadb.ui.mirror.MirrorPanel
 import com.easyadb.core.adb.LogcatStream
+import com.easyadb.core.adb.MirrorState
 import com.easyadb.core.config.CmdGroup
 import com.easyadb.core.config.FunctionItem
 import com.easyadb.core.config.FunctionTemplate
@@ -198,7 +200,9 @@ private fun ToolBar(
  * ├── ToolBar           (工具栏：新建设备连接 / Shell / Root / Unroot)
  * ├── SplitPane         (水平拖拽分割面板)
  * │     ├── DeviceListPanel  (左栏：设备树 + 命令树)
- * │     └── FunctionPanel    (右栏：功能模板按钮网格) — P5
+ * │     └── CenterTabs       (右栏双 Tab：常用操作 / 设备实时预览，对齐 Python QTabWidget)
+ * │           ├── FunctionPanel (功能模板按钮网格) — P5
+ * │           └── MirrorPanel   (Scrcpy 独立窗口控制) — P8
  * └── BottomTabHost     (底部标签栏，可拖拽调整高度)
  *       ├── ConsolePanel     (控制台：应用自身日志) — P6
  *       └── LogcatPanel      (实时日志：设备 logcat) — P6
@@ -224,6 +228,13 @@ private fun ToolBar(
  * ### P6 控制台 + Logcat 参数
  * @param consoleLogFlow 控制台日志流（MutableStateFlow，支持清空操作）
  * @param logcatStream 设备 logcat 流管理器（控制启动/停止/过滤）
+ *
+ * ### P8 实时预览参数
+ * @param mirrorState 镜像状态（Idle / Running，由宿主的 ScrcpyLauncher 推送）
+ * @param mirrorBinaryReady scrcpy.exe 是否就绪（缺失时面板显示下载指引）
+ * @param mirrorBinaryPath scrcpy.exe 期望路径（指引文案用）
+ * @param onMirrorStart 点击「开启实时预览」
+ * @param onMirrorStop 点击「关闭实时预览」
  */
 @Composable
 fun MainWindowScreen(
@@ -245,7 +256,13 @@ fun MainWindowScreen(
     onFunctionItemClick: (FunctionItem, AppParamState) -> Unit = { _, _ -> },
     // P6 控制台 + Logcat 参数
     consoleLogFlow: MutableStateFlow<List<LogEntry>> = MutableStateFlow(emptyList()),
-    logcatStream: LogcatStream = LogcatStream()
+    logcatStream: LogcatStream = LogcatStream(),
+    // P8 实时预览参数
+    mirrorState: MirrorState = MirrorState.Idle,
+    mirrorBinaryReady: Boolean = false,
+    mirrorBinaryPath: String = "",
+    onMirrorStart: () -> Unit = {},
+    onMirrorStop: () -> Unit = {}
 ) {
     val bottomTabs = remember(selectedDeviceIp) {
         listOf(
@@ -292,15 +309,36 @@ fun MainWindowScreen(
                 )
             },
             rightPanel = { m ->
-                FunctionPanel(
-                    functionTemplates = functionTemplates,
-                    deviceIp = selectedDeviceIp,
-                    dbPackages = dbPackages,
-                    onPackageAdd = onPackageAdd,
-                    onPackageDelete = onPackageDelete,
-                    onItemClick = { item, state -> onFunctionItemClick(item, state) },
-                    modifier = m
-                )
+                // 右栏双 Tab（对齐 Python init_center_panel 的 QTabWidget：常用操作 / 设备实时预览）
+                var selectedCenterTab by remember { mutableStateOf(CENTER_TAB_FUNCTIONS) }
+                Column(modifier = m) {
+                    CenterTabHeader(
+                        selected = selectedCenterTab,
+                        onSelect = { selectedCenterTab = it }
+                    )
+                    Box(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                        when (selectedCenterTab) {
+                            CENTER_TAB_MIRROR -> MirrorPanel(
+                                deviceIp = selectedDeviceIp,
+                                mirrorState = mirrorState,
+                                binaryReady = mirrorBinaryReady,
+                                binaryPath = mirrorBinaryPath,
+                                onStart = onMirrorStart,
+                                onStop = onMirrorStop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                            else -> FunctionPanel(
+                                functionTemplates = functionTemplates,
+                                deviceIp = selectedDeviceIp,
+                                dbPackages = dbPackages,
+                                onPackageAdd = onPackageAdd,
+                                onPackageDelete = onPackageDelete,
+                                onItemClick = { item, state -> onFunctionItemClick(item, state) },
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+                    }
+                }
             }
         )
 
@@ -309,6 +347,58 @@ fun MainWindowScreen(
             modifier = Modifier.fillMaxWidth(),
             tabs = bottomTabs,
             defaultHeight = bottomTabDefaultHeight
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────
+// 右栏双 Tab（P8：常用操作 / 设备实时预览）
+// ─────────────────────────────────────────────────────────
+
+/** 右栏 Tab id：常用操作（P5 功能区） */
+private const val CENTER_TAB_FUNCTIONS = "functions"
+
+/** 右栏 Tab id：设备实时预览（P8 Scrcpy 独立窗口） */
+private const val CENTER_TAB_MIRROR = "mirror"
+
+/**
+ * 右栏顶部 Tab 头。视觉对齐底部标签栏的设计标准（PanelHeader 底色、32dp 高、
+ * 选中白底），对应 Python `center_panel` QTabWidget 的页签。
+ */
+@Composable
+private fun CenterTabHeader(selected: String, onSelect: (String) -> Unit) {
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth().height(32.dp).background(easyAdbColors.PanelHeader)
+        ) {
+            CenterTabItem(title = "常用操作", id = CENTER_TAB_FUNCTIONS, selectedId = selected, onSelect = onSelect)
+            CenterTabItem(title = "设备实时预览", id = CENTER_TAB_MIRROR, selectedId = selected, onSelect = onSelect)
+        }
+        Divider(color = easyAdbColors.Divider, thickness = 1.dp)
+    }
+}
+
+@Composable
+private fun RowScope.CenterTabItem(
+    title: String,
+    id: String,
+    selectedId: String,
+    onSelect: (String) -> Unit
+) {
+    val isSelected = id == selectedId
+    Box(
+        modifier = Modifier
+            .fillMaxHeight()
+            .background(if (isSelected) MaterialTheme.colors.surface else Color.Transparent)
+            .clickable(interactionSource = null, indication = null) { onSelect(id) }
+            .padding(horizontal = 16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = title,
+            fontSize = 12.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (isSelected) easyAdbColors.TextPrimary else easyAdbColors.TextSecondary
         )
     }
 }
