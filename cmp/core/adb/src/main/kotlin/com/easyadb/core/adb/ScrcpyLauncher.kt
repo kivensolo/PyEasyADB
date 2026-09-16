@@ -36,7 +36,7 @@ sealed class MirrorStartResult {
 
 /**
  * Scrcpy 独立窗口启动器（P8，对齐 Python `win32Wrapper.py::ScrcpyEmbedWidget` 中
- * 「启动独立 scrcpy 进程」部分；窗口嵌入是 P12 可选增强，此处不涉及）。
+ * 「启动独立 scrcpy 进程」部分；窗口嵌入是 P9 阶段内容，此处不涉及）。
  *
  * 与 Python 版的差异：
  * - Python 裸命令 `scrcpy ...` 依赖先 `addEnvVariable` 注入 PATH，这里直接用 exe 绝对路径；

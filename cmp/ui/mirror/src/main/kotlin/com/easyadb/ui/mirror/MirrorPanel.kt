@@ -23,7 +23,7 @@ import com.easyadb.ui.designsystem.easyAdbColors
  *
  * 对齐 Python `win32Wrapper.py::ScrcpyEmbedWidget` 的控制区：
  * - 「开启实时预览」/「关闭实时预览」按钮（状态互斥启用）
- * - 「嵌入模式」checkbox —— MVP 阶段灰掉（窗口嵌入是后续可选增强 P12）
+ * - 「嵌入模式」checkbox —— 暂灰掉（窗口嵌入是 P9 阶段的实现内容，完成后启用）
  * - scrcpy 二进制缺失时显示红色下载指引（对齐 Python 的 WARRING 文案）
  *
  * 进程生命周期由宿主持有的 [com.easyadb.core.adb.ScrcpyLauncher] 管理，
@@ -67,7 +67,7 @@ fun MirrorPanel(
             ) {
                 Text("关闭实时预览")
             }
-            // 嵌入模式：MVP 灰掉（后续可选增强，见迁移计划 P12）
+            // 嵌入模式：暂灰掉，待 P9（Scrcpy 嵌入模式）实现后启用
             Checkbox(checked = false, onCheckedChange = null, enabled = false)
             Text("嵌入模式", fontSize = 10.sp, color = easyAdbColors.TextSecondary)
             Text(
