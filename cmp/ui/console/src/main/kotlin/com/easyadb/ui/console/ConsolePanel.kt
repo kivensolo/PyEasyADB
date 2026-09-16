@@ -135,7 +135,7 @@ fun ConsolePanel(
             SelectionContainer {
                 LazyColumn(
                     state = listState,
-                    modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     itemsIndexed(logs.takeLast(logLimit), key = { index, entry -> "${entry.timestamp}-${entry.message.hashCode()}-$index" }) { _, entry ->
                         Text(
@@ -145,7 +145,12 @@ fun ConsolePanel(
                             color = LogColor.byLevel(entry.level),
                             maxLines = if ('\n' in entry.message) 16 else 3,
                             overflow = if ('\n' in entry.message) TextOverflow.Visible else TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(vertical = 1.dp)
+                            // fillMaxWidth 撑满整行 + padding 内置：短行右侧空白与行间距
+                            // 都落在 Text 布局边界内，选区可从任意空白处按住启动
+                            // （选区手势 pointerInput 挂在 Text 上，只响应边界内的按下）
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 4.dp, end = 4.dp, top = 1.dp, bottom = 1.dp)
                         )
                     }
                 }
