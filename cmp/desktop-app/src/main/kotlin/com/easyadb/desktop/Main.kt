@@ -1,6 +1,7 @@
 package com.easyadb.desktop
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -169,6 +170,12 @@ fun main() {
         // 用户直接关 scrcpy 窗口也会经 onExit 回置 Idle）
         val scrcpyLauncher = remember { ScrcpyLauncher() }
         val mirrorState by scrcpyLauncher.state.collectAsState()
+        // 镜像事件（异常退出诊断 / 转发清理）转到应用控制台，可见性不依赖文件日志
+        LaunchedEffect(Unit) {
+            scrcpyLauncher.events.collect { event ->
+                logAppender(event.message, if (event.isError) 4 else 2)
+            }
+        }
 
         // 菜单快捷键映射：解析 menus_ui.xml 中各 action 的 shortcut（如 "Ctrl+N"、"Alt+H"）。
         // 快捷键此前仅在菜单项右侧作文本展示，未注册按键监听；现配合 Window.onKeyEvent 实现。

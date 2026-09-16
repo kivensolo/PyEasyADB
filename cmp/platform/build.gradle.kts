@@ -20,7 +20,12 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.core)
             }
         }
-        val desktopMain by getting
+        val desktopMain by getting {
+            dependencies {
+                // Win32 窗口互操作（P9 Scrcpy 嵌入：FindWindow/SetParent/SetWindowPos 等）
+                implementation(libs.jna.platform)
+            }
+        }
     }
 }
 
