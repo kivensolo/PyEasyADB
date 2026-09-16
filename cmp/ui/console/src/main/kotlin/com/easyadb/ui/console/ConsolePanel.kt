@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Icon
@@ -129,20 +130,24 @@ fun ConsolePanel(
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
             )
 
-            LazyColumn(
-                state = listState,
-                modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
-            ) {
-                itemsIndexed(logs.takeLast(logLimit), key = { index, entry -> "${entry.timestamp}-${entry.message.hashCode()}-$index" }) { _, entry ->
-                    Text(
-                        text = "[${entry.timestamp}] ${entry.message}",
-                        fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
-                        color = LogColor.byLevel(entry.level),
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(vertical = 1.dp)
-                    )
+            // SelectionContainer 必须包住整个列表：每行各包一个会产生独立选区，
+            // 只能单行选择；共享一个容器才能拖动跨行复制
+            SelectionContainer {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize().padding(horizontal = 4.dp)
+                ) {
+                    itemsIndexed(logs.takeLast(logLimit), key = { index, entry -> "${entry.timestamp}-${entry.message.hashCode()}-$index" }) { _, entry ->
+                        Text(
+                            text = "[${entry.timestamp}] ${entry.message}",
+                            fontSize = 10.sp,
+                            fontFamily = FontFamily.Monospace,
+                            color = LogColor.byLevel(entry.level),
+                            maxLines = if ('\n' in entry.message) 16 else 3,
+                            overflow = if ('\n' in entry.message) TextOverflow.Visible else TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(vertical = 1.dp)
+                        )
+                    }
                 }
             }
         }
