@@ -365,6 +365,10 @@ fun LogcatPanel(
                         event.key == Key.C && lineRangeActive -> {
                         copyLineSelection(); true
                     }
+                    // 右键菜单打开时 Esc 关菜单（菜单 Popup 非 focusable，键盘事件走面板根）
+                    event.type == KeyEventType.KeyDown && event.key == Key.Escape && contextMenuVisible -> {
+                        contextMenuVisible = false; true
+                    }
                     event.type == KeyEventType.KeyDown && event.key == Key.Escape && lineRangeActive -> {
                         lineSelectAnchor = null; lineSelectEnd = null; true
                     }
@@ -631,167 +635,161 @@ fun LogcatPanel(
                     )
                 }
             } else {
-                // 桌面版 SelectionContainer 自带右键「复制/全选」默认菜单（内部经
-                // ContextMenuArea 实现），会与面板自定义菜单叠加弹出。这里覆写
-                // LocalTextContextMenu 为空实现抑制之：日志区右键只出「复制日志/清空」，
-                // 选中文字的复制仍走 Ctrl+C 不受影响
-                CompositionLocalProvider(LocalTextContextMenu provides NoTextContextMenu) {
-                    key(selectionGeneration) {
-                    SelectionContainer {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                            // 右键弹出快捷菜单（复制/清空），记录按下位置（px）作为菜单锚点
-                            .onPointerEvent(PointerEventType.Press) { event ->
-                                if (event.buttons.isSecondaryPressed) {
-                                    val pos = event.changes.first().position
-                                    contextMenuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
-                                    contextMenuVisible = true
-                                }
+                // 外层 Box 承载右键菜单锚点；滚动条与右键菜单 Popup 与 SelectionContainer
+                // 平级——Popup 挂在 SelectionContainer 子树内时，菜单项点击事件会在主窗口
+                // 与弹窗两棵组合树间路由，坐标换算抛 "layouts are not part of the same
+                // hierarchy"（NodeCoordinator.findCommonAncestor 跨窗口无共同祖先）。
+                // 另：桌面版 SelectionContainer 自带右键「复制/全选」默认菜单，用空实现
+                // 覆写 LocalTextContextMenu 抑制之
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxHeight()
+                        // 右键弹出快捷菜单（复制/清空），记录按下位置（px）作为菜单锚点
+                        .onPointerEvent(PointerEventType.Press) { event ->
+                            if (event.buttons.isSecondaryPressed) {
+                                val pos = event.changes.first().position
+                                contextMenuOffset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt())
+                                contextMenuVisible = true
                             }
-                    ) {
-                        val lineSelRange = lineSelectRange()
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 4.dp)
-                                // 列表主键按下（Initial 父→子遍历）：行选模式做整行区间
-                                // 选择并阻断字级手势；普通模式下若视口自上次选择按下后
-                                // 变化过，先换代重建 SelectionContainer 清悬空选区并吞掉
-                                // 本次按下（防 Compose 1.7 悬空 id 崩溃，再按一次正常选择）。
-                                // 挂 LazyColumn 而非外层 Box：滚动条是兄弟节点不在事件
-                                // 路由上，其拖拽不受任何影响
-                                .onPointerEvent(PointerEventType.Press, PointerEventPass.Initial) { event ->
-                                    if (event.buttons.isPrimaryPressed) {
-                                        val mark = pressViewportVersion
-                                        pressViewportVersion = viewportVersion
-                                        if (lineSelectMode) {
-                                            val seq = seqAtPosition(listState, event.changes.first().position.y)
-                                            if (seq != null) {
-                                                if (event.keyboardModifiers.pointerIsShiftPressed && lineSelectAnchor != null) {
-                                                    lineSelectEnd = seq
-                                                } else {
-                                                    lineSelectAnchor = seq
-                                                    lineSelectEnd = seq
-                                                }
-                                                event.changes.forEach { it.consume() }
-                                            }
-                                        } else if (mark >= 0 && mark != viewportVersion) {
-                                            selectionGeneration++
-                                            event.changes.forEach { it.consume() }
-                                        }
-                                    }
-                                }
-                                // Ctrl+滚轮缩放字号；消费掉滚轮事件避免列表同时滚动
-                                .pointerInput(Unit) {
-                                    awaitPointerEventScope {
-                                        while (true) {
-                                            val event = awaitPointerEvent()
-                                            if (event.type == PointerEventType.Scroll &&
-                                                event.keyboardModifiers.pointerIsCtrlPressed
-                                            ) {
-                                                val delta = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
-                                                if (delta != 0f) {
-                                                    logFontSize = (logFontSize.value + if (delta < 0f) 1f else -1f)
-                                                                        .coerceIn(9f, 20f).sp
+                        }
+                ) {
+                    val lineSelRange = lineSelectRange()
+                    CompositionLocalProvider(LocalTextContextMenu provides NoTextContextMenu) {
+                        key(selectionGeneration) {
+                            SelectionContainer {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .padding(horizontal = 4.dp)
+                                        // 列表主键按下（Initial 父→子遍历）：行选模式做整行区间
+                                        // 选择并阻断字级手势；普通模式下若视口自上次选择按下后
+                                        // 变化过，先换代重建 SelectionContainer 清悬空选区并吞掉
+                                        // 本次按下（防 Compose 1.7 悬空 id 崩溃，再按一次正常选择）。
+                                        // 挂 LazyColumn 而非外层 Box：滚动条是兄弟节点不在事件
+                                        // 路由上，其拖拽不受任何影响
+                                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Initial) { event ->
+                                            if (event.buttons.isPrimaryPressed) {
+                                                val mark = pressViewportVersion
+                                                pressViewportVersion = viewportVersion
+                                                if (lineSelectMode) {
+                                                    val seq = seqAtPosition(listState, event.changes.first().position.y)
+                                                    if (seq != null) {
+                                                        if (event.keyboardModifiers.pointerIsShiftPressed && lineSelectAnchor != null) {
+                                                            lineSelectEnd = seq
+                                                        } else {
+                                                            lineSelectAnchor = seq
+                                                            lineSelectEnd = seq
+                                                        }
+                                                        event.changes.forEach { it.consume() }
+                                                    }
+                                                } else if (mark >= 0 && mark != viewportVersion) {
+                                                    selectionGeneration++
                                                     event.changes.forEach { it.consume() }
                                                 }
                                             }
                                         }
-                                    }
-                                }
-                        ) {
-                            // seq 作稳定 key：内容 key 在重复行下必撞 key 崩溃，下标 key 在头部
-                            // 淘汰时全列表错位；seq 单调唯一，淘汰/追加下 LazyColumn 可精确增量更新
-                            itemsIndexed(logEntries, key = { _, it -> it.seq }) { _, entry ->
-                                val annotated = if (findQuery.isEmpty()) null
-                                    else buildHighlighted(entry.raw, findQuery, entry.seq == currentMatchSeq)
-                                val inLineSel = lineSelRange != null && entry.seq in lineSelRange
-                                Text(
-                                    text = annotated ?: AnnotatedString(entry.raw),
-                                    fontSize = logFontSize,
-                                    fontFamily = FontFamily.Monospace,
-                                    color = LogColor.byLevel(entry.level.value),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    // fillMaxWidth 撑满整行 + padding 内置：短行右侧空白也能起选；
-                                    // 行选区间整行铺选中底色
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(
-                                            if (inLineSel) easyAdbColors.Selected else Color.Transparent
-                                        )
-                                        .padding(vertical = 1.dp)
-                                )
-                            }
-                        }
-
-                        // 右侧滚动条：滑块随列表实时联动，支持拖动滑块与点击轨道滚动；
-                        // hover 到滚动条区域（12dp 宽轨道）时显示淡底色突出
-                        VerticalScrollbar(
-                            adapter = rememberScrollbarAdapter(listState),
-                            modifier = Modifier
-                                .align(Alignment.CenterEnd)
-                                .fillMaxHeight()
-                                .width(12.dp)
-                                .background(if (scrollbarHovered) easyAdbColors.Hover else Color.Transparent)
-                                .onPointerEvent(PointerEventType.Enter) { scrollbarHovered = true }
-                                .onPointerEvent(PointerEventType.Exit) { scrollbarHovered = false }
-                        )
-
-                        // 右键快捷菜单：复制=当前过滤视图全部内容写剪贴板（选中文字仍走 Ctrl+C），
-                        // 清空=与左侧工具栏清空按钮同款行为。用 Popup(TopStart) 锚定点击点固定
-                        // 向下展开——material DropdownMenu 的定位算法在点击处下方空间不足时会
-                        // 自动向上翻折，不符合预期
-                        if (contextMenuVisible) {
-                            Popup(
-                                alignment = Alignment.TopStart,
-                                offset = contextMenuOffset,
-                                onDismissRequest = { contextMenuVisible = false },
-                                focusable = true,
-                                onKeyEvent = { event ->
-                                    if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
-                                        contextMenuVisible = false
-                                        true
-                                    } else {
-                                        false
-                                    }
-                                }
-                            ) {
-                                Surface(
-                                    shape = RoundedCornerShape(6.dp),
-                                    elevation = 4.dp
-                                ) {
-                                    Column(modifier = Modifier.width(IntrinsicSize.Min)) {
-                                        // 行选区间存在时优先提供区间复制
-                                        lineSelectRange()?.let { range ->
-                                            ContextMenuItemRow(
-                                                "复制选中行（${logEntries.count { it.seq in range }} 条）"
-                                            ) {
-                                                contextMenuVisible = false
-                                                copyLineSelection()
+                                        // Ctrl+滚轮缩放字号；消费掉滚轮事件避免列表同时滚动
+                                        .pointerInput(Unit) {
+                                            awaitPointerEventScope {
+                                                while (true) {
+                                                    val event = awaitPointerEvent()
+                                                    if (event.type == PointerEventType.Scroll &&
+                                                        event.keyboardModifiers.pointerIsCtrlPressed
+                                                    ) {
+                                                        val delta = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
+                                                        if (delta != 0f) {
+                                                            logFontSize = (logFontSize.value + if (delta < 0f) 1f else -1f)
+                                                                                .coerceIn(9f, 20f).sp
+                                                            event.changes.forEach { it.consume() }
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
-                                        ContextMenuItemRow("复制日志（当前过滤视图）") {
-                                            contextMenuVisible = false
-                                            clipboard.setText(
-                                                AnnotatedString(logEntries.joinToString("\n") { it.raw })
-                                            )
-                                        }
-                                        ContextMenuItemRow("清空日志") {
-                                            contextMenuVisible = false
-                                            logEntries.clear()
-                                            logcatStream.clearDisplay()
-                                        }
+                                ) {
+                                    // seq 作稳定 key：内容 key 在重复行下必撞 key 崩溃，下标 key 在头部
+                                    // 淘汰时全列表错位；seq 单调唯一，淘汰/追加下 LazyColumn 可精确增量更新
+                                    itemsIndexed(logEntries, key = { _, it -> it.seq }) { _, entry ->
+                                        val annotated = if (findQuery.isEmpty()) null
+                                            else buildHighlighted(entry.raw, findQuery, entry.seq == currentMatchSeq)
+                                        val inLineSel = lineSelRange != null && entry.seq in lineSelRange
+                                        Text(
+                                            text = annotated ?: AnnotatedString(entry.raw),
+                                            fontSize = logFontSize,
+                                            fontFamily = FontFamily.Monospace,
+                                            color = LogColor.byLevel(entry.level.value),
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            // fillMaxWidth 撑满整行 + padding 内置：短行右侧空白也能起选；
+                                            // 行选区间整行铺选中底色
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .background(
+                                                    if (inLineSel) easyAdbColors.Selected else Color.Transparent
+                                                )
+                                                .padding(vertical = 1.dp)
+                                        )
                                     }
                                 }
                             }
                         }
                     }
+
+                    // 右侧滚动条：滑块随列表实时联动，支持拖动滑块与点击轨道滚动；
+                    // hover 到滚动条区域（12dp 宽轨道）时显示淡底色突出
+                    VerticalScrollbar(
+                        adapter = rememberScrollbarAdapter(listState),
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .fillMaxHeight()
+                            .width(12.dp)
+                            .background(if (scrollbarHovered) easyAdbColors.Hover else Color.Transparent)
+                            .onPointerEvent(PointerEventType.Enter) { scrollbarHovered = true }
+                            .onPointerEvent(PointerEventType.Exit) { scrollbarHovered = false }
+                    )
+
+                    // 右键快捷菜单：复制=当前过滤视图全部内容写剪贴板（选中文字仍走 Ctrl+C），
+                    // 清空=与左侧工具栏清空按钮同款行为。Popup(TopStart) 锚定点击点固定向下
+                    // 展开（material DropdownMenu 在下方空间不足时会向上翻折）；不用 focusable
+                    // ——焦点弹窗的事件路由是跨组合树坐标崩溃的另一半诱因，外点关闭由
+                    // onDismissRequest 承担、Esc 关闭走面板根快捷键
+                    if (contextMenuVisible) {
+                        Popup(
+                            alignment = Alignment.TopStart,
+                            offset = contextMenuOffset,
+                            onDismissRequest = { contextMenuVisible = false }
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                elevation = 4.dp
+                            ) {
+                                Column(modifier = Modifier.width(IntrinsicSize.Min)) {
+                                    // 行选区间存在时优先提供区间复制
+                                    lineSelectRange()?.let { range ->
+                                        ContextMenuItemRow(
+                                            "复制选中行（${logEntries.count { it.seq in range }} 条）"
+                                        ) {
+                                            contextMenuVisible = false
+                                            copyLineSelection()
+                                        }
+                                    }
+                                    ContextMenuItemRow("复制日志（当前过滤视图）") {
+                                        contextMenuVisible = false
+                                        clipboard.setText(
+                                            AnnotatedString(logEntries.joinToString("\n") { it.raw })
+                                        )
+                                    }
+                                    ContextMenuItemRow("清空日志") {
+                                        contextMenuVisible = false
+                                        logEntries.clear()
+                                        logcatStream.clearDisplay()
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
                 }
             }
         }

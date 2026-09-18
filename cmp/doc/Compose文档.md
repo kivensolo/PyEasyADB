@@ -110,3 +110,66 @@ var activeMenuIndex by remember { mutableStateOf<Int?>(null) }
 
 `remember` = 跨重组的局部缓存；`remember + mutableStateOf` = 跨重组且可触发重组的状态。
 私有状态用它在组件内留存，跨组件共享时向上提升（State Hoisting）。
+
+---
+
+# 报错速查：`IllegalArgumentException: layouts are not part of the same hierarchy`
+
+> 记录目的：报错成因与源码定位路径（修复方式因场景而异，不做记录）。
+> 定位版本：Compose Multiplatform 1.7.3（desktop）。
+
+## 一、唯一抛出点
+
+字符串 `layouts are not part of the same hierarchy` 在整个 Compose UI 模块中**只出现于一处**：
+
+```
+androidx.compose.ui.node.NodeCoordinator.findCommonAncestor$ui(NodeCoordinator other)
+```
+
+内部逻辑：沿两个 LayoutNode 的 `getParent()` 链向上找交汇；**任一链先到 null（根）仍未相遇即抛**。
+
+## 二、直接成因
+
+两个布局节点**没有共同的组合树祖先**。最典型场景：一个节点在主窗口组合树、另一个在
+**Popup / Dialog 的独立弹窗组合树**——桌面端弹窗是独立 window + 独立组合树，根部分叉，
+按定义不可能有共同祖先。任何跨这两棵树的"节点间坐标换算 / 关系计算"都会触发。
+
+## 三、典型触发链（指针事件路径，本工程两次遇到）
+
+```
+指针事件分发
+→ androidx.compose.ui.input.pointer.Node.buildCache(changes, layoutCoordinates, ...)
+    （把事件坐标从来源节点坐标换算到分发根坐标）
+→ LayoutCoordinates.localPositionOf-R5De75A(sourceCoordinates, offset)
+→ LookaheadLayoutCoordinates / NodeCoordinator
+→ findCommonAncestor$ui(other)  ← 两个节点分属主窗口与弹窗 → throw
+```
+
+即：**交互一旦涉及"弹窗 ↔ 主窗口"的指针/坐标跨界**（弹窗内点击牵动主窗口命中路径、
+弹窗内 hover、跨界拖拽等），就走这条路。
+
+## 四、快速定位方法（可复用）
+
+1. **找抛出类**：报错字符串在整个依赖里通常唯一，直接在 Gradle 缓存的 jar 里定位：
+
+   ```bash
+   # 解压候选 jar（foundation/ui 等 *-desktop-1.7.3.jar）后：
+   grep -ral --include="*.class" "报错子串" <解压目录>
+   # 注意：grep 命中 .class 二进制必须带 -a，否则静默返回 0 条（已踩坑）
+   ```
+
+2. **反汇编确认抛出方法与调用条件**：
+
+   ```bash
+   javap -c -p -classpath <解压目录> 'androidx.compose.ui.node.NodeCoordinator' \
+     | grep -B20 "same hierarchy"
+   ```
+
+3. **顺着唯一调用方上溯**：`findCommonAncestor` 的调用方是 `LookaheadLayoutCoordinates.localPositionOf`，
+   再往上 `Node.buildCache`（指针事件坐标缓存构建）——据此判定是"指针事件跨树路由"，
+   而非布局/测量问题。
+
+## 五、一句话成因
+
+**两个节点分属主窗口与弹窗两棵组合树，却被要求做"同树"关系计算**——看到此报错先找
+交互路径上有没有 Popup/Dialog 与主窗口内容的指针或坐标交互。
