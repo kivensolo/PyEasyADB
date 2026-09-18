@@ -44,7 +44,10 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
+import androidx.compose.material.icons.filled.ListAlt
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Delete
@@ -52,11 +55,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -69,12 +74,16 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.input.pointer.isCtrlPressed as pointerIsCtrlPressed
+import androidx.compose.ui.input.pointer.isShiftPressed as pointerIsShiftPressed
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -149,6 +158,40 @@ fun LogcatPanel(
     val clipboard = LocalClipboardManager.current
     // 滚动条 hover 状态：进入滚动条区域时给一条淡淡的轨道底色，突出可交互区域
     var scrollbarHovered by remember { mutableStateOf(false) }
+    // ── 选区代际：防 SelectionContainer 悬空选区崩溃 ──
+    // Compose 1.7 缺陷：LazyColumn 虚拟化把选中行滚出组合后，选区对象仍保留其
+    // selectableId；shift 扩展选区时 SelectionManager 的 compareBy 按 id 查
+    // MutableLongIntMap，缺 key 直接抛 NoSuchElementException（Cannot find value
+    // for key N）。对策：视口版本号（firstVisibleItemIndex 每变一次 +1）与"上次
+    // 列表按下时的版本"不一致，说明旧选区可能含已滚出组合的行——下一次列表主键
+    // 按下时换代重建 SelectionContainer 并吞掉该次按下（再按一次正常选择）。
+    // 换代推迟到按下而非滚动瞬间，避免重建打断进行中的滚动条拖拽/选区拖拽。
+    var selectionGeneration by remember { mutableStateOf(0) }
+    var viewportVersion by remember { mutableStateOf(0) }
+    var pressViewportVersion by remember { mutableStateOf(-1) }
+    LaunchedEffect(Unit) {
+        snapshotFlow { listState.firstVisibleItemIndex }.collect { viewportVersion++ }
+    }
+    // ── 行区间选择（方案 A）：以 seq 为锚的整行范围选择，不受 LazyColumn 虚拟化限制 ──
+    // 开启后点击行设锚点、Shift+点击行扩展端点，两行之间（当前过滤视图内）整行高亮；
+    // Ctrl+C / 右键「复制选中行」复制区间全文；Esc 清除。主键按下在预览阶段被消费，
+    // 字级选区手势被阻断（虚拟化列表的字级选择本就无法跨视口，见选区代际注释）
+    var lineSelectMode by remember { mutableStateOf(false) }
+    var lineSelectAnchor by remember { mutableStateOf<Long?>(null) }
+    var lineSelectEnd by remember { mutableStateOf<Long?>(null) }
+
+    fun lineSelectRange(): LongRange? {
+        val a = lineSelectAnchor ?: return null
+        val b = lineSelectEnd ?: return null
+        return minOf(a, b)..maxOf(a, b)
+    }
+
+    fun copyLineSelection() {
+        val range = lineSelectRange() ?: return
+        clipboard.setText(
+            AnnotatedString(logEntries.filter { it.seq in range }.joinToString("\n") { it.raw })
+        )
+    }
 
     // 过滤状态
     var selectedLevel by remember { mutableStateOf(LogLevel.DEBUG) }
@@ -305,17 +348,27 @@ fun LogcatPanel(
     Column(
         modifier = modifier
             .fillMaxSize()
-            // Ctrl+F 打开/聚焦 FindBar（面板内任意子项持有焦点时生效）
+            // Ctrl+F 打开/聚焦 FindBar（面板内任意子项持有焦点时生效）；
+            // 行选模式下 Ctrl+C 复制选中行区间、Esc 清除行选
             .onPreviewKeyEvent { event ->
-                if (event.type == KeyEventType.KeyDown && event.isCtrlPressed && event.key == Key.F) {
-                    if (findBarVisible) {
-                        runCatching { findInputFocus.requestFocus() }
-                    } else {
-                        findBarVisible = true // 聚焦由 LaunchedEffect(findBarVisible) 组合完成后处理
+                val lineRangeActive = lineSelectMode && lineSelectRange() != null
+                when {
+                    event.type == KeyEventType.KeyDown && event.isCtrlPressed && event.key == Key.F -> {
+                        if (findBarVisible) {
+                            runCatching { findInputFocus.requestFocus() }
+                        } else {
+                            findBarVisible = true // 聚焦由 LaunchedEffect(findBarVisible) 组合完成后处理
+                        }
+                        true
                     }
-                    true
-                } else {
-                    false
+                    event.type == KeyEventType.KeyDown && event.isCtrlPressed &&
+                        event.key == Key.C && lineRangeActive -> {
+                        copyLineSelection(); true
+                    }
+                    event.type == KeyEventType.KeyDown && event.key == Key.Escape && lineRangeActive -> {
+                        lineSelectAnchor = null; lineSelectEnd = null; true
+                    }
+                    else -> false
                 }
             }
     ) {
@@ -409,26 +462,6 @@ fun LogcatPanel(
                             }
                         }
                     )
-
-                    Spacer(modifier = Modifier.width(4.dp))
-
-                    // 启动/停止按钮
-                    if (isRunning) {
-                        IconButton(
-                            onClick = { stopLogcat() },
-                            modifier = Modifier.width(24.dp).height(24.dp)
-                        ) {
-                            Icon(Icons.Default.Stop, "停止", modifier = Modifier.width(16.dp).height(16.dp), tint = Color(0xFFD32F2F))
-                        }
-                    } else {
-                        IconButton(
-                            onClick = { startLogcat() },
-                            enabled = deviceIp != null,
-                            modifier = Modifier.width(24.dp).height(24.dp)
-                        ) {
-                            Icon(Icons.Default.PlayArrow, "启动", modifier = Modifier.width(16.dp).height(16.dp), tint = Color(0xFF2E7D32))
-                        }
-                    }
                 }
 
                 Row(
@@ -446,6 +479,14 @@ fun LogcatPanel(
                         fontSize = 9.sp,
                         color = Color(0xFF9E9E9E)
                     )
+                    lineSelectRange()?.let { range ->
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "行选 ${logEntries.count { it.seq in range }} 条",
+                            fontSize = 9.sp,
+                            color = Color(0xFF9E9E9E)
+                        )
+                    }
                 }
             }
         }
@@ -524,39 +565,56 @@ fun LogcatPanel(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
-                // 自动滚动图标：双下箭头（明确区别于 FindBar 的跳转箭头）；激活态加深色
-                // 圆角底框 + 白色图标，形成明确的开关视觉区分
-                IconButton(
-                    onClick = { autoScroll = !autoScroll },
-                    modifier = Modifier.width(32.dp).height(32.dp)
-                ) {
-                    Icon(
-                        Icons.Default.KeyboardDoubleArrowDown,
-                        contentDescription = if (autoScroll) "自动滚动" else "手动滚动",
-                        tint = if (autoScroll) Color.White else Color(0xFF757575),
-                        modifier = Modifier
-                            .background(
-                                if (autoScroll) easyAdbColors.Primary else Color.Transparent,
-                                RoundedCornerShape(5.dp)
-                            )
-                            .padding(3.dp)
-                            .width(18.dp).height(18.dp)
-                    )
-                }
-                // 清空图标
-                IconButton(
+                // ── 第1组：数据操作（清空 · 开始/停止采集）──
+                TooltipIconButton(
+                    tooltip = "清空日志",
                     onClick = {
                         logEntries.clear()
                         logcatStream.clearDisplay()
-                    },
-                    modifier = Modifier.width(32.dp).height(32.dp)
+                    }
+                ) {
+                    Icon(Icons.Default.Delete, null, tint = Color(0xFF757575), modifier = Modifier.width(18.dp).height(18.dp))
+                }
+                TooltipIconButton(
+                    tooltip = if (isRunning) "停止采集" else "开始采集",
+                    onClick = { if (isRunning) stopLogcat() else startLogcat() },
+                    enabled = !isRunning && deviceIp != null || isRunning
                 ) {
                     Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "清空",
-                        tint = Color(0xFF757575),
+                        if (isRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
+                        null,
+                        tint = if (isRunning) Color(0xFFD32F2F) else Color(0xFF2E7D32),
                         modifier = Modifier.width(18.dp).height(18.dp)
                     )
+                }
+
+                ToolbarDivider()
+
+                // ── 第2组：视图模式（自动滚动 · 行选模式）──
+                TooltipIconButton(
+                    tooltip = if (autoScroll) "自动滚动（点击关闭）" else "自动滚动（点击开启）",
+                    onClick = { autoScroll = !autoScroll }
+                ) {
+                    ModeIcon(Icons.Default.KeyboardDoubleArrowDown, autoScroll)
+                }
+                TooltipIconButton(
+                    tooltip = if (lineSelectMode) "行选模式（点击关闭）" else "行选模式（点击行设锚点，Shift+点击扩展区间）",
+                    onClick = {
+                        lineSelectMode = !lineSelectMode
+                        if (!lineSelectMode) { lineSelectAnchor = null; lineSelectEnd = null }
+                    }
+                ) {
+                    ModeIcon(Icons.Default.ListAlt, lineSelectMode)
+                }
+
+                ToolbarDivider()
+
+                // ── 第3组：日志导出/导入（占位，功能后续实现）──
+                TooltipIconButton(tooltip = "导出日志（待实现）", enabled = false, onClick = {}) {
+                    Icon(Icons.Default.FileDownload, null, tint = Color(0xFFBDBDBD), modifier = Modifier.width(18.dp).height(18.dp))
+                }
+                TooltipIconButton(tooltip = "导入日志（待实现）", enabled = false, onClick = {}) {
+                    Icon(Icons.Default.FileUpload, null, tint = Color(0xFFBDBDBD), modifier = Modifier.width(18.dp).height(18.dp))
                 }
             }
 
@@ -578,6 +636,7 @@ fun LogcatPanel(
                 // LocalTextContextMenu 为空实现抑制之：日志区右键只出「复制日志/清空」，
                 // 选中文字的复制仍走 Ctrl+C 不受影响
                 CompositionLocalProvider(LocalTextContextMenu provides NoTextContextMenu) {
+                    key(selectionGeneration) {
                     SelectionContainer {
                     Box(
                         modifier = Modifier
@@ -592,11 +651,39 @@ fun LogcatPanel(
                                 }
                             }
                     ) {
+                        val lineSelRange = lineSelectRange()
                         LazyColumn(
                             state = listState,
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 4.dp)
+                                // 列表主键按下（Initial 父→子遍历）：行选模式做整行区间
+                                // 选择并阻断字级手势；普通模式下若视口自上次选择按下后
+                                // 变化过，先换代重建 SelectionContainer 清悬空选区并吞掉
+                                // 本次按下（防 Compose 1.7 悬空 id 崩溃，再按一次正常选择）。
+                                // 挂 LazyColumn 而非外层 Box：滚动条是兄弟节点不在事件
+                                // 路由上，其拖拽不受任何影响
+                                .onPointerEvent(PointerEventType.Press, PointerEventPass.Initial) { event ->
+                                    if (event.buttons.isPrimaryPressed) {
+                                        val mark = pressViewportVersion
+                                        pressViewportVersion = viewportVersion
+                                        if (lineSelectMode) {
+                                            val seq = seqAtPosition(listState, event.changes.first().position.y)
+                                            if (seq != null) {
+                                                if (event.keyboardModifiers.pointerIsShiftPressed && lineSelectAnchor != null) {
+                                                    lineSelectEnd = seq
+                                                } else {
+                                                    lineSelectAnchor = seq
+                                                    lineSelectEnd = seq
+                                                }
+                                                event.changes.forEach { it.consume() }
+                                            }
+                                        } else if (mark >= 0 && mark != viewportVersion) {
+                                            selectionGeneration++
+                                            event.changes.forEach { it.consume() }
+                                        }
+                                    }
+                                }
                                 // Ctrl+滚轮缩放字号；消费掉滚轮事件避免列表同时滚动
                                 .pointerInput(Unit) {
                                     awaitPointerEventScope {
@@ -621,6 +708,7 @@ fun LogcatPanel(
                             itemsIndexed(logEntries, key = { _, it -> it.seq }) { _, entry ->
                                 val annotated = if (findQuery.isEmpty()) null
                                     else buildHighlighted(entry.raw, findQuery, entry.seq == currentMatchSeq)
+                                val inLineSel = lineSelRange != null && entry.seq in lineSelRange
                                 Text(
                                     text = annotated ?: AnnotatedString(entry.raw),
                                     fontSize = logFontSize,
@@ -628,8 +716,14 @@ fun LogcatPanel(
                                     color = LogColor.byLevel(entry.level.value),
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
-                                    // fillMaxWidth 撑满整行 + padding 内置：短行右侧空白也能起选
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 1.dp)
+                                    // fillMaxWidth 撑满整行 + padding 内置：短行右侧空白也能起选；
+                                    // 行选区间整行铺选中底色
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            if (inLineSel) easyAdbColors.Selected else Color.Transparent
+                                        )
+                                        .padding(vertical = 1.dp)
                                 )
                             }
                         }
@@ -671,6 +765,15 @@ fun LogcatPanel(
                                     elevation = 4.dp
                                 ) {
                                     Column(modifier = Modifier.width(IntrinsicSize.Min)) {
+                                        // 行选区间存在时优先提供区间复制
+                                        lineSelectRange()?.let { range ->
+                                            ContextMenuItemRow(
+                                                "复制选中行（${logEntries.count { it.seq in range }} 条）"
+                                            ) {
+                                                contextMenuVisible = false
+                                                copyLineSelection()
+                                            }
+                                        }
                                         ContextMenuItemRow("复制日志（当前过滤视图）") {
                                             contextMenuVisible = false
                                             clipboard.setText(
@@ -687,6 +790,7 @@ fun LogcatPanel(
                             }
                         }
                     }
+                    }
                 }
                 }
             }
@@ -697,6 +801,14 @@ fun LogcatPanel(
 /** seq → 列表位置（logEntries 按 seq 升序，二分查找）；未找到（已被淘汰/过滤）返回 -1 */
 private fun positionOf(entries: List<LogcatEntry>, seq: Long): Int =
     entries.binarySearch { it.seq.compareTo(seq) }
+
+/** 视口内点击纵坐标 → 行 seq（item key 即 seq；null 表示点在行间隙或视口外） */
+private fun seqAtPosition(listState: LazyListState, y: Float): Long? {
+    val info = listState.layoutInfo.visibleItemsInfo.firstOrNull {
+        y >= it.offset && y < it.offset + it.size
+    }
+    return info?.key as? Long
+}
 
 /** 展示层过滤：级别 + 关键字纯比较（解析在发射端完成，重滤无需 regex）。PID 过滤已立项后续 */
 private fun accepts(entry: LogcatEntry, level: LogLevel, keyword: String): Boolean =
@@ -739,6 +851,89 @@ private fun ContextMenuItemRow(label: String, onClick: () -> Unit) {
     ) {
         Text(label, fontSize = 12.sp, color = easyAdbColors.TextPrimary)
     }
+}
+
+/**
+ * 工具栏按钮 + hover 提示：鼠标悬停 ≥300ms 在按钮右侧弹出一个小气泡显示 [tooltip]。
+ * CMP 1.7.3 无 TooltipArea，用 Box + Popup 自建。气泡左缘锚定按钮左缘并向右偏移
+ * 一个按钮宽（CenterEnd + 向左伸展会把气泡盖回按钮上，指针进出气泡边界导致闪烁）
+ */
+@Composable
+private fun TooltipIconButton(
+    tooltip: String,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit
+) {
+    var hovered by remember { mutableStateOf(false) }
+    var showTip by remember { mutableStateOf(false) }
+    val density = LocalDensity.current
+    LaunchedEffect(hovered) {
+        if (hovered) {
+            delay(300)
+            showTip = true
+        } else {
+            showTip = false
+        }
+    }
+    Box {
+        IconButton(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = Modifier
+                .width(28.dp)
+                .height(28.dp)
+                .onPointerEvent(PointerEventType.Enter) { hovered = true }
+                .onPointerEvent(PointerEventType.Exit) { hovered = false }
+        ) { content() }
+        if (showTip) {
+            // 向右偏移一个按钮宽（28dp）+ 4dp 间隙，气泡整体落在按钮右侧
+            val offsetX = with(density) { 32.dp.roundToPx() }
+            Popup(alignment = Alignment.CenterStart, offset = IntOffset(offsetX, 0)) {
+                Surface(
+                    shape = RoundedCornerShape(4.dp),
+                    elevation = 3.dp,
+                    color = Color(0xFF424242)
+                ) {
+                    Text(
+                        tooltip,
+                        color = Color.White,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** 工具栏分组分隔线 */
+@Composable
+private fun ToolbarDivider() {
+    Box(
+        modifier = Modifier
+            .width(20.dp)
+            .height(1.dp)
+            .background(Color(0xFFBDBDBD))
+            .padding(vertical = 3.dp)
+    )
+}
+
+/** 视图模式开关图标：激活态淡主题色圆角底框 + 主题色图标 */
+@Composable
+private fun ModeIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, active: Boolean) {
+    Icon(
+        icon,
+        null,
+        tint = if (active) easyAdbColors.Primary else Color(0xFF757575),
+        modifier = Modifier
+            .background(
+                if (active) easyAdbColors.Primary.copy(alpha = 0.15f) else Color.Transparent,
+                RoundedCornerShape(5.dp)
+            )
+            .padding(3.dp)
+            .width(18.dp).height(18.dp)
+    )
 }
 
 /** 查询命中片段高亮：普通匹配浅黄底，当前匹配深琥珀底；大小写不敏感（v1 从简，无正则） */

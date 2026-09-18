@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.easyadb.ui.console
 
 import androidx.compose.foundation.background
@@ -25,12 +27,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.isPrimaryPressed
+import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,6 +92,18 @@ fun ConsolePanel(
         }
     }
 
+    // ── 选区代际：防 SelectionContainer 悬空选区崩溃（与 LogcatPanel 同款防护）──
+    // Compose 1.7 缺陷：LazyColumn 虚拟化把选中行滚出组合后，选区仍保留其 selectableId，
+    // shift 扩展选区时 SelectionManager 的 compareBy 按 id 查 MutableLongIntMap 缺 key
+    // 直接抛 NoSuchElementException。对策：视口版本号与上次按下版本不一致 → 下一次
+    // 主键按下时换代重建并吞掉该次按下（不在滚动瞬间换代，避免打断进行中的手势）。
+    var selectionGeneration by remember { mutableStateOf(0) }
+    var viewportVersion by remember { mutableStateOf(0) }
+    var pressViewportVersion by remember { mutableStateOf(-1) }
+    LaunchedEffect(Unit) {
+        snapshotFlow { listState.firstVisibleItemIndex }.collect { viewportVersion++ }
+    }
+
     Row(modifier = modifier.fillMaxSize()) {
         // ── 左侧垂直工具栏（对齐 Python 风格） ──
         Column(
@@ -131,8 +151,23 @@ fun ConsolePanel(
             )
 
             // SelectionContainer 必须包住整个列表：每行各包一个会产生独立选区，
-            // 只能单行选择；共享一个容器才能拖动跨行复制
-            SelectionContainer {
+            // 只能单行选择；共享一个容器才能拖动跨行复制；key 换代见上方"选区代际"说明。
+            // 按下处理走 Initial 遍历（先于容器内部的字级手势）
+            key(selectionGeneration) {
+                SelectionContainer(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .onPointerEvent(PointerEventType.Press, PointerEventPass.Initial) { event ->
+                            if (event.buttons.isPrimaryPressed) {
+                                val mark = pressViewportVersion
+                                pressViewportVersion = viewportVersion
+                                if (mark >= 0 && mark != viewportVersion) {
+                                    selectionGeneration++
+                                    event.changes.forEach { it.consume() }
+                                }
+                            }
+                        }
+                ) {
                 LazyColumn(
                     state = listState,
                     modifier = Modifier.fillMaxSize()
@@ -153,6 +188,7 @@ fun ConsolePanel(
                                 .padding(start = 4.dp, end = 4.dp, top = 1.dp, bottom = 1.dp)
                         )
                     }
+                }
                 }
             }
         }
