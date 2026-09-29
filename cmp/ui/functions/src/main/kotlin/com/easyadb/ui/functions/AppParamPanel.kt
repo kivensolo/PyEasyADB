@@ -69,7 +69,7 @@ private fun CompactTextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
     trailingIcon: @Composable (() -> Unit)? = null
 ) {
-    val borderColor = Color(0xFFBDBDBD)
+    val borderColor = easyAdbColors.Border
     val focusedBorderColor = easyAdbColors.Primary
 
     Box(
@@ -106,7 +106,7 @@ private fun CompactTextField(
                     Text(
                         text = placeholder,
                         fontSize = 11.sp,
-                        color = Color(0xFF9E9E9E)
+                        color = easyAdbColors.TextHint
                     )
                 }
             }

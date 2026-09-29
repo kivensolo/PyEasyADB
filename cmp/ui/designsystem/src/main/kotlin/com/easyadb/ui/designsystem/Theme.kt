@@ -6,7 +6,6 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.graphics.Color
 
 /** 由扩展调色板实例构建 Material 浅色槽位（工厂函数，避免顶层 val 引用静态色） */
 private fun lightPalette(c: EasyAdbColors) = lightColors(
@@ -15,7 +14,7 @@ private fun lightPalette(c: EasyAdbColors) = lightColors(
     secondary = c.PrimaryLight,
     background = c.Background,
     surface = c.Surface,
-    error = LogColor.Error,
+    error = c.LogError,
     onPrimary = c.TextOnPrimary,
     onSecondary = c.TextPrimary,
     onBackground = c.TextPrimary,
@@ -30,13 +29,33 @@ private fun darkPalette(c: EasyAdbColors) = darkColors(
     secondary = c.PrimaryLight,
     background = c.Background,
     surface = c.Surface,
-    error = LogColor.Error,
-    onPrimary = Color(0xFF0D47A1),
-    onSecondary = c.TextOnPrimary,
+    error = c.LogError,
+    onPrimary = c.TextOnPrimary,
+    onSecondary = c.TextPrimary,
     onBackground = c.TextPrimary,
     onSurface = c.TextPrimary,
     onError = c.TextOnPrimary
 )
+
+/**
+ * 主题三态选择。配置项 `[General] Theme` 持小写值 `system|light|dark`；
+ * 菜单「工具」下提供三项切换（当前态加 ✓ 前缀），选择即写回配置。
+ */
+enum class ThemeMode {
+    /** 跟随系统（`isSystemInDarkTheme()`），默认值 */
+    SYSTEM,
+    LIGHT,
+    DARK;
+
+    /** 配置文件中的小写取值 */
+    val configValue: String get() = name.lowercase()
+
+    companion object {
+        /** 从配置值解析，无效/缺省回落 [SYSTEM] */
+        fun fromConfigValue(value: String): ThemeMode =
+            entries.firstOrNull { it.configValue == value.trim().lowercase() } ?: SYSTEM
+    }
+}
 
 /**
  * EasyADB 主题组件。

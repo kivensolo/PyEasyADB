@@ -44,7 +44,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.ui.designsystem.easyAdbColors
-import com.easyadb.ui.designsystem.LogColor
+import com.easyadb.ui.designsystem.logColor
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -55,7 +55,7 @@ import java.time.format.DateTimeFormatter
  * 通过 [createLogFlow] 创建日志桥接，Main.kt 中调用返回的 appender 函数
  * 即可将日志推送到控制台面板。[timestamp] 为 HH:mm:ss 格式的时间戳，
  * [level] 对应 [LogLevel.value]（0=TRACE, 1=DEBUG, 2=INFO, 3=WARN, 4=ERROR），
- * 用于 [LogColor.byLevel] 着色。
+ * 用于 [logColor]（主题化日志级别色）着色。
  */
 data class LogEntry(
     val timestamp: String,
@@ -73,7 +73,7 @@ data class LogEntry(
  * - **数据源**：通过 [logFlow] 接收 [LogEntry] 列表，由 `collectAsState` 驱动 UI 重组。
  *   通过 [onClear] 回调清空日志。
  * - **渲染**：使用 `LazyColumn` 高效渲染，仅显示最近 1000 条。
- * - **着色**：日志级别颜色使用 [LogColor.byLevel] 映射，字体为 `Monospace`。
+ * - **着色**：日志级别颜色使用 [logColor] 映射（随明暗主题切换），字体为 `Monospace`。
  * - **自动滚动**：默认开启（图标高亮），新日志到达时自动滚动到底部；点击切换为手动滚动。
  */
 @Composable
@@ -122,7 +122,7 @@ fun ConsolePanel(
                 Icon(
                     Icons.Default.ArrowDownward,
                     contentDescription = if (autoScroll) "自动滚动" else "手动滚动",
-                    tint = if (autoScroll) easyAdbColors.Primary else Color(0xFF757575),
+                    tint = if (autoScroll) easyAdbColors.Primary else easyAdbColors.TextSecondary,
                     modifier = Modifier.width(18.dp).height(18.dp)
                 )
             }
@@ -134,7 +134,7 @@ fun ConsolePanel(
                 Icon(
                     Icons.Default.Delete,
                     contentDescription = "清空",
-                    tint = Color(0xFF757575),
+                    tint = easyAdbColors.TextSecondary,
                     modifier = Modifier.width(18.dp).height(18.dp)
                 )
             }
@@ -146,7 +146,7 @@ fun ConsolePanel(
             Text(
                 text = "共 ${logs.size} 条",
                 fontSize = 9.sp,
-                color = Color(0xFF9E9E9E),
+                color = easyAdbColors.TextHint,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
             )
 
@@ -177,7 +177,7 @@ fun ConsolePanel(
                             text = "[${entry.timestamp}] ${entry.message}",
                             fontSize = 10.sp,
                             fontFamily = FontFamily.Monospace,
-                            color = LogColor.byLevel(entry.level),
+                            color = logColor(entry.level),
                             maxLines = if ('\n' in entry.message) 16 else 3,
                             overflow = if ('\n' in entry.message) TextOverflow.Visible else TextOverflow.Ellipsis,
                             // fillMaxWidth 撑满整行 + padding 内置：短行右侧空白与行间距

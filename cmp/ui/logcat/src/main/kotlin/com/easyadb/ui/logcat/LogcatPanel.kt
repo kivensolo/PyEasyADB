@@ -98,7 +98,7 @@ import com.easyadb.core.adb.LogcatEntry
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.log.LogLevel
 import com.easyadb.ui.designsystem.easyAdbColors
-import com.easyadb.ui.designsystem.LogColor
+import com.easyadb.ui.designsystem.logColor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -118,7 +118,7 @@ import kotlin.math.roundToInt
  *   派生的子序列——条件变化全量重滤（entry 已带解析好的 level/pid，重滤零 regex，毫秒级），
  *   flush 增量追加通过条件的新行；被过滤的行仍在缓冲中，切回条件即恢复。
  *   PID 过滤（仅看选中应用，对应 Python `onlyShowSelectedApp`）已立项后续。
- * - **着色**：使用 [LogColor.byLevel] 对 [LogcatEntry.level] 着色，字体为 `Monospace`。
+ * - **着色**：使用 [logColor]（主题化日志级别色）对 [LogcatEntry.level] 着色，字体为 `Monospace`。
  * - **控制**：启动/停止按钮控制 `logcatJob` 的协程生命周期；停止时调用 `logcatStream.stop()`
  *   销毁底层 ADB 进程。
  * - **容量**：按内存预算而非条数管理（[LogcatBuffer]，默认 8MB ≈ 1.5~2 万行）——
@@ -380,7 +380,7 @@ fun LogcatPanel(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             elevation = 0.dp,
-            color = Color(0xFFF5F5F5)
+            color = easyAdbColors.SurfaceVariant
         ) {
             Column(
                 modifier = Modifier
@@ -395,7 +395,7 @@ fun LogcatPanel(
                     Text(
                         text = deviceIp ?: "未选中设备",
                         fontSize = 10.sp,
-                        color = Color(0xFF757575)
+                        color = easyAdbColors.TextSecondary
                     )
                     Spacer(modifier = Modifier.width(8.dp))
 
@@ -405,8 +405,8 @@ fun LogcatPanel(
                             onClick = { levelDropdownExpanded = true },
                             modifier = Modifier.height(24.dp),
                             colors = ButtonDefaults.buttonColors(
-                                backgroundColor = Color(0xFFE0E0E0),
-                                contentColor = Color(0xFF212121)
+                                backgroundColor = easyAdbColors.PanelHeader,
+                                contentColor = easyAdbColors.TextPrimary
                             ),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 0.dp),
                             shape = RoundedCornerShape(4.dp)
@@ -432,7 +432,7 @@ fun LogcatPanel(
                                     Text(
                                         "${level.name} (${level.shortName})",
                                         fontSize = 12.sp,
-                                        color = LogColor.byLevel(level.value)
+                                        color = logColor(level.value)
                                     )
                                 }
                             }
@@ -475,20 +475,20 @@ fun LogcatPanel(
                     Text(
                         text = "过滤后 ${logEntries.size} · 全量 ${logcatStream.buffer.size} 条",
                         fontSize = 9.sp,
-                        color = Color(0xFF9E9E9E)
+                        color = easyAdbColors.TextHint
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "缓冲 ${logcatStream.buffer.used / 1024} / ${logcatStream.buffer.budget / 1024} KB",
                         fontSize = 9.sp,
-                        color = Color(0xFF9E9E9E)
+                        color = easyAdbColors.TextHint
                     )
                     lineSelectRange()?.let { range ->
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "行选 ${logEntries.count { it.seq in range }} 条",
                             fontSize = 9.sp,
-                            color = Color(0xFF9E9E9E)
+                            color = easyAdbColors.TextHint
                         )
                     }
                 }
@@ -500,7 +500,7 @@ fun LogcatPanel(
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = 1.dp,
-                color = Color(0xFFF5F5F5)
+                color = easyAdbColors.SurfaceVariant
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
@@ -542,7 +542,7 @@ fun LogcatPanel(
                         },
                         fontSize = 10.sp,
                         fontFamily = FontFamily.Monospace,
-                        color = Color(0xFF616161),
+                        color = easyAdbColors.TextSecondary,
                         modifier = Modifier.padding(horizontal = 2.dp)
                     )
                     IconButton(onClick = { jumpMatch(false) }, modifier = Modifier.width(24.dp).height(24.dp)) {
@@ -577,7 +577,7 @@ fun LogcatPanel(
                         logcatStream.clearDisplay()
                     }
                 ) {
-                    Icon(Icons.Default.Delete, null, tint = Color(0xFF757575), modifier = Modifier.width(18.dp).height(18.dp))
+                    Icon(Icons.Default.Delete, null, tint = easyAdbColors.TextSecondary, modifier = Modifier.width(18.dp).height(18.dp))
                 }
                 TooltipIconButton(
                     tooltip = if (isRunning) "停止采集" else "开始采集",
@@ -587,7 +587,7 @@ fun LogcatPanel(
                     Icon(
                         if (isRunning) Icons.Default.Stop else Icons.Default.PlayArrow,
                         null,
-                        tint = if (isRunning) Color(0xFFD32F2F) else Color(0xFF2E7D32),
+                        tint = if (isRunning) easyAdbColors.LogError else easyAdbColors.StatusOnline,
                         modifier = Modifier.width(18.dp).height(18.dp)
                     )
                 }
@@ -615,10 +615,10 @@ fun LogcatPanel(
 
                 // ── 第3组：日志导出/导入（占位，功能后续实现）──
                 TooltipIconButton(tooltip = "导出日志（待实现）", enabled = false, onClick = {}) {
-                    Icon(Icons.Default.FileDownload, null, tint = Color(0xFFBDBDBD), modifier = Modifier.width(18.dp).height(18.dp))
+                    Icon(Icons.Default.FileDownload, null, tint = easyAdbColors.TextDisabled, modifier = Modifier.width(18.dp).height(18.dp))
                 }
                 TooltipIconButton(tooltip = "导入日志（待实现）", enabled = false, onClick = {}) {
-                    Icon(Icons.Default.FileUpload, null, tint = Color(0xFFBDBDBD), modifier = Modifier.width(18.dp).height(18.dp))
+                    Icon(Icons.Default.FileUpload, null, tint = easyAdbColors.TextDisabled, modifier = Modifier.width(18.dp).height(18.dp))
                 }
             }
 
@@ -631,7 +631,7 @@ fun LogcatPanel(
                     Text(
                         text = "请先在左侧设备列表中选择一个设备",
                         fontSize = 12.sp,
-                        color = Color(0xFFBDBDBD)
+                        color = easyAdbColors.TextDisabled
                     )
                 }
             } else {
@@ -719,7 +719,7 @@ fun LogcatPanel(
                                             text = annotated ?: AnnotatedString(entry.raw),
                                             fontSize = logFontSize,
                                             fontFamily = FontFamily.Monospace,
-                                            color = LogColor.byLevel(entry.level.value),
+                                            color = logColor(entry.level.value),
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,
                                             // fillMaxWidth 撑满整行 + padding 内置：短行右侧空白也能起选；
@@ -891,11 +891,11 @@ private fun TooltipIconButton(
                 Surface(
                     shape = RoundedCornerShape(4.dp),
                     elevation = 3.dp,
-                    color = Color(0xFF424242)
+                    color = easyAdbColors.TooltipBackground
                 ) {
                     Text(
                         tooltip,
-                        color = Color.White,
+                        color = easyAdbColors.TooltipText,
                         fontSize = 11.sp,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
@@ -912,7 +912,7 @@ private fun ToolbarDivider() {
         modifier = Modifier
             .width(20.dp)
             .height(1.dp)
-            .background(Color(0xFFBDBDBD))
+            .background(easyAdbColors.Divider)
             .padding(vertical = 3.dp)
     )
 }
@@ -923,7 +923,7 @@ private fun ModeIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, acti
     Icon(
         icon,
         null,
-        tint = if (active) easyAdbColors.Primary else Color(0xFF757575),
+        tint = if (active) easyAdbColors.Primary else easyAdbColors.TextSecondary,
         modifier = Modifier
             .background(
                 if (active) easyAdbColors.Primary.copy(alpha = 0.15f) else Color.Transparent,
@@ -935,6 +935,7 @@ private fun ModeIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, acti
 }
 
 /** 查询命中片段高亮：普通匹配浅黄底，当前匹配深琥珀底；大小写不敏感（v1 从简，无正则） */
+@Composable
 private fun buildHighlighted(raw: String, query: String, isCurrent: Boolean): AnnotatedString =
     buildAnnotatedString {
         append(raw)
@@ -943,7 +944,7 @@ private fun buildHighlighted(raw: String, query: String, isCurrent: Boolean): An
             val idx = raw.indexOf(query, startIndex = from, ignoreCase = true)
             if (idx < 0) break
             addStyle(
-                SpanStyle(background = if (isCurrent) Color(0xFFFFB300) else Color(0xFFFFE082)),
+                SpanStyle(background = if (isCurrent) easyAdbColors.FindCurrent else easyAdbColors.FindHighlight),
                 idx, idx + query.length
             )
             from = idx + query.length

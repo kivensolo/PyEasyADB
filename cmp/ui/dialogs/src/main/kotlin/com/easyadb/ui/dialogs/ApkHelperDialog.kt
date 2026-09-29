@@ -47,7 +47,7 @@ import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.core.apk.ApkInfo
 import com.easyadb.core.apk.ApkParseResult
 import com.easyadb.ui.designsystem.AppImages
-import com.easyadb.ui.designsystem.LogColor
+import com.easyadb.ui.designsystem.easyAdbColors
 import org.jetbrains.skia.Image as SkiaImage
 import java.awt.Toolkit
 import java.io.File
@@ -163,7 +163,7 @@ fun ApkHelperDialog(
                     },
                     fontSize = 13.sp,
                     color = if (parseResult is ApkParseResult.Failure) {
-                        LogColor.Error
+                        easyAdbColors.LogError
                     } else {
                         MaterialTheme.colors.onSurface
                     },

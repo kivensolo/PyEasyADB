@@ -34,7 +34,6 @@ import androidx.compose.ui.unit.sp
 import com.easyadb.core.adb.MirrorState
 import com.easyadb.core.adb.ScrcpyLauncher
 import com.easyadb.platform.Win32Interop
-import com.easyadb.ui.designsystem.LogColor
 import com.easyadb.ui.designsystem.easyAdbColors
 import kotlinx.coroutines.delay
 import java.awt.BorderLayout
@@ -150,7 +149,7 @@ fun MirrorPanel(
                 },
                 fontSize = 11.sp,
                 fontFamily = FontFamily.Monospace,
-                color = LogColor.Error
+                color = easyAdbColors.LogError
             )
         }
 
@@ -205,7 +204,8 @@ private fun EmbeddedScrcpyRegion(modifier: Modifier = Modifier) {
             }
     ) {
         SwingPanel(
-            background = Color.White,
+            // scrcpy 画面收编前的垫底色随主题（原 Color.White 在暗色下会白块闪烁）
+            background = easyAdbColors.Surface,
             factory = {
                 hostPanel.apply {
                     layout = BorderLayout()

@@ -1,5 +1,6 @@
 package com.easyadb.desktop
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,6 +39,7 @@ import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.adb.MirrorStartResult
 import com.easyadb.core.adb.ScrcpyLauncher
 import com.easyadb.ui.designsystem.EasyAdbTheme
+import com.easyadb.ui.designsystem.ThemeMode
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CustomActionHandler
 import com.easyadb.ui.home.MainWindowScreen
@@ -85,13 +87,21 @@ fun main() {
     appLogger.info { "AppData dir: ${AppPathsConfig.localAppDataPath}" }
 
     // ── Step 2: Config ──
-    val configFile = File(AppPathsConfig.appConfigIniFile)
-    if (configFile.exists()) {
-        AppConfigManager.initialize(configFile)
-        appLogger.info { "AppConfig.ini loaded" }
-    } else {
-        appLogger.warn { "AppConfig.ini not found, skipping" }
-    }
+    // 用户配置落可写位置（%LOCALAPPDATA%/EasyADB/data/AppConfig.ini），承载运行时设置
+    // （[General] Theme 等）；权限表等静态内容做种子：开发态取运行目录 res/config/，
+    // 打包态取 classpath（desktop-app 资源内 config/AppConfig.ini）。首次 save 起种子
+    // 内容一并并入用户文件，此后不再依赖种子。
+    val userConfigFile = File(AppPathsConfig.dataPath, "AppConfig.ini")
+    val seedFile = File(AppPathsConfig.appConfigIniFile)
+    val seedStream = Thread.currentThread().contextClassLoader
+        .getResourceAsStream("/config/AppConfig.ini")
+    AppConfigManager.initialize(userConfigFile, seedFile.takeIf { it.exists() }, seedStream)
+
+    // 主题初始态：读 [General] Theme（system|light|dark），缺省跟随系统
+    val initialThemeMode = ThemeMode.fromConfigValue(
+        AppConfigManager.getOrDefault(AppConfigManager.GENERAL_SECTION, "Theme", "system")
+    )
+    appLogger.info { "Theme mode: ${initialThemeMode.configValue}" }
 
     // ── Step 3: Database ──
     val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -177,10 +187,46 @@ fun main() {
             }
         }
 
+        // ── 主题三态（P11）：跟随系统/浅色/深色，菜单「工具」下切换，选择即写回配置 ──
+        var themeMode by remember { mutableStateOf(initialThemeMode) }
+        val applyThemeMode: (ThemeMode) -> Unit = { mode ->
+            themeMode = mode
+            AppConfigManager.set(AppConfigManager.GENERAL_SECTION, "Theme", mode.configValue)
+            if (AppConfigManager.save()) {
+                appLogger.info { "Theme switched: ${mode.configValue}" }
+            } else {
+                appLogger.warn { "Theme switched to ${mode.configValue} but config save failed" }
+            }
+        }
+        val darkTheme = when (themeMode) {
+            ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            ThemeMode.LIGHT -> false
+            ThemeMode.DARK -> true
+        }
+        // 「工具」菜单追加主题三项，当前态加 ✓ 前缀（随 themeMode 变化重建）
+        val menuConfigsForDisplay = remember(menuConfigs, themeMode) {
+            val themeActions = listOf(
+                MenuAction(
+                    name = if (themeMode == ThemeMode.SYSTEM) "✓ 跟随系统" else "跟随系统",
+                    action = "m_theme_system"
+                ),
+                MenuAction(
+                    name = if (themeMode == ThemeMode.LIGHT) "✓ 浅色" else "浅色",
+                    action = "m_theme_light"
+                ),
+                MenuAction(
+                    name = if (themeMode == ThemeMode.DARK) "✓ 深色" else "深色",
+                    action = "m_theme_dark"
+                )
+            )
+            menuConfigs.map { config ->
+                if (config.name == "工具") config.copy(actions = config.actions + themeActions) else config
+            }
+        }
         // 菜单快捷键映射：解析 menus_ui.xml 中各 action 的 shortcut（如 "Ctrl+N"、"Alt+H"）。
         // 快捷键此前仅在菜单项右侧作文本展示，未注册按键监听；现配合 Window.onKeyEvent 实现。
-        val shortcutActions = remember(menuConfigs) {
-            menuConfigs.flatMap { it.actions }
+        val shortcutActions = remember(menuConfigsForDisplay) {
+            menuConfigsForDisplay.flatMap { it.actions }
                 .mapNotNull { action -> parseShortcut(action.shortcut)?.let { spec -> spec to action } }
         }
         // 菜单 action 统一处理入口（菜单项点击与全局快捷键共用）
@@ -190,6 +236,9 @@ fun main() {
                 "m_close_app" -> exitApplication()
                 "m_open_log_page" -> openLogsFolder(appLogger, logAppender)
                 "m_open_about_page" -> showAboutDialog = true
+                "m_theme_system" -> applyThemeMode(ThemeMode.SYSTEM)
+                "m_theme_light" -> applyThemeMode(ThemeMode.LIGHT)
+                "m_theme_dark" -> applyThemeMode(ThemeMode.DARK)
                 "m_show_apk_helper_dialog" -> {
                     apkHelperResult = null
                     showApkHelperDialog = true
@@ -225,7 +274,7 @@ fun main() {
                 }
             }
         ) {
-            EasyAdbTheme {
+            EasyAdbTheme(darkTheme = darkTheme) {
                 val toolBarActions = rememberDefaultToolBarActions(
                     onAddDevice = {
                         appLogger.info { "ToolBar: 新建设备连接" }
@@ -335,7 +384,7 @@ fun main() {
                 MainWindowScreen(
                     modifier = Modifier.fillMaxSize(),
                     toolBarActions = toolBarActions,
-                    menuConfigs = menuConfigs,
+                    menuConfigs = menuConfigsForDisplay,
                     onMenuAction = handleAction,
                     dbDevices = dbDevices,
                     onlineDevices = onlineDevices,

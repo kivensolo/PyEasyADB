@@ -59,8 +59,8 @@ fun TemplateGrid(
                     .fillMaxWidth()
                     .padding(bottom = 8.dp),
                 shape = RoundedCornerShape(6.dp),
-                color = Color.White,
-                border = BorderStroke(1.dp, Color(0xFFE0E0E0)),
+                color = easyAdbColors.Surface,
+                border = BorderStroke(1.dp, easyAdbColors.Divider),
                 elevation = 0.dp
             ) {
                 Column(
@@ -128,7 +128,7 @@ private fun FunctionButton(
             .padding(3.dp)
             .heightIn(min = 72.dp),
         shape = RoundedCornerShape(6.dp),
-        color = Color.White,
+        color = easyAdbColors.Surface,
         elevation = 0.dp
     ) {
         Column(
@@ -148,7 +148,7 @@ private fun FunctionButton(
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
-                color = if (!isDisabled) easyAdbColors.TextPrimary else Color(0xFFBDBDBD),
+                color = if (!isDisabled) easyAdbColors.TextPrimary else easyAdbColors.TextDisabled,
                 modifier = Modifier.padding(horizontal = 2.dp)
             )
         }
