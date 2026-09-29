@@ -44,9 +44,21 @@ compose.desktop {
             copyright = "© 2026 EasyADB contributors"
             description = "EasyPyADB - Compose Multiplatform rewrite"
 
+            // jlink 按需模块：默认集(java.base/java.desktop/java.logging/jdk.crypto.ec)
+            // + suggestModules 建议的 4 个（java.sql=SQLite JDBC、jdk.unsupported=协程/JNA 的 Unsafe）。
+            // 运行时若报 NoClassDefFoundError/NoSuchMethodError 即缺模块，回这里补。
+            modules("java.instrument", "java.prefs", "java.sql", "jdk.unsupported")
+
             windows {
+                iconFile.set(project.file("icons/ic_app.ico"))
                 menuGroup = "EasyADB"
-                upgradeUuid = "8c7b3a92-4e1d-4f2b-9c5a-easyadb2026"
+                menu = true
+                shortcut = true
+                dirChooser = true
+                // 按用户安装到 %LOCALAPPDATA%\Programs：运行目录 logs 可写
+                // （日志约定写在运行目录下，Program Files 不可写）
+                perUserInstall = true
+                upgradeUuid = "321110fc-7cd8-480f-be13-630915dfef28"
             }
             macOS {
                 bundleID = "com.easyadb.desktop"
