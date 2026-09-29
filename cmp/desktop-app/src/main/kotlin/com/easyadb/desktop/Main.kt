@@ -202,7 +202,7 @@ fun main() {
             onCloseRequest = {
                 watcher.stop()
                 DbManager.close()
-                appLogger.close()
+                AppLogger.closeAll()
                 exitApplication()
             },
             title = "EasyADB",

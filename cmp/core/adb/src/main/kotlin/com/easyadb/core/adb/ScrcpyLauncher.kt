@@ -16,7 +16,7 @@ import kotlin.concurrent.thread
 
 /**
  * 面向用户的镜像事件（启动/退出诊断/清理），宿主收集后转发到应用控制台——
- * 可见性不依赖文件日志（RollingFileHandler 落盘问题待修）。
+ * 可见性不依赖文件日志。
  */
 data class MirrorEvent(val message: String, val isError: Boolean = false)
 
@@ -73,7 +73,7 @@ class ScrcpyLauncher {
     private val _events = MutableSharedFlow<MirrorEvent>(extraBufferCapacity = 16)
     val events: SharedFlow<MirrorEvent> = _events.asSharedFlow()
 
-    /** 诊断直写文件（UTF-8 追加）：RollingFileHandler 落盘失效期间的可靠可复制通道 */
+    /** 诊断直写文件（UTF-8 追加）：比 RollingFileHandler 更直观的 scrcpy 启动诊断通道 */
     private val debugLogFile: File by lazy { File(AppPathsConfig.logsPath, "scrcpy-debug.log") }
 
     /** 事件四通道：文件（UTF-8 可复制）+ 应用控制台 + stdout + 文件日志 */
