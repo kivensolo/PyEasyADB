@@ -1,5 +1,6 @@
 package com.easyadb.ui.home.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -112,23 +113,29 @@ fun EmbeddedConsoleHost(
             }
         }
 
-        // 内容区
+        // 内容区（双 Tab 切换同款淡入淡出过渡；chips 保持 chip 选中语言不加 ink）
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(currentHeight)
                 .background(easyAdbColors.Surface)
         ) {
-            when (selectedTab) {
-                1 -> LogcatPanel(
-                    deviceIp = deviceIp,
-                    logcatStream = logcatStream,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                else -> ConsolePanel(
-                    logFlow = consoleLogFlow,
-                    modifier = Modifier.fillMaxWidth()
-                )
+            AnimatedContent(
+                targetState = selectedTab,
+                transitionSpec = tabSwitchTransition(),
+                label = "embeddedTab"
+            ) { tab ->
+                when (tab) {
+                    1 -> LogcatPanel(
+                        deviceIp = deviceIp,
+                        logcatStream = logcatStream,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    else -> ConsolePanel(
+                        logFlow = consoleLogFlow,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             }
         }
     }

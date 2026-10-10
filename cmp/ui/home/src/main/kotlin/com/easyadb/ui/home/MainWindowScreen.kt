@@ -2,6 +2,10 @@
 
 package com.easyadb.ui.home
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,7 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -45,7 +54,10 @@ import com.easyadb.ui.console.LogEntry
 import com.easyadb.ui.home.components.EmbeddedConsoleHost
 import com.easyadb.ui.home.components.MenuBarDropdown
 import com.easyadb.ui.home.components.SplitPane
+import com.easyadb.ui.home.components.tabSwitchTransition
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 // ─────────────────────────────────────────────────────────
 // 顶部应用头栏（P12 布局大改）
@@ -225,10 +237,15 @@ private const val TAB_MIRROR = 4
 
 private val CONTENT_TAB_TITLES = listOf("快捷操作", "常用命令", "按键模拟", "文件传输", "实时预览")
 
+/** ink 指示条滑动时长（ms，对齐 HTML 参照稿 .tab-ink 的 transition .28s） */
+private const val TAB_INK_ANIM_MS = 280
+
 /**
- * 五 Tab 下划线行（对齐 HTML 参照稿 tabs）：高 44dp、文字 14sp、选中态主文字色
- * + 底部与文字等宽 2.5dp Primary 指示条；行尾为当前设备 chip（只读展示，
- * 选中/切换仍在左侧设备列表，未选中设备时不显示）。
+ * 五 Tab 下划线行（对齐 HTML 参照稿 tabs）：高 44dp、文字 14sp、选中态主文字色。
+ * 指示条为独立渐变 ink 层（PrimaryLight→Primary，贴行底），切 Tab 时 x/宽度以
+ * 280ms 平滑滑动到新位置（对齐 H5 moveInk 的 left/width 过渡），首次落位直接
+ * 显示不播动画；行尾为当前设备 chip（只读展示，选中/切换仍在左侧设备列表，
+ * 未选中设备时不显示）。
  */
 @Composable
 private fun ContentTabRow(
@@ -238,45 +255,93 @@ private fun ContentTabRow(
     dbDevices: List<DeviceRecord>,
     onlineDevices: List<DeviceInfo>
 ) {
-    Row(
+    // 各 Tab 的 (x, width) 像素测量（相对 tabs 行，随窗口布局变化自动重报）
+    var tabMetrics by remember {
+        mutableStateOf(Array(CONTENT_TAB_TITLES.size) { 0f to 0f })
+    }
+    // tabs 行相对外层 Box 的 x 偏移（当前布局为 0，测量值相加防未来加内边距错位）
+    var tabsOffsetX by remember { mutableStateOf(0f) }
+    val (inkTargetX, inkTargetW) = tabMetrics[selected].let { (x, w) -> (tabsOffsetX + x) to w }
+
+    val inkX = remember { Animatable(0f) }
+    val inkW = remember { Animatable(0f) }
+    var inkPlaced by remember { mutableStateOf(false) }
+
+    // 首个有效目标直接落位（避免启动时 ink 从 0 滑出），其后 280ms 滑动过渡
+    LaunchedEffect(inkTargetX, inkTargetW) {
+        if (inkTargetW <= 0f) return@LaunchedEffect
+        if (!inkPlaced) {
+            inkX.snapTo(inkTargetX)
+            inkW.snapTo(inkTargetW)
+            inkPlaced = true
+        } else {
+            launch {
+                inkX.animateTo(inkTargetX, tween(TAB_INK_ANIM_MS, easing = FastOutSlowInEasing))
+            }
+            launch {
+                inkW.animateTo(inkTargetW, tween(TAB_INK_ANIM_MS, easing = FastOutSlowInEasing))
+            }
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(44.dp)
-            .padding(horizontal = easyAdbTokens.spaceMd),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(horizontal = easyAdbTokens.spaceMd)
     ) {
-        CONTENT_TAB_TITLES.forEachIndexed { index, title ->
-            val isSelected = selected == index
-            Column(
-                modifier = Modifier
-                    // IntrinsicSize.Min：宽度收窄到文字宽度，等宽 ink 条才不会把同行其余 Tab 挤出
-                    .width(IntrinsicSize.Min)
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) { onSelect(index) }
-                    .padding(horizontal = 2.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = title,
-                    fontSize = 14.sp,
-                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isSelected) easyAdbColors.TextPrimary else easyAdbColors.TextSecondary
-                )
-                Spacer(Modifier.height(3.dp))
-                Box(
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .onGloballyPositioned { tabsOffsetX = it.positionInParent().x },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            CONTENT_TAB_TITLES.forEachIndexed { index, title ->
+                val isSelected = selected == index
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(2.5.dp)
-                        .clip(easyAdbTokens.shapeSm)
-                        .background(if (isSelected) easyAdbColors.Primary else Color.Transparent)
-                )
+                        // IntrinsicSize.Min：宽度收窄到文字宽度，ink 条与文字等宽
+                        .width(IntrinsicSize.Min)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { onSelect(index) }
+                        .onGloballyPositioned { coords ->
+                            tabMetrics = tabMetrics.copyOf().also {
+                                it[index] = coords.positionInParent().x to coords.size.width.toFloat()
+                            }
+                        }
+                        .padding(horizontal = 2.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = title,
+                        fontSize = 14.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (isSelected) easyAdbColors.TextPrimary else easyAdbColors.TextSecondary
+                    )
+                }
+                Spacer(Modifier.width(easyAdbTokens.spaceLg))
             }
-            Spacer(Modifier.width(easyAdbTokens.spaceLg))
         }
 
-        Spacer(Modifier.weight(1f))
+        // ink 指示条独立层：BottomStart 定位 + x/width 双 Animatable 平滑滑动
+        if (inkPlaced) {
+            val inkWidth = with(LocalDensity.current) { inkW.value.toDp() }
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .offset { IntOffset(inkX.value.roundToInt(), 0) }
+                    .width(inkWidth)
+                    .height(2.5.dp)
+                    .clip(easyAdbTokens.shapeSm)
+                    .background(
+                        Brush.horizontalGradient(
+                            listOf(easyAdbColors.PrimaryLight, easyAdbColors.Primary)
+                        )
+                    )
+            )
+        }
 
         // 当前设备 chip（对齐 HTML tabs-right .cur-dev：显示器图标 + 名称 · 地址）
         if (selectedDeviceIp != null) {
@@ -290,11 +355,13 @@ private fun ContentTabRow(
             val isOnline = remember(onlineDevices, deviceAddr) {
                 onlineDevices.any { it.name == deviceAddr }
             }
-            CurrentDeviceChip(
-                alias = record?.alias.orEmpty(),
-                deviceAddr = deviceAddr,
-                isOnline = isOnline
-            )
+            Box(modifier = Modifier.align(Alignment.CenterEnd)) {
+                CurrentDeviceChip(
+                    alias = record?.alias.orEmpty(),
+                    deviceAddr = deviceAddr,
+                    isOnline = isOnline
+                )
+            }
         }
     }
 }
@@ -494,58 +561,64 @@ fun MainWindowScreen(
                     )
                     Divider(color = easyAdbColors.Divider, thickness = 1.dp)
 
-                    // Tab 内容
+                    // Tab 内容（切换时新面板淡入+上移、旧面板快速淡出）
                     Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                        when (contentTab) {
-                            // 常用命令：seg 分组 + 命令行卡片（{pkg} 取参数卡包名）
-                            TAB_CMDS -> CommandsPanel(
-                                packageName = appParamState.selectedPackage,
-                                onRunCommand = onRunCommand,
-                                onCopyCommand = onCopyCommand,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            TAB_KEYS -> RemoteKeyPad(
-                                items = keysItems,
-                                onKeyClick = { item -> onFunctionItemClick(item, appParamState) },
-                                onCustomKey = onCustomKey,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            TAB_FILES -> TemplateGrid(
-                                items = filesItems,
-                                onItemClick = { item ->
-                                    if (item.action == "m_pull_apk") onPullApk()
-                                },
-                                onFileItemClick = { _, _ -> },
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            TAB_MIRROR -> MirrorPanel(
-                                deviceIp = selectedDeviceIp,
-                                mirrorState = mirrorState,
-                                binaryReady = mirrorBinaryReady,
-                                binaryPath = mirrorBinaryPath,
-                                onStart = onMirrorStart,
-                                onStop = onMirrorStop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                            // 快捷操作：参数卡(2×2) + 功能卡(13 项小卡+推送/拉取大卡，安装卡虚线拖拽)
-                            else -> FunctionPanel(
-                                items = quickItems,
-                                appParamState = appParamState,
-                                onParamStateChanged = { appParamState = it },
-                                dbPackages = dbPackages,
-                                onPackageAdd = onPackageAdd,
-                                onPackageDelete = onPackageDelete,
-                                onItemClick = onFunctionItemClick,
-                                onFileItemClick = { item, devicePath ->
-                                    when (item.action) {
-                                        "m_push_file" -> onPushFile(devicePath)
-                                        "m_pull_file" -> onPullFile(devicePath)
-                                    }
-                                },
-                                onApkDropped = onApkDropped,
-                                showParamBar = true,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                        AnimatedContent(
+                            targetState = contentTab,
+                            transitionSpec = tabSwitchTransition(),
+                            label = "contentTab"
+                        ) { tab ->
+                            when (tab) {
+                                // 常用命令：seg 分组 + 命令行卡片（{pkg} 取参数卡包名）
+                                TAB_CMDS -> CommandsPanel(
+                                    packageName = appParamState.selectedPackage,
+                                    onRunCommand = onRunCommand,
+                                    onCopyCommand = onCopyCommand,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                TAB_KEYS -> RemoteKeyPad(
+                                    items = keysItems,
+                                    onKeyClick = { item -> onFunctionItemClick(item, appParamState) },
+                                    onCustomKey = onCustomKey,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                TAB_FILES -> TemplateGrid(
+                                    items = filesItems,
+                                    onItemClick = { item ->
+                                        if (item.action == "m_pull_apk") onPullApk()
+                                    },
+                                    onFileItemClick = { _, _ -> },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                TAB_MIRROR -> MirrorPanel(
+                                    deviceIp = selectedDeviceIp,
+                                    mirrorState = mirrorState,
+                                    binaryReady = mirrorBinaryReady,
+                                    binaryPath = mirrorBinaryPath,
+                                    onStart = onMirrorStart,
+                                    onStop = onMirrorStop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                // 快捷操作：参数卡(2×2) + 功能卡(13 项小卡+推送/拉取大卡，安装卡虚线拖拽)
+                                else -> FunctionPanel(
+                                    items = quickItems,
+                                    appParamState = appParamState,
+                                    onParamStateChanged = { appParamState = it },
+                                    dbPackages = dbPackages,
+                                    onPackageAdd = onPackageAdd,
+                                    onPackageDelete = onPackageDelete,
+                                    onItemClick = onFunctionItemClick,
+                                    onFileItemClick = { item, devicePath ->
+                                        when (item.action) {
+                                            "m_push_file" -> onPushFile(devicePath)
+                                            "m_pull_file" -> onPullFile(devicePath)
+                                        }
+                                    },
+                                    onApkDropped = onApkDropped,
+                                    showParamBar = true,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
                         }
                     }
 
