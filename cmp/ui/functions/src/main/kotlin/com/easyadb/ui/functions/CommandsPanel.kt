@@ -2,6 +2,9 @@
 
 package com.easyadb.ui.functions
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -129,6 +132,9 @@ private val CMD_CATEGORIES = listOf(
 /** {pkg} 占位符缺省包名（对齐 H5 fillTpl：参数区包名为空时回退） */
 private const val DEFAULT_PKG = "com.example.app"
 
+/** H5 .seg button{transition:.15s}：仅非选中项 hover 提亮时渐变，选中切换瞬切 */
+private const val SEG_TRANSITION_MS = 150
+
 /**
  * 常用命令面板。
  *
@@ -171,25 +177,40 @@ fun CommandsPanel(
                 Row(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(easyAdbColors.PanelHeader)
+                        .background(easyAdbColors.SegTrack)
                         .border(easyAdbTokens.strokeWidth, easyAdbColors.Border, RoundedCornerShape(10.dp))
                         .padding(3.dp),
                     horizontalArrangement = Arrangement.spacedBy(2.dp)
                 ) {
                     CMD_CATEGORIES.forEachIndexed { index, cat ->
                         val active = index == curCat
+                        val segInteraction = remember { MutableInteractionSource() }
+                        val segHovered by segInteraction.collectIsHoveredAsState()
+                        // 选中切换完全瞬切（渐显/渐隐的中间态在小面积控件上感知为
+                        // 闪烁）；仅非选中项的 hover 提亮保留 H5 .15s 渐变
+                        val segBg = if (active) easyAdbColors.SegActiveBg else Color.Transparent
+                        val segText by animateColorAsState(
+                            targetValue = when {
+                                active -> easyAdbColors.SegActiveText
+                                segHovered -> easyAdbColors.TextPrimary // H5 hover 变主文字色
+                                else -> easyAdbColors.TextSecondary
+                            },
+                            animationSpec = if (segHovered && !active) tween(SEG_TRANSITION_MS) else snap(),
+                            label = "segText"
+                        )
                         Text(
                             text = cat.name,
                             fontSize = 12.5.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = if (active) easyAdbColors.TextPrimary else easyAdbColors.TextSecondary,
+                            color = segText,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (active) easyAdbColors.Selected else Color.Transparent)
+                                .background(segBg)
                                 .clickable(
-                                    interactionSource = remember { MutableInteractionSource() },
+                                    interactionSource = segInteraction,
                                     indication = null
                                 ) { curCat = index }
+                                .hoverable(segInteraction)
                                 .padding(horizontal = 14.dp, vertical = 6.dp)
                         )
                     }

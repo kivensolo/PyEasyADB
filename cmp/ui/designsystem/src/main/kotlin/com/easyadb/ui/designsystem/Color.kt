@@ -41,6 +41,14 @@ data class EasyAdbColors(
     /** 选中底色 */
     val Selected: Color,
 
+    // ── seg 分组按钮（常用命令工具条 .seg，H5 明暗各有字面覆盖色） ──
+    /** 分组容器底（H5 .seg：暗 = --field #0d1524 / 浅 = #eaeff8 覆盖） */
+    val SegTrack: Color,
+    /** 选中分组项底色（H5 .seg button.active：暗 #22335a / 浅 #ffffff） */
+    val SegActiveBg: Color,
+    /** 选中分组项文字（H5 .seg button.active：暗 #fff / 浅 #1d4ed8） */
+    val SegActiveText: Color,
+
     // ── 文字 ──
     val TextPrimary: Color,
     val TextSecondary: Color,
@@ -103,6 +111,9 @@ val LightEasyAdbColors = EasyAdbColors(
     StatusUnauthorized = Color(0xFFB45309), // --amber
     Hover = Color(0xFFE6EDF7),            // .wc:hover
     Selected = Color(0xFFE9F1FE),         // .dev-card.sel 渐变底（#eff5ff→#e9f1fe）
+    SegTrack = Color(0xFFEAEFF8),         // .seg 容器底（浅色覆盖）
+    SegActiveBg = Color(0xFFFFFFFF),      // .seg button.active 白底
+    SegActiveText = Color(0xFF1D4ED8),    // .seg button.active 蓝字
     TextPrimary = Color(0xFF1B2534),      // --tx
     TextSecondary = Color(0xFF5A6B82),    // --tx-2
     TextOnPrimary = Color(0xFFFFFFFF),
@@ -146,6 +157,9 @@ val DarkEasyAdbColors = EasyAdbColors(
     StatusUnauthorized = Color(0xFFFBBF24), // --amber（.dev-state.busy）
     Hover = Color(0xFF1A2740),            // .wc:hover / .frow:hover 同级
     Selected = Color(0xFF1B2A47),         // .dev-card.sel 渐变底（#17253e→#132036）
+    SegTrack = Color(0xFF0D1524),         // .seg 容器底（--field）
+    SegActiveBg = Color(0xFF22335A),      // .seg button.active
+    SegActiveText = Color(0xFFFFFFFF),    // .seg button.active 白字
     TextPrimary = Color(0xFFE6ECF6),      // --tx
     TextSecondary = Color(0xFF8FA0B8),    // --tx-2
     TextOnPrimary = Color(0xFFFFFFFF),    // .btn-primary 白字
