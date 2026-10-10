@@ -1,12 +1,24 @@
 package com.easyadb.platform
 
+import com.sun.jna.Memory
 import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef
 import com.sun.jna.platform.win32.WinUser
+import com.sun.jna.win32.StdCallLibrary
+import com.sun.jna.win32.W32APIOptions
 import java.awt.Component
+
+/** dwmapi.dll 最小绑定（JNA 5.14 未内置 Dwmapi）：仅 DwmSetWindowAttribute。 */
+private interface DwmApi : StdCallLibrary {
+    fun DwmSetWindowAttribute(hwnd: WinDef.HWND, attribute: WinDef.DWORD, value: Pointer, size: WinDef.DWORD): Int
+
+    companion object {
+        val INSTANCE: DwmApi = Native.load("dwmapi", DwmApi::class.java, W32APIOptions.DEFAULT_OPTIONS)
+    }
+}
 
 /** 窗口屏幕矩形快照（物理像素），避免 JNA 类型泄漏到调用方。 */
 data class Win32Rect(val left: Int, val top: Int, val right: Int, val bottom: Int) {
@@ -259,6 +271,44 @@ object Win32Interop {
         val okUp = User32.INSTANCE.SendInput(WinDef.DWORD(1), arrayOf(up), up.size()).toInt() == 1
         return okDown && okUp
     }
+
+    /**
+     * 把窗口原生标题栏染成应用主题色（P12 webUI：与应用头栏融为一体）。
+     *
+     * 走 DwmSetWindowAttribute：DWMWA_USE_IMMERSIVE_DARK_MODE(20) / DWMWA_CAPTION_COLOR(35) /
+     * DWMWA_TEXT_COLOR(36)。Windows 11（build 22000+）支持后两者；Win10 只支持暗亮模式切换，
+     * 设置失败静默返回 false，调用方无需任何回退逻辑。
+     *
+     * @param captionColorRef 标题栏底色，COLORREF 格式（0x00BBGGRR）
+     * @param textColorRef    标题文字色，COLORREF 格式
+     */
+    fun setCaptionColors(hwnd: Long, captionColorRef: Int, textColorRef: Int, darkMode: Boolean): Boolean {
+        if (!isWindows) return false
+        return runCatching {
+            val dwm = DwmApi.INSTANCE
+            fun setDword(attr: Int, value: Int): Boolean {
+                Memory(4).use { mem ->
+                    mem.setInt(0, value)
+                    return dwm.DwmSetWindowAttribute(h(hwnd), WinDef.DWORD(attr.toLong()), mem, WinDef.DWORD(4)) == 0
+                }
+            }
+            setDword(DWMWA_USE_IMMERSIVE_DARK_MODE, if (darkMode) 1 else 0)
+            setDword(DWMWA_CAPTION_COLOR, captionColorRef)
+            setDword(DWMWA_TEXT_COLOR, textColorRef)
+        }.getOrDefault(false)
+    }
+
+    /** ARGB(0xAARRGGBB) → COLORREF(0x00BBGGRR) */
+    fun argbToColorRef(argb: Int): Int {
+        val r = (argb shr 16) and 0xFF
+        val g = (argb shr 8) and 0xFF
+        val b = argb and 0xFF
+        return (b shl 16) or (g shl 8) or r
+    }
+
+    private const val DWMWA_USE_IMMERSIVE_DARK_MODE = 20
+    private const val DWMWA_CAPTION_COLOR = 35
+    private const val DWMWA_TEXT_COLOR = 36
 
     private const val MAPVK_VK_TO_VSC_EX = 4
 }

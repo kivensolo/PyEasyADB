@@ -208,7 +208,8 @@ private fun PlaygroundScreen(
         val entry = entries.firstOrNull { it.id == id } ?: return@forEach
         key(entry.id) {
             // content 为函数类型属性，只能按位置传参（不支持命名参数）
-            entry.content({ onToggleEntry(id) }, onLog)
+            // darkTheme 显式传入：DialogWindow 是独立组合根，CompositionLocal 不跨窗口传播
+            entry.content(darkTheme, { onToggleEntry(id) }, onLog)
         }
     }
 }
@@ -398,7 +399,7 @@ private class DialogEntry(
     val group: String,
     val component: String,
     val state: String,
-    val content: @Composable (onDismiss: () -> Unit, log: (String) -> Unit) -> Unit
+    val content: @Composable (darkTheme: Boolean, onDismiss: () -> Unit, log: (String) -> Unit) -> Unit
 )
 
 /** ApkHelperDialog「解析成功」状态用的假数据（iconFilePath 留空 → 图标区显示占位）。 */
@@ -446,11 +447,19 @@ private val demoApps = listOf(
 /** 画廊全部入口。同一个组件的多个状态（如 ApkHelperDialog）各自一条，便于并排对比。 */
 private val entries = listOf(
     DialogEntry(
+        id = "token-showcase",
+        group = "设计 Token",
+        component = "TokenShowcaseDialog",
+        state = "圆角/间距/elevation/描边/色板 · 明暗并排"
+    ) { darkTheme, onDismiss, _ ->
+        TokenShowcaseDialog(darkTheme = darkTheme, onDismiss = onDismiss)
+    },
+    DialogEntry(
         id = "text-input",
         group = "基础输入",
         component = "TextInputDialog",
         state = "多行输入 + 清空 / 输入"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         TextInputDialog(
             onDismiss = onDismiss,
             onInput = { text ->
@@ -464,7 +473,7 @@ private val entries = listOf(
         group = "基础输入",
         component = "AddPackageDialog",
         state = "包名输入 + Add（未接入主流程）"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         AddPackageDialog(
             onDismiss = onDismiss,
             onAdd = { pkg ->
@@ -478,7 +487,7 @@ private val entries = listOf(
         group = "基础输入",
         component = "NewConnectDialog",
         state = "IP 格式校验 + 自动补 :5555"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         NewConnectDialog(
             onDismiss = onDismiss,
             onConnect = { ip ->
@@ -492,7 +501,7 @@ private val entries = listOf(
         group = "应用操作",
         component = "InstallApkDialog",
         state = "路径输入 / 浏览 / 拖拽 + 三个安装选项"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         InstallApkDialog(
             onDismiss = onDismiss,
             onInstall = { apkPath, options ->
@@ -509,7 +518,7 @@ private val entries = listOf(
         group = "应用操作",
         component = "ApkHelperDialog",
         state = "未解析（拖入真实 APK 只打印回调）"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         ApkHelperDialog(
             parseResult = null,
             isParsing = false,
@@ -522,7 +531,7 @@ private val entries = listOf(
         group = "应用操作",
         component = "ApkHelperDialog",
         state = "解析成功（假数据）"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         ApkHelperDialog(
             parseResult = ApkParseResult.Success(demoApkInfo),
             isParsing = false,
@@ -535,7 +544,7 @@ private val entries = listOf(
         group = "应用操作",
         component = "ApkHelperDialog",
         state = "解析失败（红字错误提示）"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         ApkHelperDialog(
             parseResult = ApkParseResult.Failure("ERROR: AssetManager.java 语义错误，apk 包体损坏或非标准 zip 格式（示例错误）"),
             isParsing = false,
@@ -548,7 +557,7 @@ private val entries = listOf(
         group = "应用操作",
         component = "ApkHelperDialog",
         state = "解析中（底部「解析中....」）"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         ApkHelperDialog(
             parseResult = null,
             isParsing = true,
@@ -561,7 +570,7 @@ private val entries = listOf(
         group = "应用操作",
         component = "PullApkDialog",
         state = "空列表 → 刷新模拟加载 → 数据（可搜索 / 筛选 / 选中）"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         var apps by remember { mutableStateOf<List<PullableApp>>(emptyList()) }
         var loading by remember { mutableStateOf(false) }
         LaunchedEffect(loading) {
@@ -587,7 +596,7 @@ private val entries = listOf(
         group = "其他",
         component = "ScreenRecordDialog",
         state = "可交互：开始后实时倒计时，归零自动结束"
-    ) { onDismiss, log ->
+    ) { _, onDismiss, log ->
         var recording by remember { mutableStateOf(false) }
         var remaining by remember { mutableStateOf(0) }
         LaunchedEffect(recording) {
@@ -624,7 +633,7 @@ private val entries = listOf(
         group = "其他",
         component = "AboutDialog",
         state = "版本信息 + GitHub 链接（点击真开浏览器）"
-    ) { onDismiss, _ ->
+    ) { _, onDismiss, _ ->
         AboutDialog(onDismiss = onDismiss)
     }
 )

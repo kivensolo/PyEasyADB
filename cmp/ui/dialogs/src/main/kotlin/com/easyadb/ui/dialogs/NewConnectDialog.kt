@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
@@ -20,12 +21,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.core.util.NetworkUtils
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 
 /**
  * 新建连接对话框。
@@ -52,12 +55,12 @@ fun NewConnectDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colors.surface
+            color = easyAdbColors.Surface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = easyAdbTokens.spaceLg, vertical = easyAdbTokens.spaceMd),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
@@ -80,7 +83,8 @@ fun NewConnectDialog(
                         modifier = Modifier.weight(1f),
                         isError = errorMsg != null
                     )
-                    Box(modifier = Modifier.width(8.dp))
+                    Box(modifier = Modifier.width(easyAdbTokens.spaceSm))
+                    // 主确认动作：品牌色实底按钮（P12 webUI 语言）
                     Button(
                         enabled = ipText.isNotBlank(),
                         onClick = {
@@ -91,7 +95,13 @@ fun NewConnectDialog(
                             } else {
                                 errorMsg = "无效的 IP 地址格式"
                             }
-                        }
+                        },
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Primary,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text("连接")
                     }
@@ -102,7 +112,7 @@ fun NewConnectDialog(
                         text = errorMsg!!,
                         color = MaterialTheme.colors.error,
                         fontSize = 11.sp,
-                        modifier = Modifier.padding(start = 4.dp)
+                        modifier = Modifier.padding(start = easyAdbTokens.spaceXs)
                     )
                 }
             }

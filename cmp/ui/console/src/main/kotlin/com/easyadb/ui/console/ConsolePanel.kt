@@ -3,6 +3,7 @@
 package com.easyadb.ui.console
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,13 +13,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
@@ -34,6 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -41,9 +44,13 @@ import androidx.compose.ui.input.pointer.isPrimaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
+import com.easyadb.ui.designsystem.hoverBackground
 import com.easyadb.ui.designsystem.logColor
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.time.LocalTime
@@ -105,35 +112,39 @@ fun ConsolePanel(
     }
 
     Row(modifier = modifier.fillMaxSize()) {
-        // ── 左侧垂直工具栏（对齐 Python 风格） ──
+        // ── 左侧垂直工具栏（P12 翻新：Surface 底 + 圆角 chip 图标按钮，开关类激活淡主题色底框） ──
         Column(
             modifier = Modifier
                 .width(36.dp)
                 .fillMaxHeight()
-                .background(easyAdbColors.PanelHeader),
+                .background(easyAdbColors.Surface),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            // 自动滚动图标（Python 中对应滚动到底部按钮）
-            IconButton(
+            Spacer(modifier = Modifier.height(easyAdbTokens.spaceSm))
+            // 自动滚动开关（激活态：淡主题色底框 + 主题色图标，对齐 LogcatPanel 工具栏语言）
+            ConsoleToolButton(
                 onClick = { autoScroll = !autoScroll },
-                modifier = Modifier.width(32.dp).height(32.dp)
+                active = autoScroll,
+                desc = if (autoScroll) "自动滚动" else "手动滚动"
             ) {
                 Icon(
                     Icons.Default.ArrowDownward,
-                    contentDescription = if (autoScroll) "自动滚动" else "手动滚动",
+                    contentDescription = null,
                     tint = if (autoScroll) easyAdbColors.Primary else easyAdbColors.TextSecondary,
                     modifier = Modifier.width(18.dp).height(18.dp)
                 )
             }
-            // 清空图标
-            IconButton(
+            Spacer(modifier = Modifier.height(easyAdbTokens.spaceXs))
+            // 清空
+            ConsoleToolButton(
                 onClick = { logFlow.value = emptyList() },
-                modifier = Modifier.width(32.dp).height(32.dp)
+                active = false,
+                desc = "清空"
             ) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "清空",
+                    contentDescription = null,
                     tint = easyAdbColors.TextSecondary,
                     modifier = Modifier.width(18.dp).height(18.dp)
                 )
@@ -192,6 +203,31 @@ fun ConsolePanel(
                 }
             }
         }
+    }
+}
+
+/**
+ * 控制台工具栏按钮（P12）：28dp 圆角 chip，悬浮淡底，开关类按钮激活时淡主题色底框
+ * （与 LogcatPanel 工具栏语言一致）。
+ */
+@Composable
+private fun ConsoleToolButton(
+    onClick: () -> Unit,
+    active: Boolean,
+    desc: String,
+    content: @Composable () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(28.dp)
+            .clip(easyAdbTokens.shapeMd)
+            .background(if (active) easyAdbColors.Primary.copy(alpha = 0.15f) else Color.Transparent)
+            .hoverBackground(shape = easyAdbTokens.shapeMd)
+            .clickable(interactionSource = null, indication = null, onClick = onClick)
+            .semantics { contentDescription = desc },
+        contentAlignment = Alignment.Center
+    ) {
+        content()
     }
 }
 

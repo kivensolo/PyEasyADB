@@ -1,5 +1,6 @@
 package com.easyadb.ui.mirror
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +37,7 @@ import com.easyadb.core.adb.MirrorState
 import com.easyadb.core.adb.ScrcpyLauncher
 import com.easyadb.platform.Win32Interop
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 import kotlinx.coroutines.delay
 import java.awt.BorderLayout
 import java.awt.Canvas
@@ -74,23 +77,36 @@ fun MirrorPanel(
     var embedEnabled by remember { mutableStateOf(false) }
 
     Column(
-        modifier = modifier.fillMaxSize().padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+        modifier = modifier.fillMaxSize().padding(easyAdbTokens.spaceMd),
+        verticalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceMd)
     ) {
-        // ── 控制按钮行（对齐 Python buttonsLayout） ──
+        // ── 控制按钮行（P12 翻新：品牌色主按钮 + 描边次级按钮） ──
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceSm)
         ) {
             Button(
                 enabled = deviceIp != null && !isRunning,
-                onClick = onStart
+                onClick = onStart,
+                shape = easyAdbTokens.shapeMd,
+                elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = easyAdbColors.Primary,
+                    contentColor = Color.White
+                )
             ) {
                 Text("开启实时预览")
             }
             Button(
                 enabled = isRunning,
-                onClick = onStop
+                onClick = onStop,
+                shape = easyAdbTokens.shapeMd,
+                elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    backgroundColor = easyAdbColors.Surface,
+                    contentColor = easyAdbColors.TextPrimary
+                ),
+                border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider)
             ) {
                 Text("关闭实时预览")
             }

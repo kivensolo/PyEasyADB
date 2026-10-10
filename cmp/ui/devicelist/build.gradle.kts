@@ -6,6 +6,7 @@ plugins {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+    implementation(compose.materialIconsExtended)
     implementation(libs.kotlinx.coroutines.core)
 
     implementation(project(":platform"))

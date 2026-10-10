@@ -10,6 +10,13 @@ import androidx.compose.ui.graphics.Color
  * 以不可变实例承载，通过 [LocalEasyAdbColors] 随主题分发，明暗各一套；
  * 运行时切换主题只需在 [EasyAdbTheme] 上层传入新的 darkTheme 状态即可整组生效。
  *
+ * 取值对齐 HTML 参照稿（easyadb-ui/index.html）明暗双主题 CSS 变量：
+ * - 暗色取 `:root`（深空蓝黑系）、浅色取 `html[data-theme="light"]`；
+ * - 各字段注释标注对应 HTML 变量名/选择器，散落在类选择器中的硬编码色
+ *   （.dev-card.sel / .wc:hover / .pfield input 等）一并归位；
+ * - HTML 未提供浅色稿的色（a-icon 语义色、Find 高亮）按暗色值在白底上的
+ *   可读性降饱和推导，注释中标注「推导」。
+ *
  * 属性名沿用 PascalCase（历史调用点迁移时仅需改接收者，不做属性重命名）。
  */
 @Immutable
@@ -53,6 +60,15 @@ data class EasyAdbColors(
     /** 分割线、卡片描边 */
     val Divider: Color,
 
+    // ── 功能卡图标语义色（HTML .a-icon.{green|red|blue|orange|gray|sky|rose}）──
+    val AccentGreen: Color,
+    val AccentRed: Color,
+    val AccentBlue: Color,
+    val AccentOrange: Color,
+    val AccentGrey: Color,
+    val AccentSky: Color,
+    val AccentRose: Color,
+
     // ── 反色浮层（Tooltip：亮主题深气泡、暗主题浅气泡） ──
     val TooltipBackground: Color,
     val TooltipText: Color,
@@ -63,7 +79,7 @@ data class EasyAdbColors(
     /** 当前命中底色（更强一级） */
     val FindCurrent: Color,
 
-    // ── 日志级别色（P11 主题化：替代原静态 LogColor，暗色下整组提亮） ──
+    // ── 日志级别色（对齐 HTML 控制台 .lv-* 行级配色） ──
     val LogDebug: Color,
     val LogInfo: Color,
     val LogWarn: Color,
@@ -71,78 +87,90 @@ data class EasyAdbColors(
     val LogStamp: Color
 )
 
-/** 浅色调色板（默认；取值为历史静态版本的原值，视觉零变化） */
+/**
+ * 浅色调色板：对齐 HTML 参照稿 `html[data-theme="light"]`。
+ * 基准：win-bg #F6F8FC 窗底、panel/card #FFFFFF 面板、tx #1B2534 主文字、
+ * 蓝系强调 #2563EB（btn 渐变深端）；状态色取浅色变量 --green/--red/--amber/--cyan。
+ */
 val LightEasyAdbColors = EasyAdbColors(
-    Primary = Color(0xFF1565C0),          // Blue 800
-    PrimaryDark = Color(0xFF0D47A1),      // Blue 900
-    PrimaryLight = Color(0xFF42A5F5),     // Blue 400
-    Surface = Color(0xFFFFFFFF),
-    Background = Color(0xFFFAFAFA),       // Grey 50
-    StatusOnline = Color(0xFF2E7D32),     // Green 800
-    StatusOffline = Color(0xFF757575),    // Grey 600
-    StatusUnauthorized = Color(0xFFE65100), // Orange 900
-    Hover = Color(0xFF1565C0).copy(alpha = 0.08f),   // 品牌蓝 8%
-    Selected = Color(0xFF1565C0).copy(alpha = 0.18f), // 品牌蓝 18%
-    TextPrimary = Color(0xFF212121),      // Grey 900
-    TextSecondary = Color(0xFF757575),    // Grey 600
+    Primary = Color(0xFF2563EB),          // btn 渐变深端 / 浅色强调蓝
+    PrimaryDark = Color(0xFF1D4ED8),      // 浅色文字级强调蓝（combo/cmd-line hover）
+    PrimaryLight = Color(0xFF3B82F6),     // --blue（a-icon.blue 浅色推导）
+    Surface = Color(0xFFFFFFFF),          // --panel / --card-hi
+    Background = Color(0xFFF6F8FC),       // --win-bg
+    StatusOnline = Color(0xFF16A34A),     // --green
+    StatusOffline = Color(0xFF93A1B5),    // --tx-3
+    StatusUnauthorized = Color(0xFFB45309), // --amber
+    Hover = Color(0xFFE6EDF7),            // .wc:hover
+    Selected = Color(0xFFE9F1FE),         // .dev-card.sel 渐变底（#eff5ff→#e9f1fe）
+    TextPrimary = Color(0xFF1B2534),      // --tx
+    TextSecondary = Color(0xFF5A6B82),    // --tx-2
     TextOnPrimary = Color(0xFFFFFFFF),
-    TextHint = Color(0xFF9E9E9E),         // Grey 500
-    TextDisabled = Color(0xFFBDBDBD),     // Grey 400
-    SurfaceVariant = Color(0xFFF5F5F5),   // Grey 100，用于侧栏/面板
-    PanelHeader = Color(0xFFEEEEEE),      // Grey 200，用于表头/标签栏
-    Border = Color(0xFFBDBDBD),           // Grey 400
-    Divider = Color(0xFFE0E0E0),          // Grey 300
-    TooltipBackground = Color(0xFF424242), // Grey 800，深气泡
-    TooltipText = Color(0xFFFFFFFF),
-    FindHighlight = Color(0xFFFFE082),    // Amber 200，浅黄底配深字
-    FindCurrent = Color(0xFFFFB300),      // Amber 600，当前命中
-    LogDebug = Color(0xFF2E7D32),         // Green 800（原 LogColor.Debug）
-    LogInfo = Color(0xFF424242),          // Grey 800（原 LogColor.Info）
-    LogWarn = Color(0xFFF57F17),          // Yellow 900（原 LogColor.Warn）
-    LogError = Color(0xFFD32F2F),         // Red 700（原 LogColor.Error）
-    LogStamp = Color(0xFF1565C0)          // Blue 800（原 LogColor.Stamp）
+    TextHint = Color(0xFFA3B1C4),         // input::placeholder
+    TextDisabled = Color(0xFF93A1B5),     // --tx-3
+    SurfaceVariant = Color(0xFFF2F5FA),   // .sidebar
+    PanelHeader = Color(0xFFF3F6FB),      // .con-head / .tabs
+    Border = Color(0xFFC9D6EA),           // .pfield input 描边（浅）
+    Divider = Color(0xFFEBEDF1),          // --line 合成（rgba(15,23,42,.08) 于白底）
+    AccentGreen = Color(0xFF16A34A),      // --green（a-icon 浅色推导）
+    AccentRed = Color(0xFFDC2626),        // --red
+    AccentBlue = Color(0xFF2563EB),       // blue-600（a-icon.blue 浅色推导）
+    AccentOrange = Color(0xFFEA580C),     // orange-600（a-icon.orange 浅色推导）
+    AccentGrey = Color(0xFF64748B),       // slate-500（a-icon.gray 浅色推导）
+    AccentSky = Color(0xFF0369A1),        // --cyan
+    AccentRose = Color(0xFFE11D48),       // rose-600（a-icon.rose 浅色推导）
+    TooltipBackground = Color(0xFFEEF3F9), // 浅色气泡（微蓝灰，比 Surface 深一档保辨识）
+    TooltipText = Color(0xFF1B2534),
+    FindHighlight = Color(0xFFFFE082),    // Amber 200，浅黄底配深字（HTML 无对应，保留原值）
+    FindCurrent = Color(0xFFFFB300),      // Amber 600，当前命中（同上）
+    LogDebug = Color(0xFF93A1B5),         // .lv-dim
+    LogInfo = Color(0xFF334155),          // .lv-info
+    LogWarn = Color(0xFFB45309),          // .lv-warn
+    LogError = Color(0xFFDC2626),         // .lv-err
+    LogStamp = Color(0xFF1D4ED8)          // 浅色强调蓝（命令回显标记）
 )
 
 /**
- * 深色调色板（P11 人工校对稿）：
- * - 表面层级 Background(121212) < Surface(1E1E1E) < SurfaceVariant(2A2A2A) < PanelHeader(333333)，
- *   对齐 Material 暗色"越浮起越亮"的层级规则；
- * - 文字 TextPrimary(E0E0E0)/TextSecondary(9E9E9E)/TextHint(7A7A7A)/TextDisabled(5A5A5A)
- *   在 1E1E1E 上对比度依次 12.6 / 4.7 / 2.9 / 1.8，仅装饰性元素用后两档；
- * - 描边/分割线取 4A4A4A / 3C3C3C，在两档表面间可辨但不抢眼；
- * - 状态色与日志级别色整体提亮一档（Material 200/300 系），Warn/Error 等
- *   高饱和色降到 300 而非 200，避免暗底上过曝刺眼；
- * - Find 命中高亮反转为暗琥珀/暗橄榄（浅字可读），不再是浅色主题的亮黄底。
+ * 深色调色板：对齐 HTML 参照稿 `:root`（深空蓝黑系）。
+ * 基准：win-bg #0C1320 窗底、panel #101A2B 面板、tx #E6ECF6 主文字、
+ * --blue #3B82F6 主色；交互底取 .wc:hover / .dev-card.sel 等硬编码层级色。
  */
 val DarkEasyAdbColors = EasyAdbColors(
-    Primary = Color(0xFF42A5F5),          // Blue 400 提亮
-    PrimaryDark = Color(0xFF1565C0),      // Blue 800
-    PrimaryLight = Color(0xFF90CAF9),     // Blue 200
-    Surface = Color(0xFF1E1E1E),
-    Background = Color(0xFF121212),
-    StatusOnline = Color(0xFF81C784),     // Green 300
-    StatusOffline = Color(0xFF9E9E9E),    // Grey 500
-    StatusUnauthorized = Color(0xFFFFB74D), // Orange 300
-    Hover = Color(0xFF42A5F5).copy(alpha = 0.16f),
-    Selected = Color(0xFF42A5F5).copy(alpha = 0.30f),
-    TextPrimary = Color(0xFFE0E0E0),      // Grey 300
-    TextSecondary = Color(0xFF9E9E9E),    // Grey 500
-    TextOnPrimary = Color(0xFF0D47A1),    // 深底浅字反转为浅底深字
-    TextHint = Color(0xFF7A7A7A),
-    TextDisabled = Color(0xFF5A5A5A),
-    SurfaceVariant = Color(0xFF2A2A2A),
-    PanelHeader = Color(0xFF333333),
-    Border = Color(0xFF4A4A4A),
-    Divider = Color(0xFF3C3C3C),
-    TooltipBackground = Color(0xFFE0E0E0), // 浅气泡（与亮主题反转）
-    TooltipText = Color(0xFF212121),
-    FindHighlight = Color(0xFF584A1A),    // 暗橄榄，浅字可读
-    FindCurrent = Color(0xFF8C6D00),      // 暗琥珀，当前命中
-    LogDebug = Color(0xFF81C784),         // Green 300
-    LogInfo = Color(0xFFCCCCCC),
-    LogWarn = Color(0xFFFFD54F),          // Yellow 300
-    LogError = Color(0xFFE57373),         // Red 300
-    LogStamp = Color(0xFF64B5F6)          // Blue 300
+    Primary = Color(0xFF3B82F6),          // --blue
+    PrimaryDark = Color(0xFF2563EB),      // --blue-deep
+    PrimaryLight = Color(0xFF60A5FA),     // a-icon.blue（.cur-dev svg 同源）
+    Surface = Color(0xFF101A2B),          // --panel（card 渐变基线 #111a2b）
+    Background = Color(0xFF0C1320),       // --win-bg
+    StatusOnline = Color(0xFF4ADE80),     // --green
+    StatusOffline = Color(0xFF5F7089),    // --tx-3（.dev-state.off）
+    StatusUnauthorized = Color(0xFFFBBF24), // --amber（.dev-state.busy）
+    Hover = Color(0xFF1A2740),            // .wc:hover / .frow:hover 同级
+    Selected = Color(0xFF1B2A47),         // .dev-card.sel 渐变底（#17253e→#132036）
+    TextPrimary = Color(0xFFE6ECF6),      // --tx
+    TextSecondary = Color(0xFF8FA0B8),    // --tx-2
+    TextOnPrimary = Color(0xFFFFFFFF),    // .btn-primary 白字
+    TextHint = Color(0xFF4C5C74),         // input::placeholder
+    TextDisabled = Color(0xFF5F7089),     // --tx-3
+    SurfaceVariant = Color(0xFF0D1422),   // .sidebar
+    PanelHeader = Color(0xFF0D1524),      // .tabs / .con-head / --field
+    Border = Color(0xFF263450),           // .pfield input 描边
+    Divider = Color(0xFF1B2738),          // --line 合成（rgba(148,163,184,.08) 于 panel）
+    AccentGreen = Color(0xFF4ADE80),      // .a-icon.green
+    AccentRed = Color(0xFFF87171),        // .a-icon.red
+    AccentBlue = Color(0xFF60A5FA),       // .a-icon.blue
+    AccentOrange = Color(0xFFFB923C),     // .a-icon.orange
+    AccentGrey = Color(0xFF9FB0C8),       // .a-icon.gray
+    AccentSky = Color(0xFF38BDF8),        // .a-icon.sky（--cyan）
+    AccentRose = Color(0xFFFB7185),       // .a-icon.rose
+    TooltipBackground = Color(0xFF141E32), // .toast 底（rgba(20,30,50,.92)）
+    TooltipText = Color(0xFFDBE6F5),      // .toast 文字
+    FindHighlight = Color(0xFF1D3358),    // 蓝调暗底推导（seg active 系）
+    FindCurrent = Color(0xFF2A4A7F),      // 更强一级命中
+    LogDebug = Color(0xFF5C6C84),         // .lv-dim
+    LogInfo = Color(0xFFC2CEDE),          // .lv-info
+    LogWarn = Color(0xFFFBBF24),          // .lv-warn
+    LogError = Color(0xFFF87171),         // .lv-err
+    LogStamp = Color(0xFF7DB4FA)          // 蓝系强调字（.q-pct/.f-act 同源）
 )
 
 /** 当前组合中的扩展调色板，由 [EasyAdbTheme] 按明暗提供 */
@@ -153,8 +181,8 @@ val easyAdbColors: EasyAdbColors
     @Composable get() = LocalEasyAdbColors.current
 
 /**
- * 日志级别 → 主题化颜色。替代原静态 `LogColor.byLevel`（浅色取值与原值一致，
- * 暗色下整组提亮：Info 深灰在暗底不可读的问题随主题化解决）。
+ * 日志级别 → 主题化颜色（对齐 HTML 控制台 .lv-* 行级配色：dim/info/warn/err，
+ * Stamp 对应命令回显的蓝系强调字）。
  *
  * level 约定沿用 Python 版：0/1=DEBUG、2=INFO、3=WARN、4=ERROR、5=STAMP。
  */

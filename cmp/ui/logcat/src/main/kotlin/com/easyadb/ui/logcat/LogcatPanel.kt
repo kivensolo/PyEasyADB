@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.LocalTextContextMenu
@@ -44,6 +43,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Devices
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
@@ -98,6 +98,8 @@ import com.easyadb.core.adb.LogcatEntry
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.log.LogLevel
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
+import com.easyadb.ui.designsystem.EmptyState
 import com.easyadb.ui.designsystem.logColor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -310,6 +312,8 @@ fun LogcatPanel(
         isRunning = false
     }
 
+    // 清空信号：停采集并清缓冲与显示视图（放在 stopLogcat 定义之后引用）
+
     fun closeFindBar() {
         findBarVisible = false
         findQuery = ""
@@ -376,11 +380,11 @@ fun LogcatPanel(
                 }
             }
     ) {
-        // ── 控制栏 ──
+        // ── 控制栏（P12 翻新：Surface 底 + token 间距） ──
         Surface(
             modifier = Modifier.fillMaxWidth(),
             elevation = 0.dp,
-            color = easyAdbColors.SurfaceVariant
+            color = easyAdbColors.Surface
         ) {
             Column(
                 modifier = Modifier
@@ -397,7 +401,7 @@ fun LogcatPanel(
                         fontSize = 10.sp,
                         color = easyAdbColors.TextSecondary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(easyAdbTokens.spaceSm))
 
                     // 日志级别下拉
                     Box {
@@ -409,7 +413,7 @@ fun LogcatPanel(
                                 contentColor = easyAdbColors.TextPrimary
                             ),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 6.dp, vertical = 0.dp),
-                            shape = RoundedCornerShape(4.dp)
+                            shape = easyAdbTokens.shapeSm
                         ) {
                             Text(selectedLevel.shortName, fontSize = 10.sp)
                             Icon(Icons.Default.ArrowDropDown, null, modifier = Modifier.width(14.dp).height(14.dp))
@@ -439,7 +443,7 @@ fun LogcatPanel(
                         }
                     }
 
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(easyAdbTokens.spaceXs))
 
                     // 过滤输入框：条件即状态，显示视图随输入实时全量重滤
                     OutlinedTextField(
@@ -477,14 +481,14 @@ fun LogcatPanel(
                         fontSize = 9.sp,
                         color = easyAdbColors.TextHint
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(easyAdbTokens.spaceSm))
                     Text(
                         text = "缓冲 ${logcatStream.buffer.used / 1024} / ${logcatStream.buffer.budget / 1024} KB",
                         fontSize = 9.sp,
                         color = easyAdbColors.TextHint
                     )
                     lineSelectRange()?.let { range ->
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(easyAdbTokens.spaceSm))
                         Text(
                             text = "行选 ${logEntries.count { it.seq in range }} 条",
                             fontSize = 9.sp,
@@ -495,12 +499,12 @@ fun LogcatPanel(
             }
         }
 
-        // ── Find 工具条（Ctrl+F 打开，Esc 关闭）──
+        // ── Find 工具条（Ctrl+F 打开，Esc 关闭；P12 翻新：Surface 底 + 轻浮起 token） ──
         if (findBarVisible) {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                elevation = 1.dp,
-                color = easyAdbColors.SurfaceVariant
+                elevation = easyAdbTokens.elevationLow,
+                color = easyAdbColors.Surface
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
@@ -532,7 +536,7 @@ fun LogcatPanel(
                             fontFamily = FontFamily.Monospace
                         )
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
+                    Spacer(modifier = Modifier.width(easyAdbTokens.spaceXs))
                     // 计数 cur/total：流式运行中追加 "+"，表示匹配总数随新日志持续增长
                     Text(
                         text = buildString {
@@ -560,12 +564,12 @@ fun LogcatPanel(
 
         // ── 左侧工具栏 + 右侧内容区 ──
         Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            // 左侧垂直工具栏（始终可见，对齐 ConsolePanel 风格）
+            // 左侧垂直工具栏（始终可见，P12 翻新：Surface 底与 ConsolePanel 对齐）
             Column(
                 modifier = Modifier
                     .width(36.dp)
                     .fillMaxHeight()
-                    .background(easyAdbColors.PanelHeader),
+                    .background(easyAdbColors.Surface),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Top
             ) {
@@ -622,16 +626,16 @@ fun LogcatPanel(
                 }
             }
 
-            // 右侧内容区：未选中设备显示提示，选中设备显示日志列表
+            // 右侧内容区：未选中设备显示空态，选中设备显示日志列表
             if (deviceIp == null) {
                 Box(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "请先在左侧设备列表中选择一个设备",
-                        fontSize = 12.sp,
-                        color = easyAdbColors.TextDisabled
+                    EmptyState(
+                        icon = Icons.Default.Devices,
+                        title = "未选择设备",
+                        subtitle = "请先在左侧设备列表中选择一个设备，再开始采集日志"
                     )
                 }
             } else {
@@ -762,8 +766,8 @@ fun LogcatPanel(
                             onDismissRequest = { contextMenuVisible = false }
                         ) {
                             Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                elevation = 4.dp
+                                shape = easyAdbTokens.shapeLg,
+                                elevation = easyAdbTokens.elevationMid
                             ) {
                                 Column(modifier = Modifier.width(IntrinsicSize.Min)) {
                                     // 行选区间存在时优先提供区间复制
@@ -889,8 +893,8 @@ private fun TooltipIconButton(
             val offsetX = with(density) { 32.dp.roundToPx() }
             Popup(alignment = Alignment.CenterStart, offset = IntOffset(offsetX, 0)) {
                 Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    elevation = 3.dp,
+                    shape = easyAdbTokens.shapeSm,
+                    elevation = easyAdbTokens.elevationMid,
                     color = easyAdbColors.TooltipBackground
                 ) {
                     Text(
@@ -917,7 +921,7 @@ private fun ToolbarDivider() {
     )
 }
 
-/** 视图模式开关图标：激活态淡主题色圆角底框 + 主题色图标 */
+/** 视图模式开关图标：激活态淡主题色圆角底框（token 圆角）+ 主题色图标 */
 @Composable
 private fun ModeIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, active: Boolean) {
     Icon(
@@ -927,7 +931,7 @@ private fun ModeIcon(icon: androidx.compose.ui.graphics.vector.ImageVector, acti
         modifier = Modifier
             .background(
                 if (active) easyAdbColors.Primary.copy(alpha = 0.15f) else Color.Transparent,
-                RoundedCornerShape(5.dp)
+                easyAdbTokens.shapeSm
             )
             .padding(3.dp)
             .width(18.dp).height(18.dp)

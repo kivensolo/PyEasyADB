@@ -1,5 +1,6 @@
 package com.easyadb.ui.dialogs
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,8 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Slider
 import androidx.compose.material.Surface
@@ -28,11 +29,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.GroupBox
 import kotlin.math.roundToInt
 
@@ -88,18 +91,18 @@ fun ScreenRecordDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colors.surface
+            color = easyAdbColors.Surface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                    .padding(easyAdbTokens.spaceMd),
+                verticalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceSm)
             ) {
                 // ── 分辨率 + 比特率（水平平分） ──
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceSm)
                 ) {
                     GroupBox("分辨率", Modifier.weight(1f)) {
                         Row(
@@ -187,8 +190,9 @@ fun ScreenRecordDialog(
                 // ── 按钮区域 ──
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    horizontalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceXs)
                 ) {
+                    // 主确认动作：品牌色实底按钮
                     Button(
                         enabled = !isRecording,
                         onClick = {
@@ -200,21 +204,42 @@ fun ScreenRecordDialog(
                             )
                             onRecordStart(options)
                         },
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Primary,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text(if (isRecording) "${remainingSeconds}s" else "开始")
                     }
+                    // 次级动作：描边按钮（P12 webUI 语言）
                     Button(
                         enabled = isRecording,
                         onClick = onRecordStop,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Surface,
+                            contentColor = easyAdbColors.TextPrimary
+                        ),
+                        border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider)
                     ) {
                         Text("终止")
                     }
                     Button(
                         enabled = !isRecording,
                         onClick = onPull,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.weight(1f),
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Surface,
+                            contentColor = easyAdbColors.TextPrimary
+                        ),
+                        border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider)
                     ) {
                         Text("拉取")
                     }
@@ -245,7 +270,7 @@ private fun CompactCheckbox(
             imageVector = if (checked) Icons.Default.CheckBox else Icons.Default.CheckBoxOutlineBlank,
             contentDescription = null,
             modifier = Modifier.size(16.dp),
-            tint = if (enabled) MaterialTheme.colors.primary else easyAdbColors.TextSecondary
+            tint = if (enabled) easyAdbColors.Primary else easyAdbColors.TextSecondary
         )
     }
 }

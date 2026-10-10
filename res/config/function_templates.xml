@@ -13,137 +13,214 @@ act : 自定义的命令行为，为自定义的行为, 自定义的行为需代
 sehll: 命令执行是否需要在shell模式中, 可选值: true或false
 
 isNeedPkgName: 操作是否需要依赖应用包名, 默认为false
+tab: 内容区Tab归属(P12布局大改), 可选值: quick(快捷操作)/keys(按键模拟)/files(文件传输), 缺省quick
+size: 卡片尺寸(P12布局大改), 可选值: large(大卡,含副文案,文件传输类含设备路径输入行)/small(小卡), 缺省small
+desc: 卡片副文案(large 卡显示在标题下方)
+accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange/grey/sky/rose, 缺省不着色
 -->
 <templates>
     <template name="通用应用操作" layout="grid">
         <item>
-            <attr name="icon">./res/img/app_uninstall_256x256.png</attr>
-            <attr name="text">卸载应用</attr>
-            <attr name="cmd" shell="false">uninstall {0}</attr>
-            <attr name="isNeedPkgName">true</attr>
-        </item>
-        <item>
             <attr name="icon">./res/img/app_install_256x256.png</attr>
-            <attr name="text">安装应用</attr>
-            <attr name="act">m_show_install_app_dialog</attr>
+            <attr name="text">推送文件</attr>
+            <attr name="act">m_push_file</attr>
             <attr name="isNeedDeviceOnline">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="size">large</attr>
+            <attr name="desc">选择本机文件推送到设备 /sdcard/ 目录</attr>
+            <attr name="accent">orange</attr>
         </item>
         <item>
-            <attr name="icon">./res/img/app_stop_256x256.png</attr>
-            <attr name="text">停止应用</attr>
-            <attr name="cmd">am force-stop {0}</attr>
-            <attr name="isNeedPkgName">true</attr>
+            <attr name="icon">./res/img/app_start_256x256.png</attr>
+            <attr name="text">拉取文件</attr>
+            <attr name="act">m_pull_file</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="size">large</attr>
+            <attr name="desc">输入设备文件路径，保存到本机</attr>
+            <attr name="accent">blue</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_start_256x256.png</attr>
             <attr name="text">启动应用</attr>
             <attr name="act">m_start_app</attr>
             <attr name="isNeedPkgName">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">拉起指定包名应用的入口 Activity</attr>
+            <attr name="accent">sky</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/app_stop_256x256.png</attr>
+            <attr name="text">停止应用</attr>
+            <attr name="cmd">am force-stop {0}</attr>
+            <attr name="isNeedPkgName">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">强制停止指定包名的应用进程</attr>
+            <attr name="accent">rose</attr>
         </item>
         <item>
             <attr name="icon">./res/img/app_restart_256x256.png</attr>
             <attr name="text">重启应用</attr>
             <attr name="act">m_restart_app</attr>
             <attr name="isNeedPkgName">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">先停止再拉起指定包名应用</attr>
+            <attr name="accent">blue</attr>
         </item>
         <item>
-            <attr name="icon">./res/img/app_clear_data_256x256.png</attr>
-            <attr name="text">清除数据</attr>
-            <attr name="cmd">pm clear {0}</attr>
+            <attr name="icon">./res/img/app_install_256x256.png</attr>
+            <attr name="text">安装应用</attr>
+            <attr name="act">m_show_install_app_dialog</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">选择本机 APK 文件安装到设备</attr>
+            <attr name="accent">green</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/app_uninstall_256x256.png</attr>
+            <attr name="text">卸载应用</attr>
+            <attr name="cmd" shell="false">uninstall {0}</attr>
             <attr name="isNeedPkgName">true</attr>
-        </item>
-        <item>
-            <attr name="icon">./res/img/text_input_256x256.png</attr>
-            <attr name="text">文本输入</attr>
-            <attr name="act">m_input_text</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">输入或选择包名，从设备卸载应用</attr>
+            <attr name="accent">red</attr>
         </item>
         <item>
             <attr name="icon">./res/img/broadcast_256x256.png</attr>
             <attr name="text">发送广播</attr>
             <attr name="act">m_send_broadcast</attr>
             <attr name="isNeedPkgName">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">向指定应用发送自定义广播 Action</attr>
+            <attr name="accent">orange</attr>
         </item>
         <item>
             <attr name="icon">./res/img/query_content_provider_256x256.png</attr>
             <attr name="text">查询ContentProvider</attr>
             <attr name="act">m_query_contentprovider</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">查询指定应用的 ContentProvider 数据</attr>
+            <attr name="accent">blue</attr>
         </item>
-    </template>
-    <template name="数据获取" layout="grid">
+        <item>
+            <attr name="icon">./res/img/text_input_256x256.png</attr>
+            <attr name="text">文本输入</attr>
+            <attr name="act">m_input_text</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">向设备输入框写入自定义文本</attr>
+            <attr name="accent">grey</attr>
+        </item>
         <item>
             <attr name="icon">./res/img/screen_capture_256x256.png</attr>
             <attr name="text">屏幕截图</attr>
             <attr name="act">m_screenshot</attr>
             <attr name="isNeedDeviceOnline">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">保存当前设备画面为图片</attr>
+            <attr name="accent">grey</attr>
         </item>
         <item>
             <attr name="icon">./res/img/screen_record_256x256.png</attr>
             <attr name="text">视频录制</attr>
             <attr name="act">m_screen_record</attr>
             <attr name="isNeedDeviceOnline">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">录制设备屏幕为视频文件</attr>
+            <attr name="accent">sky</attr>
         </item>
+        <item>
+            <attr name="icon">./res/img/app_clear_data_256x256.png</attr>
+            <attr name="text">清除数据</attr>
+            <attr name="cmd">pm clear {0}</attr>
+            <attr name="isNeedPkgName">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">清除指定应用的所有用户数据</attr>
+            <attr name="accent">orange</attr>
+        </item>
+    </template>
+    <template name="数据获取" layout="grid">
         <item>
             <attr name="icon">./res/img/app_pull_256x256.png</attr>
             <attr name="text">APK提取</attr>
             <attr name="act">m_pull_apk</attr>
             <attr name="isNeedDeviceOnline">true</attr>
+            <attr name="tab">files</attr>
+            <attr name="size">large</attr>
+            <attr name="desc">从设备提取已安装应用的 APK 文件</attr>
         </item>
     </template>
     <template name="按键模拟" layout="grid">
         <item>
-            <attr name="icon">./res/img/back_256x256.png</attr>
-            <attr name="text">返回键</attr>
-            <attr name="cmd" shell="true">input keyevent 4</attr>
+            <attr name="icon">./res/img/power_256x256.png</attr>
+            <attr name="text">电源键</attr>
+            <attr name="cmd" shell="true">input keyevent 26</attr>
+            <attr name="tab">keys</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/volume_down_256x256.png</attr>
+            <attr name="text">静音键</attr>
+            <attr name="cmd" shell="true">input keyevent 164</attr>
+            <attr name="tab">keys</attr>
         </item>
         <item>
             <attr name="icon">./res/img/arrow_up.png</attr>
             <attr name="text">上键</attr>
             <attr name="cmd" shell="true">input keyevent 19</attr>
-        </item>
-        <item>
-            <attr name="icon">./res/img/ok_256x256.png</attr>
-            <attr name="text">确认键</attr>
-            <attr name="cmd" shell="true">input keyevent 23</attr>
-        </item>
-        <item>
-            <attr name="icon">./res/img/volume_up_256x256.png</attr>
-            <attr name="text">音量加</attr>
-            <attr name="cmd" shell="true">input keyevent 24</attr>
-        </item>
-        <item>
-            <attr name="icon">./res/img/menu_256x256.png</attr>
-            <attr name="text">菜单键</attr>
-            <attr name="cmd" shell="true">input keyevent 82</attr>
+            <attr name="tab">keys</attr>
         </item>
         <item>
             <attr name="icon">./res/img/arrow_left.png</attr>
             <attr name="text">左键</attr>
             <attr name="cmd" shell="true">input keyevent 21</attr>
+            <attr name="tab">keys</attr>
         </item>
         <item>
-            <attr name="icon">./res/img/arrow_down.png</attr>
-            <attr name="text">下键</attr>
-            <attr name="cmd" shell="true">input keyevent 20</attr>
+            <attr name="icon">./res/img/ok_256x256.png</attr>
+            <attr name="text">确认键</attr>
+            <attr name="cmd" shell="true">input keyevent 23</attr>
+            <attr name="tab">keys</attr>
         </item>
         <item>
             <attr name="icon">./res/img/arrow_right.png</attr>
             <attr name="text">右键</attr>
             <attr name="cmd" shell="true">input keyevent 22</attr>
+            <attr name="tab">keys</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/arrow_down.png</attr>
+            <attr name="text">下键</attr>
+            <attr name="cmd" shell="true">input keyevent 20</attr>
+            <attr name="tab">keys</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/back_256x256.png</attr>
+            <attr name="text">返回键</attr>
+            <attr name="cmd" shell="true">input keyevent 4</attr>
+            <attr name="tab">keys</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/back_256x256.png</attr>
+            <attr name="text">主页键</attr>
+            <attr name="cmd" shell="true">input keyevent 3</attr>
+            <attr name="tab">keys</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/menu_256x256.png</attr>
+            <attr name="text">菜单键</attr>
+            <attr name="cmd" shell="true">input keyevent 82</attr>
+            <attr name="tab">keys</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/volume_up_256x256.png</attr>
+            <attr name="text">音量加</attr>
+            <attr name="cmd" shell="true">input keyevent 24</attr>
+            <attr name="tab">keys</attr>
         </item>
         <item>
             <attr name="icon">./res/img/volume_down_256x256.png</attr>
             <attr name="text">音量减</attr>
-            <attr name="cmd">input keyevent 25</attr>
+            <attr name="cmd" shell="true">input keyevent 25</attr>
+            <attr name="tab">keys</attr>
         </item>
-        <item>
-            <attr name="icon">./res/img/power_256x256.png</attr>
-            <attr name="text">电源键</attr>
-            <attr name="cmd" shell="true">input keyevent 26</attr>
-        </item>
-        <!--<item state="disable">
-            <attr name="icon">./res/img/app_restart_256x256.png</attr>
-            <attr name="text">遥控器模式</attr>
-            <attr name="cmd" shell="true"></attr>
-        </item>-->
     </template>
 </templates>

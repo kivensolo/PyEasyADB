@@ -7,13 +7,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.ClickableText
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -25,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 import java.awt.Desktop
 import java.net.URI
 
@@ -32,7 +31,7 @@ import java.net.URI
  * 关于对话框。
  *
  * 对齐 Python `src/widget/Dialogs.py::AboutDialog`：
- * - 应用标题（黑底白字，居中，粗体大字号）
+ * - 应用标题（反色横幅，居中，粗体大字号）
  * - 版本号
  * - 编译时间
  * - GitHub 链接（可点击跳转浏览器）
@@ -52,19 +51,19 @@ fun AboutDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colors.surface
+            color = easyAdbColors.Surface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceMd)
             ) {
-                // ── 应用标题（黑底白字） ──
+                // ── 应用标题（反色横幅，随明暗主题反转） ──
                 Surface(
                     modifier = Modifier.fillMaxWidth().height(60.dp),
-                    color = Color.Black
+                    color = easyAdbColors.TooltipBackground
                 ) {
                     Column(
                         modifier = Modifier.fillMaxWidth(),
@@ -73,7 +72,7 @@ fun AboutDialog(
                     ) {
                         Text(
                             text = "EasyADB",
-                            color = Color.White,
+                            color = easyAdbColors.TooltipText,
                             fontSize = 26.sp,
                             fontWeight = FontWeight.Bold
                         )

@@ -1,16 +1,17 @@
 package com.easyadb.ui.functions
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -18,7 +19,6 @@ import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -32,7 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -40,6 +40,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 import java.util.prefs.Preferences
 
 /**
@@ -53,87 +54,16 @@ data class AppParamState(
 )
 
 /**
- * 紧凑型输入框，使用 BasicTextField + 自定义边框，
- * 内边距比 Material 默认的 OutlinedTextField 小得多。
- */
-@Composable
-private fun CompactTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    placeholder: String = "",
-    singleLine: Boolean = true,
-    minLines: Int = 1,
-    maxLines: Int = 1,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions.Default,
-    trailingIcon: @Composable (() -> Unit)? = null
-) {
-    val borderColor = easyAdbColors.Border
-    val focusedBorderColor = easyAdbColors.Primary
-
-    Box(
-        modifier = modifier
-            .border(
-                width = 1.dp,
-                color = borderColor,
-                shape = RoundedCornerShape(4.dp)
-            )
-            .padding(horizontal = 6.dp, vertical = 3.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(modifier = Modifier.weight(1f)) {
-                BasicTextField(
-                    value = value,
-                    onValueChange = onValueChange,
-                    singleLine = singleLine,
-                    minLines = minLines,
-                    maxLines = maxLines,
-                    textStyle = TextStyle(
-                        fontSize = 11.sp,
-                        color = easyAdbColors.TextPrimary
-                    ),
-                    cursorBrush = SolidColor(focusedBorderColor),
-                    keyboardOptions = keyboardOptions,
-                    keyboardActions = keyboardActions,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                // 占位文字（无值时显示）
-                if (value.isEmpty()) {
-                    Text(
-                        text = placeholder,
-                        fontSize = 11.sp,
-                        color = easyAdbColors.TextHint
-                    )
-                }
-            }
-            // 尾部图标
-            trailingIcon?.invoke()
-        }
-    }
-}
-
-/**
- * 自定义参数行：固定高度 28dp、垂直居中对齐的 Row。
- * 三个单行输入框（包名 / Activity / Action）共用此布局。
- */
-@Composable
-private fun ParamRow(
-    content: @Composable RowScope.() -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().height(28.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        content = content
-//      content: @Composable RowScope.() -> Unit //如果需要不同的变体，还可以这样加参数
-    )
-}
-
-/**
- * 应用参数配置面板。
+ * Copyright (c) 2026, 北京视达科科技有限责任公司 All rights reserved.
+ * author：ZekeWong
+ * date：2026/10/10
+ * description：常用命令参数卡（快捷操作 Tab 对齐 HTML 参照稿 params-card）。
+ *              shapeLg 描边卡片 + 标题「常用命令参数」+ 2×2 输入网格
+ *              （label 置于输入框上方：包名 / Activity / Action / 扩展参数），
+ *              包名格带已存包名下拉与快捷删除，回车保存包名。
+ *              仅负责参数收集与持久化（Preferences），不包含执行按钮——
+ *              启动应用 / 发送广播等执行入口为功能卡本身（点击走
+ *              onItemClick(item, appParamState) 既有链路）。
  */
 @Composable
 fun AppParamPanel(
@@ -159,105 +89,99 @@ fun AppParamPanel(
         prefs.flush()
     }
 
-    // 标签后的间距，控制标签文本与输入框之间的距离
-    val labelEndPadding = 4.dp
-
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        elevation = 0.dp,
-        color = MaterialTheme.colors.surface
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        shape = easyAdbTokens.shapeLg,
+        color = easyAdbColors.Surface,
+        border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider),
+        elevation = 0.dp
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // ── 标题 ──
             Text(
-                text = "应用参数配置",
+                text = "常用命令参数",
                 fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                color = easyAdbColors.TextPrimary
+                fontWeight = FontWeight.SemiBold,
+                color = easyAdbColors.TextSecondary
             )
-            Spacer(modifier = Modifier.height(6.dp))
 
-            // ── 包名行 ──
-            ParamRow {
-                Text(
-                    text = "包名:",
-                    fontSize = 11.sp,
-                    color = easyAdbColors.TextSecondary,
-                    modifier = Modifier.padding(end = labelEndPadding)
-                )
-                Box(modifier = Modifier.weight(1f)) {
-                    CompactTextField(
-                        value = selectedPackage,
-                        onValueChange = { selectedPackage = it },
-                        placeholder = "输入或选择包名，按回车添加",
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                if (selectedPackage.isNotBlank()) {
-                                    onPackageAdd(selectedPackage.trim())
-                                }
-                            }
-                        ),
-                        trailingIcon = {
-                            Row {
-                                if (selectedPackage.isNotEmpty()) {
-                                    IconButton(
-                                        onClick = {
-                                            onPackageDelete(selectedPackage)
-                                            selectedPackage = ""
-                                        },
-                                        modifier = Modifier.width(20.dp).height(20.dp)
-                                    ) {
-                                        Icon(Icons.Default.Close, "删除", modifier = Modifier.width(14.dp).height(14.dp))
+            // ── 网格行 1：包名 | Activity ──
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ParamField("包名", modifier = Modifier.weight(1f)) {
+                    Box {
+                        CompactTextField(
+                            value = selectedPackage,
+                            onValueChange = { selectedPackage = it },
+                            placeholder = "输入或选择包名，回车添加",
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    if (selectedPackage.isNotBlank()) {
+                                        onPackageAdd(selectedPackage.trim())
                                     }
                                 }
-                                IconButton(
-                                    onClick = { packageDropdownExpanded = true },
-                                    modifier = Modifier.width(20.dp).height(20.dp)
-                                ) {
-                                    Icon(Icons.Default.ArrowDropDown, "展开", modifier = Modifier.width(16.dp).height(16.dp))
-                                }
-                            }
-                        }
-                    )
-                    DropdownMenu(
-                        expanded = packageDropdownExpanded,
-                        onDismissRequest = { packageDropdownExpanded = false }
-                    ) {
-                        if (dbPackages.isEmpty()) {
-                            DropdownMenuItem(enabled = false, onClick = {}) {
-                                Text("暂无已保存的包名", fontSize = 12.sp)
-                            }
-                        } else {
-                            dbPackages.forEach { pkg ->
-                                DropdownMenuItem(
-                                    onClick = {
-                                        selectedPackage = pkg
-                                        packageDropdownExpanded = false
-                                    }
-                                ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = pkg,
-                                            fontSize = 12.sp,
-                                            modifier = Modifier.weight(1f)
-                                        )
+                            ),
+                            trailingIcon = {
+                                Row {
+                                    if (selectedPackage.isNotEmpty()) {
                                         IconButton(
                                             onClick = {
-                                                onPackageDelete(pkg)
-                                                if (selectedPackage == pkg) selectedPackage = ""
+                                                onPackageDelete(selectedPackage)
+                                                selectedPackage = ""
                                             },
-                                            modifier = Modifier.width(24.dp).height(24.dp)
+                                            modifier = Modifier.width(20.dp).height(20.dp)
                                         ) {
                                             Icon(Icons.Default.Close, "删除", modifier = Modifier.width(14.dp).height(14.dp))
+                                        }
+                                    }
+                                    IconButton(
+                                        onClick = { packageDropdownExpanded = true },
+                                        modifier = Modifier.width(20.dp).height(20.dp)
+                                    ) {
+                                        Icon(Icons.Default.ArrowDropDown, "展开", modifier = Modifier.width(16.dp).height(16.dp))
+                                    }
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = packageDropdownExpanded,
+                            onDismissRequest = { packageDropdownExpanded = false }
+                        ) {
+                            if (dbPackages.isEmpty()) {
+                                DropdownMenuItem(enabled = false, onClick = {}) {
+                                    Text("暂无已保存的包名", fontSize = 12.sp)
+                                }
+                            } else {
+                                dbPackages.forEach { pkg ->
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            selectedPackage = pkg
+                                            packageDropdownExpanded = false
+                                        }
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = pkg,
+                                                fontSize = 12.sp,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            IconButton(
+                                                onClick = {
+                                                    onPackageDelete(pkg)
+                                                    if (selectedPackage == pkg) selectedPackage = ""
+                                                },
+                                                modifier = Modifier.width(24.dp).height(24.dp)
+                                            ) {
+                                                Icon(Icons.Default.Close, "删除", modifier = Modifier.width(14.dp).height(14.dp))
+                                            }
                                         }
                                     }
                                 }
@@ -265,69 +189,122 @@ fun AppParamPanel(
                         }
                     }
                 }
+                ParamField("Activity", modifier = Modifier.weight(1f)) {
+                    CompactTextField(
+                        value = activityClassPath,
+                        onValueChange = { activityClassPath = it },
+                        placeholder = "com.example/.MainActivity",
+                        singleLine = true
+                    )
+                }
             }
 
-            Spacer(modifier = Modifier.height(6.dp))
+            // ── 网格行 2：Action | 扩展参数 ──
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                ParamField("Action", modifier = Modifier.weight(1f)) {
+                    CompactTextField(
+                        value = action,
+                        onValueChange = { action = it },
+                        placeholder = "android.intent.action.VIEW",
+                        singleLine = true
+                    )
+                }
+                ParamField("扩展参数", modifier = Modifier.weight(1f)) {
+                    CompactTextField(
+                        value = extendParams,
+                        onValueChange = { extendParams = it },
+                        placeholder = "--es key value",
+                        singleLine = true
+                    )
+                }
+            }
+        }
+    }
+}
 
-            // ── Activity 类路径行 ──
-            ParamRow {
-                Text(
-                    text = "Activity:",
-                    fontSize = 11.sp,
-                    color = easyAdbColors.TextSecondary,
-                    modifier = Modifier.padding(end = labelEndPadding)
-                )
-                CompactTextField(
-                    value = activityClassPath,
-                    onValueChange = { activityClassPath = it },
-                    placeholder = "目标activity的完整路径，如:com.example.myapp.MainActivity",
-                    singleLine = true,
+/** 参数格：label（输入框上方）+ 内容。 */
+@Composable
+private fun ParamField(
+    label: String,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            fontSize = 11.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = easyAdbColors.TextSecondary
+        )
+        Spacer(Modifier.height(4.dp))
+        content()
+    }
+}
+
+/**
+ * 紧凑型输入框，使用 BasicTextField + 自定义边框（SurfaceVariant 底，
+ * focus 时描边变主色），内边距比 Material 默认的 OutlinedTextField 小得多。
+ */
+@Composable
+private fun CompactTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    placeholder: String = "",
+    singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = 1,
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    keyboardActions: KeyboardActions = KeyboardActions.Default,
+    trailingIcon: @Composable (() -> Unit)? = null
+) {
+    var isFocused by remember { mutableStateOf(false) }
+
+    Box(
+        modifier = modifier
+            .height(34.dp)
+            .border(
+                width = easyAdbTokens.strokeWidth,
+                color = if (isFocused) easyAdbColors.Primary else easyAdbColors.Border,
+                shape = easyAdbTokens.shapeSm
+            )
+            .background(easyAdbColors.SurfaceVariant, easyAdbTokens.shapeSm)
+            .padding(horizontal = 8.dp)
+            .onFocusChanged { isFocused = it.hasFocus },
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(modifier = Modifier.weight(1f)) {
+                BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    singleLine = singleLine,
+                    minLines = minLines,
+                    maxLines = maxLines,
+                    textStyle = TextStyle(
+                        fontSize = 12.sp,
+                        color = easyAdbColors.TextPrimary
+                    ),
+                    cursorBrush = SolidColor(easyAdbColors.Primary),
+                    keyboardOptions = keyboardOptions,
+                    keyboardActions = keyboardActions,
                     modifier = Modifier.fillMaxWidth()
                 )
+                // 占位文字（无值时显示）
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        fontSize = 12.sp,
+                        color = easyAdbColors.TextHint,
+                        maxLines = 1
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // ── Action 行 ──
-            ParamRow {
-                Text(
-                    text = "Action:",
-                    fontSize = 11.sp,
-                    color = easyAdbColors.TextSecondary,
-                    modifier = Modifier.padding(end = labelEndPadding)
-                )
-                CompactTextField(
-                    value = action,
-                    onValueChange = { action = it },
-                    placeholder = "用于启动activity或广播发送",
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // ── 扩展参数行 ──
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top
-            ) {
-                Text(
-                    text = "Extend:",
-                    fontSize = 11.sp,
-                    color = easyAdbColors.TextSecondary,
-                    modifier = Modifier.padding(end = labelEndPadding, top = 5.dp)
-                )
-                CompactTextField(
-                    value = extendParams,
-                    onValueChange = { extendParams = it },
-                    placeholder = "扩展参数，如:--es \"key1\" \"value1\"",
-                    singleLine = false,
-                    minLines = 2,
-                    maxLines = 4,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+            // 尾部图标
+            trailingIcon?.invoke()
         }
     }
 }

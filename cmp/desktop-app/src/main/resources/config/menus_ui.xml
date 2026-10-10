@@ -18,6 +18,15 @@
             <attr name="icon">./res/icons/apk_64x64_09a413.png</attr>
             <attr name="action">m_show_apk_helper_dialog</attr>
         </action>
+        <action name="打开 Shell">
+            <attr name="action">m_open_shell</attr>
+        </action>
+        <action name="Root">
+            <attr name="action">m_root</attr>
+        </action>
+        <action name="Unroot">
+            <attr name="action">m_unroot</attr>
+        </action>
     </menu>
     <menu name="帮助">
         <action name="查看日志">

@@ -24,7 +24,6 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.easyadb.core.config.AppConfigManager
 import com.easyadb.core.config.AppPathsConfig
-import com.easyadb.core.config.CmdGroup
 import com.easyadb.core.config.FunctionItem
 import com.easyadb.core.config.FunctionTemplate
 import com.easyadb.core.config.MenuAction
@@ -38,17 +37,19 @@ import com.easyadb.core.adb.AdbExecutor
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.adb.MirrorStartResult
 import com.easyadb.core.adb.ScrcpyLauncher
+import androidx.compose.ui.graphics.toArgb
+import com.easyadb.platform.Win32Interop
 import com.easyadb.ui.designsystem.EasyAdbTheme
+import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.ThemeMode
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CustomActionHandler
 import com.easyadb.ui.home.MainWindowScreen
-import com.easyadb.ui.home.rememberDefaultToolBarActions
+import com.easyadb.core.device.DevicePropFetcher
 import com.easyadb.ui.devicelist.DeviceAliasEditDialog
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.console.createLogFlow
 import com.easyadb.ui.dialogs.NewConnectDialog
-import com.easyadb.ui.dialogs.AboutDialog
 import com.easyadb.ui.dialogs.TextInputDialog
 import com.easyadb.ui.dialogs.InstallApkDialog
 import com.easyadb.ui.dialogs.InstallOptions
@@ -56,12 +57,10 @@ import com.easyadb.ui.dialogs.ScreenRecordDialog
 import com.easyadb.ui.dialogs.ScreenRecordOptions
 import com.easyadb.ui.dialogs.PullApkDialog
 import com.easyadb.ui.dialogs.PullableApp
-import com.easyadb.ui.dialogs.ApkHelperDialog
-import com.easyadb.core.apk.ApkParser
-import com.easyadb.core.apk.ApkParseResult
 import com.easyadb.core.adb.AppListLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -71,6 +70,18 @@ import org.jetbrains.skia.Image
 import java.io.File
 import java.io.InputStream
 import javax.xml.parsers.DocumentBuilderFactory
+
+/** CMP 侧移除的菜单 action（种子 XML 保留给 Python 版；明细见 doc/待重构功能.md）。 */
+private val REMOVED_MENU_ACTIONS = setOf(
+    "m_connect_new_device",
+    "m_close_app",
+    "m_show_apk_helper_dialog",
+    "m_open_shell",
+    "m_root",
+    "m_unroot",
+    "m_open_log_page",
+    "m_open_about_page"
+)
 
 fun main() {
     // ── Step 1: Logging ──
@@ -130,9 +141,14 @@ fun main() {
     watcher.start(intervalSeconds = 2, scope = scope)
     appLogger.info { "DevicesWatcher started" }
 
-    // ── Step 5: Load menu & cmd & function configs (优先从 classpath 加载) ──
+    // ── Step 5: Load menu & function configs (优先从 classpath 加载) ──
+    // CMP 菜单精简（menus_ui.xml 种子保留供 Python 版使用，加载后剔除）：
+    // 连接新设备（设备列表区头部按钮入口保留）/ 退出（窗口关闭钮）/
+    // APK Helper、查看日志、关于（已列入 doc/待重构功能.md，后续对接）/
+    // 打开 Shell、Root、Unroot（未实现占位）
     val menuConfigs = loadMenuConfigFromClasspath(appLogger)
-    val cmdGroups = loadCmdConfigFromClasspath(appLogger)
+        .map { config -> config.copy(actions = config.actions.filter { it.action !in REMOVED_MENU_ACTIONS }) }
+        .filter { it.actions.isNotEmpty() }
     val functionTemplates = loadFunctionTemplatesFromClasspath(appLogger)
 
     // ── Step 6: AdbExecutor ──
@@ -159,20 +175,15 @@ fun main() {
         // 新建连接对话框；true 时弹出 NewConnectDialog。
         var showNewConnectDialog by remember { mutableStateOf(false) }
         // P7 对话框显示状态
-        var showAboutDialog by remember { mutableStateOf(false) }
         var showTextInputDialog by remember { mutableStateOf(false) }
         var showInstallApkDialog by remember { mutableStateOf(false) }
         var showScreenRecordDialog by remember { mutableStateOf(false) }
         var showPullApkDialog by remember { mutableStateOf(false) }
-        var showApkHelperDialog by remember { mutableStateOf(false) }
         // 屏幕录制状态
         var isRecording by remember { mutableStateOf(false) }
         var remainingSeconds by remember { mutableStateOf(0) }
         // 当前录制协程：用于"终止"按钮和关闭对话框时取消（cancel 会杀 adb 进程，对齐原版 SIGINT）
         var recordJob by remember { mutableStateOf<Job?>(null) }
-        // APK Helper 解析结果（null 表示未解析）
-        var apkHelperResult by remember { mutableStateOf<ApkParseResult?>(null) }
-        var isParsingApk by remember { mutableStateOf(false) }
         // PullApk 应用列表
         var pullableApps by remember { mutableStateOf<List<PullableApp>>(emptyList()) }
         var isLoadingApps by remember { mutableStateOf(false) }
@@ -203,7 +214,8 @@ fun main() {
             ThemeMode.LIGHT -> false
             ThemeMode.DARK -> true
         }
-        // 「工具」菜单追加主题三项，当前态加 ✓ 前缀（随 themeMode 变化重建）
+        // 「工具」菜单追加主题三项，当前态加 ✓ 前缀（随 themeMode 变化重建）；
+        // XML 菜单精简后可能已无「工具」组，缺失时补一个空组承载主题三项
         val menuConfigsForDisplay = remember(menuConfigs, themeMode) {
             val themeActions = listOf(
                 MenuAction(
@@ -219,9 +231,11 @@ fun main() {
                     action = "m_theme_dark"
                 )
             )
-            menuConfigs.map { config ->
+            val withTheme = menuConfigs.map { config ->
                 if (config.name == "工具") config.copy(actions = config.actions + themeActions) else config
             }
+            if (withTheme.any { it.name == "工具" }) withTheme
+            else withTheme + MenuConfig(name = "工具", actions = themeActions)
         }
         // 菜单快捷键映射：解析 menus_ui.xml 中各 action 的 shortcut（如 "Ctrl+N"、"Alt+H"）。
         // 快捷键此前仅在菜单项右侧作文本展示，未注册按键监听；现配合 Window.onKeyEvent 实现。
@@ -229,20 +243,13 @@ fun main() {
             menuConfigsForDisplay.flatMap { it.actions }
                 .mapNotNull { action -> parseShortcut(action.shortcut)?.let { spec -> spec to action } }
         }
-        // 菜单 action 统一处理入口（菜单项点击与全局快捷键共用）
+        // 菜单 action 统一处理入口（菜单项点击与全局快捷键共用；
+        // 已移除入口的 action 分支一并清理，功能去向见 doc/待重构功能.md）
         val handleAction: (MenuAction) -> Unit = { action ->
             when (action.action) {
-                "m_connect_new_device" -> showNewConnectDialog = true
-                "m_close_app" -> exitApplication()
-                "m_open_log_page" -> openLogsFolder(appLogger, logAppender)
-                "m_open_about_page" -> showAboutDialog = true
                 "m_theme_system" -> applyThemeMode(ThemeMode.SYSTEM)
                 "m_theme_light" -> applyThemeMode(ThemeMode.LIGHT)
                 "m_theme_dark" -> applyThemeMode(ThemeMode.DARK)
-                "m_show_apk_helper_dialog" -> {
-                    apkHelperResult = null
-                    showApkHelperDialog = true
-                }
                 else -> handleMenuAction(action, appLogger, logAppender)
             }
         }
@@ -274,25 +281,48 @@ fun main() {
                 }
             }
         ) {
+            val composeWindow = window
             EasyAdbTheme(darkTheme = darkTheme) {
-                val toolBarActions = rememberDefaultToolBarActions(
-                    onAddDevice = {
-                        appLogger.info { "ToolBar: 新建设备连接" }
-                        showNewConnectDialog = true
-                    },
-                    onOpenShell = {
-                        appLogger.info { "ToolBar: 打开 Shell" }
-                        logAppender("[未实现] 打开 Shell", 3)
-                    },
-                    onRoot = {
-                        appLogger.info { "ToolBar: Root" }
-                        logAppender("[未实现] Root", 3)
-                    },
-                    onUnroot = {
-                        appLogger.info { "ToolBar: Unroot" }
-                        logAppender("[未实现] Unroot", 3)
+                // P12 webUI：原生标题栏染色融入头栏（Win11 DWMWA_CAPTION_COLOR；Win10 仅暗亮切换）
+                val surfaceArgb = easyAdbColors.Surface.toArgb()
+                val textArgb = easyAdbColors.TextPrimary.toArgb()
+                LaunchedEffect(surfaceArgb, textArgb) {
+                    if (!Win32Interop.isWindows) return@LaunchedEffect
+                    var hwnd: Long? = null
+                    repeat(50) {
+                        hwnd = Win32Interop.componentHwnd(composeWindow)
+                        if (hwnd != null) return@repeat
+                        delay(100)
                     }
-                )
+                    hwnd?.let {
+                        Win32Interop.setCaptionColors(
+                            hwnd = it,
+                            captionColorRef = Win32Interop.argbToColorRef(surfaceArgb),
+                            textColorRef = Win32Interop.argbToColorRef(textArgb),
+                            darkMode = darkTheme
+                        )
+                    }
+                }
+                // ── 侧栏折叠/展开（P12 布局大改） ──
+                var sidebarCollapsed by remember { mutableStateOf(false) }
+
+                // ── 设备 Android 版本查询（P12）：上线设备异步 getprop，内存缓存不写 DB ──
+                val versionFetcher = remember { DevicePropFetcher() }
+                val deviceVersionsFlow = remember { MutableStateFlow<Map<String, String>>(emptyMap()) }
+                val deviceVersions by deviceVersionsFlow.collectAsState()
+                LaunchedEffect(onlineDevices) {
+                    val missing = onlineDevices
+                        .map { it.name }
+                        .filter { it.isNotBlank() && it !in deviceVersionsFlow.value }
+                    missing.forEach { ip ->
+                        scope.launch {
+                            val version = versionFetcher.fetchVersion(ip)
+                            if (version != null) {
+                                deviceVersionsFlow.value = deviceVersionsFlow.value + (ip to version)
+                            }
+                        }
+                    }
+                }
 
                 val deviceListCallbacks = remember(scope, dbDevicesFlow) {
                     DeviceListCallbacks(
@@ -351,6 +381,10 @@ fun main() {
                         onCommandClick = { item ->
                             appLogger.info { "Command click: ${item.name}" }
                         },
+                        onAddDevice = {
+                            appLogger.info { "DeviceList: 添加设备" }
+                            showNewConnectDialog = true
+                        },
                         onCommandDoubleClick = { item ->
                             appLogger.info { "Command double-click: ${item.name} cmd=${item.cmd}" }
                             logAppender("执行命令: ${item.name}", 2)
@@ -383,15 +417,21 @@ fun main() {
 
                 MainWindowScreen(
                     modifier = Modifier.fillMaxSize(),
-                    toolBarActions = toolBarActions,
                     menuConfigs = menuConfigsForDisplay,
                     onMenuAction = handleAction,
+                    // 顶栏主题切换按钮（H5 themeToggle）：暗色切浅色、浅色切暗色
+                    themeIsDark = darkTheme,
+                    onToggleTheme = {
+                        applyThemeMode(if (darkTheme) ThemeMode.LIGHT else ThemeMode.DARK)
+                    },
                     dbDevices = dbDevices,
                     onlineDevices = onlineDevices,
-                    cmdGroups = cmdGroups,
+                    deviceVersions = deviceVersions,
                     selectedDeviceIp = selectedDeviceIp,
                     deviceListCallbacks = deviceListCallbacks,
-                    bottomTabDefaultHeight = 200.dp,
+                    onCollapseDeviceList = { sidebarCollapsed = true },
+                    onExpandDeviceList = { sidebarCollapsed = false },
+                    sidebarCollapsed = sidebarCollapsed,
                     // P5 功能区参数
                     functionTemplates = functionTemplates,
                     dbPackages = dbPackages,
@@ -450,6 +490,156 @@ fun main() {
                                         logAppender("[P5] $msg", 2)
                                     }
                                 )
+                            }
+                        }
+                    },
+                    // 按键模拟 Tab：自定义 KEYCODE 键值（"+" 拼接逐条发送，间隔 200ms，同 H5 稿）
+                    onCustomKey = { keycodes: List<Int> ->
+                        val deviceIp = selectedDeviceIp
+                        if (deviceIp == null) {
+                            logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+                        } else {
+                            scope.launch {
+                                if (keycodes.size > 1) {
+                                    logAppender("> adb shell input keyevent ${keycodes.joinToString("+")}（逐条发送 · 间隔 200ms）", 2)
+                                }
+                                keycodes.forEachIndexed { index, kc ->
+                                    if (index > 0) delay(200)
+                                    val cmd = "adb -s $deviceIp shell input keyevent $kc"
+                                    logAppender("> $cmd", 2)
+                                    val result = adbExecutor.execAdbCmd(cmd)
+                                    if (!result.success) {
+                                        logAppender("[错误] KEYCODE $kc 发送失败 (exitCode=${result.exitCode})", 4)
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    // 常用命令 Tab：执行模板命令（shell/tcpip 定向到当前设备，version/help 为本机命令原样执行）
+                    onRunCommand = { cmd: String ->
+                        val deviceIp = selectedDeviceIp
+                        if (deviceIp == null) {
+                            logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+                        } else {
+                            val fullCmd = when {
+                                cmd.startsWith("adb shell ") || cmd.startsWith("adb tcpip") ->
+                                    "adb -s $deviceIp ${cmd.removePrefix("adb ")}"
+                                else -> cmd
+                            }
+                            scope.launch {
+                                logAppender("> $fullCmd", 2)
+                                val result = adbExecutor.execAdbCmd(fullCmd)
+                                val output = result.output.take(500)
+                                if (output.isNotEmpty()) {
+                                    logAppender(output, 2)
+                                }
+                                if (!result.success) {
+                                    logAppender("[错误] 命令执行失败 (exitCode=${result.exitCode})", 4)
+                                }
+                            }
+                        }
+                    },
+                    // 常用命令 Tab：命令已复制，控制台回显
+                    onCopyCommand = { cmd: String ->
+                        logAppender("命令已复制到剪贴板：$cmd", 2)
+                    },
+                    // P12 新增回调：安装卡拖入 APK 直接安装 + 文件传输 + chips 联动
+                    onApkDropped = { apkPath ->
+                        val deviceIp = selectedDeviceIp
+                        if (deviceIp == null) {
+                            logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+                        } else {
+                            val fileName = apkPath.replace('\\', '/').substringAfterLast('/')
+                            scope.launch {
+                                val cmd = "adb -s $deviceIp install -r \"$apkPath\""
+                                logAppender("> $cmd", 2)
+                                logAppender("[安装] $fileName 安装中...", 2)
+                                val result = adbExecutor.execAdbCmd(cmd)
+                                if (result.success) {
+                                    logAppender(result.output.take(500), 2)
+                                    logAppender("[安装成功] $fileName", 2)
+                                } else {
+                                    logAppender("[安装失败] ${result.output.take(500)}", 4)
+                                }
+                            }
+                        }
+                    },
+                    onPullApk = {
+                        pullableApps = emptyList()
+                        showPullApkDialog = true
+                        val deviceIp = selectedDeviceIp
+                        if (deviceIp != null) {
+                            isLoadingApps = true
+                            scope.launch {
+                                val apps = AppListLoader.loadAppList(deviceIp)
+                                pullableApps = apps.map {
+                                    PullableApp(
+                                        packageName = it.packageName,
+                                        apkPath = it.apkPath,
+                                        isSystem = it.type == "系统"
+                                    )
+                                }
+                                isLoadingApps = false
+                                logAppender("[应用列表] 加载 ${apps.size} 个应用", 2)
+                            }
+                        }
+                    },
+                    onPushFile = { devicePath ->
+                        val deviceIp = selectedDeviceIp
+                        if (deviceIp == null) {
+                            logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+                            return@MainWindowScreen
+                        }
+                        if (devicePath.isBlank()) {
+                            logAppender("[错误] 设备路径为空", 4)
+                            return@MainWindowScreen
+                        }
+                        val chooser = java.awt.FileDialog(null as java.awt.Frame?, "选择要推送的文件", java.awt.FileDialog.LOAD)
+                        chooser.isVisible = true
+                        val picked = chooser.file
+                        if (chooser.directory == null || picked == null) return@MainWindowScreen
+                        val localPath = java.io.File(chooser.directory, picked).absolutePath
+                        val fileName = picked.replace('\\', '/').substringAfterLast('/')
+                        // 目录以 / 结尾按目录拼接文件名；否则视为完整目标路径
+                        val deviceTarget = if (devicePath.endsWith("/")) {
+                            devicePath.trimEnd('/') + "/$fileName"
+                        } else {
+                            devicePath
+                        }
+                        scope.launch {
+                            val cmd = "adb -s $deviceIp push \"$localPath\" \"$deviceTarget\""
+                            logAppender("> $cmd", 2)
+                            val result = adbExecutor.execAdbCmd(cmd)
+                            if (result.success) {
+                                logAppender("[推送成功] $fileName -> $deviceTarget", 2)
+                            } else {
+                                logAppender("[推送失败] ${result.output.take(200)}", 4)
+                            }
+                        }
+                    },
+                    onPullFile = { devicePath ->
+                        val deviceIp = selectedDeviceIp
+                        if (deviceIp == null) {
+                            logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+                            return@MainWindowScreen
+                        }
+                        if (devicePath.isBlank()) {
+                            logAppender("[错误] 设备路径为空", 4)
+                            return@MainWindowScreen
+                        }
+                        val saveDialog = java.awt.FileDialog(null as java.awt.Frame?, "保存拉取文件", java.awt.FileDialog.SAVE)
+                        saveDialog.file = devicePath.trimEnd('/').substringAfterLast('/').ifEmpty { "download" }
+                        saveDialog.isVisible = true
+                        if (saveDialog.directory == null || saveDialog.file == null) return@MainWindowScreen
+                        val savePath = java.io.File(saveDialog.directory, saveDialog.file).absolutePath
+                        scope.launch {
+                            val cmd = "adb -s $deviceIp pull \"$devicePath\" \"$savePath\""
+                            logAppender("> $cmd", 2)
+                            val result = adbExecutor.execAdbCmd(cmd)
+                            if (result.success) {
+                                logAppender("[拉取成功] $savePath", 2)
+                            } else {
+                                logAppender("[拉取失败] ${result.output.take(200)}", 4)
                             }
                         }
                     },
@@ -542,38 +732,6 @@ fun main() {
                                     }
                                 } else {
                                     logAppender("[连接失败] $deviceIp: ${connectResult.output}", 4)
-                                }
-                            }
-                        }
-                    )
-                }
-
-                // 关于对话框（菜单「关于」触发）
-                if (showAboutDialog) {
-                    AboutDialog(onDismiss = { showAboutDialog = false })
-                }
-
-                // APK Helper 对话框（菜单「APK Helper」触发）
-                if (showApkHelperDialog) {
-                    ApkHelperDialog(
-                        parseResult = apkHelperResult,
-                        isParsing = isParsingApk,
-                        onDismiss = {
-                            showApkHelperDialog = false
-                            apkHelperResult = null
-                        },
-                        onParse = { apkPath ->
-                            isParsingApk = true
-                            apkHelperResult = null
-                            scope.launch {
-                                val result = ApkParser.parse(apkPath)
-                                apkHelperResult = result
-                                isParsingApk = false
-                                when (result) {
-                                    is ApkParseResult.Success ->
-                                        logAppender("[APK解析] ${result.info.packageName.ifBlank { "未知包名" }}", 2)
-                                    is ApkParseResult.Failure ->
-                                        logAppender("[APK解析失败] ${result.reason.take(200)}", 4)
                                 }
                             }
                         }
@@ -813,34 +971,6 @@ private fun loadMenuConfigFromClasspath(logger: AppLogger): List<MenuConfig> {
 }
 
 /**
- * 从 classpath 加载命令配置（config/cmdConfig.xml）。
- */
-private fun loadCmdConfigFromClasspath(logger: AppLogger): List<CmdGroup> {
-    val classLoader = Thread.currentThread().contextClassLoader
-    val stream = classLoader.getResourceAsStream("config/cmdConfig.xml")
-    if (stream != null) {
-        return try {
-            val groups = parseCmdConfigXml(stream)
-            logger.info { "cmdConfig.xml loaded from classpath: ${groups.size} groups" }
-            groups
-        } catch (e: Exception) {
-            logger.error { "Failed to parse cmdConfig.xml from classpath: ${e.message}" }
-            emptyList()
-        }
-    }
-
-    val cmdFile = File(AppPathsConfig.cmdConfigFile)
-    if (cmdFile.exists()) {
-        return XmlConfigLoader.loadCmdConfig(cmdFile).also {
-            logger.info { "cmdConfig.xml loaded from file: ${it.size} groups (path: ${cmdFile.absolutePath})" }
-        }
-    }
-
-    logger.warn { "cmdConfig.xml not found (classpath nor " + cmdFile.absolutePath + ")" }
-    return emptyList()
-}
-
-/**
  * 从 classpath 加载功能模板配置（config/function_templates.xml）。
  */
 private fun loadFunctionTemplatesFromClasspath(logger: AppLogger): List<FunctionTemplate> {
@@ -901,6 +1031,10 @@ private fun parseFunctionTemplateXml(stream: InputStream): List<FunctionTemplate
                     shell = attrs["shell"]?.toBoolean() ?: true,
                     needPkgName = attrs["isNeedPkgName"]?.toBoolean() ?: false,
                     needDeviceOnline = attrs["isNeedDeviceOnline"]?.toBoolean() ?: false,
+                    tab = attrs["tab"] ?: "quick",
+                    size = attrs["size"] ?: "small",
+                    desc = attrs["desc"] ?: "",
+                    accent = attrs["accent"] ?: "",
                     state = state
                 )
             )
@@ -1015,90 +1149,10 @@ private fun parseMenuConfigXml(stream: InputStream): List<MenuConfig> {
 }
 
 /**
- * 解析 cmdConfig.xml 的 InputStream 为 CmdGroup 列表。
- */
-private fun parseCmdConfigXml(stream: InputStream): List<CmdGroup> {
-    val factory = DocumentBuilderFactory.newInstance().apply {
-        isIgnoringComments = true
-        isIgnoringElementContentWhitespace = true
-    }
-    val db = factory.newDocumentBuilder()
-    val doc = db.parse(stream)
-    val groupNodes = doc.documentElement.getElementsByTagName("group")
-    val result = mutableListOf<CmdGroup>()
-
-    for (i in 0 until groupNodes.length) {
-        val groupEl = groupNodes.item(i) as org.w3c.dom.Element
-        val groupName = groupEl.getAttribute("name")
-        val items = mutableListOf<com.easyadb.core.config.CmdItem>()
-        val subGroups = mutableListOf<com.easyadb.core.config.CmdSubGroup>()
-
-        for (j in 0 until groupEl.childNodes.length) {
-            val child = groupEl.childNodes.item(j)
-            if (child !is org.w3c.dom.Element) continue
-            when (child.tagName) {
-                "item" -> parseCmdItem(child)?.let(items::add)
-                "sub_group" -> parseCmdSubGroup(child)?.let(subGroups::add)
-            }
-        }
-        result.add(CmdGroup(name = groupName, items = items, subGroups = subGroups))
-    }
-    stream.close()
-    return result
-}
-
-private fun parseCmdItem(element: org.w3c.dom.Element): com.easyadb.core.config.CmdItem? {
-    val name = element.getAttribute("name")
-    if (name.isBlank()) return null
-    val text = element.textContent?.trim() ?: ""
-    val desc = element.getAttribute("desc")
-    val dstPkg = element.getAttribute("dst_pkg") == "true"
-    val shell = element.getAttribute("shell") != "false"
-    return com.easyadb.core.config.CmdItem(
-        name = name,
-        cmd = text,
-        shell = shell,
-        needDstPkg = dstPkg,
-        description = desc
-    )
-}
-
-private fun parseCmdSubGroup(element: org.w3c.dom.Element): com.easyadb.core.config.CmdSubGroup? {
-    val name = element.getAttribute("name")
-    if (name.isBlank()) return null
-    val items = mutableListOf<com.easyadb.core.config.CmdItem>()
-    val itemNodes = element.getElementsByTagName("item")
-    for (i in 0 until itemNodes.length) {
-        val item = parseCmdItem(itemNodes.item(i) as org.w3c.dom.Element)
-        if (item != null) items.add(item)
-    }
-    return com.easyadb.core.config.CmdSubGroup(name = name, items = items)
-}
-
-/**
- * 用系统资源管理器打开日志目录（菜单「查看日志」）。
- * 对齐 Python MenuBar.open_log_folder() 的 QDesktopServices.openUrl(QUrl.fromLocalFile(LOGS_PATH))。
- */
-private fun openLogsFolder(logger: AppLogger, logAppender: (String, Int) -> Unit) {
-    try {
-        val logsDir = File(AppPathsConfig.logsPath)
-        if (!logsDir.exists()) logsDir.mkdirs()
-        java.awt.Desktop.getDesktop().open(logsDir)
-        logger.info { "Opened logs folder: ${logsDir.absolutePath}" }
-    } catch (e: Exception) {
-        logger.error { "Open logs folder failed: ${e.message}" }
-        logAppender("[错误] 打开日志目录失败: ${e.message}", 4)
-    }
-}
-
-/**
  * 处理菜单栏操作。
  * P4 阶段仅记录日志，后续阶段实现具体操作（P5/P7）。
  */
 private fun handleMenuAction(action: MenuAction, logger: AppLogger, logAppender: (String, Int) -> Unit) {
     logger.info { "Menu action: ${action.name} (action=${action.action})" }
-    when (action.action) {
-        "m_close_app" -> logger.info { "Exit requested via menu" }
-        else -> logAppender("[未实现] 菜单操作: ${action.name}", 3)
-    }
+    logAppender("[未实现] 菜单操作: ${action.name}", 3)
 }

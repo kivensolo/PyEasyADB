@@ -2,6 +2,7 @@ package com.easyadb.ui.designsystem
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Shapes
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
@@ -72,11 +73,21 @@ fun EasyAdbTheme(
 ) {
     val extended = if (darkTheme) DarkEasyAdbColors else LightEasyAdbColors
     val colors = if (darkTheme) darkPalette(extended) else lightPalette(extended)
+    val tokens = EasyAdbTokensDefault
 
-    CompositionLocalProvider(LocalEasyAdbColors provides extended) {
+    CompositionLocalProvider(
+        LocalEasyAdbColors provides extended,
+        LocalEasyAdbTokens provides tokens
+    ) {
         MaterialTheme(
             colors = colors,
             typography = EasyAdbTypography,
+            // Material 语义圆角映射到 token 体系：未翻新的 Material 组件自动收敛
+            shapes = Shapes(
+                small = tokens.shapeSm,
+                medium = tokens.shapeLg,
+                large = tokens.shapeXl
+            ),
             content = content
         )
     }

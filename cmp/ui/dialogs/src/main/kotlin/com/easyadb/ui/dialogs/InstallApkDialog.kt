@@ -1,5 +1,6 @@
 package com.easyadb.ui.dialogs
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Checkbox
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -20,11 +21,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
+import com.easyadb.ui.designsystem.apkDropTarget
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.FilenameFilter
@@ -71,13 +75,13 @@ fun InstallApkDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth().apkDropTarget { apkPath = it },
-            color = MaterialTheme.colors.surface
+            color = easyAdbColors.Surface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = easyAdbTokens.spaceLg, vertical = easyAdbTokens.spaceMd),
+                verticalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceMd)
             ) {
                 // ── 文件选择区域 ──
                 Text(
@@ -96,24 +100,41 @@ fun InstallApkDialog(
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
-                    Box(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        val dialog = FileDialog(null as Frame?, "选择 APK 文件", FileDialog.LOAD).apply {
-                            filenameFilter = FilenameFilter { _, name -> name.endsWith(".apk") }
-                        }
-                        dialog.isVisible = true
-                        val selectedDir = dialog.directory
-                        val selectedFile = dialog.file
-                        if (selectedDir != null && selectedFile != null) {
-                            apkPath = java.io.File(selectedDir, selectedFile).absolutePath
-                        }
-                    }) {
+                    Box(modifier = Modifier.width(easyAdbTokens.spaceSm))
+                    // 次级动作：描边按钮（P12 webUI 语言）
+                    Button(
+                        onClick = {
+                            val dialog = FileDialog(null as Frame?, "选择 APK 文件", FileDialog.LOAD).apply {
+                                filenameFilter = FilenameFilter { _, name -> name.endsWith(".apk") }
+                            }
+                            dialog.isVisible = true
+                            val selectedDir = dialog.directory
+                            val selectedFile = dialog.file
+                            if (selectedDir != null && selectedFile != null) {
+                                apkPath = java.io.File(selectedDir, selectedFile).absolutePath
+                            }
+                        },
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Surface,
+                            contentColor = easyAdbColors.TextPrimary
+                        ),
+                        border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider)
+                    ) {
                         Text("浏览")
                     }
-                    Box(modifier = Modifier.width(8.dp))
+                    Box(modifier = Modifier.width(easyAdbTokens.spaceSm))
+                    // 主确认动作：品牌色实底按钮
                     Button(
                         enabled = apkPath.isNotBlank(),
-                        onClick = { onInstall(apkPath.trim(), options) }
+                        onClick = { onInstall(apkPath.trim(), options) },
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Primary,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text("安装")
                     }
@@ -129,13 +150,13 @@ fun InstallApkDialog(
                         onCheckedChange = { options = options.copy(replace = it) }
                     )
                     Text("替换安装", fontSize = 12.sp, color = easyAdbColors.TextPrimary)
-                    Box(modifier = Modifier.width(16.dp))
+                    Box(modifier = Modifier.width(easyAdbTokens.spaceLg))
                     Checkbox(
                         checked = options.testApp,
                         onCheckedChange = { options = options.copy(testApp = it) }
                     )
                     Text("Test包", fontSize = 12.sp, color = easyAdbColors.TextPrimary)
-                    Box(modifier = Modifier.width(16.dp))
+                    Box(modifier = Modifier.width(easyAdbTokens.spaceLg))
                     Checkbox(
                         checked = options.downgrade,
                         onCheckedChange = { options = options.copy(downgrade = it) }

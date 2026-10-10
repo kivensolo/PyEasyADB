@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -19,12 +19,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.core.database.DeviceRecord
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 
 /**
  * 设备备注（别名）编辑对话框。
@@ -55,12 +57,12 @@ fun DeviceAliasEditDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            color = MaterialTheme.colors.surface
+            color = easyAdbColors.Surface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = easyAdbTokens.spaceLg, vertical = easyAdbTokens.spaceMd),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Text(
@@ -78,13 +80,25 @@ fun DeviceAliasEditDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) {
+                    // 次级动作：描边按钮（P12 webUI 语言）
+                    TextButton(
+                        onClick = onDismiss,
+                        shape = easyAdbTokens.shapeMd,
+                        colors = ButtonDefaults.textButtonColors(contentColor = easyAdbColors.TextPrimary)
+                    ) {
                         Text("取消")
                     }
-                    Box(modifier = Modifier.width(8.dp))
+                    Box(modifier = Modifier.width(easyAdbTokens.spaceSm))
+                    // 主确认动作：品牌色实底按钮
                     Button(
                         enabled = aliasText.isNotBlank(),
-                        onClick = { onConfirm(aliasText.trim()) }
+                        onClick = { onConfirm(aliasText.trim()) },
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Primary,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text("更新备注名称")
                     }

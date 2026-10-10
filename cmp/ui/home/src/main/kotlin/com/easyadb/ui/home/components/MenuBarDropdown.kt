@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import com.easyadb.ui.designsystem.easyAdbTokens
 
 /**
  * 紧贴锚点底边展开的下拉弹层，供顶部菜单栏使用。
@@ -83,8 +84,8 @@ fun MenuBarDropdown(
         }
     ) {
         Surface(
-            shape = MaterialTheme.shapes.medium,
-            elevation = 8.dp
+            shape = easyAdbTokens.shapeLg,
+            elevation = easyAdbTokens.elevationHigh
         ) {
             Column(
                 modifier = Modifier.width(IntrinsicSize.Max)

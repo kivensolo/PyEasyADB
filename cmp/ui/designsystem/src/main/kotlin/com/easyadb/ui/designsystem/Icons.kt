@@ -6,11 +6,13 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.PlayArrow
@@ -49,4 +51,6 @@ object AppIcons {
     val ArrowDown: ImageVector get() = Icons.Filled.KeyboardArrowDown
     val ArrowLeft: ImageVector get() = Icons.AutoMirrored.Filled.KeyboardArrowLeft
     val ArrowRight: ImageVector get() = Icons.AutoMirrored.Filled.KeyboardArrowRight
+    val Cast: ImageVector get() = Icons.Filled.Cast
+    val MoreVert: ImageVector get() = Icons.Filled.MoreVert
 }

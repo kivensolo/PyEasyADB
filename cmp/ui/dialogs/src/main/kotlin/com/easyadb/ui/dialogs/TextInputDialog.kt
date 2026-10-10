@@ -1,5 +1,6 @@
 package com.easyadb.ui.dialogs
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,9 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -20,11 +20,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
-import com.easyadb.ui.designsystem.EasyAdbColors
+import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 
 /**
  * 文本输入对话框。
@@ -51,13 +53,13 @@ fun TextInputDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colors.surface
+            color = easyAdbColors.Surface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                    .padding(horizontal = easyAdbTokens.spaceLg, vertical = easyAdbTokens.spaceMd),
+                verticalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceMd)
             ) {
                 OutlinedTextField(
                     value = text,
@@ -75,16 +77,28 @@ fun TextInputDialog(
                     horizontalArrangement = Arrangement.Start,
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
-                    TextButton(onClick = { text = "" }) {
+                    // 次级动作：描边按钮（P12 webUI 语言）
+                    TextButton(
+                        onClick = { text = "" },
+                        shape = easyAdbTokens.shapeMd,
+                        colors = ButtonDefaults.textButtonColors(contentColor = easyAdbColors.TextPrimary)
+                    ) {
                         Text("清空")
                     }
                     Box(modifier = Modifier.weight(1f))
+                    // 主确认动作：品牌色实底按钮
                     Button(
                         enabled = text.isNotBlank(),
                         onClick = {
                             onInput(text)
                             text = ""
-                        }
+                        },
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Primary,
+                            contentColor = Color.White
+                        )
                     ) {
                         Text("输入")
                     }

@@ -17,10 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -47,7 +45,9 @@ import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.core.apk.ApkInfo
 import com.easyadb.core.apk.ApkParseResult
 import com.easyadb.ui.designsystem.AppImages
+import com.easyadb.ui.designsystem.apkDropTarget
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 import org.jetbrains.skia.Image as SkiaImage
 import java.awt.Toolkit
 import java.io.File
@@ -105,12 +105,12 @@ fun ApkHelperDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxSize().apkDropTarget { onParse(it) },
-            color = MaterialTheme.colors.background
+            color = easyAdbColors.Background
         ) {
             val info = (parseResult as? ApkParseResult.Success)?.info
 
             Column(
-                modifier = Modifier.fillMaxSize().padding(8.dp),
+                modifier = Modifier.fillMaxSize().padding(easyAdbTokens.spaceSm),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 // ── APK 信息 ──
@@ -165,7 +165,7 @@ fun ApkHelperDialog(
                     color = if (parseResult is ApkParseResult.Failure) {
                         easyAdbColors.LogError
                     } else {
-                        MaterialTheme.colors.onSurface
+                        easyAdbColors.TextPrimary
                     },
                     textAlign = TextAlign.Center,
                     maxLines = 2,
@@ -184,20 +184,20 @@ fun ApkHelperDialog(
 private fun InfoSection(title: String, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colors.surface,
-        elevation = 2.dp,
-        border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.06f))
+        shape = easyAdbTokens.shapeXl,
+        color = easyAdbColors.Surface,
+        elevation = easyAdbTokens.elevationLow,
+        border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.TextPrimary.copy(alpha = 0.06f))
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
+            modifier = Modifier.fillMaxWidth().padding(easyAdbTokens.spaceMd),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
             Text(
                 text = title,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colors.primary
+                color = easyAdbColors.Primary
             )
             content()
         }
@@ -214,7 +214,7 @@ private fun InfoRow(label: String, value: String?) {
         Text(
             text = label,
             fontSize = 13.sp,
-            color = MaterialTheme.colors.onSurface,
+            color = easyAdbColors.TextPrimary,
             modifier = Modifier.width(70.dp)
         )
         ReadOnlyField(value = value.orEmpty(), modifier = Modifier.weight(1f))
@@ -252,7 +252,7 @@ private fun FeatureItem(name: String, on: Boolean?) {
         Text(
             text = "$name:",
             fontSize = 13.sp,
-            color = MaterialTheme.colors.onSurface
+            color = easyAdbColors.TextPrimary
         )
         Image(
             painter = stateIcon,
@@ -278,7 +278,7 @@ private fun PermissionRow(info: ApkInfo?) {
         Text(
             text = "权限要求",
             fontSize = 13.sp,
-            color = MaterialTheme.colors.onSurface,
+            color = easyAdbColors.TextPrimary,
             modifier = Modifier.width(70.dp)
         )
         ReadOnlyField(
@@ -310,7 +310,7 @@ private fun ApkLogo(info: ApkInfo?) {
         Image(
             painter = BitmapPainter(bitmap),
             contentDescription = "app icon",
-            modifier = Modifier.size(64.dp).clip(RoundedCornerShape(8.dp))
+            modifier = Modifier.size(64.dp).clip(easyAdbTokens.shapeLg)
         )
     } else {
         Spacer(modifier = Modifier.size(64.dp))
@@ -319,7 +319,7 @@ private fun ApkLogo(info: ApkInfo?) {
         Text(
             text = info?.iconSizeInfo.orEmpty(),
             fontSize = 11.sp,
-            color = MaterialTheme.colors.onSurface
+            color = easyAdbColors.TextPrimary
         )
     }
 }
@@ -339,11 +339,11 @@ private fun ReadOnlyField(
 ) {
     var isHovered by remember { mutableStateOf(false) }
     val borderColor = if (isHovered) {
-        MaterialTheme.colors.primary
+        easyAdbColors.Primary
     } else {
-        MaterialTheme.colors.onSurface.copy(alpha = 0.15f)
+        easyAdbColors.TextPrimary.copy(alpha = 0.15f)
     }
-    val shape = RoundedCornerShape(6.dp)
+    val shape = easyAdbTokens.shapeMd
     val contentModifier = if (scrollable) {
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState())
     } else {
@@ -351,19 +351,19 @@ private fun ReadOnlyField(
     }
     Box(
         modifier = modifier
-            .shadow(if (isHovered) 4.dp else 0.dp, shape)
+            .shadow(if (isHovered) easyAdbTokens.elevationMid else 0.dp, shape)
             .clip(shape)
-            .background(MaterialTheme.colors.surface)
-            .border(1.dp, borderColor, shape)
+            .background(easyAdbColors.Surface)
+            .border(easyAdbTokens.strokeWidth, borderColor, shape)
             .onHover { isHovered = it }
-            .padding(horizontal = 8.dp, vertical = 5.dp)
+            .padding(horizontal = easyAdbTokens.spaceSm, vertical = 5.dp)
     ) {
         SelectionContainer {
             Text(
                 text = value,
                 fontSize = 13.sp,
                 fontFamily = FontFamily.Monospace,
-                color = MaterialTheme.colors.onSurface,
+                color = easyAdbColors.TextPrimary,
                 maxLines = if (scrollable) Int.MAX_VALUE else 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = contentModifier

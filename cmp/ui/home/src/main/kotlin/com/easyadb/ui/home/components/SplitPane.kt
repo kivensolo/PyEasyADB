@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -17,6 +16,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.easyadb.ui.designsystem.easyAdbColors
 import java.awt.Cursor
 
 @Composable
@@ -26,6 +26,7 @@ fun SplitPane(
     dividerThickness: Dp = 4.dp,
     minLeftWidthDp: Dp = 120.dp,
     minRightWidthDp: Dp = 120.dp,
+    leftCollapsed: Boolean = false,
     leftPanel: @Composable (Modifier) -> Unit,
     rightPanel: @Composable (Modifier) -> Unit
 ) {
@@ -33,8 +34,7 @@ fun SplitPane(
     var isDragging by remember { mutableStateOf(false) }
     val density = LocalDensity.current
 
-    val dividerColor = if (isDragging) MaterialTheme.colors.primary
-        else MaterialTheme.colors.onSurface.copy(alpha = 0.08f)
+    val dividerColor = if (isDragging) easyAdbColors.Primary else easyAdbColors.Divider
 
     BoxWithConstraints(modifier = modifier) {
         val totalWidthPx = constraints.maxWidth.toFloat()
@@ -43,6 +43,14 @@ fun SplitPane(
         val dividerPx = with(density) { dividerThickness.toPx() }
         val minLeftPx = with(density) { minLeftWidthDp.toPx() }
         val minRightPx = with(density) { minRightWidthDp.toPx() }
+
+        // 左栏折叠：左栏 0 宽 + divider 不渲染，右栏占满
+        if (leftCollapsed) {
+            Row(modifier = Modifier.fillMaxSize()) {
+                rightPanel(Modifier.fillMaxSize())
+            }
+            return@BoxWithConstraints
+        }
 
         val leftWidthPx = (totalWidthPx * fraction)
             .coerceIn(minLeftPx, totalWidthPx - dividerPx - minRightPx)

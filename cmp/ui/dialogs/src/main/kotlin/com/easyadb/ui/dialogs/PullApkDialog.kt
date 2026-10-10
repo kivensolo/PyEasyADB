@@ -1,5 +1,6 @@
 package com.easyadb.ui.dialogs
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,9 +18,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -31,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbTokens
 
 /**
  * 可提取的应用信息。
@@ -109,11 +112,11 @@ fun PullApkDialog(
     ) {
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colors.surface
+            color = easyAdbColors.Surface
         ) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxSize().padding(easyAdbTokens.spaceMd),
+                verticalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceSm)
             ) {
                 // ── 搜索栏 ──
                 Row(
@@ -127,7 +130,7 @@ fun PullApkDialog(
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
-                    Box(modifier = Modifier.padding(horizontal = 4.dp))
+                    Box(modifier = Modifier.padding(horizontal = easyAdbTokens.spaceXs))
                     // 类型筛选下拉
                     Box {
                         Surface(
@@ -136,7 +139,10 @@ fun PullApkDialog(
                             elevation = 0.dp
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                modifier = Modifier.padding(
+                                    horizontal = easyAdbTokens.spaceMd,
+                                    vertical = easyAdbTokens.spaceSm
+                                ),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(filter.label, fontSize = 12.sp)
@@ -157,8 +163,18 @@ fun PullApkDialog(
                             }
                         }
                     }
-                    Box(modifier = Modifier.padding(horizontal = 4.dp))
-                    Button(onClick = onRefresh) {
+                    Box(modifier = Modifier.padding(horizontal = easyAdbTokens.spaceXs))
+                    // 次级动作：描边按钮（P12 webUI 语言）
+                    Button(
+                        onClick = onRefresh,
+                        shape = easyAdbTokens.shapeMd,
+                        elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = easyAdbColors.Surface,
+                            contentColor = easyAdbColors.TextPrimary
+                        ),
+                        border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider)
+                    ) {
                         Text("刷新")
                     }
                 }
@@ -167,7 +183,7 @@ fun PullApkDialog(
                 Row(
                     modifier = Modifier.fillMaxWidth()
                         .background(easyAdbColors.PanelHeader)
-                        .padding(horizontal = 8.dp, vertical = 6.dp)
+                        .padding(horizontal = easyAdbTokens.spaceSm, vertical = 6.dp)
                 ) {
                     Text("包名", modifier = Modifier.weight(1f), fontSize = 11.sp, color = easyAdbColors.TextSecondary)
                     Text("APK路径", modifier = Modifier.weight(1.5f), fontSize = 11.sp, color = easyAdbColors.TextSecondary)
@@ -203,7 +219,10 @@ fun PullApkDialog(
                                 items(filteredApps.withIndex().toList()) { (index, app) ->
                                     val isSelected = selectedIndex == index
                                     Row(
+                                        // P12 翻新：行底色从通栏改为圆角 chip（外层留白，选中底只铺 chip 区域）
                                         modifier = Modifier.fillMaxWidth()
+                                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                                            .clip(easyAdbTokens.shapeMd)
                                             .background(
                                                 if (isSelected) easyAdbColors.Selected
                                                 else Color.Transparent
@@ -262,17 +281,28 @@ fun PullApkDialog(
                         color = easyAdbColors.TextSecondary
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        // 主确认动作：品牌色实底按钮
                         Button(
                             enabled = selectedIndex >= 0,
                             onClick = {
                                 val app = filteredApps.getOrNull(selectedIndex)
                                 if (app != null) onPull(app)
-                            }
+                            },
+                            shape = easyAdbTokens.shapeMd,
+                            elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = easyAdbColors.Primary,
+                                contentColor = Color.White
+                            )
                         ) {
                             Text("提取选中应用")
                         }
-                        Box(modifier = Modifier.padding(horizontal = 4.dp))
-                        TextButton(onClick = onDismiss) {
+                        Box(modifier = Modifier.padding(horizontal = easyAdbTokens.spaceXs))
+                        TextButton(
+                            onClick = onDismiss,
+                            shape = easyAdbTokens.shapeMd,
+                            colors = ButtonDefaults.textButtonColors(contentColor = easyAdbColors.TextPrimary)
+                        ) {
                             Text("关闭")
                         }
                     }
