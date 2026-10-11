@@ -74,7 +74,7 @@ fun EmbeddedConsoleHost(
 
     if (collapsed) {
         // 收缩态：仅显示一条展开按钮条（对齐左栏折叠后头栏出现 [»] 的交互语言）
-        Surface(color = easyAdbColors.Surface, elevation = 0.dp) {
+        Surface(color = easyAdbColors.PanelHeader, elevation = 0.dp) {
             Row(
                 modifier = Modifier.fillMaxWidth().height(30.dp),
                 verticalAlignment = Alignment.CenterVertically
@@ -94,8 +94,8 @@ fun EmbeddedConsoleHost(
             }
         )
 
-        // 头部行：双 Tab chips + 弹性 + 收缩按钮
-        Surface(color = easyAdbColors.Surface, elevation = 0.dp) {
+        // 头部行：双 Tab chips + 弹性 + 收缩按钮（.con-head：暗 #0d1524 / 浅 #f3f6fb）
+        Surface(color = easyAdbColors.PanelHeader, elevation = 0.dp) {
             Row(
                 modifier = Modifier.fillMaxWidth().height(34.dp).padding(horizontal = 6.dp),
                 verticalAlignment = Alignment.CenterVertically

@@ -9,9 +9,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
@@ -54,9 +65,11 @@ import com.easyadb.ui.console.LogEntry
 import com.easyadb.ui.home.components.EmbeddedConsoleHost
 import com.easyadb.ui.home.components.MenuBarDropdown
 import com.easyadb.ui.home.components.SplitPane
+import com.easyadb.ui.home.components.WindowControls
 import com.easyadb.ui.home.components.tabSwitchTransition
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.roundToInt
 
 // ─────────────────────────────────────────────────────────
@@ -64,12 +77,14 @@ import kotlin.math.roundToInt
 // ─────────────────────────────────────────────────────────
 
 /**
- * 顶部应用头栏（44dp）：品牌标识 + [»]侧栏展开按钮（折叠时） + 行尾设置齿轮
- * 与明暗主题切换按钮（对齐 HTML 参照稿 titlebar win-controls 的 .wc 样式）。
- * 「新建设备连接」入口在设备列表区头部；当前设备 chip 在 ContentTabRow 右侧。
+ * 顶部应用头栏（44dp，即应用唯一标题栏）：品牌标识 + [»]侧栏展开按钮（折叠时）
+ * + 行尾设置齿轮、明暗主题切换与窗口控制按钮（最小化/最大化/关闭，对齐 HTML 参照稿
+ * titlebar win-controls 的 .wc 样式）。窗口为 undecorated，头栏空白区承担拖拽移动
+ * 与双击最大化；「新建设备连接」入口在设备列表区头部，当前设备 chip 在 ContentTabRow 右侧。
  *
  * 齿轮按钮展开精简后的菜单（当前仅「工具」主题三项）；主题按钮按 H5 行为：
- * 暗色显示太阳（点击切浅色）、浅色显示月亮（点击切暗色），SYSTEM 态按解析值。
+ * 暗色显示太阳（点击切浅色）、浅色显示月亮（点击切暗色），SYSTEM 态按解析值；
+ * 关闭按钮悬停红底白图标（H5 .wc-close:hover）。
  */
 @Composable
 private fun AppTopBar(
@@ -78,31 +93,53 @@ private fun AppTopBar(
     themeIsDark: Boolean,
     onToggleTheme: () -> Unit,
     menuConfigs: List<MenuConfig>,
-    onMenuAction: (MenuAction) -> Unit
+    onMenuAction: (MenuAction) -> Unit,
+    windowControls: WindowControls
 ) {
     var overflowOpen by remember { mutableStateOf(false) }
-    Surface(color = easyAdbColors.Surface, elevation = 0.dp) {
+    // 顶栏垂直渐变底（对齐 HTML .titlebar：暗 #0e1626→#0c1320 / 浅 #ffffff→#f1f5fb）
+    Surface(
+        color = Color.Transparent,
+        elevation = 0.dp,
+        modifier = Modifier.background(
+            Brush.verticalGradient(listOf(easyAdbColors.TitleBarTop, easyAdbColors.TitleBarBottom))
+        )
+    ) {
         Column {
+            // 头栏整条作为窗口拖拽区（undecorated 窗口的移动手段），空白处双击切换最大化
+            windowControls.dragArea {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(44.dp)
+                    .titleBarDoubleClick(onDoubleClick = { windowControls.toggleMaximize() })
                     .padding(horizontal = easyAdbTokens.spaceMd),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // 品牌标识：品牌蓝竖条 + 应用名
+                // 品牌标识（HTML .brand）：青色渐变圆角 logo（终端线稿）+ 品牌名（Easy 主文字 / ADB cyan）
                 Box(
                     modifier = Modifier
-                        .width(3.dp)
-                        .height(14.dp)
-                        .clip(easyAdbTokens.shapeSm)
-                        .background(easyAdbColors.Primary)
-                )
-                Spacer(Modifier.width(easyAdbTokens.spaceSm))
+                        .size(32.dp)
+                        .clip(RoundedCornerShape(9.dp))
+                        .background(BrandLogoGradient),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = EasyAdbTileIcons.Terminal,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(17.dp)
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
                 Text(
-                    text = "EasyADB",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
+                    text = buildAnnotatedString {
+                        append("Easy")
+                        withStyle(SpanStyle(color = easyAdbColors.AccentSky)) { append("ADB") }
+                    },
+                    fontSize = 18.5.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 0.3.sp,
                     color = easyAdbColors.TextPrimary
                 )
                 Spacer(Modifier.width(easyAdbTokens.spaceLg))
@@ -171,28 +208,121 @@ private fun AppTopBar(
                 }
 
                 // 明暗主题切换按钮（H5 themeToggle：暗色显太阳切浅色，浅色显月亮切暗色）
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(easyAdbTokens.shapeMd)
-                        .hoverBackground()
-                        .clickable(
-                            interactionSource = null,
-                            indication = null,
-                            onClick = onToggleTheme
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = if (themeIsDark) EasyAdbTileIcons.Sun else EasyAdbTileIcons.Moon,
-                        contentDescription = if (themeIsDark) "切换到浅色模式" else "切换到暗色模式",
-                        tint = easyAdbColors.TextSecondary,
-                        modifier = Modifier.size(15.dp)
-                    )
-                }
+                TopBarButton(
+                    icon = if (themeIsDark) EasyAdbTileIcons.Sun else EasyAdbTileIcons.Moon,
+                    contentDescription = if (themeIsDark) "切换到浅色模式" else "切换到暗色模式",
+                    onClick = onToggleTheme
+                )
+
+                // 窗口控制按钮（H5 winMin/winMax/winClose：.wc 同款，关闭悬停红底白图标）
+                TopBarButton(
+                    icon = EasyAdbTileIcons.WinMinimize,
+                    contentDescription = "最小化",
+                    onClick = windowControls.minimize
+                )
+                TopBarButton(
+                    icon = EasyAdbTileIcons.WinMaximize,
+                    contentDescription = "最大化 / 还原",
+                    onClick = windowControls.toggleMaximize
+                )
+                WindowCloseButton(onClick = windowControls.close)
+            }
             }
             Divider(color = easyAdbColors.Divider, thickness = 1.dp)
         }
+    }
+}
+
+/** 头栏小方按钮（32dp，H5 .wc 同构）：明暗主题切换与窗口最小化/最大化共用 */
+@Composable
+private fun TopBarButton(
+    icon: ImageVector,
+    contentDescription: String,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(easyAdbTokens.shapeMd)
+            .hoverBackground()
+            .clickable(interactionSource = null, indication = null, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = contentDescription,
+            tint = easyAdbColors.TextSecondary,
+            modifier = Modifier.size(15.dp)
+        )
+    }
+}
+
+/** 关闭窗口按钮：悬停红底白图标（HTML .wc-close:hover） */
+@Composable
+private fun WindowCloseButton(onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val hovered by interactionSource.collectIsHoveredAsState()
+    Box(
+        modifier = Modifier
+            .size(32.dp)
+            .clip(easyAdbTokens.shapeMd)
+            .background(if (hovered) CloseHoverRed else Color.Transparent)
+            .hoverable(interactionSource)
+            .clickable(interactionSource = null, indication = null, onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = EasyAdbTileIcons.WinClose,
+            contentDescription = "关闭",
+            tint = if (hovered) Color.White else easyAdbColors.TextSecondary,
+            modifier = Modifier.size(14.dp)
+        )
+    }
+}
+
+/** 关闭按钮悬停底色（HTML .wc-close:hover #dc2626，明暗主题同值） */
+private val CloseHoverRed = Color(0xFFDC2626)
+
+/** 品牌 logo 渐变底（HTML .logo：145deg #14b8c8→#0a7f9e，明暗主题同值） */
+private val BrandLogoGradient = Brush.linearGradient(listOf(Color(0xFF14B8C8), Color(0xFF0A7F9E)))
+
+/**
+ * 头栏双击检测（切换最大化）：用 Initial pass 仅观察、不消费任何事件。
+ * 常规 Main pass 的 detectTapGestures 在位移超 touch slop 时会消费 move 事件，
+ * 与外层 WindowDraggableArea 的拖拽手势竞争（父层 slop 检测见到消费即取消），
+ * 导致头栏拖不动窗口；观察式实现让两者互不干扰。
+ */
+private fun Modifier.titleBarDoubleClick(onDoubleClick: () -> Unit): Modifier =
+    pointerInput(onDoubleClick) {
+        awaitEachGesture {
+            val firstUp = awaitObservedTap() ?: return@awaitEachGesture
+            // 双击时间窗内的第二次按下（超时视为单击）
+            val secondDown = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
+                awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+            } ?: return@awaitEachGesture
+            val secondUp = awaitObservedTap(resumeFrom = secondDown) ?: return@awaitEachGesture
+            if ((secondUp.second - firstUp.second).getDistance() <= viewConfiguration.touchSlop) {
+                onDoubleClick()
+            }
+        }
+    }
+
+/**
+ * 观察一次完整按压（按下到抬起，均不消费事件）；期间该指针位移超 touch slop
+ * 视为拖动（非点击）返回 null。[resumeFrom] 传入已在处理中的按下事件时跳过
+ * 首个 down 等待（双击第二次按压场景）。
+ */
+private suspend fun AwaitPointerEventScope.awaitObservedTap(
+    resumeFrom: PointerInputChange? = null
+): Pair<Offset, Offset>? {
+    val down = resumeFrom ?: awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+    val downPos = down.position
+    while (true) {
+        // Initial pass 仅观察：不检查消费状态（桌面平台手势取消即指针抬起，无需 Cancel 分支）
+        val event = awaitPointerEvent(PointerEventPass.Initial)
+        val change = event.changes.firstOrNull { it.id == down.id } ?: continue
+        if (!change.pressed) return downPos to change.position
+        if ((change.position - downPos).getDistance() > viewConfiguration.touchSlop) return null
     }
 }
 
@@ -288,6 +418,7 @@ private fun ContentTabRow(
         modifier = Modifier
             .fillMaxWidth()
             .height(44.dp)
+            .background(easyAdbColors.TabsBar) // Tab 栏专色（HTML .tabs：暗 #0d1524 / 浅 #f6f8fc）
             .padding(horizontal = easyAdbTokens.spaceMd)
     ) {
         Row(
@@ -468,6 +599,7 @@ private fun CurrentDeviceChip(
  * @param mirrorBinaryPath scrcpy.exe 期望路径（指引文案用）
  * @param onMirrorStart 点击「开启实时预览」
  * @param onMirrorStop 点击「关闭实时预览」
+ * @param windowControls 窗口控制能力（undecorated 窗口：头栏拖拽区 + 最小化/最大化/关闭），宿主注入
  */
 @Composable
 fun MainWindowScreen(
@@ -510,7 +642,14 @@ fun MainWindowScreen(
     mirrorBinaryReady: Boolean = false,
     mirrorBinaryPath: String = "",
     onMirrorStart: () -> Unit = {},
-    onMirrorStop: () -> Unit = {}
+    onMirrorStop: () -> Unit = {},
+    /** 窗口控制能力（undecorated 窗口：头栏拖拽 + 最小化/最大化/关闭），由宿主注入 */
+    windowControls: WindowControls = WindowControls(
+        dragArea = { content -> content() },
+        minimize = {},
+        toggleMaximize = {},
+        close = {}
+    )
 ) {
     // 内容区五 Tab 与内嵌控制台 Tab 状态（embeddedTab 提升到本层）
     var contentTab by remember { mutableStateOf(TAB_QUICK) }
@@ -532,7 +671,8 @@ fun MainWindowScreen(
             themeIsDark = themeIsDark,
             onToggleTheme = onToggleTheme,
             menuConfigs = menuConfigs,
-            onMenuAction = onMenuAction
+            onMenuAction = onMenuAction,
+            windowControls = windowControls
         )
 
         SplitPane(

@@ -126,13 +126,13 @@ fun DeviceListPanel(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(easyAdbColors.Surface)
+            .background(easyAdbColors.SurfaceVariant) // 侧栏底色（HTML .sidebar：暗 #0d1422 / 浅 #f2f5fa）
     ) {
         // ── 头部：品牌蓝竖条 + 标题 + 弹性 + [+]添加 + [«]折叠 ──
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(easyAdbColors.Surface)
+                .background(easyAdbColors.SurfaceVariant)
                 .padding(start = 8.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

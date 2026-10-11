@@ -225,6 +225,38 @@ object EasyAdbTileIcons {
         )
     }
 
+    /** 终端：左尖括号 + 下横线（HTML .logo 内图标，标题栏品牌标识） */
+    val Terminal: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbTerminal",
+            stroke = listOf("M8 6 3 12l5 6", "M13 18h7")
+        )
+    }
+
+    /** 最小化：中置横线（HTML titlebar winMin） */
+    val WinMinimize: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbWinMinimize",
+            stroke = listOf("M5 12h14")
+        )
+    }
+
+    /** 最大化：圆角方框（HTML titlebar winMax） */
+    val WinMaximize: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbWinMaximize",
+            stroke = listOf("M6.5 4.5h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-11a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2z")
+        )
+    }
+
+    /** 关闭：交叉双斜线（HTML titlebar winClose） */
+    val WinClose: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbWinClose",
+            stroke = listOf("M6 6l12 12", "M18 6 6 18")
+        )
+    }
+
     /**
      * 按线稿规范构建图标：描边路径 2 单位圆头/圆角、不填充；实心路径仅填充。
      * 颜色占位为黑色，实际显示色由 Icon(tint) 染色决定。

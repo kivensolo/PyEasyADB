@@ -20,6 +20,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.easyadb.core.config.AppConfigManager
@@ -37,14 +38,12 @@ import com.easyadb.core.adb.AdbExecutor
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.adb.MirrorStartResult
 import com.easyadb.core.adb.ScrcpyLauncher
-import androidx.compose.ui.graphics.toArgb
-import com.easyadb.platform.Win32Interop
 import com.easyadb.ui.designsystem.EasyAdbTheme
-import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.ThemeMode
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CustomActionHandler
 import com.easyadb.ui.home.MainWindowScreen
+import com.easyadb.ui.home.components.WindowControls
 import com.easyadb.core.device.DevicePropFetcher
 import com.easyadb.ui.devicelist.DeviceAliasEditDialog
 import com.easyadb.ui.devicelist.DeviceListCallbacks
@@ -67,6 +66,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.skia.Image
+import java.awt.Frame
 import java.io.File
 import java.io.InputStream
 import javax.xml.parsers.DocumentBuilderFactory
@@ -254,13 +254,19 @@ fun main() {
             }
         }
 
+        // undecorated 窗口的统一关闭入口（头栏关闭按钮与系统 onCloseRequest 共用一套清理）
+        val closeApp: () -> Unit = {
+            watcher.stop()
+            DbManager.close()
+            AppLogger.closeAll()
+            exitApplication()
+        }
+
         Window(
-            onCloseRequest = {
-                watcher.stop()
-                DbManager.close()
-                AppLogger.closeAll()
-                exitApplication()
-            },
+            onCloseRequest = closeApp,
+            // 去掉系统原生标题栏：头栏 AppTopBar 即唯一标题栏（品牌区/齿轮/主题/窗口按钮一体，
+            // 对齐 H5 参照稿 .titlebar），拖拽移动与双击最大化由 WindowControls.dragArea 承担
+            undecorated = true,
             title = "EasyADB",
             icon = iconPainter,
             onKeyEvent = { event ->
@@ -282,27 +288,20 @@ fun main() {
             }
         ) {
             val composeWindow = window
+            // undecorated 窗口控制能力：拖拽区 slot + 最小化/最大化/关闭（头栏 AppTopBar 渲染按钮）
+            // 最大化/还原走 AWT extendedState（ComposeWindow 即 Frame；WindowState.placement 需随
+            // Window state 参数托管，这里直接操作系统级窗口状态更直接）
+            val windowControls = WindowControls(
+                dragArea = { content -> WindowDraggableArea { content() } },
+                minimize = { composeWindow.extendedState = composeWindow.extendedState or Frame.ICONIFIED },
+                toggleMaximize = {
+                    val maximized = composeWindow.extendedState and Frame.MAXIMIZED_BOTH != 0
+                    composeWindow.extendedState =
+                        if (maximized) Frame.NORMAL else Frame.MAXIMIZED_BOTH
+                },
+                close = closeApp
+            )
             EasyAdbTheme(darkTheme = darkTheme) {
-                // P12 webUI：原生标题栏染色融入头栏（Win11 DWMWA_CAPTION_COLOR；Win10 仅暗亮切换）
-                val surfaceArgb = easyAdbColors.Surface.toArgb()
-                val textArgb = easyAdbColors.TextPrimary.toArgb()
-                LaunchedEffect(surfaceArgb, textArgb) {
-                    if (!Win32Interop.isWindows) return@LaunchedEffect
-                    var hwnd: Long? = null
-                    repeat(50) {
-                        hwnd = Win32Interop.componentHwnd(composeWindow)
-                        if (hwnd != null) return@repeat
-                        delay(100)
-                    }
-                    hwnd?.let {
-                        Win32Interop.setCaptionColors(
-                            hwnd = it,
-                            captionColorRef = Win32Interop.argbToColorRef(surfaceArgb),
-                            textColorRef = Win32Interop.argbToColorRef(textArgb),
-                            darkMode = darkTheme
-                        )
-                    }
-                }
                 // ── 侧栏折叠/展开（P12 布局大改） ──
                 var sidebarCollapsed by remember { mutableStateOf(false) }
 
@@ -680,7 +679,8 @@ fun main() {
                     onMirrorStop = {
                         scrcpyLauncher.stop()
                         logAppender("[镜像] 已请求关闭实时预览", 2)
-                    }
+                    },
+                    windowControls = windowControls
                 )
 
                 // 备注设置弹窗（对齐 Python device_alis_edit_dialog）

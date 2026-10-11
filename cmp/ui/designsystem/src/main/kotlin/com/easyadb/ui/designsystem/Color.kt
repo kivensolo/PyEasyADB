@@ -80,6 +80,14 @@ data class EasyAdbColors(
     val SurfaceVariant: Color,
     val PanelHeader: Color,
 
+    // ── 顶栏与 Tab 栏（HTML .titlebar / .tabs 专色） ──
+    /** 顶栏渐变顶色（暗 #0e1626 / 浅 #ffffff） */
+    val TitleBarTop: Color,
+    /** 顶栏渐变底色（暗 #0c1320 / 浅 #f1f5fb） */
+    val TitleBarBottom: Color,
+    /** 内容区 Tab 栏背景（HTML .tabs：暗 #0d1524 / 浅 #f6f8fc） */
+    val TabsBar: Color,
+
     // ── 描边与分割 ──
     /** 输入框/控件描边 */
     val Border: Color,
@@ -146,7 +154,10 @@ val LightEasyAdbColors = EasyAdbColors(
     TextHint = Color(0xFFA3B1C4),         // input::placeholder
     TextDisabled = Color(0xFF93A1B5),     // --tx-3
     SurfaceVariant = Color(0xFFF2F5FA),   // .sidebar
-    PanelHeader = Color(0xFFF3F6FB),      // .con-head / .tabs
+    PanelHeader = Color(0xFFF3F6FB),      // .con-head
+    TitleBarTop = Color(0xFFFFFFFF),      // .titlebar 渐变顶（浅）
+    TitleBarBottom = Color(0xFFF1F5FB),   // .titlebar 渐变底（浅）
+    TabsBar = Color(0xFFF6F8FC),          // .tabs（浅）
     Border = Color(0xFFC9D6EA),           // .pfield input 描边（浅）
     Divider = Color(0xFFEBEDF1),          // --line 合成（rgba(15,23,42,.08) 于白底）
     AccentGreen = Color(0xFF16A34A),      // --green（a-icon 浅色推导）
@@ -200,7 +211,10 @@ val DarkEasyAdbColors = EasyAdbColors(
     TextHint = Color(0xFF4C5C74),         // input::placeholder
     TextDisabled = Color(0xFF5F7089),     // --tx-3
     SurfaceVariant = Color(0xFF0D1422),   // .sidebar
-    PanelHeader = Color(0xFF0D1524),      // .tabs / .con-head / --field
+    PanelHeader = Color(0xFF0D1524),      // .con-head / --field
+    TitleBarTop = Color(0xFF0E1626),      // .titlebar 渐变顶
+    TitleBarBottom = Color(0xFF0C1320),   // .titlebar 渐变底
+    TabsBar = Color(0xFF0D1524),          // .tabs
     Border = Color(0xFF263450),           // .pfield input 描边
     Divider = Color(0xFF1B2738),          // --line 合成（rgba(148,163,184,.08) 于 panel）
     AccentGreen = Color(0xFF4ADE80),      // .a-icon.green
