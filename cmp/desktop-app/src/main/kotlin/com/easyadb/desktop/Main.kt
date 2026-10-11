@@ -340,6 +340,8 @@ fun main() {
                                     if (result.success) {
                                         appLogger.info { "Connected to ${record.ip}" }
                                         logAppender("[连接成功] ${record.ip}", 2)
+                                        // 使用率 +1（设备列表按连接次数排序，下次启动生效）
+                                        DbManager.incrementDeviceConnectCount(record.ip)
                                     } else {
                                         appLogger.error { "Connect failed: ${result.output}" }
                                         logAppender("[连接失败] ${record.ip}: ${result.output.take(200)}", 4)
@@ -714,14 +716,16 @@ fun main() {
                                 if (connectResult.success) {
                                     appLogger.info { "Connected to $deviceIp" }
                                     logAppender("[连接成功] $deviceIp", 2)
-                                    // 写入数据库
+                                    // 写入数据库（已存在的设备合并旧记录：别名/信息/使用率保留，连接次数 +1）
                                     val (ip, port) = com.easyadb.core.util.NetworkUtils.parseIpPort(deviceIp)
+                                    val existing = DbManager.getDevice(ip).data
                                     val deviceRecord = com.easyadb.core.database.DeviceRecord(
                                         ip = ip,
                                         port = port,
-                                        alias = "",
-                                        deviceInfo = "",
-                                        active = 1
+                                        alias = existing?.alias.orEmpty(),
+                                        deviceInfo = existing?.deviceInfo.orEmpty(),
+                                        active = 1,
+                                        connectCount = (existing?.connectCount ?: 0) + 1
                                     )
                                     val insertResult = DbManager.insertDevice(deviceRecord)
                                     if (insertResult.success) {

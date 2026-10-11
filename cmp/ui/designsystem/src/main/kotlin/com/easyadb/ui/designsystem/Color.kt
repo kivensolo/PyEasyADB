@@ -35,6 +35,24 @@ data class EasyAdbColors(
     val StatusOffline: Color,
     val StatusUnauthorized: Color,
 
+    // ── 设备卡（HTML .dev-card 系：渐变卡体/图标容器/IP 主行） ──
+    /** 卡体渐变顶色（暗 #131e31 / 浅 #ffffff） */
+    val DevCardTop: Color,
+    /** 卡体渐变底色（暗 #101a2b / 浅 #f7fafe） */
+    val DevCardBottom: Color,
+    /** 选中卡渐变顶色（暗 #17253e / 浅 #eff5ff） */
+    val DevCardSelTop: Color,
+    /** 选中卡渐变底色（暗 #132036 / 浅 #e9f1fe） */
+    val DevCardSelBottom: Color,
+    /** 卡内图标容器底（HTML .dev-ico：暗 #1a2842 / 浅 #edf2fa） */
+    val DevIcoBg: Color,
+    /** 图标容器描边（暗 #26375a / 浅 #d9e3f2） */
+    val DevIcoBorder: Color,
+    /** 图标颜色（暗 #9db4dd / 浅 #5a7699） */
+    val DevIcoIcon: Color,
+    /** 设备 IP 主行文字（HTML .dev-ip：暗 #7db4fa / 浅 #1d4ed8） */
+    val DevIpText: Color,
+
     // ── 交互状态底色（菜单项 / 列表行，全局统一） ──
     /** 鼠标悬浮底色，弱于选中态，形成 hover < selected 的视觉层次 */
     val Hover: Color,
@@ -106,9 +124,17 @@ val LightEasyAdbColors = EasyAdbColors(
     PrimaryLight = Color(0xFF3B82F6),     // --blue（a-icon.blue 浅色推导）
     Surface = Color(0xFFFFFFFF),          // --panel / --card-hi
     Background = Color(0xFFF6F8FC),       // --win-bg
-    StatusOnline = Color(0xFF16A34A),     // --green
-    StatusOffline = Color(0xFF93A1B5),    // --tx-3
-    StatusUnauthorized = Color(0xFFB45309), // --amber
+    StatusOnline = Color(0xFF16A34A),     // --green（绿 = 已连接）
+    StatusOffline = Color(0xFFB45309),    // --amber（黄 = 离线）
+    StatusUnauthorized = Color(0xFFDC2626), // --red（红 = 未连接/未授权）
+    DevCardTop = Color(0xFFFFFFFF),       // .dev-card 渐变顶（浅）
+    DevCardBottom = Color(0xFFF7FAFE),    // .dev-card 渐变底（浅）
+    DevCardSelTop = Color(0xFFEFF5FF),    // .dev-card.sel 渐变顶
+    DevCardSelBottom = Color(0xFFE9F1FE), // .dev-card.sel 渐变底
+    DevIcoBg = Color(0xFFEDF2FA),         // .dev-ico（浅）
+    DevIcoBorder = Color(0xFFD9E3F2),     // .dev-ico 描边（浅）
+    DevIcoIcon = Color(0xFF5A7699),       // .dev-ico 图标色（浅）
+    DevIpText = Color(0xFF1D4ED8),        // .dev-ip（浅）
     Hover = Color(0xFFE6EDF7),            // .wc:hover
     Selected = Color(0xFFE9F1FE),         // .dev-card.sel 渐变底（#eff5ff→#e9f1fe）
     SegTrack = Color(0xFFEAEFF8),         // .seg 容器底（浅色覆盖）
@@ -152,9 +178,17 @@ val DarkEasyAdbColors = EasyAdbColors(
     PrimaryLight = Color(0xFF60A5FA),     // a-icon.blue（.cur-dev svg 同源）
     Surface = Color(0xFF101A2B),          // --panel（card 渐变基线 #111a2b）
     Background = Color(0xFF0C1320),       // --win-bg
-    StatusOnline = Color(0xFF4ADE80),     // --green
-    StatusOffline = Color(0xFF5F7089),    // --tx-3（.dev-state.off）
-    StatusUnauthorized = Color(0xFFFBBF24), // --amber（.dev-state.busy）
+    StatusOnline = Color(0xFF4ADE80),     // --green（绿 = 已连接）
+    StatusOffline = Color(0xFFFBBF24),    // --amber（黄 = 离线）
+    StatusUnauthorized = Color(0xFFF87171), // --red（红 = 未连接/未授权）
+    DevCardTop = Color(0xFF131E31),       // .dev-card 渐变顶
+    DevCardBottom = Color(0xFF101A2B),    // .dev-card 渐变底
+    DevCardSelTop = Color(0xFF17253E),    // .dev-card.sel 渐变顶
+    DevCardSelBottom = Color(0xFF132036), // .dev-card.sel 渐变底
+    DevIcoBg = Color(0xFF1A2842),         // .dev-ico
+    DevIcoBorder = Color(0xFF26375A),     // .dev-ico 描边
+    DevIcoIcon = Color(0xFF9DB4DD),       // .dev-ico 图标色
+    DevIpText = Color(0xFF7DB4FA),        // .dev-ip
     Hover = Color(0xFF1A2740),            // .wc:hover / .frow:hover 同级
     Selected = Color(0xFF1B2A47),         // .dev-card.sel 渐变底（#17253e→#132036）
     SegTrack = Color(0xFF0D1524),         // .seg 容器底（--field）

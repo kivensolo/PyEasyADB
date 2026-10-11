@@ -25,6 +25,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.material.DropdownMenu
 import androidx.compose.material.Icon
@@ -44,6 +46,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -53,6 +60,7 @@ import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
@@ -63,6 +71,7 @@ import com.easyadb.core.device.DeviceInfo
 import com.easyadb.core.device.DeviceState
 import com.easyadb.ui.designsystem.AppIcons
 import com.easyadb.ui.designsystem.AppImages
+import com.easyadb.ui.designsystem.EasyAdbTileIcons
 import com.easyadb.ui.designsystem.EmptyState
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
@@ -113,7 +122,6 @@ fun DeviceListPanel(
     modifier: Modifier = Modifier
 ) {
     val deviceCards = remember(dbDevices, onlineDevices) { buildDeviceCards(dbDevices, onlineDevices) }
-    val deviceStateIcons = rememberDeviceStateIcons()
 
     Column(
         modifier = modifier
@@ -178,7 +186,6 @@ fun DeviceListPanel(
                             card = card,
                             androidVersion = deviceVersions[card.record.ip],
                             isSelected = selectedDeviceIp == card.record.ip,
-                            stateIcons = deviceStateIcons,
                             onClick = { callbacks.onDeviceClick(card.record) },
                             onDoubleClick = { callbacks.onDeviceDoubleClick(card.record) },
                             onAliasEdit = { callbacks.onDeviceAliasEdit(card.record) },
@@ -253,15 +260,16 @@ private fun HeaderIconButton(desc: String, onClick: () -> Unit, content: @Compos
 }
 
 /**
- * 单个设备卡片（对齐设计图）：设备图标 + 别名 + IP·Android版本 + 状态点。
- * 选中 = 品牌描边 + Selected 底；支持双击连接与右键菜单（备注设置/断开连接/删除设备）。
+ * 单个设备卡片（对齐 HTML .dev-card）：渐变卡体 + 44dp 图标容器（.dev-ico）+
+ * IP 主行（.dev-ip，mono 蓝）+ 别名/版本副行（.dev-sub）+ 状态点行（.dev-state，
+ * 绿=已连接 黄=离线 红=未连接）。选中 = 品牌描边 + 渐变底 + 左缘渐变竖条
+ * （.sel::before）；支持双击连接与右键菜单（备注设置/断开连接/删除设备）。
  */
 @Composable
 private fun DeviceCard(
     card: DeviceCardData,
     androidVersion: String?,
     isSelected: Boolean,
-    stateIcons: DeviceStateIcons,
     onClick: () -> Unit,
     onDoubleClick: () -> Unit,
     onAliasEdit: () -> Unit,
@@ -307,22 +315,47 @@ private fun DeviceCard(
     )
 
     Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 3.dp)) {
+        // 选中竖条渐变色（组合期取出，绘制层使用）
+        val selBarGradient = listOf(easyAdbColors.PrimaryLight, easyAdbColors.Primary)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(easyAdbTokens.shapeLg)
+                .clip(RoundedCornerShape(14.dp))
                 .background(
+                    Brush.verticalGradient(
+                        if (isSelected) listOf(easyAdbColors.DevCardSelTop, easyAdbColors.DevCardSelBottom)
+                        else listOf(easyAdbColors.DevCardTop, easyAdbColors.DevCardBottom)
+                    )
+                )
+                .border(
+                    easyAdbTokens.strokeWidth,
                     when {
-                        isSelected -> easyAdbColors.Selected
-                        isHovered -> easyAdbColors.Hover
-                        else -> easyAdbColors.Surface
+                        isSelected -> easyAdbColors.Primary   // HTML .sel border #2f6bff
+                        isHovered -> easyAdbColors.Border     // .dev-card:hover border 提亮
+                        else -> easyAdbColors.Divider
+                    },
+                    RoundedCornerShape(14.dp)
+                )
+                // 选中左缘渐变竖条（HTML .sel::before：宽 3px、上下内缩 14px）。
+                // 用绘制层实现而非子项 Box：LazyColumn item 高度约束无界，
+                // 子项 fillMaxHeight 不生效会导致竖条高度为 0 不可见；
+                // 渐变色在组合期取出（drawBehind lambda 非组合上下文）
+                .drawBehind {
+                    if (isSelected) {
+                        val barWidth = 3.dp.toPx()
+                        val verticalInset = 14.dp.toPx()
+                        drawRoundRect(
+                            brush = Brush.verticalGradient(
+                                colors = selBarGradient,
+                                startY = verticalInset,
+                                endY = size.height - verticalInset
+                            ),
+                            topLeft = Offset(0f, verticalInset),
+                            size = Size(barWidth, size.height - verticalInset * 2),
+                            cornerRadius = CornerRadius(barWidth / 2f)
+                        )
                     }
-                )
-                .then(
-                    if (isSelected) Modifier.border(
-                        easyAdbTokens.strokeWidth, easyAdbColors.Primary, easyAdbTokens.shapeLg
-                    ) else Modifier
-                )
+                }
                 .clickable(
                     interactionSource = hoverSource,
                     indication = null
@@ -341,57 +374,74 @@ private fun DeviceCard(
                         showContextMenu = true
                     }
                 }
-                .padding(horizontal = 10.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(16.dp),
+            verticalAlignment = Alignment.Top
         ) {
-            // 设备图标
-            Icon(
-                imageVector = AppIcons.Android,
-                contentDescription = null,
-                tint = if (card.isOnline) easyAdbColors.Primary else easyAdbColors.TextDisabled,
-                modifier = Modifier.size(30.dp)
-            )
-            Spacer(Modifier.width(8.dp))
-
-            // 别名 + IP·版本
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = card.record.alias.ifBlank {
-                        if (card.record.port == "0") card.record.ip
-                        else "${card.record.ip}:${card.record.port}"
-                    },
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = easyAdbColors.TextPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Spacer(Modifier.height(1.dp))
-                Text(
-                    text = buildString {
-                        append(if (card.record.port == "0") card.record.ip else "${card.record.ip}:${card.record.port}")
-                        if (!androidVersion.isNullOrBlank()) append(" · Android ").append(androidVersion)
-                    },
-                    fontSize = 11.sp,
-                    color = easyAdbColors.TextSecondary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+            // 图标容器（HTML .dev-ico：44dp 圆角容器 + 显示器线稿）
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(RoundedCornerShape(11.dp))
+                    .background(easyAdbColors.DevIcoBg)
+                    .border(easyAdbTokens.strokeWidth, easyAdbColors.DevIcoBorder, RoundedCornerShape(11.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = EasyAdbTileIcons.Monitor,
+                    contentDescription = null,
+                    tint = easyAdbColors.DevIcoIcon,
+                    modifier = Modifier.size(23.dp)
                 )
             }
+            Spacer(Modifier.width(13.dp))
 
-            // 状态点 + 文案
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painter = card.statePainter(stateIcons),
-                    contentDescription = "设备状态 ${card.state?.value ?: "unknown"}",
-                    modifier = Modifier.size(12.dp)
-                )
-                Spacer(Modifier.width(4.dp))
+            // 地址主行 + 别名/版本副行 + 状态行（HTML .dev-info）
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = card.stateLabel,
-                    fontSize = 10.sp,
-                    color = card.stateColor(easyAdbColors)
+                    text = if (card.record.port == "0") card.record.ip
+                    else "${card.record.ip}:${card.record.port}",
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = easyAdbColors.DevIpText,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                val subLine = buildString {
+                    if (card.record.alias.isNotBlank()) append(card.record.alias)
+                    if (!androidVersion.isNullOrBlank()) {
+                        if (isNotEmpty()) append(" · ")
+                        append("Android ").append(androidVersion)
+                    }
+                }
+                if (subLine.isNotBlank()) {
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        text = subLine,
+                        fontFamily = FontFamily.Monospace,
+                        fontSize = 12.sp,
+                        color = easyAdbColors.TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                Spacer(Modifier.height(8.dp))
+                // 状态点 + 文案（HTML .dev-state：7dp 色点；绿=已连接 黄=离线 红=未连接）
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(7.dp)
+                            .clip(CircleShape)
+                            .background(card.stateColor(easyAdbColors))
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = card.stateLabel,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = card.stateColor(easyAdbColors)
+                    )
+                }
             }
         }
 
@@ -482,40 +532,41 @@ private data class DeviceCardData(
             else -> "未连接"
         }
 
-    /** 状态色（返回映射函数而非 @Composable getter，调用处在 Composable 上下文执行） */
+    /** 状态色（绿=已连接 黄=离线 红=未连接/未授权；返回映射函数而非 @Composable getter） */
     fun stateColor(colors: com.easyadb.ui.designsystem.EasyAdbColors): Color = when (state) {
         DeviceState.DEVICE -> colors.StatusOnline
         DeviceState.OFFLINE -> colors.StatusOffline
         DeviceState.UNAUTHORIZED -> colors.StatusUnauthorized
-        else -> colors.TextHint
-    }
-
-    fun statePainter(icons: DeviceStateIcons): Painter = when (state) {
-        DeviceState.DEVICE -> icons.connected
-        DeviceState.OFFLINE -> icons.offline
-        DeviceState.UNAUTHORIZED -> icons.disconnected
-        else -> icons.disconnected
+        else -> colors.StatusUnauthorized
     }
 }
 
 /**
  * 从 [records]（数据库）与 [onlineDevices]（DeviceWatcher）合并出设备卡片数据。
  * 数据库中保存的设备始终展示（含离线），Watcher 推送的 state 驱动状态显示。
+ * 排序：按使用率（连接次数）降序，次数相同按 IP·端口——应用启动时从库中
+ * 读到的次数生效；运行中连接成功的计数只写库，下次启动生效（避免列表跳动）。
  */
 private fun buildDeviceCards(
     records: List<DeviceRecord>,
     onlineDevices: List<DeviceInfo>
 ): List<DeviceCardData> {
     val stateByName = onlineDevices.associateBy { it.name }
-    return records.sortedWith(compareBy({ it.ip }, { it.port })).map { record ->
-        val portPart = if (record.port == "0") "" else ":${record.port}"
-        val matched = stateByName[record.ip + portPart]
-        DeviceCardData(
-            record = record,
-            online = matched != null,
-            state = matched?.state
+    return records
+        .sortedWith(
+            compareByDescending<DeviceRecord> { it.connectCount }
+                .thenBy { it.ip }
+                .thenBy { it.port }
         )
-    }
+        .map { record ->
+            val portPart = if (record.port == "0") "" else ":${record.port}"
+            val matched = stateByName[record.ip + portPart]
+            DeviceCardData(
+                record = record,
+                online = matched != null,
+                state = matched?.state
+            )
+        }
 }
 
 /**
@@ -531,25 +582,3 @@ data class ContextMenuItem(
     val icon: Painter? = null,
     val onClick: () -> Unit
 )
-
-/**
- * 设备状态图标的 painter 缓存。
- * 在 [DeviceListPanel] 顶层通过 `remember { DeviceStateIcons(...) }` 创建一次，
- * 避免每张卡片重复加载 PNG。
- */
-class DeviceStateIcons(
-    val connected: Painter,
-    val offline: Painter,
-    val disconnected: Painter
-)
-
-/** 从 AppImages 加载并缓存到组合中的设备状态图标。 */
-@Composable
-fun rememberDeviceStateIcons(): DeviceStateIcons {
-    val connected = AppImages.deviceConnected()
-    val offline = AppImages.deviceOffline()
-    val disconnected = AppImages.deviceDisconnected()
-    return remember(connected, offline, disconnected) {
-        DeviceStateIcons(connected, offline, disconnected)
-    }
-}

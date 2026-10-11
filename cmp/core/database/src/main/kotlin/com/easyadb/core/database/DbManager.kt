@@ -10,8 +10,8 @@ import java.sql.DriverManager
 /**
  * SQLite 数据库管理器。
  * 对应 Python 中的 DataBase.py（位于 src/）。
- * 表结构保持与 Python 一致：
- *   device(ip VARCHAR(20) PK, port VARCHAR(10) DEFAULT 0, alias VARCHAR(50), device_info VARCHAR(50), active INTEGER DEFAULT 0)
+ * 表结构保持与 Python 一致（connect_count 为 CMP 版新增，旧库自动迁移补列）：
+ *   device(ip VARCHAR(20) PK, port VARCHAR(10) DEFAULT 0, alias VARCHAR(50), device_info VARCHAR(50), active INTEGER DEFAULT 0, connect_count INTEGER DEFAULT 0)
  *   package(name VARCHAR(50) PK)
  */
 object DbManager {
@@ -25,7 +25,8 @@ object DbManager {
             port VARCHAR(10) DEFAULT 0,
             alias VARCHAR(50),
             device_info VARCHAR(50),
-            active INTEGER DEFAULT 0
+            active INTEGER DEFAULT 0,
+            connect_count INTEGER DEFAULT 0
         )
     """.trimIndent()
 
@@ -47,6 +48,20 @@ object DbManager {
                 close()
             }
 
+            // 旧库迁移：connect_count（使用率排序，CMP v2.0.0 新增）缺列则补
+            val existingColumns = mutableListOf<String>()
+            getConnection().createStatement().use { stmt ->
+                stmt.executeQuery("PRAGMA table_info(device)").use { rs ->
+                    while (rs.next()) existingColumns.add(rs.getString("name"))
+                }
+            }
+            if ("connect_count" !in existingColumns) {
+                conn.createStatement().use { stmt ->
+                    stmt.execute("ALTER TABLE device ADD COLUMN connect_count INTEGER DEFAULT 0")
+                }
+                logger.info { "device table migrated: connect_count column added" }
+            }
+
             logger.info { "Database initialized at $dbPath" }
             DbResult(success = true, data = Unit)
         } catch (e: Exception) {
@@ -62,13 +77,14 @@ object DbManager {
 
     suspend fun insertDevice(device: DeviceRecord): DbResult<Unit> = withContext(Dispatchers.IO) {
         try {
-            val sql = "INSERT OR REPLACE INTO device (ip, port, alias, device_info, active) VALUES (?, ?, ?, ?, ?)"
+            val sql = "INSERT OR REPLACE INTO device (ip, port, alias, device_info, active, connect_count) VALUES (?, ?, ?, ?, ?, ?)"
             getConnection().prepareStatement(sql).use { stmt ->
                 stmt.setString(1, device.ip)
                 stmt.setString(2, device.port)
                 stmt.setString(3, device.alias)
                 stmt.setString(4, device.deviceInfo)
                 stmt.setInt(5, device.active)
+                stmt.setInt(6, device.connectCount)
                 stmt.executeUpdate()
             }
             DbResult(success = true)
@@ -80,7 +96,7 @@ object DbManager {
 
     suspend fun getAllDevices(): DbResult<List<DeviceRecord>> = withContext(Dispatchers.IO) {
         try {
-            val sql = "SELECT ip, port, alias, device_info, active FROM device"
+            val sql = "SELECT ip, port, alias, device_info, active, connect_count FROM device"
             val stmt = getConnection().createStatement()
             val rs = stmt.executeQuery(sql)
             val devices = mutableListOf<DeviceRecord>()
@@ -91,7 +107,8 @@ object DbManager {
                         port = rs.getString("port"),
                         alias = rs.getString("alias") ?: "",
                         deviceInfo = rs.getString("device_info") ?: "",
-                        active = rs.getInt("active")
+                        active = rs.getInt("active"),
+                        connectCount = rs.getInt("connect_count")
                     )
                 )
             }
@@ -106,7 +123,7 @@ object DbManager {
 
     suspend fun getDevice(ip: String): DbResult<DeviceRecord?> = withContext(Dispatchers.IO) {
         try {
-            val sql = "SELECT ip, port, alias, device_info, active FROM device WHERE ip = ?"
+            val sql = "SELECT ip, port, alias, device_info, active, connect_count FROM device WHERE ip = ?"
             getConnection().prepareStatement(sql).use { stmt ->
                 stmt.setString(1, ip)
                 val rs = stmt.executeQuery()
@@ -116,7 +133,8 @@ object DbManager {
                         port = rs.getString("port"),
                         alias = rs.getString("alias") ?: "",
                         deviceInfo = rs.getString("device_info") ?: "",
-                        active = rs.getInt("active")
+                        active = rs.getInt("active"),
+                        connectCount = rs.getInt("connect_count")
                     )
                 } else null
                 rs.close()
@@ -124,6 +142,21 @@ object DbManager {
             }
         } catch (e: Exception) {
             logger.error { "Get device failed: ${e.message}" }
+            DbResult(success = false, error = e.message)
+        }
+    }
+
+    /** 连接次数 +1（使用率统计，连接成功时调用；设备列表排序在下次启动生效） */
+    suspend fun incrementDeviceConnectCount(ip: String): DbResult<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val sql = "UPDATE device SET connect_count = connect_count + 1 WHERE ip = ?"
+            getConnection().prepareStatement(sql).use { stmt ->
+                stmt.setString(1, ip)
+                stmt.executeUpdate()
+            }
+            DbResult(success = true)
+        } catch (e: Exception) {
+            logger.error { "Increment connect count failed: ${e.message}" }
             DbResult(success = false, error = e.message)
         }
     }
