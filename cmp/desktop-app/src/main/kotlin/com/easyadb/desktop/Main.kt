@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.window.WindowDraggableArea
 import androidx.compose.ui.window.Window
+import androidx.compose.ui.window.rememberWindowState
 import androidx.compose.ui.window.application
 import com.easyadb.core.config.AppConfigManager
 import com.easyadb.core.config.AppPathsConfig
@@ -264,6 +265,9 @@ fun main() {
 
         Window(
             onCloseRequest = closeApp,
+            // 显式默认尺寸：平台默认 ~800x600 下侧栏过窄；1280x800 时侧栏 0.25 ≈ 320px，
+            // 对齐 H5 参照稿 .sidebar 的 318px 设计宽度
+            state = rememberWindowState(width = 1280.dp, height = 800.dp),
             // 去掉系统原生标题栏：头栏 AppTopBar 即唯一标题栏（品牌区/齿轮/主题/窗口按钮一体，
             // 对齐 H5 参照稿 .titlebar），拖拽移动与双击最大化由 WindowControls.dragArea 承担
             undecorated = true,
@@ -311,6 +315,7 @@ fun main() {
                 val deviceVersions by deviceVersionsFlow.collectAsState()
                 LaunchedEffect(onlineDevices) {
                     val missing = onlineDevices
+                        .filter { it.state == com.easyadb.core.device.DeviceState.DEVICE }
                         .map { it.name }
                         .filter { it.isNotBlank() && it !in deviceVersionsFlow.value }
                     missing.forEach { ip ->
@@ -327,9 +332,18 @@ fun main() {
                 // 使参数卡/命令/文件等无需用户手动点选即可操作；用户后续点选始终优先（只在 null 时兜底）
                 LaunchedEffect(onlineDevices) {
                     if (selectedDeviceIp == null) {
-                        onlineDevices.firstOrNull { it.name.isNotBlank() }?.let { first ->
-                            selectedDeviceIp = first.name
-                            appLogger.info { "Auto-selected first online device: ${first.name}" }
+                        // 优先正常 device 状态的设备，兜底取列表第一台。selectedDeviceIp 沿用
+                        // record.ip 口径（不含端口）——选中高亮按 `selectedDeviceIp == record.ip`
+                        // 比较，watcher 的完整地址 ip:port 若不去端口，带端口设备永远不高亮
+                        // （P13 坑点「设备地址端口口径不一致」的同族问题）
+                        val first = onlineDevices.firstOrNull {
+                            it.state == com.easyadb.core.device.DeviceState.DEVICE && it.name.isNotBlank()
+                        } ?: onlineDevices.firstOrNull { it.name.isNotBlank() }
+                        first?.let { dev ->
+                            val name = dev.name
+                            selectedDeviceIp =
+                                if ('.' in name && ':' in name) name.substringBeforeLast(':') else name
+                            appLogger.info { "Auto-selected first online device: $selectedDeviceIp" }
                         }
                     }
                 }

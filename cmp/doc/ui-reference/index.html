@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EasyADB — 安卓设备调试助手</title>
+<link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect width='24' height='24' rx='6.5' fill='%230d9aa8'/><g fill='none' stroke='%23ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M5.2 18.8 12 5.2l6.8 13.6'/></g><g fill='none' stroke='%237df3ff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><path d='M8.8 14.6h6.4'/></g></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -497,6 +498,129 @@ svg{flex:none;display:block}
 .q-item.done .q-pct{color:var(--green)}
 .q-item.leaving{opacity:0;transform:translateY(-8px);transition:.4s}
 
+/* ---------- 实时预览 tab ---------- */
+/* 镜像区铺满：工具栏以下全部给画面（对应 CMP 端 EmbeddedScrcpyRegion 随面板尺寸拉伸） */
+#pane-mirror{padding:8px 12px 10px;overflow:hidden}
+#pane-mirror .pane-inner{gap:8px;height:100%}
+.mirror-toolbar{display:flex;align-items:center;gap:14px;padding:8px 14px;flex-wrap:wrap}
+.mirror-name{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;font-weight:700;color:#b9c8de;letter-spacing:.5px}
+.mirror-dot{width:8px;height:8px;border-radius:50%;background:var(--tx-3);flex:none;transition:.2s}
+.mirror-dot.conn{background:var(--amber);animation:blink 1s infinite}
+.mirror-dot.run{background:var(--green);box-shadow:0 0 10px var(--green)}
+.mirror-state{font-size:12.5px;font-weight:600;color:var(--tx-3);min-width:64px}
+.mirror-state.conn{color:var(--amber)}
+.mirror-state.run{color:var(--green)}
+.mirror-lock-hint{font-size:11.5px;color:var(--amber);display:inline-flex;align-items:center;gap:5px}
+.seg.locked{opacity:.55}
+.seg.locked button{cursor:not-allowed}
+.mirror-hint-line{margin-left:auto;font-size:12px;color:var(--tx-3);white-space:nowrap}
+.mirror-stats{display:flex;gap:8px}
+.mstat{font-family:var(--mono);font-size:11.5px;font-weight:600;color:#9ec3fb;background:rgba(59,130,246,.1);border:1px solid rgba(96,165,250,.28);padding:4px 10px;border-radius:7px;white-space:nowrap}
+.mirror-stage{display:flex;flex-direction:column;flex:1;min-height:0;padding:0;overflow:hidden}
+/* 预览画面（始终深色 = 设备屏幕本体），铺满镜像区 */
+.scr-outer{
+  position:relative;flex:1;min-height:0;width:100%;overflow:hidden;background:#05080d;
+}
+.scr-outer.nack{animation:scrNack .35s}
+@keyframes scrNack{25%{transform:translateX(-6px)}50%{transform:translateX(5px)}75%{transform:translateX(-2px)}}
+.scr-empty,.scr-connecting{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:12px;text-align:center;padding:20px;color:#5f7089;user-select:none;
+}
+.scr-empty .big{width:72px;height:72px;border-radius:20px;display:grid;place-items:center;background:#101a2e;border:1px solid #22314a;color:#42536e}
+.scr-empty .t1{font-size:15.5px;font-weight:700;color:#8fa0b8}
+.scr-empty .t2{font-size:12.5px;max-width:430px;line-height:1.65}
+.scr-connecting .t1{font-size:13.5px;font-weight:600;color:#8fa0b8}
+.scr-spin{width:32px;height:32px;border-radius:50%;border:3px solid #22314a;border-top-color:#60a5fa;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;transition:opacity .3s;user-select:none}
+.scr.on{opacity:1}
+.scr-bar{
+  flex:none;height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;
+  background:rgba(8,13,24,.92);border-bottom:1px solid rgba(148,163,184,.1);
+  font-family:var(--mono);font-size:12px;color:#8fa0b8;
+}
+.scr-bar-r{display:flex;align-items:center;gap:9px}
+.scr-tag{font-size:10px;font-weight:700;letter-spacing:.6px;color:#7db4fa;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.28);padding:2px 7px;border-radius:5px}
+.scr-body{
+  flex:1;position:relative;overflow:hidden;
+  background:
+    radial-gradient(520px 320px at 18% 0%, rgba(59,130,246,.16), transparent 62%),
+    radial-gradient(420px 280px at 92% 100%, rgba(14,165,183,.13), transparent 60%),
+    linear-gradient(160deg,#0c1526,#0a0f1c);
+}
+.scr-lv{position:absolute;inset:0;padding:16px 20px;transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .32s}
+.scr-h{font-size:12.5px;font-weight:700;color:#9fb0c8;letter-spacing:1px;margin-bottom:12px}
+.scr-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.scr-tile{
+  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:11px;text-align:left;
+  background:linear-gradient(180deg,rgba(30,44,72,.9),rgba(20,31,52,.9));
+  border:1.5px solid rgba(148,163,184,.15);transition:.14s;
+}
+.scr-tile:hover{border-color:#60a5fa;background:rgba(47,107,255,.18)}
+.scr-tile .t-ico{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;font-weight:800;font-size:14px;color:#fff;flex:none;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.scr-tile .t-name{font-size:12.5px;font-weight:600;color:#dbe4f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scr-rows{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.scr-row{height:50px;border-radius:10px;position:relative;overflow:hidden;background:linear-gradient(90deg,rgba(148,163,184,.09),rgba(148,163,184,.04))}
+.scr-row::after{content:"";position:absolute;inset:0;transform:translateX(-100%);background:linear-gradient(90deg,transparent,rgba(148,163,184,.1),transparent);animation:scrShine 2.8s ease infinite}
+@keyframes scrShine{to{transform:translateX(100%)}}
+.scr-lv.app{
+  transform:translateX(56%);opacity:0;pointer-events:none;overflow-y:auto;
+  background:
+    radial-gradient(520px 320px at 18% 0%, rgba(59,130,246,.16), transparent 62%),
+    linear-gradient(160deg,#0c1526,#0a0f1c);
+}
+.scr-lv.app::-webkit-scrollbar{width:0}
+.scr-lv.app.open{transform:none;opacity:1;pointer-events:auto}
+.scr-app-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.scr-app-head .a-ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-weight:800;font-size:17px;color:#fff;flex:none;text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.scr-app-head .a-name{font-size:14.5px;font-weight:700;color:#e6ecf6}
+.scr-app-head .a-pkg{font-family:var(--mono);font-size:11px;color:#5f7089;margin-top:2px}
+.scr-ripple{
+  position:absolute;width:16px;height:16px;border-radius:50%;border:2px solid rgba(96,165,250,.9);
+  transform:translate(-50%,-50%) scale(.4);opacity:.95;pointer-events:none;
+  animation:scrRipple .5s ease-out forwards;z-index:6;
+}
+@keyframes scrRipple{to{transform:translate(-50%,-50%) scale(3.4);opacity:0}}
+.scr-bubble{
+  position:absolute;z-index:7;transform:translate(-50%,-130%);pointer-events:none;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:9px;
+  background:rgba(13,21,36,.95);border:1px solid rgba(96,165,250,.5);color:#bcd7fb;
+  font-size:12px;font-weight:700;box-shadow:0 10px 28px rgba(0,0,0,.5);
+  animation:scrBubble .85s ease forwards;
+}
+.scr-bubble .k{font-family:var(--mono);font-size:10px;font-weight:600;color:#7db4fa;background:rgba(59,130,246,.14);border:1px solid rgba(59,130,246,.3);padding:1.5px 6px;border-radius:5px}
+@keyframes scrBubble{0%{opacity:0;transform:translate(-50%,-90%) scale(.92)}18%{opacity:1;transform:translate(-50%,-135%) scale(1)}70%{opacity:1}100%{opacity:0;transform:translate(-50%,-175%)}}
+/* 独立窗口占位卡（同样铺满镜像区） */
+.float-ghost{
+  flex:1;min-height:0;width:100%;border-radius:10px;
+  border:1.5px dashed rgba(148,163,184,.3);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;
+  text-align:center;padding:20px;color:var(--tx-3);
+}
+.float-ghost .big{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;background:rgba(148,163,184,.08);border:1px solid var(--line-2);color:var(--tx-3)}
+.float-ghost .t1{font-size:14.5px;font-weight:700;color:var(--tx-2)}
+.float-ghost .t2{font-size:12.5px;max-width:440px;line-height:1.6}
+.fg-ops{display:flex;gap:10px;margin-top:4px}
+/* scrcpy 独立浮窗（挂在 .window 上，跨 Tab 存活） */
+.mirror-float{
+  position:absolute;right:64px;top:118px;z-index:95;width:min(420px,44vw);
+  background:var(--win-bg);border:1px solid rgba(148,163,184,.25);border-radius:12px;overflow:hidden;
+  box-shadow:0 26px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.35);
+  animation:rise .35s both;user-select:none;
+}
+.mf-head{
+  height:34px;display:flex;align-items:center;gap:8px;padding:0 6px 0 12px;cursor:move;
+  background:linear-gradient(180deg,#141f33,#0f1828);border-bottom:1px solid rgba(148,163,184,.14);color:#9fb0c8;
+}
+.mf-head svg{color:#38bdf8;flex:none}
+.mf-head .mf-title{font-family:var(--mono);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mf-ops{margin-left:auto;display:flex;gap:2px}
+.mf-ops button{width:26px;height:24px;border-radius:6px;display:grid;place-items:center;color:var(--tx-3);transition:.13s}
+.mf-ops button:hover{color:#fff;background:#22335a}
+.mf-ops button.mf-close:hover{background:#dc2626;color:#fff}
+.mf-body{position:relative;aspect-ratio:16/9;background:#05080d;overflow:hidden}
+
 /* ---------- console ---------- */
 .console{
   flex:none;height:262px;display:flex;flex-direction:column;min-height:0;
@@ -813,6 +937,10 @@ html[data-theme="light"] .switch input:checked{background:#2563eb}
 html[data-theme="light"] .btn-plain{background:#eef2f9;border-color:#ccd9ec;color:#3a4a60}
 html[data-theme="light"] .btn-plain:hover{border-color:#9dbdfa;color:#1d4ed8;background:#dbe7fb}
 html[data-theme="light"] .modal-settings .modal-body{background:transparent}
+html[data-theme="light"] .mirror-float{background:#ffffff;border-color:rgba(15,23,42,.18);box-shadow:0 26px 70px rgba(15,23,42,.3)}
+html[data-theme="light"] .mf-head{background:linear-gradient(180deg,#f2f6fc,#e9eff8);border-bottom-color:rgba(15,23,42,.08);color:#5a6b82}
+html[data-theme="light"] .mf-ops button:hover{background:#dbe6f6;color:var(--tx)}
+html[data-theme="light"] .mf-ops button.mf-close:hover{background:#dc2626;color:#fff}
 </style>
 </head>
 <body>
@@ -824,7 +952,11 @@ html[data-theme="light"] .modal-settings .modal-body{background:transparent}
     <header class="titlebar">
       <div class="brand">
         <span class="logo">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6 3 12l5 6"/><path d="M13 18h7"/></svg>
+          <!-- 品牌标志：字母 A × 终端提示符（ADB 的 A 就是一条命令：人字=旋转的 >，横杠=_） -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5.2 18.8 12 5.2l6.8 13.6" stroke="#ffffff" stroke-width="2.4"/>
+            <path d="M8.8 14.6h6.4" stroke="#7df3ff" stroke-width="2.4"/>
+          </svg>
         </span>
         <span class="brand-name">Easy<em>ADB</em></span>
       </div>
@@ -873,6 +1005,7 @@ html[data-theme="light"] .modal-settings .modal-body{background:transparent}
           <button class="tab active" data-tab="quick">快捷操作</button>
           <button class="tab" data-tab="cmds">常用命令</button>
           <button class="tab" data-tab="keys">按键模拟</button>
+          <button class="tab" data-tab="mirror">实时预览</button>
           <button class="tab" data-tab="apps">应用管理</button>
           <button class="tab" data-tab="files">文件传输</button>
           <span class="tab-ink" id="tabInk"></span>
@@ -1051,6 +1184,94 @@ html[data-theme="light"] .modal-settings .modal-body{background:transparent}
             </div>
           </section>
 
+          <!-- ========== 实时预览 ========== -->
+          <section class="pane" id="pane-mirror">
+            <div class="pane-inner">
+
+              <div class="card mirror-toolbar rise d1">
+                <span class="mirror-name"><i class="mirror-dot" id="mirrorDot"></i>实时预览</span>
+                <label class="switch"><input type="checkbox" id="mirrorSwitch" title="开启 / 关闭实时预览"></label>
+                <span class="mirror-state" id="mirrorState">已停止</span>
+                <div class="seg" id="mirrorEmbed" title="嵌入模式">
+                  <button class="active" data-m="embed">嵌入应用窗口</button>
+                  <button data-m="float">独立窗口</button>
+                </div>
+                <span class="mirror-lock-hint" id="mirrorLockHint" hidden>预览运行中已锁定 · 停止后可切换</span>
+                <span class="mirror-hint-line">鼠标模式(右键=返回)、键盘模式(方向键、Enter键)</span>
+                <div class="mirror-stats" id="mirrorStats" hidden>
+                  <span class="mstat" id="mstTime">00:00</span>
+                  <span class="mstat" id="mstRes">1920×1080</span>
+                </div>
+              </div>
+
+              <div class="card mirror-stage rise d2">
+                  <div class="scr-outer" id="scrOuter">
+                    <div class="scr-empty" id="scrEmpty">
+                      <span class="big">
+                        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="13" rx="2"/><path d="m8.5 8.5 5 2.5-5 2.5z"/></svg>
+                      </span>
+                      <div class="t1">实时预览未开启</div>
+                      <div class="t2">通过 scrcpy 实时镜像设备画面 · 支持嵌入应用窗口 / 独立窗口两种模式 · 鼠标右键 = 返回</div>
+                      <button class="btn btn-primary" id="scrStartBtn" style="margin-top:6px">开启实时预览</button>
+                    </div>
+                    <div class="scr-connecting" id="scrConnecting" hidden>
+                      <span class="scr-spin"></span>
+                      <div class="t1">正在连接设备画面…</div>
+                    </div>
+                    <div class="scr" id="scrLive" hidden>
+                      <div class="scr-bar">
+                        <span id="scrClock">--:--</span>
+                        <span class="scr-bar-r">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor" stroke="none"/></svg>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="17" height="9" rx="2"/><path d="M22 11v3" stroke-linecap="round"/><rect x="4" y="10" width="11" height="5" rx="1" fill="currentColor" stroke="none"/></svg>
+                          <span class="scr-tag">scrcpy · H.265</span>
+                        </span>
+                      </div>
+                      <div class="scr-body" id="scrBody">
+                        <div class="scr-lv">
+                          <div class="scr-h">我的应用</div>
+                          <div class="scr-tiles" id="scrTiles"></div>
+                          <div class="scr-rows">
+                            <div class="scr-row" style="width:76%"></div>
+                            <div class="scr-row" style="width:58%"></div>
+                          </div>
+                        </div>
+                        <div class="scr-lv app" id="scrApp">
+                          <div class="scr-app-head">
+                            <span class="a-ico" id="scrAppIco">B</span>
+                            <span>
+                              <div class="a-name" id="scrAppName">哔哩哔哩</div>
+                              <div class="a-pkg" id="scrAppPkg">tv.danmaku.bili · 正在前台运行</div>
+                            </span>
+                          </div>
+                          <div class="scr-rows" style="margin-top:10px">
+                            <div class="scr-row"></div>
+                            <div class="scr-row" style="width:88%"></div>
+                            <div class="scr-row" style="width:94%"></div>
+                            <div class="scr-row" style="width:80%"></div>
+                            <div class="scr-row" style="width:90%"></div>
+                            <div class="scr-row" style="width:64%"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="float-ghost" id="floatGhost" hidden>
+                    <span class="big">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17.5V21"/></svg>
+                    </span>
+                    <div class="t1">预览正在独立窗口中运行</div>
+                    <div class="t2">画面显示在应用外的 scrcpy 独立窗口（可拖动标题栏移动位置），切换到其他 Tab 时预览继续运行</div>
+                    <div class="fg-ops">
+                      <button class="run-btn" id="fgReembed">收回嵌入</button>
+                      <button class="mini-btn danger" id="fgStop">停止预览</button>
+                    </div>
+                  </div>
+                </div>
+
+            </div>
+          </section>
+
           <!-- ========== 应用管理 ========== -->
           <section class="pane" id="pane-apps">
             <div class="pane-inner">
@@ -1131,6 +1352,23 @@ html[data-theme="light"] .modal-settings .modal-body{background:transparent}
           </div>
         </section>
       </main>
+    </div>
+
+    <!-- 实时预览：scrcpy 独立窗口（浮窗，跨 Tab 存活） -->
+    <div class="mirror-float" id="mirrorFloat" hidden>
+      <div class="mf-head" id="mfHead" title="按住拖动移动窗口">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17.5V21"/></svg>
+        <span class="mf-title">EasyADB Device Mirror — scrcpy</span>
+        <div class="mf-ops">
+          <button id="mfReembed" title="收回嵌入">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 5h6v14h-6"/><path d="m9 8 4 4-4 4"/></svg>
+          </button>
+          <button class="mf-close" id="mfStop" title="停止预览">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="mf-body" id="mfBody"></div>
     </div>
   </div>
 </div>
@@ -1286,7 +1524,10 @@ html[data-theme="light"] .modal-settings .modal-body{background:transparent}
 <div class="shutdown" id="shutdown">
   <div class="sd-box">
     <span class="logo">
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6 3 12l5 6"/><path d="M13 18h7"/></svg>
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5.2 18.8 12 5.2l6.8 13.6" stroke="#ffffff" stroke-width="2.4"/>
+        <path d="M8.8 14.6h6.4" stroke="#7df3ff" stroke-width="2.4"/>
+      </svg>
     </span>
     <div>
       <div class="sd-title">EasyADB 已关闭</div>
@@ -1810,6 +2051,7 @@ function renderApps(){
   $$('#appsList [data-un]').forEach(function(b){
     b.addEventListener('click', function(){ openUninstall(b.dataset.un); });
   });
+  renderScrTiles();
 }
 $('#appSearch').addEventListener('input', function(){ appKeyword = this.value.trim().toLowerCase(); renderApps(); });
 $$('#appFilter button').forEach(function(b){
@@ -1950,6 +2192,251 @@ $('#locBack').addEventListener('click', function(){
 });
 $('#devBack').addEventListener('click', function(){
   if (devStack.length > 1){ devStack.pop(); renderFiles(); }
+});
+
+/* ---------------- 实时预览 tab ---------------- */
+var mirror = {
+  running:false, connecting:false, mode:'embed', session:0,
+  timer:null, sec:0, appOpen:false
+};
+try {
+  var _mirrorMode = localStorage.getItem('easyadb-mirror-mode');
+  if (_mirrorMode === 'embed' || _mirrorMode === 'float') mirror.mode = _mirrorMode;
+} catch(e){}
+
+function setModeUI(){
+  $$('#mirrorEmbed button').forEach(function(b){ b.classList.toggle('active', b.dataset.m === mirror.mode); });
+}
+function setMirrorMode(m){
+  mirror.mode = m;
+  try { localStorage.setItem('easyadb-mirror-mode', m); } catch(e){}
+  setModeUI();
+}
+$$('#mirrorEmbed button').forEach(function(b){
+  b.addEventListener('click', function(){
+    if (mirror.running || mirror.connecting){
+      toast('预览运行中无法切换嵌入模式 — 请先关闭实时预览', 'err');
+      return;
+    }
+    if (mirror.mode !== b.dataset.m){
+      setMirrorMode(b.dataset.m);
+      toast('嵌入模式已切换为「' + (mirror.mode === 'embed' ? '嵌入应用窗口' : '独立窗口') + '」', 'ok');
+    }
+  });
+});
+function lockEmbedSeg(lock){
+  $('#mirrorEmbed').classList.toggle('locked', lock);
+  $('#mirrorEmbed').title = lock ? '预览运行中已锁定，停止后可切换' : '嵌入模式';
+  $('#mirrorLockHint').hidden = !lock;
+}
+function setMirrorStateUI(txt, cls){
+  $('#mirrorState').textContent = txt;
+  $('#mirrorState').className = 'mirror-state' + (cls ? ' ' + cls : '');
+  $('#mirrorDot').className = 'mirror-dot' + (cls === 'run' ? ' run' : cls === 'conn' ? ' conn' : '');
+}
+function syncMirrorSwitch(){
+  $('#mirrorSwitch').checked = mirror.running || mirror.connecting;
+}
+function updateScrClock(){
+  var d = new Date();
+  var p = function(n){ n = String(n); return n.length < 2 ? '0' + n : n; };
+  $('#scrClock').textContent = p(d.getHours()) + ':' + p(d.getMinutes());
+}
+function renderScrTiles(){
+  var host = $('#scrTiles'); host.innerHTML = '';
+  APPS.filter(function(a){ return a.type === 'user' && !state.appsRemoved[a.pkg]; }).slice(0, 6).forEach(function(a){
+    var b = document.createElement('button');
+    b.className = 'scr-tile';
+    b.dataset.pkg = a.pkg;
+    b.innerHTML = '<span class="t-ico" style="background:' + a.color + '">' + esc(a.name.charAt(0)) + '</span><span class="t-name">' + esc(a.name) + '</span>';
+    host.appendChild(b);
+  });
+}
+function openScrApp(a){
+  mirror.appOpen = true;
+  $('#scrAppIco').textContent = a.name.charAt(0);
+  $('#scrAppIco').style.background = a.color;
+  $('#scrAppName').textContent = a.name;
+  $('#scrAppPkg').textContent = a.pkg + ' · 正在前台运行';
+  $('#scrApp').classList.add('open');
+}
+function closeScrApp(){
+  mirror.appOpen = false;
+  $('#scrApp').classList.remove('open');
+}
+function enterFloat(){
+  $('#mfBody').appendChild($('#scrOuter'));
+  $('#mirrorFloat').hidden = false;
+  $('#floatGhost').hidden = false;
+}
+function exitFloat(){
+  if ($('#mirrorFloat').hidden) return;
+  $('#mirrorFloat').hidden = true;
+  var stage = $('.mirror-stage');
+  stage.insertBefore($('#scrOuter'), stage.firstChild);
+}
+function startStats(){
+  stopStats();
+  mirror.timer = setInterval(function(){
+    mirror.sec++;
+    var m = Math.floor(mirror.sec / 60), s = mirror.sec % 60;
+    var p = function(n){ n = String(n); return n.length < 2 ? '0' + n : n; };
+    $('#mstTime').textContent = p(m) + ':' + p(s);
+    updateScrClock();
+  }, 1000);
+}
+function stopStats(){
+  if (mirror.timer){ clearInterval(mirror.timer); mirror.timer = null; }
+}
+function startMirror(){
+  if (mirror.running || mirror.connecting) return;
+  if (!guard()){ syncMirrorSwitch(); return; }
+  var d = selDev();
+  var sess = ++mirror.session;
+  mirror.connecting = true;
+  $('#scrEmpty').hidden = true;
+  $('#scrConnecting').hidden = false;
+  $('#mirrorSwitch').checked = true;
+  lockEmbedSeg(true);
+  setMirrorStateUI('连接中…', 'conn');
+  addLog('adb -s ' + devAddr(d) + ' forward tcp:27183 localabstract:scrcpy', 'cmd');
+  setTimeout(function(){
+    if (sess !== mirror.session) return;
+    addLog('scrcpy -s ' + devAddr(d) + ' --window-title "EasyADB Device Mirror"', 'cmd');
+  }, 300);
+  setTimeout(function(){
+    if (sess !== mirror.session) return;
+    addLog('[scrcpy] INFO: Renderer: direct3d · decoder H.265 · 1920x1080@60', 'info');
+  }, 640);
+  setTimeout(function(){
+    if (sess !== mirror.session) return;
+    mirror.connecting = false;
+    mirror.running = true;
+    mirror.sec = 0;
+    closeScrApp();
+    $('#scrConnecting').hidden = true;
+    var live = $('#scrLive');
+    live.hidden = false;
+    requestAnimationFrame(function(){ live.classList.add('on'); });
+    updateScrClock();
+    if (mirror.mode === 'float') enterFloat();
+    else $('#floatGhost').hidden = true;
+    $('#mirrorStats').hidden = false;
+    startStats();
+    setMirrorStateUI('运行中 · ' + (mirror.mode === 'embed' ? '嵌入' : '独立窗口'), 'run');
+    addLog(mirror.mode === 'embed'
+      ? '嵌入模式：已收编 scrcpy 窗口（SetParent → 预览区），焦点已交付'
+      : '独立窗口运行中：' + devAddr(d) + '（窗口「EasyADB Device Mirror」）', 'ok');
+    toast('实时预览已开启 · ' + (mirror.mode === 'embed' ? '嵌入应用窗口' : '独立窗口'), 'ok');
+  }, 980);
+}
+function stopMirror(silent){
+  if (!mirror.running && !mirror.connecting) return;
+  var sess = ++mirror.session;
+  mirror.running = false;
+  mirror.connecting = false;
+  stopStats();
+  $('#mirrorSwitch').checked = false;
+  $('#mirrorStats').hidden = true;
+  var live = $('#scrLive');
+  live.classList.remove('on');
+  setTimeout(function(){
+    if (sess !== mirror.session) return;
+    live.hidden = true;
+    $('#scrConnecting').hidden = true;
+    $('#scrEmpty').hidden = false;
+    closeScrApp();
+  }, 300);
+  exitFloat();
+  $('#floatGhost').hidden = true;
+  lockEmbedSeg(false);
+  setMirrorStateUI('已停止', '');
+  addLog('停止实时预览（scrcpy 进程退出）', 'cmd');
+  if (!silent) toast('实时预览已关闭', 'info');
+}
+$('#mirrorSwitch').addEventListener('change', function(){
+  if (this.checked) startMirror(); else stopMirror(false);
+});
+$('#scrStartBtn').addEventListener('click', startMirror);
+$('#fgStop').addEventListener('click', function(){ stopMirror(false); });
+$('#mfStop').addEventListener('click', function(){ stopMirror(false); });
+/* 收回嵌入：停止 → 切换为嵌入模式 → 重新启动（运行中锁定 seg 时的唯一切换通道） */
+function reEmbed(){
+  if (!mirror.running && !mirror.connecting) return;
+  setMirrorMode('embed');
+  addLog('收回嵌入：切换为「嵌入应用窗口」并重新启动预览', 'warn');
+  stopMirror(true);
+  setTimeout(function(){ if (!mirror.running && !mirror.connecting) startMirror(); }, 460);
+}
+$('#fgReembed').addEventListener('click', reEmbed);
+$('#mfReembed').addEventListener('click', reEmbed);
+/* 画面点击 = 触摸（波纹 + input tap 坐标），点应用卡片 = 打开应用 */
+$('#scrBody').addEventListener('click', function(e){
+  var r = this.getBoundingClientRect();
+  if (r.width > 0 && r.height > 0){
+    var rip = document.createElement('span');
+    rip.className = 'scr-ripple';
+    rip.style.left = (e.clientX - r.left) + 'px';
+    rip.style.top = (e.clientY - r.top) + 'px';
+    this.appendChild(rip);
+    setTimeout(function(){ rip.remove(); }, 520);
+    addLog('adb shell input tap ' + Math.round((e.clientX - r.left) / r.width * 1920) + ' ' + Math.round((e.clientY - r.top) / r.height * 1080), 'dim');
+  }
+  var tile = e.target.closest('.scr-tile');
+  if (tile){
+    var a = APPS.filter(function(p){ return p.pkg === tile.dataset.pkg; })[0];
+    if (a) openScrApp(a);
+  }
+});
+/* 返回动作（右键 / Alt+B 共用）：气泡提示 + 实际执行返回导航 */
+function doBackAction(logText){
+  if (mirror.appOpen){
+    closeScrApp();
+    addLog(logText + '（adb shell input keyevent 4）', 'dim');
+  } else {
+    var outer = $('#scrOuter');
+    outer.classList.remove('nack'); void outer.offsetWidth; outer.classList.add('nack');
+    addLog(logText + '（KEYCODE_BACK · 已在主页）', 'dim');
+  }
+}
+function kcBubbleAt(x, y, label, ktext){
+  var body = $('#scrBody');
+  var r = body.getBoundingClientRect();
+  var bub = document.createElement('span');
+  bub.className = 'scr-bubble';
+  bub.innerHTML = label + '<span class="k">' + ktext + '</span>';
+  bub.style.left = Math.max(70, Math.min(r.width - 70, x)) + 'px';
+  bub.style.top = Math.max(60, y) + 'px';
+  body.appendChild(bub);
+  setTimeout(function(){ bub.remove(); }, 880);
+}
+/* 右键 = 返回（scrcpy 默认 RIGHT_CLICK=BACK） */
+$('#scrBody').addEventListener('contextmenu', function(e){
+  e.preventDefault();
+  var r = this.getBoundingClientRect();
+  kcBubbleAt(e.clientX - r.left, e.clientY - r.top, '返回', 'BACK · 4');
+  doBackAction('右键 → 返回');
+});
+/* 独立浮窗：标题栏拖拽 */
+$('#mfHead').addEventListener('mousedown', function(e){
+  if (e.target.closest('button')) return;
+  e.preventDefault();
+  var fl = $('#mirrorFloat'), host = $('#appWindow');
+  var fr = fl.getBoundingClientRect(), hr = host.getBoundingClientRect();
+  var ox = e.clientX - fr.left, oy = e.clientY - fr.top;
+  fl.classList.add('dragging');
+  function mv(e2){
+    fl.style.left = Math.max(0, Math.min(hr.width - 80, e2.clientX - hr.left - ox)) + 'px';
+    fl.style.top = Math.max(0, Math.min(hr.height - 60, e2.clientY - hr.top - oy)) + 'px';
+    fl.style.right = 'auto';
+  }
+  function up(){
+    fl.classList.remove('dragging');
+    document.removeEventListener('mousemove', mv);
+    document.removeEventListener('mouseup', up);
+  }
+  document.addEventListener('mousemove', mv);
+  document.addEventListener('mouseup', up);
 });
 
 /* ---------------- 常用命令 tab ---------------- */
@@ -2330,6 +2817,8 @@ renderFiles();
 renderCmdCats();
 renderCmdList();
 updatePkgMeta();
+setModeUI();
+updateScrClock();
 moveInk();
 bootLog();
 setTimeout(function(){ addLog('> 就绪 — 点击上方卡片与命令条查看模拟输出', 'dim'); }, 3200);

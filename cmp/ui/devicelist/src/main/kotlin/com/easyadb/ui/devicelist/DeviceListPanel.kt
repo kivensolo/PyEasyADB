@@ -184,7 +184,7 @@ fun DeviceListPanel(
                     items(deviceCards, key = { it.id }) { card ->
                         DeviceCard(
                             card = card,
-                            androidVersion = deviceVersions[card.record.ip],
+                            androidVersion = deviceVersions[card.fullAddress],
                             isSelected = selectedDeviceIp == card.record.ip,
                             onClick = { callbacks.onDeviceClick(card.record) },
                             onDoubleClick = { callbacks.onDeviceDoubleClick(card.record) },
@@ -398,8 +398,7 @@ private fun DeviceCard(
             // 地址主行 + 别名/版本副行 + 状态行（HTML .dev-info）
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (card.record.port == "0") card.record.ip
-                    else "${card.record.ip}:${card.record.port}",
+                    text = card.fullAddress,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Bold,
@@ -426,7 +425,7 @@ private fun DeviceCard(
                     )
                 }
                 Spacer(Modifier.height(8.dp))
-                // 状态点 + 文案（HTML .dev-state：7dp 色点；绿=已连接 黄=离线 红=未连接）
+                // 状态点 + 文案（7dp 色点；绿=在线 黄=离线 红=未连接/未授权）
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
@@ -520,6 +519,10 @@ private data class DeviceCardData(
     val state: DeviceState?
 ) {
     val id: String get() = "device.${record.ip}:${record.port}"
+
+    /** 完整 adb 地址（ip 或 ip:port；port=0 表示无端口）——版本缓存查找与卡片主行共用 */
+    val fullAddress: String
+        get() = if (record.port == "0") record.ip else "${record.ip}:${record.port}"
 
     /** 设备是否已在线（在线 = state 为 device/offline，可执行 ADB 命令）。 */
     val isOnline: Boolean get() = online && (state == DeviceState.DEVICE || state == DeviceState.OFFLINE)

@@ -16,27 +16,44 @@ class DevicePropFetcher {
     private val logger = AppLogger.getLogger(DevicePropFetcher::class.java)
 
     /**
-     * 查询设备 Android 版本号（ro.build.version.release）。
+     * 查询设备 Android 版本号 + API 级别（ro.build.version.release / ro.build.version.sdk）。
+     *
+     * 一次 `getprop`（全量属性）后本地解析两键，而非两次单键查询或 `&&` 拼接——
+     * ExecUtils 在 Windows 走 `cmd.exe /c`，拼接命令的引号/元字符会被 cmd 二次解释，不可靠。
      *
      * @param deviceIp 设备地址（ip:port）
-     * @return 版本号字符串（如 "11"），查询失败或输出为空返回 null
+     * @return 如 "11 (API 30)"；sdk 缺失时仅返回版本号（如 "11"）；查询失败返回 null
      */
     suspend fun fetchVersion(deviceIp: String): String? {
         return try {
-            val result = ExecUtils.execCmd(
-                "adb -s $deviceIp shell getprop ro.build.version.release",
-                timeoutMs = 5000
-            )
-            val version = result.output.trim()
-            if (result.success && version.isNotEmpty()) {
-                version
-            } else {
+            val result = ExecUtils.execCmd("adb -s $deviceIp shell getprop", timeoutMs = 8000)
+            if (!result.success) {
                 logger.warn { "[DeviceProp] fetchVersion failed for $deviceIp: ${result.output.take(100)}" }
-                null
+                return null
             }
+            val props = parseProps(result.output)
+            val release = props["ro.build.version.release"]?.trim().orEmpty()
+            if (release.isEmpty()) {
+                logger.warn { "[DeviceProp] release prop missing for $deviceIp" }
+                return null
+            }
+            val sdk = props["ro.build.version.sdk"]?.trim().orEmpty()
+            if (sdk.isEmpty()) release else "$release (API $sdk)"
         } catch (e: Exception) {
             logger.error { "[DeviceProp] fetchVersion error for $deviceIp: ${e.message}" }
             null
         }
+    }
+
+    /** 解析 getprop 全量输出：每行 `[key]: [value]`（adb 统一格式）。 */
+    private fun parseProps(output: String): Map<String, String> {
+        val props = mutableMapOf<String, String>()
+        val regex = Regex("""^\[(.+?)]:\s*\[(.*)]\s*$""")
+        for (line in output.lines()) {
+            regex.find(line.trim())?.let { m ->
+                props[m.groupValues[1]] = m.groupValues[2]
+            }
+        }
+        return props
     }
 }

@@ -680,7 +680,7 @@ fun MainWindowScreen(
 
         SplitPane(
             modifier = Modifier.fillMaxWidth().weight(1f),
-            initialFraction = 0.2f,
+            initialFraction = 0.25f, // 1280 宽窗口下 ≈ 320px，对齐 H5 .sidebar 318px
             leftCollapsed = sidebarCollapsed,
             leftPanel = { m ->
                 DeviceListPanel(
