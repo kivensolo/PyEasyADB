@@ -323,6 +323,17 @@ fun main() {
                     }
                 }
 
+                // 启动默认选中：首次收到在线设备列表时，若尚未选中任何设备则自动选中第一台在线设备，
+                // 使参数卡/命令/文件等无需用户手动点选即可操作；用户后续点选始终优先（只在 null 时兜底）
+                LaunchedEffect(onlineDevices) {
+                    if (selectedDeviceIp == null) {
+                        onlineDevices.firstOrNull { it.name.isNotBlank() }?.let { first ->
+                            selectedDeviceIp = first.name
+                            appLogger.info { "Auto-selected first online device: ${first.name}" }
+                        }
+                    }
+                }
+
                 val deviceListCallbacks = remember(scope, dbDevicesFlow) {
                     DeviceListCallbacks(
                         onDeviceClick = { record -> selectedDeviceIp = record.ip },

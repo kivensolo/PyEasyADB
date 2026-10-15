@@ -164,7 +164,10 @@ svg{flex:none;display:block}
   background:#1a2842;color:#9db4dd;border:1px solid #26375a;
 }
 .dev-info{display:flex;flex-direction:column;min-width:0}
-.dev-name{display:block;font-size:15.5px;font-weight:700;margin-bottom:3px}
+.dev-ip{
+  display:block;font-family:var(--mono);font-size:13.5px;font-weight:700;
+  color:#7db4fa;letter-spacing:.2px;margin-bottom:3px;
+}
 .dev-sub{display:block;font-family:var(--mono);font-size:12px;color:var(--tx-2);margin-bottom:8px}
 .dev-state{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600}
 .dev-state i{width:7px;height:7px;border-radius:50%;background:var(--green);position:relative}
@@ -281,25 +284,38 @@ svg{flex:none;display:block}
 .pfield.shake input{animation:shake .4s;border-color:var(--red)}
 @keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 .combo-box{position:relative;display:flex;align-items:center}
-.combo-box input{padding-right:30px}
+.combo-box input{padding-right:118px}
+.combo-badge{
+  position:absolute;right:32px;max-width:88px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:11px;font-weight:700;color:#7dd3fc;background:rgba(56,189,248,.12);
+  border:1px solid rgba(56,189,248,.28);padding:2.5px 8px;border-radius:6px;pointer-events:none;
+}
 .combo-toggle{
   position:absolute;right:3px;width:24px;height:24px;border-radius:6px;
   display:grid;place-items:center;color:var(--tx-3);transition:.14s;
 }
 .combo-toggle:hover{color:#fff;background:#22335a}
 .combo-menu{
-  position:absolute;top:calc(100% + 6px);left:0;min-width:100%;width:max-content;max-width:320px;z-index:90;
+  position:absolute;top:calc(100% + 6px);left:0;min-width:100%;width:max-content;max-width:340px;z-index:90;
   background:#141f34;border:1px solid var(--line-2);border-radius:11px;padding:5px;
   box-shadow:0 18px 50px rgba(0,0,0,.55);
   opacity:0;transform:translateY(-6px);pointer-events:none;transition:.16s;
+  max-height:320px;overflow-y:auto;
 }
 .combo-menu.open{opacity:1;transform:none;pointer-events:auto}
+.combo-menu .sec{
+  display:block;font-size:10.5px;font-weight:800;color:var(--tx-2);letter-spacing:1.5px;
+  padding:8px 10px 4px;user-select:none;
+}
 .combo-menu .ci{
   display:flex;align-items:center;gap:9px;width:100%;padding:8px 10px;border-radius:7px;
   font-family:var(--mono);font-size:12px;color:#c6d2e4;text-align:left;transition:.12s;
 }
 .combo-menu .ci:hover{background:var(--blue-soft);color:#dbe8ff}
 .combo-menu .ci.cur{color:#7db4fa}
+.combo-menu .ci .ci-wrap{display:flex;flex-direction:column;min-width:0;flex:1;text-align:left}
+.combo-menu .ci .ci-name{font-family:var(--ui);font-size:12.5px;font-weight:600;color:#dbe4f0}
+.combo-menu .ci .ci-pkg{font-size:10.5px;color:var(--tx-3)}
 .combo-menu .ci .del{
   margin-left:auto;opacity:0;width:20px;height:20px;border-radius:5px;flex:none;
   display:grid;place-items:center;color:var(--tx-3);font-size:14px;line-height:1;transition:.12s;
@@ -307,6 +323,16 @@ svg{flex:none;display:block}
 .combo-menu .ci:hover .del{opacity:1}
 .combo-menu .ci .del:hover{color:#fff;background:#dc2626}
 .combo-menu .empty{padding:12px 12px;font-size:12px;color:var(--tx-3);white-space:nowrap}
+.cmd-preview{margin-top:12px;padding-top:11px;border-top:1px dashed rgba(148,163,184,.18);display:flex;flex-direction:column;gap:5px}
+.cmd-preview .row{display:flex;align-items:center;gap:9px;min-width:0}
+.cmd-preview .tag{flex:none;font-size:10.5px;font-weight:800;letter-spacing:1px;padding:2.5px 8px;border-radius:5px}
+.cmd-preview .t-start{color:#7db4fa;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3)}
+.cmd-preview .t-bcast{color:#fb923c;background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.3)}
+.cmd-preview .cmd{
+  font-family:var(--mono);font-size:11.5px;color:#bcd7fb;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;user-select:all;
+}
+.cmd-preview .hint{font-size:11.5px;color:var(--tx-3)}
 
 /* ---------- 常用命令 tab ---------- */
 .cmd-cat-hint{font-size:12px;color:var(--tx-3);margin-left:auto}
@@ -697,6 +723,12 @@ html[data-theme="light"] .dev-card.sel{
   box-shadow:0 0 0 1px rgba(47,107,255,.35), 0 8px 22px rgba(37,99,235,.14);
 }
 html[data-theme="light"] .dev-ico{background:#edf2fa;color:#5a7699;border-color:#d9e3f2}
+html[data-theme="light"] .dev-ip{color:#1d4ed8}
+html[data-theme="light"] .combo-badge{color:#0369a1;background:rgba(3,105,161,.08);border-color:rgba(3,105,161,.25)}
+html[data-theme="light"] .combo-menu .ci .ci-name{color:#1b2534}
+html[data-theme="light"] .cmd-preview .cmd{color:#1d4ed8}
+html[data-theme="light"] .cmd-preview .t-start{color:#1d4ed8;background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.25)}
+html[data-theme="light"] .cmd-preview .t-bcast{color:#c2410c;background:rgba(234,88,12,.08);border-color:rgba(234,88,12,.25)}
 html[data-theme="light"] .tabs{background:#f6f8fc}
 html[data-theme="light"] .tab:hover{color:var(--tx)}
 html[data-theme="light"] .tab.active{color:#16233a}
@@ -861,10 +893,11 @@ html[data-theme="light"] .modal-settings .modal-body{background:transparent}
                 </div>
                 <div class="params-grid">
                   <div class="pfield" id="fPkg">
-                    <label>包名</label>
+                    <label>目标应用</label>
                     <div class="combo-box">
-                      <input id="pPkg" value="com.example.app" spellcheck="false" placeholder="输入后回车保存">
-                      <button class="combo-toggle" id="pPkgToggle" title="包名列表">
+                      <input id="pPkg" value="com.example.app" spellcheck="false" placeholder="输入包名回车保存，或从下拉选择">
+                      <span class="combo-badge" id="pkgBadge" hidden></span>
+                      <button class="combo-toggle" id="pPkgToggle" title="选择目标应用">
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                       </button>
                       <div class="combo-menu" id="pPkgMenu"></div>
@@ -874,6 +907,7 @@ html[data-theme="light"] .modal-settings .modal-body{background:transparent}
                   <div class="pfield"><label>Action</label><input id="pAction" value="android.intent.action.VIEW" spellcheck="false"></div>
                   <div class="pfield"><label>扩展参数</label><input id="pExtra" placeholder="-n / -a / -e ..." spellcheck="false"></div>
                 </div>
+                <div class="cmd-preview" id="cmdPreview"></div>
               </div>
 
               <div class="qa-grid4">
@@ -1370,8 +1404,8 @@ function renderDevices(){
     el.style.animationDelay = (i * 0.07) + 's';
     el.innerHTML =
       '<span class="dev-ico"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17.5V21"/></svg></span>' +
-      '<span class="dev-info"><span class="dev-name">' + esc(d.name) + '</span>' +
-      '<span class="dev-sub">' + esc(d.ip) + ' · ' + esc(d.os) + '</span>' + st + '</span>';
+      '<span class="dev-info"><span class="dev-ip">' + esc(devAddr(d)) + '</span>' +
+      '<span class="dev-sub">' + esc(d.name) + ' · ' + esc(d.os) + '</span>' + st + '</span>';
     el.addEventListener('click', function(){
       if (state.selected !== i){
         state.selected = i;
@@ -1573,32 +1607,86 @@ try {
 function savePkgs(){
   try { localStorage.setItem('easyadb-pkgs', JSON.stringify(pkgHistory)); } catch(e){}
 }
+function matchApp(pkg){
+  for (var i = 0; i < APPS.length; i++){
+    if (APPS[i].pkg === pkg && !state.appsRemoved[pkg]) return APPS[i];
+  }
+  return null;
+}
+function renderCmdPreview(){
+  var pkg = $('#pPkg').value.trim();
+  var el = $('#cmdPreview');
+  if (!pkg){
+    el.innerHTML = '<div class="hint">填写目标应用后，这里实时预览将要执行的命令</div>';
+    return;
+  }
+  var act = $('#pAct').value.trim() || '.MainActivity';
+  if (act.indexOf('/') < 0 && act.charAt(0) !== '/') act = '/' + act;
+  var action = $('#pAction').value.trim();
+  var extra = $('#pExtra').value.trim();
+  var start = 'adb shell am start' + (action ? ' -a "' + action + '"' : '') + ' -n "' + pkg + act + '"' + (extra ? ' ' + extra : '');
+  var bcast = 'adb shell am broadcast -a "' + (action || 'android.intent.action.BOOT_COMPLETED') + '"';
+  el.innerHTML =
+    '<div class="row"><span class="tag t-start">启动</span><span class="cmd">' + esc(start) + '</span></div>' +
+    '<div class="row"><span class="tag t-bcast">广播</span><span class="cmd">' + esc(bcast) + '</span></div>';
+}
+function updatePkgMeta(){
+  var pkg = $('#pPkg').value.trim();
+  var a = pkg ? matchApp(pkg) : null;
+  var b = $('#pkgBadge');
+  if (a){ b.hidden = false; b.textContent = a.name; }
+  else { b.hidden = true; b.textContent = ''; }
+  renderCmdPreview();
+}
+/* 统一入口：设定目标应用（应用列表、下拉、手动输入共用） */
+function setTarget(pkg, name){
+  $('#pPkg').value = pkg;
+  if (pkgHistory.indexOf(pkg) < 0){ pkgHistory.unshift(pkg); savePkgs(); }
+  updatePkgMeta();
+  toast('已将 <b>' + esc(name || pkg) + '</b> 设为目标应用', 'ok');
+}
 function renderPkgMenu(){
   var m = $('#pPkgMenu');
   m.innerHTML = '';
-  if (!pkgHistory.length){
-    m.innerHTML = '<div class="empty">暂无记录 — 输入包名后按回车保存</div>';
-    return;
+  var cur = $('#pPkg').value.trim();
+  if (cur){
+    var cb = document.createElement('button');
+    cb.className = 'ci cur';
+    cb.innerHTML = '<span class="ci-wrap"><span class="ci-name">当前值</span><span class="ci-pkg">' + esc(cur) + '</span></span>';
+    cb.addEventListener('click', function(){ $('#pPkgMenu').classList.remove('open'); });
+    m.appendChild(cb);
   }
-  pkgHistory.forEach(function(p){
-    var b = document.createElement('button');
-    b.className = 'ci' + (p === $('#pPkg').value.trim() ? ' cur' : '');
-    b.innerHTML = '<span>' + esc(p) + '</span><span class="del" title="删除">' +
-      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span>';
-    b.querySelector('.del').addEventListener('click', function(e){
-      e.stopPropagation();
-      pkgHistory = pkgHistory.filter(function(x){ return x !== p; });
-      savePkgs();
-      renderPkgMenu();
-      toast('已删除 <b>' + esc(p) + '</b>', 'info');
+  if (pkgHistory.length){
+    var h = document.createElement('span');
+    h.className = 'sec';
+    h.textContent = '最近使用';
+    m.appendChild(h);
+    pkgHistory.forEach(function(p){
+      var a = matchApp(p);
+      var b = document.createElement('button');
+      b.className = 'ci';
+      b.innerHTML =
+        '<span class="ci-wrap"><span class="ci-name">' + esc(a ? a.name : p) + '</span><span class="ci-pkg">' + esc(p) + '</span></span>' +
+        '<span class="del" title="删除"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></span>';
+      b.querySelector('.del').addEventListener('click', function(e){
+        e.stopPropagation();
+        pkgHistory = pkgHistory.filter(function(x){ return x !== p; });
+        savePkgs();
+        renderPkgMenu();
+        toast('已删除 <b>' + esc(p) + '</b>', 'info');
+      });
+      b.addEventListener('click', function(){
+        setTarget(p, a ? a.name : null);
+        $('#pPkgMenu').classList.remove('open');
+      });
+      m.appendChild(b);
     });
-    b.addEventListener('click', function(){
-      $('#pPkg').value = p;
-      $('#pPkgMenu').classList.remove('open');
-    });
-    m.appendChild(b);
-  });
+  }
+  if (!m.children.length){
+    m.innerHTML = '<div class="empty">暂无记录 — 输入包名后按回车保存</div>';
+  }
 }
+$('#pPkg').addEventListener('input', updatePkgMeta);
 $('#pPkg').addEventListener('keydown', function(e){
   if (e.key !== 'Enter') return;
   var v = this.value.trim();
@@ -1606,14 +1694,18 @@ $('#pPkg').addEventListener('keydown', function(e){
     pkgHistory.unshift(v);
     savePkgs();
     renderPkgMenu();
-    toast('已保存 <b>' + esc(v) + '</b> 到包名列表', 'ok');
+    toast('已保存 <b>' + esc(v) + '</b> 到最近使用', 'ok');
   }
+  updatePkgMeta();
   $('#pPkgMenu').classList.remove('open');
 });
 $('#pPkgToggle').addEventListener('click', function(e){
   e.stopPropagation();
   renderPkgMenu();
   $('#pPkgMenu').classList.toggle('open');
+});
+['#pAct','#pAction','#pExtra'].forEach(function(sel){
+  $(sel).addEventListener('input', renderCmdPreview);
 });
 $('#actLaunch').addEventListener('click', function(){
   if (!guard()) return;
@@ -1697,12 +1789,15 @@ function renderApps(){
       '<span class="app-ico" style="background:' + a.color + '">' + esc(a.name.charAt(0).toUpperCase()) + '</span>' +
       '<span><span class="app-name">' + esc(a.name) + '</span><div class="app-pkg">' + esc(a.pkg) + '</div></span>' +
       '<span class="app-meta">' + a.ver + '<br>' + a.size + '</span>' +
-      '<span class="app-ops"><button class="mini-btn" data-open="' + esc(a.pkg) + '">打开</button>' + ops + '</span>';
+      '<span class="app-ops"><button class="mini-btn" data-target="' + esc(a.pkg) + '" data-tname="' + esc(a.name) + '">设为目标</button><button class="mini-btn" data-open="' + esc(a.pkg) + '">打开</button>' + ops + '</span>';
     list.appendChild(el);
   });
   if (!shown){
     list.innerHTML = '<div class="card fp-empty">没有匹配的应用 — 试试其他关键词或分类</div>';
   }
+  $$('#appsList [data-target]').forEach(function(b){
+    b.addEventListener('click', function(){ setTarget(b.dataset.target, b.dataset.tname); });
+  });
   $$('#appsList [data-open]').forEach(function(b){
     b.addEventListener('click', function(){
       if (!guard()) return;
@@ -1743,7 +1838,7 @@ function openUninstall(pkg){
     c.addEventListener('click', function(){ $('#unPkgInput').value = a.pkg; });
     chips.appendChild(c);
   });
-  $('#unPkgInput').value = pkg || '';
+  $('#unPkgInput').value = pkg || $('#pPkg').value.trim();
   openModal('modalUninstall');
   setTimeout(function(){ $('#unPkgInput').focus(); }, 240);
 }
@@ -2234,6 +2329,7 @@ renderApps();
 renderFiles();
 renderCmdCats();
 renderCmdList();
+updatePkgMeta();
 moveInk();
 bootLog();
 setTimeout(function(){ addLog('> 就绪 — 点击上方卡片与命令条查看模拟输出', 'dim'); }, 3200);
