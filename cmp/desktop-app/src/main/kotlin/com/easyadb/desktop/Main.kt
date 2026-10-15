@@ -334,6 +334,42 @@ fun main() {
                     }
                 }
 
+                // 命令行 adb connect 的设备自动入库（对齐 Python on_devices_refreshed 的自动更新）：
+                // 设备卡片列表以 DB 为源，watcher 发现的新连接设备若不入库则永不显示。
+                // 入库规则同 Python：device/offline 状态都收；"ip:port" 拆分保存、"ip" 默认 5555、
+                // 非 IP 序列号（USB/emulator）原样保存 port=0。session 内 autoAddedDeviceNames
+                // 去重，防 reload 异步未落地时 INSERT OR REPLACE 重复覆盖（冲掉 alias/connectCount）
+                val autoAddedDeviceNames = remember { mutableSetOf<String>() }
+                LaunchedEffect(onlineDevices) {
+                    val candidates = onlineDevices.filter { it.isConnected() && it.name.isNotBlank() }
+                    if (candidates.isEmpty()) return@LaunchedEffect
+                    val known = dbDevicesFlow.value.mapTo(mutableSetOf()) {
+                        it.ip + if (it.port == "0") "" else ":${it.port}"
+                    }
+                    var added = false
+                    for (dev in candidates) {
+                        if (!autoAddedDeviceNames.add(dev.name)) continue
+                        if (dev.name in known) continue
+                        val name = dev.name
+                        val sep = name.lastIndexOf(':')
+                        val hasDot = '.' in name
+                        val (ip, port) = when {
+                            sep > 0 && hasDot -> name.substring(0, sep) to name.substring(sep + 1)
+                            hasDot -> name to "5555"
+                            else -> name to "0"
+                        }
+                        val result = DbManager.insertDevice(com.easyadb.core.database.DeviceRecord(ip = ip, port = port))
+                        if (result.success) {
+                            appLogger.info { "Auto-added watched device to DB: $ip:$port" }
+                            logAppender("[发现新设备] $name", 2)
+                            added = true
+                        } else {
+                            autoAddedDeviceNames.remove(name) // 失败允许下次轮询重试
+                        }
+                    }
+                    if (added) reloadDevices(dbDevicesFlow, appLogger)
+                }
+
                 val deviceListCallbacks = remember(scope, dbDevicesFlow) {
                     DeviceListCallbacks(
                         onDeviceClick = { record -> selectedDeviceIp = record.ip },
