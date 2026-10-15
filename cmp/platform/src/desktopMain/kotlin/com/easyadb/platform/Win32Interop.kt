@@ -85,10 +85,16 @@ object Win32Interop {
         return style
     }
 
-    /** 还原为顶层装饰样式（配合 [setParent] 传 null 脱离父窗口后调用）。 */
-    fun restoreTopLevelStyle(hwnd: Long, originalStyle: Int) {
+    /**
+     * 还原为顶层装饰样式（配合 [setParent] 传 null 脱离父窗口后调用）。
+     *
+     * [visible]=false 时掩掉 WS_VISIBLE 位：originalStyle 摄于收编前（窗口可见），
+     * 直接写回会把刚 SW_HIDE 的窗口重新显示成独立窗口——Tab 切走隐藏托管场景必须掩掉。
+     */
+    fun restoreTopLevelStyle(hwnd: Long, originalStyle: Int, visible: Boolean = true) {
         if (!isWindows) return
-        val decorated = originalStyle or WinUser.WS_CAPTION or WinUser.WS_THICKFRAME or WinUser.WS_SYSMENU
+        var decorated = originalStyle or WinUser.WS_CAPTION or WinUser.WS_THICKFRAME or WinUser.WS_SYSMENU
+        if (!visible) decorated = decorated and WinUser.WS_VISIBLE.inv()
         User32.INSTANCE.SetWindowLong(h(hwnd), WinUser.GWL_STYLE, decorated and WinUser.WS_CHILD.inv())
     }
 
@@ -296,6 +302,18 @@ object Win32Interop {
             setDword(DWMWA_CAPTION_COLOR, captionColorRef)
             setDword(DWMWA_TEXT_COLOR, textColorRef)
         }.getOrDefault(false)
+    }
+
+    /** 隐藏窗口（SW_HIDE）：嵌入宿主销毁前收起子窗口，避免脱离后以独立窗口形态闪现/驻留任务栏。 */
+    fun hideWindow(hwnd: Long): Boolean {
+        if (!isWindows) return false
+        return User32.INSTANCE.ShowWindow(h(hwnd), WinUser.SW_HIDE)
+    }
+
+    /** 显示窗口（SW_SHOW）：重嵌入流程在 reparent + 贴合之后调用，随后再 SetFocus。 */
+    fun showWindow(hwnd: Long): Boolean {
+        if (!isWindows) return false
+        return User32.INSTANCE.ShowWindow(h(hwnd), WinUser.SW_SHOW)
     }
 
     /** ARGB(0xAARRGGBB) → COLORREF(0x00BBGGRR) */

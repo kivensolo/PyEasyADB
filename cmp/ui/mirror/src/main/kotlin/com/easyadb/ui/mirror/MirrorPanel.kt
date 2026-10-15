@@ -58,10 +58,17 @@ import javax.swing.JPanel
  * 进程生命周期由宿主持有的 [ScrcpyLauncher] 管理，本面板只按 [mirrorState] 渲染
  * 并回调 [onStart]/[onStop]；嵌入仅是呈现方式切换，reparent 失败自动保持独立窗口。
  *
+ * Tab 切走会销毁本面板组合：嵌入态子窗口在 onDispose 中**先隐藏再脱离**（而非还原
+ * 可见的独立窗口）——scrcpy 进程继续在后台运行，宿主销毁不产生窗口弹出现象；
+ * 切回 Tab 时 [embedEnabled] 仍为 true（状态提升在宿主），嵌入区重新组合并走
+ * 收编流程把隐藏的窗口重新 reparent + SW_SHOW，恢复嵌入预览。
+ *
  * @param deviceIp 当前选中设备 IP（null 时「开启」禁用）
  * @param mirrorState 镜像状态（Idle / Running）
  * @param binaryReady scrcpy.exe 是否就绪
  * @param binaryPath scrcpy.exe 期望路径（缺失时展示在指引中）
+ * @param embedEnabled 嵌入模式勾选态（宿主持有，跨 Tab 切换保持）
+ * @param onEmbedEnabledChange 勾选态变更回调
  */
 @Composable
 fun MirrorPanel(
@@ -69,12 +76,13 @@ fun MirrorPanel(
     mirrorState: MirrorState,
     binaryReady: Boolean,
     binaryPath: String,
+    embedEnabled: Boolean,
+    onEmbedEnabledChange: (Boolean) -> Unit,
     onStart: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val isRunning = mirrorState is MirrorState.Running
-    var embedEnabled by remember { mutableStateOf(false) }
 
     Column(
         modifier = modifier.fillMaxSize().padding(easyAdbTokens.spaceMd),
@@ -117,7 +125,7 @@ fun MirrorPanel(
             ) {
                 Checkbox(
                     checked = embedEnabled && Win32Interop.isWindows,
-                    onCheckedChange = { embedEnabled = it },
+                    onCheckedChange = { onEmbedEnabledChange(it) },
                     // 对齐 Python 版：实时预览运行中锁定，停止后才能切换（运行中取消嵌入会导致显示异常）
                     enabled = Win32Interop.isWindows && !isRunning,
                     modifier = Modifier.size(28.dp)
@@ -177,6 +185,9 @@ fun MirrorPanel(
         }
     }
 }
+
+/** 上次成功收编的 scrcpy 窗口句柄（文件级，跨 Tab 切换存活）：同句柄的重嵌入跳过就绪门控。 */
+private var lastEmbeddedChildHwnd: Long = 0L
 
 /**
  * scrcpy 嵌入区（P9）：宿主为 SwingPanel 内的重型 [Canvas]（有独立 HWND，子窗口
@@ -259,18 +270,24 @@ private fun EmbeddedScrcpyRegion(modifier: Modifier = Modifier) {
         }
         if (child == null) return@LaunchedEffect // 找不到（启动失败/非 Windows）→ 保持独立窗口兜底
 
-        var stable = 0
-        val readyDeadline = System.currentTimeMillis() + 4000
-        while (stable < 2 && System.currentTimeMillis() < readyDeadline) {
-            val rect = Win32Interop.windowRect(child)
-            if (rect != null && rect.width >= 50 && rect.height >= 50) {
-                stable++
-            } else {
-                stable = 0 // 尺寸不足或窗口已销毁（启动失败），重新等待
+        // 就绪门控仅防"SDL 初始化中途 reparent"（0xC000041D），只对新启动的窗口有意义；
+        // Tab 切走再切回的重嵌入（同进程同句柄）窗口早已成熟，门控的 ~500ms 采样延迟
+        // 只会表现为画面迟滞（PyQt QTabWidget 保留页面无此问题），同句柄直接跳过
+        val isReattach = child == lastEmbeddedChildHwnd
+        if (!isReattach) {
+            var stable = 0
+            val readyDeadline = System.currentTimeMillis() + 4000
+            while (stable < 2 && System.currentTimeMillis() < readyDeadline) {
+                val rect = Win32Interop.windowRect(child)
+                if (rect != null && rect.width >= 50 && rect.height >= 50) {
+                    stable++
+                } else {
+                    stable = 0 // 尺寸不足或窗口已销毁（启动失败），重新等待
+                }
+                delay(250)
             }
-            delay(250)
+            if (stable < 2) return@LaunchedEffect // 窗口未就绪 → 放弃收编，独立窗口兜底
         }
-        if (stable < 2) return@LaunchedEffect // 窗口未就绪 → 放弃收编，独立窗口兜底
 
         val host = Win32Interop.componentHwnd(hostCanvas)
         if (host == null) return@LaunchedEffect
@@ -279,6 +296,7 @@ private fun EmbeddedScrcpyRegion(modifier: Modifier = Modifier) {
         if (!Win32Interop.setParent(child, host)) return@LaunchedEffect
         embedHwnd = child
         hostHwnd = host
+        lastEmbeddedChildHwnd = child
 
         // 嵌入期常驻挂接输入队列 + 裸 SetFocus（不 detach、不抢回焦点）：KeySpike 与
         // 实测确认焦点是键盘透传的关键——attach→SetFocus→detach 会把焦点状态打散，
@@ -289,18 +307,24 @@ private fun EmbeddedScrcpyRegion(modifier: Modifier = Modifier) {
         Win32Interop.windowRect(host)?.let {
             Win32Interop.moveWindow(child, 0, 0, it.width, it.height)
         }
+        // 重嵌入路径：窗口可能因上次 Tab 切走被隐藏——先显示再聚焦（SetFocus 对隐藏窗口无效）
+        Win32Interop.showWindow(child)
         // 自动聚焦：收编后立即取得键盘焦点，无需先点击画面
         Win32Interop.setFocusWindow(child)
     }
 
-    // 离开组合：脱离父窗口 + 还原顶层样式 + 给个默认位置（避免叠在 (0,0)）
+    // 离开组合（Tab 切走 / 取消嵌入 / 停止镜像）：先隐藏收起画面，再脱离父窗口并还原
+    // 独立窗口样式、停靠到屏幕外备用位。隐藏先行保证宿主销毁瞬间窗口不可见——
+    // scrcpy 进程仍在运行（Tab 切走场景），绝不以独立窗口形态弹出；
+    // 切回 Tab 时收编流程会 find → reparent → showWindow 恢复嵌入。
     DisposableEffect(Unit) {
         onDispose {
             val child = embedHwnd
             if (child != null) {
+                Win32Interop.hideWindow(child)
                 Win32Interop.attachThreadInputToWindow(child, false)
                 Win32Interop.setParent(child, null)
-                originalStyle?.let { Win32Interop.restoreTopLevelStyle(child, it) }
+                originalStyle?.let { Win32Interop.restoreTopLevelStyle(child, it, visible = false) }
                 Win32Interop.moveWindow(child, 120, 120, 960, 720)
             }
         }

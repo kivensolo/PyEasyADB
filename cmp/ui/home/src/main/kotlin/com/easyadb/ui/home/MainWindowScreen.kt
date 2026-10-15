@@ -653,6 +653,9 @@ fun MainWindowScreen(
 ) {
     // 内容区五 Tab 与内嵌控制台 Tab 状态（embeddedTab 提升到本层）
     var contentTab by remember { mutableStateOf(TAB_QUICK) }
+    // 嵌入模式勾选态提升到 Tab 容器层：MirrorPanel 随 Tab 切换销毁重建，
+    // 勾选框本身运行中禁用——若状态随面板销毁，切回后嵌入预览将无法恢复
+    var mirrorEmbedEnabled by remember { mutableStateOf(false) }
     var embeddedTab by remember { mutableStateOf(0) }
     // 快捷操作参数卡状态提升到本层：功能卡执行与常用命令 Tab 的 {pkg} 模板共享包名
     var appParamState by remember { mutableStateOf(AppParamState()) }
@@ -735,6 +738,8 @@ fun MainWindowScreen(
                                     mirrorState = mirrorState,
                                     binaryReady = mirrorBinaryReady,
                                     binaryPath = mirrorBinaryPath,
+                                    embedEnabled = mirrorEmbedEnabled,
+                                    onEmbedEnabledChange = { mirrorEmbedEnabled = it },
                                     onStart = onMirrorStart,
                                     onStop = onMirrorStop,
                                     modifier = Modifier.fillMaxSize()
