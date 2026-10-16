@@ -2,7 +2,7 @@
 
 | 属性 | 内容 |
 |------|------|
-| 编号 | SP-9001（领域 90 其他/通用，序号 01） |
+| 编号 | SP-4001（领域 40 镜像预览，序号 01） |
 | 状态 | 已实施（用户实机验证 2026-10-16：点击嵌入区外任意位置后键盘仍可控设备、控制台过滤框输入不被劫持、切 Tab 恢复常规键盘） |
 | 日期 | 2026-10-16 |
 | 涉及代码 | `platform/src/desktopMain/kotlin/com/easyadb/platform/Win32Interop.kt`（焦点/输入族）<br>`ui/mirror/src/main/kotlin/com/easyadb/ui/mirror/MirrorPanel.kt`（EmbeddedScrcpyRegion）<br>`ui/home/src/main/kotlin/com/easyadb/ui/home/MainWindowScreen.kt`（根级接管）<br>`ui/designsystem/src/main/kotlin/com/easyadb/ui/designsystem/TextInputFocusTracker.kt` |
