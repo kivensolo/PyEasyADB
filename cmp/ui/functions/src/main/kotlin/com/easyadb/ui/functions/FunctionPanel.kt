@@ -49,7 +49,7 @@ fun FunctionPanel(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(easyAdbColors.Surface)
+            .background(easyAdbColors.Background)
             .verticalScroll(rememberScrollState())
     ) {
         // ── 可选：常用命令参数卡（仅快捷操作 Tab）──

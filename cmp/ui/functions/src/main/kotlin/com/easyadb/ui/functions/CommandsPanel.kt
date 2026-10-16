@@ -156,7 +156,7 @@ fun CommandsPanel(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(easyAdbColors.Surface)
+            .background(easyAdbColors.Background)
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)

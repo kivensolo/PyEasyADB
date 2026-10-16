@@ -242,7 +242,7 @@ private fun ParamField(
 }
 
 /**
- * 紧凑型输入框，使用 BasicTextField + 自定义边框（SurfaceVariant 底，
+ * 紧凑型输入框，使用 BasicTextField + 自定义边框（Field 底 = H5 --field，
  * focus 时描边变主色），内边距比 Material 默认的 OutlinedTextField 小得多。
  */
 @Composable
@@ -268,7 +268,7 @@ private fun CompactTextField(
                 color = if (isFocused) easyAdbColors.Primary else easyAdbColors.Border,
                 shape = easyAdbTokens.shapeSm
             )
-            .background(easyAdbColors.SurfaceVariant, easyAdbTokens.shapeSm)
+            .background(easyAdbColors.Field, easyAdbTokens.shapeSm)
             .padding(horizontal = 8.dp)
             .onFocusChanged { isFocused = it.hasFocus },
         contentAlignment = Alignment.CenterStart
