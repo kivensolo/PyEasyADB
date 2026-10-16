@@ -39,6 +39,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 import java.util.prefs.Preferences
@@ -270,7 +271,7 @@ private fun CompactTextField(
             )
             .background(easyAdbColors.Field, easyAdbTokens.shapeSm)
             .padding(horizontal = 8.dp)
-            .onFocusChanged { isFocused = it.hasFocus },
+            .onFocusChanged { isFocused = it.hasFocus; TextInputFocusTracker.onFocusChanged(it.hasFocus) },
         contentAlignment = Alignment.CenterStart
     ) {
         Row(

@@ -52,6 +52,8 @@ import androidx.compose.ui.unit.sp
 import com.easyadb.core.config.FunctionItem
 import com.easyadb.ui.designsystem.EasyAdbTileIcons
 import com.easyadb.ui.designsystem.GradientButton
+import androidx.compose.ui.focus.onFocusChanged
+import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 
@@ -560,6 +562,7 @@ private fun CustomKeycodeInput(
             ),
             cursorBrush = SolidColor(easyAdbColors.Primary),
             modifier = Modifier.fillMaxWidth()
+            .onFocusChanged { TextInputFocusTracker.onFocusChanged(it.hasFocus) }
         )
     }
 }

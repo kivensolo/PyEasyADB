@@ -33,6 +33,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.config.FunctionItem
+import androidx.compose.ui.focus.onFocusChanged
+import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 
@@ -149,6 +151,7 @@ private fun CompactFilePathInput(
             ),
             cursorBrush = SolidColor(easyAdbColors.Primary),
             modifier = Modifier.fillMaxWidth()
+            .onFocusChanged { TextInputFocusTracker.onFocusChanged(it.hasFocus) }
         )
     }
 }

@@ -97,6 +97,8 @@ import androidx.compose.ui.window.Popup
 import com.easyadb.core.adb.LogcatEntry
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.log.LogLevel
+import androidx.compose.ui.focus.onFocusChanged
+import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.EmptyState
@@ -453,7 +455,8 @@ fun LogcatPanel(
                         singleLine = true,
                         modifier = Modifier
                             .weight(1f)
-                            .heightIn(min = 24.dp),
+                            .heightIn(min = 24.dp)
+                            .onFocusChanged { TextInputFocusTracker.onFocusChanged(it.hasFocus) },
                         textStyle = androidx.compose.ui.text.TextStyle(
                             fontSize = 10.sp,
                             fontFamily = FontFamily.Monospace
@@ -520,6 +523,7 @@ fun LogcatPanel(
                             .fillMaxWidth(0.33f)
                             .heightIn(min = 28.dp)
                             .focusRequester(findInputFocus)
+                            .onFocusChanged { TextInputFocusTracker.onFocusChanged(it.hasFocus) }
                             .onPreviewKeyEvent { event ->
                                 when {
                                     event.type == KeyEventType.KeyDown && event.key == Key.Escape -> {

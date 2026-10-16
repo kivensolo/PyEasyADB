@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":ui:functions"))
     implementation(project(":ui:console"))
     implementation(project(":ui:logcat"))
+    implementation(project(":platform"))
     implementation(project(":ui:mirror"))
     implementation(project(":core:adb"))
     implementation(project(":core:config"))

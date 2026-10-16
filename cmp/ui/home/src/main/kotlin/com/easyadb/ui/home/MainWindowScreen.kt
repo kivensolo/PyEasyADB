@@ -41,6 +41,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.adb.LogcatStream
+import com.easyadb.platform.Win32Interop
 import com.easyadb.core.adb.MirrorState
 import com.easyadb.core.config.FunctionItem
 import com.easyadb.core.config.FunctionTemplate
@@ -48,8 +49,13 @@ import com.easyadb.core.config.MenuAction
 import com.easyadb.core.config.MenuConfig
 import com.easyadb.core.database.DeviceRecord
 import com.easyadb.core.device.DeviceInfo
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import com.easyadb.ui.designsystem.AppIcons
 import com.easyadb.ui.designsystem.EasyAdbTileIcons
+import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.hoverBackground
@@ -656,6 +662,9 @@ fun MainWindowScreen(
     // 嵌入模式勾选态提升到 Tab 容器层：MirrorPanel 随 Tab 切换销毁重建，
     // 勾选框本身运行中禁用——若状态随面板销毁，切回后嵌入预览将无法恢复
     var mirrorEmbedEnabled by remember { mutableStateOf(false) }
+    // 已收编的 scrcpy 子窗口句柄（嵌入区收编成功后经 onEmbeddedHwndChange 登记，脱离/停止清零）：
+    // 供根级键盘接管转发使用——句柄生命周期与嵌入区一致，宿主只读不管理
+    var embeddedScrcpyHwnd by remember { mutableStateOf(0L) }
     var embeddedTab by remember { mutableStateOf(0) }
     // 快捷操作参数卡状态提升到本层：功能卡执行与常用命令 Tab 的 {pkg} 模板共享包名
     var appParamState by remember { mutableStateOf(AppParamState()) }
@@ -667,7 +676,40 @@ fun MainWindowScreen(
     val keysItems = functionTemplates.flatMap { it.items }.filter { it.tab == "keys" }
     val filesItems = functionTemplates.flatMap { it.items }.filter { it.tab == "files" }
 
-    Column(modifier = modifier.fillMaxSize().background(easyAdbColors.Background)) {
+    // ── 实时预览 Tab 激活期间的窗口级键盘接管（P9 键盘透传补强） ──
+    // 嵌入预览的原生直达路径会被「点击嵌入区外的控件」打断（Compose 焦点转移，按键不再
+    // 经过嵌入区子树的兜底 handler）。此处在窗口根上接管：预览运行中 + 嵌入模式 +
+    // 实时预览 Tab 可见时，按键直接转投 scrcpy 子窗口（SetFocus 归还 + PostMessage 转发，
+    // 复用 MirrorPanel 嵌入区的同款机制），首个按键后焦点回归子窗口、恢复原生直达。
+    // 守卫：文本输入框聚焦时本地优先（过滤框打字不能进设备）；非实时预览 Tab 不接管。
+    val mirrorTakeOverActive = mirrorState is MirrorState.Running &&
+        mirrorEmbedEnabled && Win32Interop.isWindows &&
+        contentTab == TAB_MIRROR && !TextInputFocusTracker.hasFocusedTextInput
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(easyAdbColors.Background)
+            .onPreviewKeyEvent { event ->
+                if (!mirrorTakeOverActive || event.type != KeyEventType.KeyDown && event.type != KeyEventType.KeyUp) {
+                    false
+                } else {
+                    // Main.kt 持有的 scrcpy 子窗口句柄（嵌入区收编后经回调登记；未收编=0 不接管）
+                    val child = embeddedScrcpyHwnd
+                    val vk = event.key.keyCode.toInt()
+                    if (child == 0L || vk == 0) {
+                        false
+                    } else {
+                        if (event.type == KeyEventType.KeyDown) {
+                            Win32Interop.setFocusWindow(child)
+                            Win32Interop.postKeyDown(child, vk)
+                        } else {
+                            Win32Interop.postKeyUp(child, vk)
+                        }
+                        true
+                    }
+                }
+            }
+    ) {
         AppTopBar(
             sidebarCollapsed = sidebarCollapsed,
             onExpandSidebar = onExpandDeviceList,
@@ -740,6 +782,7 @@ fun MainWindowScreen(
                                     binaryPath = mirrorBinaryPath,
                                     embedEnabled = mirrorEmbedEnabled,
                                     onEmbedEnabledChange = { mirrorEmbedEnabled = it },
+                                    onEmbeddedHwndChange = { embeddedScrcpyHwnd = it },
                                     onStart = onMirrorStart,
                                     onStop = onMirrorStop,
                                     modifier = Modifier.fillMaxSize()

@@ -91,6 +91,8 @@ fun MirrorPanel(
     binaryPath: String,
     embedEnabled: Boolean,
     onEmbedEnabledChange: (Boolean) -> Unit,
+    /** 嵌入区收编成功回调（hwnd>0）/ 脱离·停止清零（0）：宿主用于窗口级键盘接管转发 */
+    onEmbeddedHwndChange: (Long) -> Unit = {},
     onStart: () -> Unit,
     onStop: () -> Unit,
     modifier: Modifier = Modifier
@@ -218,7 +220,10 @@ fun MirrorPanel(
                         binaryPath = binaryPath,
                         modifier = Modifier.align(Alignment.Center).padding(24.dp)
                     )
-                    isRunning && embedEnabled -> EmbeddedScrcpyRegion(modifier = Modifier.fillMaxSize())
+                    isRunning && embedEnabled -> EmbeddedScrcpyRegion(
+                        modifier = Modifier.fillMaxSize(),
+                        onEmbeddedHwndChange = onEmbeddedHwndChange
+                    )
                     isRunning -> FloatRunningHint(modifier = Modifier.align(Alignment.Center))
                     else -> MirrorEmptyState(
                         canStart = deviceIp != null && binaryReady,
@@ -394,7 +399,10 @@ private var lastEmbeddedChildHwnd: Long = 0L
  * 几何断言与全链路验证见 [main]（EmbedSpike）。
  */
 @Composable
-private fun EmbeddedScrcpyRegion(modifier: Modifier = Modifier) {
+private fun EmbeddedScrcpyRegion(
+    modifier: Modifier = Modifier,
+    onEmbeddedHwndChange: (Long) -> Unit = {}
+) {
     val hostPanel = remember { JPanel() }
     // 重型 Canvas：有独立 HWND 作嵌入宿主；置为不可聚焦，避免 AWT 抢走子窗口键盘焦点
     val hostCanvas = remember { Canvas().apply { isFocusable = false } }
@@ -493,6 +501,7 @@ private fun EmbeddedScrcpyRegion(modifier: Modifier = Modifier) {
         embedHwnd = child
         hostHwnd = host
         lastEmbeddedChildHwnd = child
+        onEmbeddedHwndChange(child)
 
         // 嵌入期常驻挂接输入队列 + 裸 SetFocus（不 detach、不抢回焦点）：KeySpike 与
         // 实测确认焦点是键盘透传的关键——attach→SetFocus→detach 会把焦点状态打散，
@@ -517,6 +526,7 @@ private fun EmbeddedScrcpyRegion(modifier: Modifier = Modifier) {
         onDispose {
             val child = embedHwnd
             if (child != null) {
+                onEmbeddedHwndChange(0L)
                 Win32Interop.hideWindow(child)
                 Win32Interop.attachThreadInputToWindow(child, false)
                 Win32Interop.setParent(child, null)
