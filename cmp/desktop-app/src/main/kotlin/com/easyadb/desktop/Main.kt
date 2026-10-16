@@ -39,6 +39,7 @@ import com.easyadb.core.adb.AdbExecutor
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.adb.MirrorStartResult
 import com.easyadb.core.adb.ScrcpyLauncher
+import com.easyadb.platform.Win32Interop
 import com.easyadb.ui.designsystem.EasyAdbTheme
 import com.easyadb.ui.designsystem.ThemeMode
 import com.easyadb.ui.functions.AppParamState
@@ -305,6 +306,12 @@ fun main() {
                 },
                 close = closeApp
             )
+            // Win11 系统原生圆角：DWMWA_WINDOW_CORNER_PREFERENCE=33 → DWMWCP_ROUND=2
+            // （系统按 Win11 标准把窗口四角做圆 + 自带系统阴影，不依赖桌面背景）
+            LaunchedEffect(Unit) {
+                val hwnd = Win32Interop.componentHwnd(composeWindow)
+                if (hwnd != null) Win32Interop.setWindowCornerPreference(hwnd, round = true)
+            }
             EasyAdbTheme(darkTheme = darkTheme) {
                 // ── 侧栏折叠/展开（P12 布局大改） ──
                 var sidebarCollapsed by remember { mutableStateOf(false) }
@@ -1232,3 +1239,5 @@ private fun handleMenuAction(action: MenuAction, logger: AppLogger, logAppender:
     logger.info { "Menu action: ${action.name} (action=${action.action})" }
     logAppender("[未实现] 菜单操作: ${action.name}", 3)
 }
+
+

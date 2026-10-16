@@ -316,6 +316,23 @@ object Win32Interop {
         return User32.INSTANCE.ShowWindow(h(hwnd), WinUser.SW_SHOW)
     }
 
+    /**
+     * Win11 窗口圆角偏好（DWMWA_WINDOW_CORNER_PREFERENCE=33）：
+     * round=true → DWMWCP_ROUND（系统标准圆角 ≈8px + 系统阴影）；false → DWMWCP_DONOTROUND。
+     * Win10 无此属性（调用静默失败返回 false，直角无副作用）。
+     */
+    fun setWindowCornerPreference(hwnd: Long, round: Boolean): Boolean {
+        if (!isWindows) return false
+        return runCatching {
+            Memory(4).use { mem ->
+                mem.setInt(0, if (round) 2 else 1) // DWMWCP_ROUND=2 / DWMWCP_DONOTROUND=1
+                DwmApi.INSTANCE.DwmSetWindowAttribute(
+                    h(hwnd), WinDef.DWORD(33), mem, WinDef.DWORD(4)
+                ) == 0
+            }
+        }.getOrDefault(false)
+    }
+
     /** ARGB(0xAARRGGBB) → COLORREF(0x00BBGGRR) */
     fun argbToColorRef(argb: Int): Int {
         val r = (argb shr 16) and 0xFF
