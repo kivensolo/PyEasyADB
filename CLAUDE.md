@@ -1,162 +1,94 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+本文件为 Claude Code (claude.ai/code) 在本仓库中工作时提供指引。
 
-## Project Overview
+## 项目概述
 
-EasyPyADB is a Windows-based GUI application built with PyQt5 that provides a user-friendly interface for ADB (Android Debug Bridge) operations. It simplifies Android device management and debugging tasks for developers.
+EasyPyADB 是一款基于 Windows 的 ADB（Android Debug Bridge）操作 GUI 应用——涵盖设备管理、包管理、logcat 查看、屏幕镜像（scrcpy）。仓库包含**两套代码**：
 
-**Language**: Python 3.11.1+ (compatible with 3.17+, 3.18+)
-**GUI Framework**: PyQt5
+1. **`cmp/` — Compose Multiplatform 重写版（v2.0.0，当前活跃开发）**。Kotlin 2.0.21 + Compose Multiplatform 1.7.3，仅桌面端。当前开发工作都在这里（分支 `dev/v2.0.0_cmp`）。
+2. **旧版 Python + PyQt5 应用（v1.x，仓库根目录）** — 已稳定，偶尔维护。
 
-## Development Commands
+Python → CMP 的迁移进度记录在 `doc/迁移进度.md`（P0–P13 已全部完成）、`doc/01_模块映射表.md`（逐文件 Python→Kotlin 映射）和 `doc/02_分阶段迁移计划.md`。移植行为前先查这三份文档：其中记录了迁移决策和已踩过的坑。
 
-### Virtual Environment Setup
+## 常用命令
+
+### CMP（Kotlin）— 当前活跃代码库
 
 ```bash
-# Create virtual environment
-python -m venv ea_venv
-
-# Activate (Windows)
-ea_venv\Scripts\activate
-
-# Deactivate
-deactivate
+cd cmp
+./gradlew build          # 构建全部 17 个模块
+./gradlew run            # 启动桌面应用
+./gradlew :desktop-app:packageMsi   # 打 MSI 安装包（需 WiX；jlink 按需模块）
+./gradlew test           # 运行全部测试
+./gradlew :core:adb:test # 运行单个模块的测试
 ```
 
-### Install Dependencies
+- JDK 17 通过 `cmp/gradle.properties` 固定（`org.gradle.java.home=D:\jdks\jdk-17.0.13`）。
+- 依赖版本集中在 `cmp/gradle/libs.versions.toml`（version catalog）。
+- MSI 配置：`cmp/desktop-app/build.gradle.kts` — 按用户安装，固定 `upgradeUuid`；运行时若报 `NoClassDefFoundError`，到该文件补缺失的 jlink 模块。
+
+### Python 旧版应用
 
 ```bash
-pip install -r ea_venv/Scripts/requirements.txt
-```
-
-Key dependencies:
-- PyQt5 5.15.10
-- lxml 5.1.0
-- pyinstaller 6.3.0
-- requests (via pip._vendor.requests)
-- pywin32-ctypes
-
-### Running the Application
-
-```bash
+python -m venv ea_venv && ea_venv\Scripts\activate
+pip install -r requriements.txt   # 注意：文件名拼写就是错的（requriements，非 requirements）
 python EasyADB.py
+
+pyinstaller EasyADB.spec          # 目录模式（推荐）
 ```
 
-### Building with PyInstaller
+CA 证书注意事项：`--onefile` 打包会丢失 `certifi/cacert.pem`，导致 requests TLS 报错；需将证书文件随 exe 一并分发。
 
-```bash
-# Single executable with console
-pyinstaller --onefile EasyADB.py
+## 架构
 
-# Directory-based package (recommended)
-pyinstaller EasyADB.py
+### CMP 重写版（`cmp/`）
 
-# Without console (may flash during operations)
-pyinstaller --noconsole --onefile EasyADB.py
+17 个 Gradle 模块，依赖方向严格单向：
+
+```
+desktop-app → ui:* → core:* → platform
 ```
 
-**Note**: PyInstaller does not bundle resource files. Manually copy the `res/` directory to the `dist/` folder after building.
+- `desktop-app/` — `Main.kt` 入口、依赖注入装配、窗口创建（无边框一体式标题栏，Win11 通过 `Win32Interop.setWindowCornerPreference` 实现 DWM 原生圆角）。
+- `ui/*` — Compose UI：`designsystem`（主题/色板 token/图标）、`home`（主窗口壳：侧栏 + Tab + 底部区）、`devicelist`、`functions`（动态功能区）、`console`、`logcat`、`mirror`（scrcpy 独立/嵌入模式）、`dialogs`。
+- `core/*` — 纯 Kotlin 业务/数据层，**不得依赖 Compose**：`adb`（AdbExecutor、LogcatStream、各类解析器）、`apk`、`config`、`database`（SQLite，与 Python 版共用同一 DB 文件）、`device`、`log`、`util`。
+- `platform/` — KMP expect/actual（如 `AppPaths`）；Windows 专属代码（Win32 重父化嵌入 scrcpy、DWM 调用）位于 `desktopMain`。
 
-**CA Certificate**: When using `--onefile`, include `certifi/cacert.pem` in the distribution directory to fix requests library TLS errors. Download from: https://curl.se/docs/caextract.html
+UI 不得反向调用 desktop-app；业务层不得引入 Compose。
 
-## Architecture
+scrcpy **嵌入预览**通过 Win32 `SetParent` 将 scrcpy 原生窗口重父化进 Compose 窗口，键盘透传跟随当前激活 Tab（SP-4001）。若 Tab 切换后出现键盘/焦点问题，先读 `cmp/doc/solution-proposals/SP-4001-*.md` 再动手改。
 
-### Entry Point Flow
+### Python 旧版应用
 
-`EasyADB.py` → `AndroidDependencies.Check()` → `MainWindow` → QApplication main loop
+- 入口：`EasyADB.py` → `AndroidDependencies.Check()`（自动下载 platform-tools/scrcpy 到 `%LOCALAPPDATA%/EasyADB/`）→ `MainWindow`。
+- GUI（`src/`）：`MainWindow`（设备树 + 功能按钮 + 菜单栏）、`CenterWindow`（由 XML 模板构建的功能区）、`BottomWindow`（控制台 + 实时 logcat 双 Tab）、`DevicesWatcher`（连接状态轮询）、`src/logcat/` 日志查看器、`src/widget/` 自定义对话框。
+- 业务层（`utils/`）：`ADBTools.py` 通过 `ActionCmdParams` 封装 adb（`{0}` 宏 → 包名；含 `isShellMode`、`needDstPkg`、`target_device_ip`），`CmdExecutor.py`（QThread + 超时定时器），`PackageManager.py`。
+- 数据层：`src/DataBase.py`（SQLite）、`src/settings.py`（常量）。
+- 配置（`res/config/`）：`cmdConfig.xml`（命令模板）、`function_templates.xml`（动态 UI）、`menus_ui.xml`、`AppConfig.ini`。这些区域的 UI 由 XML 加载，不做硬编码布局。
+- 应用数据存于 `%LOCALAPPDATA%/EasyADB/`（`platform-tools/`、`tools/scrcpy-win64/`、`data/easyADB.db`、`tmp/`）。
 
-The application:
-1. Sets up PyQt5 with high DPI scaling support
-2. Configures custom exception handling via `sys.excepthook`
-3. Initializes Android dependencies (platform-tools, scrcpy) in `%LOCALAPPDATA%/EasyADB/`
-4. Creates and runs the main window
+## 项目约定
 
-### Core Layers
+### 提交信息
 
-**GUI Layer** (`src/`):
-- `MainWindow.py` - Main window with device tree view, functional buttons, menu bar
-- `BottomWindow.py` - Bottom tab widget (console output + live logcat viewer)
-- `CenterWindow.py` - Central functional area with dynamic UI from XML templates
-- `BaseWindow.py` - Base window class
-- `MenuBar.py`, `ToolBar.py` - Navigation components
-- `widget/` - Custom UI components (dialogs, widgets, screen recording)
+格式：`Title(<type>)：<中文摘要>` — 常见 type：`feat`、`fix`、`refactor`、`doc`。摘要记录决策而非仅改动，但**保持简洁**（一两句话即可，不必罗列全部细节），无需用户每次提醒。提交信息使用中文。
 
-**Business Logic Layer** (`utils/`):
-- `ADBTools.py` - Core ADB operations wrapper using `ActionCmdParams`
-- `PackageManager.py` - APK management utilities
-- `CmdExecutor.py` - Command execution with threading
-- `Utils.py`, `Tools.py`, `UITools.py` - General utilities
+### 实施方案文档（SP 文档）
 
-**Data Layer**:
-- `src/DataBase.py` - SQLite database for device configs, preferences, templates
-- `src/settings.py` - Application configuration constants
+功能级实现决策需在 `cmp/doc/solution-proposals/` 落一份 SP 文档，命名 `SP-<领域码2位><序号2位>-<中文主题>.md`。领域码：10 设备管理、20 ADB 命令、30 实时日志、40 镜像预览、50 文件传输、60 配置与持久化、90 其他。新增 SP 须在该目录的 `README.md` 索引表登记；被否决的方案标记「已废弃」，不删除文件，序号永不复用。
 
-### Configuration System
+### H5 参照稿
 
-All configuration files are in `res/config/`:
-- `cmdConfig.xml` - ADB command templates for left panel (uses `{0}` placeholder for package name)
-- `function_templates.xml` - UI template definitions for main area
-- `menus_ui.xml` - Menu bar configuration
-- `AppConfig.ini` - Application settings
+CMP 端 UI 以 HTML 参照稿为准：`cmp/doc/ui-reference/index.html`。视觉工作（颜色、布局、动效、token）都对照它量取——例如主题 token 对应 CSS 变量、Tab 切换动效曲线对齐 CSS 缓动。做 UI 对齐时参照它，不要凭感觉猜。
 
-Dynamic UI is loaded from XML templates. The `ActionCmdParams` class handles command assembly with macro replacement.
+### 语言
 
-### Device Management
+面向用户的文案、文档、提交信息均为中文。CMP 新功能的 UI 文案同样写中文，与现有 UI 保持一致。
 
-- `DevicesWatcher.py` - Monitors device connection status
-- `TreeItemType.py` - Tree item type definitions for device hierarchy
-- Device status: online, offline, unauthorized
-- Device alias/nickname support stored in database
+## 已知问题 / 坑点
 
-### Logcat System
-
-- `src/logcat/log.py` - Logging utilities with `z_logger`
-- Live logcat viewer with filtering (by PID, log level, text)
-- Log limit: `LIVE_LOG_CONUTS_LIMITS = 3000` (default in settings.py)
-- Logs stored in `logs/` with date-based naming
-
-## File Paths
-
-**Application Data** (`%LOCALAPPDATA%/EasyADB/`):
-- `platform-tools/` - ADB tools (auto-downloaded)
-- `tools/scrcpy-win64/` - Screen mirroring tool
-- `data/easyADB.db` - SQLite database
-- `tmp/` - Temporary files
-
-**Project Structure**:
-```
-BASE_PATH = os.getcwd()  # Project root
-LOGS_PATH = logs/        # Application logs
-SCRCPY_PATH = tool/scrcpy-win64/  # Local scrcpy backup
-```
-
-## Key Patterns
-
-### Command Execution Pattern
-
-`ActionCmdParams` class wraps ADB commands:
-- `isShellMode`: Use `adb shell` vs direct adb command
-- `needDstPkg`: Require package name validation
-- `target_device_ip`: Device serial/IP
-- `target_app`: Package name (for `{0}` placeholder)
-
-Commands are assembled via `getAdbCMD()` with automatic macro replacement.
-
-### Dynamic UI Loading
-
-UI templates loaded from XML, with elements per row configured by `CTNTER_WINDOW_EVERY_ROW_SIZE = 5` in settings.py.
-
-### Exception Handling
-
-Custom `exception_handler()` in `EasyADB.py` catches all exceptions, logs them, and prevents crashes.
-
-## Common Issues
-
-**Multi-monitor dialog positioning**: Dialogs appear on primary screen center regardless of click location (known FIXME).
-
-**Platform-tools missing**: Auto-downloaded on first run to `%LOCALAPPDATA%/EasyADB/platform-tools/`.
-
-**Scrcpy missing**: Auto-downloaded when screen mirroring is first used (may require VPN for GitHub access).
-
-**Database migration**: When upgrading from v1.0.2, manually move `.\data\easyADB.db` to `%LOCALAPPDATA%\EasyADB\data\`.
+- **序列号/IP 端口口径**：设备身份比较使用**不带 :port 后缀**的地址——这里的口径不一致曾反复引发高亮/缓存 bug（已修复三次）。
+- **scrcpy 下载**需要访问 GitHub（部分环境需 VPN）。
+- **多屏弹窗定位**（Python 版）：无论在哪个屏幕点击，对话框总是显示在主屏中心（已知 FIXME）。
+- Python 侧 `BASE_PATH = os.getcwd()` — Python 应用假定从项目根目录启动。
