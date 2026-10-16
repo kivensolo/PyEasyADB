@@ -94,6 +94,25 @@ object DbManager {
         }
     }
 
+    /**
+     * 更新设备属性信息（Android 版本等展示用缓存）。
+     * 对应 Python DataBase.update_device_prop（Python 侧定义了但从未接线，CMP 补上）。
+     */
+    suspend fun updateDeviceInfo(ip: String, info: String): DbResult<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val sql = "UPDATE device SET device_info = ? WHERE ip = ?"
+            getConnection().prepareStatement(sql).use { stmt ->
+                stmt.setString(1, info)
+                stmt.setString(2, ip)
+                stmt.executeUpdate()
+            }
+            DbResult(success = true)
+        } catch (e: Exception) {
+            logger.error { "Update device_info failed for $ip: ${e.message}" }
+            DbResult(success = false, error = e.message)
+        }
+    }
+
     suspend fun getAllDevices(): DbResult<List<DeviceRecord>> = withContext(Dispatchers.IO) {
         try {
             val sql = "SELECT ip, port, alias, device_info, active, connect_count FROM device"

@@ -320,9 +320,20 @@ fun main() {
                         .filter { it.isNotBlank() && it !in deviceVersionsFlow.value }
                     missing.forEach { ip ->
                         scope.launch {
-                            val version = versionFetcher.fetchVersion(ip)
+                            val version = versionFetcher.fetchDisplayInfo(ip)
                             if (version != null) {
                                 deviceVersionsFlow.value = deviceVersionsFlow.value + (ip to version)
+                                // 持久化到 device 表（键为 record.ip 口径，无端口），重启后离线设备可回显；
+                                // 成功后原位同步 dbDevicesFlow（不整表 reload），卡片 DB 回退即时可见
+                                val dbIp = if ('.' in ip && ':' in ip) ip.substringBeforeLast(':') else ip
+                                val r = DbManager.updateDeviceInfo(dbIp, version)
+                                if (r.success) {
+                                    dbDevicesFlow.value = dbDevicesFlow.value.map {
+                                        if (it.ip == dbIp) it.copy(deviceInfo = version) else it
+                                    }
+                                } else {
+                                    appLogger.warn { "device_info persist failed for $dbIp: ${r.error}" }
+                                }
                             }
                         }
                     }

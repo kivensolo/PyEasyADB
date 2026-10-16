@@ -184,7 +184,10 @@ fun DeviceListPanel(
                     items(deviceCards, key = { it.id }) { card ->
                         DeviceCard(
                             card = card,
-                            androidVersion = deviceVersions[card.fullAddress],
+                            // 内存缓存未命中（离线/刚重启）时回退 DB 持久值；
+                            // 须含 "API" 字样——滤掉 Python 遗留库的占位值（如 '10086'）
+                            androidVersion = deviceVersions[card.fullAddress]
+                                ?: card.record.deviceInfo.takeIf { it.isNotBlank() && "API" in it },
                             isSelected = selectedDeviceIp == card.record.ip,
                             onClick = { callbacks.onDeviceClick(card.record) },
                             onDoubleClick = { callbacks.onDeviceDoubleClick(card.record) },
@@ -410,7 +413,7 @@ private fun DeviceCard(
                     if (card.record.alias.isNotBlank()) append(card.record.alias)
                     if (!androidVersion.isNullOrBlank()) {
                         if (isNotEmpty()) append(" · ")
-                        append("Android ").append(androidVersion)
+                        append(androidVersion)  // 「名称(版本)，API 级别」标签自带语义，不加 Android 前缀
                     }
                 }
                 if (subLine.isNotBlank()) {
