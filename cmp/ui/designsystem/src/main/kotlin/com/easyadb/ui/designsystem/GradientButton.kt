@@ -3,6 +3,7 @@
 package com.easyadb.ui.designsystem
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -33,15 +34,17 @@ fun GradientButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     height: Dp = 38.dp,
     horizontalPadding: Dp = 22.dp
 ) {
     Surface(
         onClick = onClick,
+        enabled = enabled,
         shape = RoundedCornerShape(8.dp),
         color = Color.Transparent,
         elevation = 0.dp,
-        modifier = modifier.height(height)
+        modifier = modifier.height(height).alpha(if (enabled) 1f else 0.45f)
     ) {
         Box(
             modifier = Modifier.background(

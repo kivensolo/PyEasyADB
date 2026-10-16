@@ -103,6 +103,14 @@ data class EasyAdbColors(
     val AccentSky: Color,
     val AccentRose: Color,
 
+    // ── 实时预览画面区（始终深色 = 设备屏幕本体，明暗同值；HTML .scr-* 系列）──
+    val PreviewBg: Color,
+    val PreviewTileBg: Color,
+    val PreviewTileBorder: Color,
+    val PreviewIcon: Color,
+    val PreviewTitle: Color,
+    val PreviewBody: Color,
+
     // ── 反色浮层（Tooltip：亮主题深气泡、暗主题浅气泡） ──
     val TooltipBackground: Color,
     val TooltipText: Color,
@@ -167,6 +175,13 @@ val LightEasyAdbColors = EasyAdbColors(
     AccentGrey = Color(0xFF64748B),       // slate-500（a-icon.gray 浅色推导）
     AccentSky = Color(0xFF0369A1),        // --cyan
     AccentRose = Color(0xFFE11D48),       // rose-600（a-icon.rose 浅色推导）
+    PreviewBg = Color(0xFF05080D),        // .scr-outer 底（设备屏幕本体，恒深）
+    PreviewTileBg = Color(0xFF101A2E),    // .scr-empty .big 容器底
+    PreviewTileBorder = Color(0xFF22314A),// .scr-empty .big 边
+    PreviewIcon = Color(0xFF42536E),      // .scr-empty .big 图标
+    PreviewTitle = Color(0xFF8FA0B8),     // .scr-empty .t1 标题
+    PreviewBody = Color(0xFF5F7089),      // .scr-empty .t2 正文
+
     TooltipBackground = Color(0xFFEEF3F9), // 浅色气泡（微蓝灰，比 Surface 深一档保辨识）
     TooltipText = Color(0xFF1B2534),
     FindHighlight = Color(0xFFFFE082),    // Amber 200，浅黄底配深字（HTML 无对应，保留原值）
@@ -224,6 +239,13 @@ val DarkEasyAdbColors = EasyAdbColors(
     AccentGrey = Color(0xFF9FB0C8),       // .a-icon.gray
     AccentSky = Color(0xFF38BDF8),        // .a-icon.sky（--cyan）
     AccentRose = Color(0xFFFB7185),       // .a-icon.rose
+    PreviewBg = Color(0xFF05080D),
+    PreviewTileBg = Color(0xFF101A2E),
+    PreviewTileBorder = Color(0xFF22314A),
+    PreviewIcon = Color(0xFF42536E),
+    PreviewTitle = Color(0xFF8FA0B8),
+    PreviewBody = Color(0xFF5F7089),
+
     TooltipBackground = Color(0xFF141E32), // .toast 底（rgba(20,30,50,.92)）
     TooltipText = Color(0xFFDBE6F5),      // .toast 文字
     FindHighlight = Color(0xFF1D3358),    // 蓝调暗底推导（seg active 系）

@@ -1,6 +1,9 @@
 package com.easyadb.ui.mirror
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,10 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Checkbox
+import androidx.compose.material.Icon
+import androidx.compose.material.Surface
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -23,7 +28,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.awt.SwingPanel
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -31,11 +40,15 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.adb.MirrorState
 import com.easyadb.core.adb.ScrcpyLauncher
 import com.easyadb.platform.Win32Interop
+import com.easyadb.ui.designsystem.EasyAdbTileIcons
+import com.easyadb.ui.designsystem.GradientButton
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 import kotlinx.coroutines.delay
@@ -46,11 +59,11 @@ import javax.swing.JPanel
 /**
  * 设备实时预览面板（P8 独立窗口 + P9 嵌入模式）。
  *
- * 对齐 Python `win32Wrapper.py::ScrcpyEmbedWidget`：
- * - 「开启实时预览」/「关闭实时预览」按钮（状态互斥启用）
- * - 「嵌入模式」checkbox：运行中也可实时切换——勾选即把已运行的 scrcpy 窗口 reparent
- *   进面板（Win32Interop），取消即脱离还原为独立窗口（无需重启镜像，优于 Python 版
- *   的“运行中锁定”）；非 Windows 平台置灰。
+ * 对齐 Python `win32Wrapper.py::ScrcpyEmbedWidget`，UI 对齐 H5 参照稿 `#pane-mirror`：
+ * - 工具栏卡片：状态点 + 标题 + 开关（Switch 替代原开启/关闭双按钮）+ 状态文案 +
+ *   「嵌入应用窗口/独立窗口」分段控件（运行中锁定并琥珀提示）
+ * - 镜像区卡片（设备屏幕本体恒深色 .scr-outer）：未开启空态（图标+说明+品牌按钮）/
+ *   scrcpy 缺失指引 / 嵌入画面 / 独立窗口运行提示
  * - 嵌入后键盘焦点自动处理（收编时自动 SetFocus + 点击画面即原生聚焦），
  *   替代 Python 版“键盘无法控制请点红字”的手工 workaround。
  * - scrcpy 二进制缺失时显示红色下载指引（对齐 Python WARRING 文案）。
@@ -84,107 +97,290 @@ fun MirrorPanel(
 ) {
     val isRunning = mirrorState is MirrorState.Running
 
+    // 运行时长（H5 .mirror-stats .mstat）：基准存文件级变量，Tab 切走再切回时长连续不重置；
+    // Idle→Running 时重置基准，每秒刷一次显示（mm:ss，满一小时进位 h:mm:ss）
+    LaunchedEffect(isRunning) {
+        if (isRunning) {
+            if (mirrorRunStartMs == 0L) mirrorRunStartMs = System.currentTimeMillis()
+        } else {
+            mirrorRunStartMs = 0L
+        }
+    }
+    var elapsedText by remember { mutableStateOf("00:00") }
+    if (isRunning) {
+        LaunchedEffect(Unit) {
+            while (true) {
+                val totalSec = (System.currentTimeMillis() - mirrorRunStartMs) / 1000
+                val h = totalSec / 3600
+                val m = (totalSec % 3600) / 60
+                val sec = totalSec % 60
+                elapsedText = if (h > 0) "%d:%02d:%02d".format(h, m, sec) else "%02d:%02d".format(m, sec)
+                delay(1000)
+            }
+        }
+    }
+
     Column(
-        modifier = modifier.fillMaxSize().padding(easyAdbTokens.spaceMd),
-        verticalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceMd)
+        modifier = modifier.fillMaxSize().padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // ── 控制按钮行（P12 翻新：品牌色主按钮 + 描边次级按钮） ──
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceSm)
+        // ── 工具栏卡片（HTML .mirror-toolbar） ──
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = easyAdbTokens.shapeLg,
+            color = easyAdbColors.Surface,
+            border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider),
+            elevation = 0.dp
         ) {
-            Button(
-                enabled = deviceIp != null && !isRunning,
-                onClick = onStart,
-                shape = easyAdbTokens.shapeMd,
-                elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = easyAdbColors.Primary,
-                    contentColor = Color.White
-                )
-            ) {
-                Text("开启实时预览")
-            }
-            Button(
-                enabled = isRunning,
-                onClick = onStop,
-                shape = easyAdbTokens.shapeMd,
-                elevation = ButtonDefaults.elevation(defaultElevation = 0.dp, pressedElevation = 0.dp),
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = easyAdbColors.Surface,
-                    contentColor = easyAdbColors.TextPrimary
-                ),
-                border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider)
-            ) {
-                Text("关闭实时预览")
-            }
-            // 嵌入模式：checkbox 压缩触区（28dp）让文字贴近，标签加大加深
             Row(
+                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(2.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Checkbox(
-                    checked = embedEnabled && Win32Interop.isWindows,
-                    onCheckedChange = { onEmbedEnabledChange(it) },
-                    // 对齐 Python 版：实时预览运行中锁定，停止后才能切换（运行中取消嵌入会导致显示异常）
-                    enabled = Win32Interop.isWindows && !isRunning,
-                    modifier = Modifier.size(28.dp)
+                // 状态点（.mirror-dot：灰=停止 绿=运行）
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(if (isRunning) easyAdbColors.StatusOnline else easyAdbColors.TextHint)
                 )
                 Text(
-                    text = if (Win32Interop.isWindows) "嵌入模式" else "嵌入模式（仅 Windows 支持）",
-                    fontSize = 12.sp,
+                    text = "实时预览",
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.SemiBold,
                     color = easyAdbColors.TextPrimary
                 )
+                // 开关（.switch）：替代原开启/关闭双按钮；未选设备/二进制缺失时禁开
+                Switch(
+                    checked = isRunning,
+                    onCheckedChange = { on -> if (on) onStart() else onStop() },
+                    enabled = if (isRunning) true else deviceIp != null && binaryReady
+                )
+                // 状态文案（.mirror-state：灰=已停止 绿=运行中）
+                Text(
+                    text = if (isRunning) "运行中" else "已停止",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (isRunning) easyAdbColors.StatusOnline else easyAdbColors.TextSecondary,
+                    modifier = Modifier.widthIn(min = 52.dp)
+                )
+                // 嵌入/独立分段控件（.seg#mirrorEmbed；运行中锁定 + 琥珀提示）
                 if (Win32Interop.isWindows) {
-                    Text(
-                        text = "· scrcpy 的操作是右键点击返回",
-                        fontSize = 10.sp,
-                        color = easyAdbColors.TextSecondary,
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .alpha(if (isRunning) 0.55f else 1f)
+                                .clip(easyAdbTokens.shapeMd)
+                                .background(easyAdbColors.SegTrack)
+                                .padding(2.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            MirrorModeButton("嵌入应用窗口", embedEnabled, !isRunning) { onEmbedEnabledChange(true) }
+                            MirrorModeButton("独立窗口", !embedEnabled, !isRunning) { onEmbedEnabledChange(false) }
+                        }
+                        if (isRunning) {
+                            Text(
+                                text = "预览运行中已锁定 · 停止后可切换",
+                                fontSize = 11.sp,
+                                color = easyAdbColors.AccentOrange
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = "鼠标模式(右键=返回)、键盘模式(方向键、Enter键)",
+                    fontSize = 11.5.sp,
+                    color = easyAdbColors.TextSecondary,
+                    maxLines = 1
+                )
+                // 运行时长徽标（.mstat：mono 蓝字蓝底胶囊）
+                if (isRunning) {
+                    MirrorStatBadge(text = elapsedText)
                 }
             }
         }
 
-        // ── 状态行（仅独立窗口运行中 / 未选设备时提示；嵌入运行时嵌入区自明，不加文字） ──
-        val statusText = when {
-            isRunning && !embedEnabled ->
-                "独立窗口运行中：${(mirrorState as MirrorState.Running).deviceIp}（窗口「${ScrcpyLauncher.WINDOW_TITLE}」）"
-            deviceIp == null -> "未选中设备——请先在左侧设备列表中选择设备"
-            else -> null
+        // ── 镜像区卡片（HTML .mirror-stage / .scr-outer：设备屏幕本体恒深色，随面板铺满） ──
+        Surface(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            shape = easyAdbTokens.shapeLg,
+            color = easyAdbColors.PreviewBg,
+            border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider),
+            elevation = 0.dp
+        ) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    !binaryReady -> MirrorMissingGuide(
+                        binaryPath = binaryPath,
+                        modifier = Modifier.align(Alignment.Center).padding(24.dp)
+                    )
+                    isRunning && embedEnabled -> EmbeddedScrcpyRegion(modifier = Modifier.fillMaxSize())
+                    isRunning -> FloatRunningHint(modifier = Modifier.align(Alignment.Center))
+                    else -> MirrorEmptyState(
+                        canStart = deviceIp != null && binaryReady,
+                        binaryReady = binaryReady,
+                        onStart = onStart,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                }
+            }
         }
-        if (statusText != null) {
-            Text(
-                text = statusText,
-                fontSize = 12.sp,
-                color = easyAdbColors.TextPrimary
+    }
+}
+
+/** 工具栏数据徽标（.mstat：mono 蓝字 + 主题主色 10% 底 + 描边胶囊）。 */
+@Composable
+private fun MirrorStatBadge(text: String) {
+    Text(
+        text = text,
+        fontFamily = FontFamily.Monospace,
+        fontSize = 11.5.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = easyAdbColors.Primary,
+        modifier = Modifier
+            .clip(easyAdbTokens.shapeSm)
+            .background(easyAdbColors.Primary.copy(alpha = 0.1f))
+            .border(
+                easyAdbTokens.strokeWidth,
+                easyAdbColors.PrimaryLight.copy(alpha = 0.28f),
+                easyAdbTokens.shapeSm
+            )
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    )
+}
+
+/** 分段控件单项（.seg button：选中=SegActiveBg+SegActiveText，未选=透底+TextSecondary）。 */
+@Composable
+private fun MirrorModeButton(
+    label: String,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .clip(easyAdbTokens.shapeSm)
+            .background(if (selected) easyAdbColors.SegActiveBg else Color.Transparent)
+            .then(
+                if (enabled) Modifier.clickable(
+                    interactionSource = null, indication = null, onClick = onClick
+                ) else Modifier
+            )
+            .padding(horizontal = 12.dp, vertical = 5.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (selected) easyAdbColors.SegActiveText else easyAdbColors.TextSecondary
+        )
+    }
+}
+
+/** 镜像区空态（.scr-empty：大图标容器 + 标题 + 说明 + 品牌主按钮）。 */
+@Composable
+private fun MirrorEmptyState(
+    canStart: Boolean,
+    binaryReady: Boolean,
+    onStart: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(72.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(easyAdbColors.PreviewTileBg)
+                .border(easyAdbTokens.strokeWidth, easyAdbColors.PreviewTileBorder, RoundedCornerShape(20.dp)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = EasyAdbTileIcons.Monitor,
+                contentDescription = null,
+                tint = easyAdbColors.PreviewIcon,
+                modifier = Modifier.size(34.dp)
             )
         }
-
-        // ── scrcpy 缺失指引（对齐 Python WARRING 文案，手动安装路径） ──
-        if (!binaryReady) {
+        Text(
+            text = "实时预览未开启",
+            fontSize = 15.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = easyAdbColors.PreviewTitle
+        )
+        Text(
+            text = "通过 scrcpy 实时镜像设备画面 · 支持嵌入应用窗口 / 独立窗口两种模式\n鼠标右键 = 返回",
+            fontSize = 12.sp,
+            color = easyAdbColors.PreviewBody,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 430.dp)
+        )
+        GradientButton(
+            text = "开启实时预览",
+            onClick = onStart,
+            enabled = canStart,
+            height = 34.dp,
+            horizontalPadding = 18.dp
+        )
+        if (!canStart) {
             Text(
-                text = buildString {
-                    appendLine("系统找不到 scrcpy。请从 https://github.com/Genymobile/scrcpy/releases 下载编译好的 win64 版本，")
-                    appendLine("例如 scrcpy-win64-v3.3.4.zip，解压后将文件夹改名为 scrcpy-win64，放入以下任一位置：")
-                    appendLine("  · $binaryPath（推荐，程序数据目录）")
-                    appendLine("  · 程序运行目录下的 tool/scrcpy-win64")
-                    appendLine("后续升级 scrcpy 版本只需替换 scrcpy-win64 目录下的文件，无缝升级。")
-                },
+                text = if (binaryReady) "请先在左侧设备列表中选择设备" else "scrcpy 未就绪，请先安装",
                 fontSize = 11.sp,
-                fontFamily = FontFamily.Monospace,
-                color = easyAdbColors.LogError
-            )
-        }
-
-        // ── 嵌入区：运行中且勾选嵌入时收编 scrcpy 窗口 ──
-        if (isRunning && embedEnabled) {
-            EmbeddedScrcpyRegion(
-                modifier = Modifier.fillMaxWidth().weight(1f)
+                color = easyAdbColors.PreviewBody
             )
         }
     }
 }
+
+/** scrcpy 缺失指引（对齐 Python WARRING 文案；恒深底上用主题错误色）。 */
+@Composable
+private fun MirrorMissingGuide(binaryPath: String, modifier: Modifier = Modifier) {
+    Text(
+        text = buildString {
+            appendLine("系统找不到 scrcpy。请从 https://github.com/Genymobile/scrcpy/releases 下载编译好的 win64 版本，")
+            appendLine("例如 scrcpy-win64-v3.3.4.zip，解压后将文件夹改名为 scrcpy-win64，放入以下任一位置：")
+            appendLine("  · $binaryPath（推荐，程序数据目录）")
+            appendLine("  · 程序运行目录下的 tool/scrcpy-win64")
+            appendLine("后续升级 scrcpy 版本只需替换 scrcpy-win64 目录下的文件，无缝升级。")
+        },
+        fontSize = 11.sp,
+        fontFamily = FontFamily.Monospace,
+        color = easyAdbColors.LogError,
+        modifier = modifier
+    )
+}
+
+/** 独立窗口模式运行提示（画面在系统窗口，镜像区仅作状态说明）。 */
+@Composable
+private fun FloatRunningHint(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            text = "预览运行中 · 独立窗口模式",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = easyAdbColors.PreviewTitle
+        )
+        Text(
+            text = "画面显示在独立窗口「" + ScrcpyLauncher.WINDOW_TITLE + "」中，操作提示同嵌入模式",
+            fontSize = 12.sp,
+            color = easyAdbColors.PreviewBody
+        )
+    }
+}
+
+/** 本轮预览运行起始时刻（文件级，跨 Tab 切换存活）：Idle→Running 重置为当前时刻，停止清零。 */
+private var mirrorRunStartMs: Long = 0L
 
 /** 上次成功收编的 scrcpy 窗口句柄（文件级，跨 Tab 切换存活）：同句柄的重嵌入跳过就绪门控。 */
 private var lastEmbeddedChildHwnd: Long = 0L
@@ -231,8 +427,8 @@ private fun EmbeddedScrcpyRegion(modifier: Modifier = Modifier) {
             }
     ) {
         SwingPanel(
-            // scrcpy 画面收编前的垫底色随主题（原 Color.White 在暗色下会白块闪烁）
-            background = easyAdbColors.Surface,
+            // scrcpy 画面收编前的垫底色：预览区恒深色（对齐 .scr-outer）
+            background = easyAdbColors.PreviewBg,
             factory = {
                 hostPanel.apply {
                     layout = BorderLayout()
