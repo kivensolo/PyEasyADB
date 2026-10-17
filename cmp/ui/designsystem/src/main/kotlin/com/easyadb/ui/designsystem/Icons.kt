@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material.icons.filled.Terminal
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.ui.graphics.vector.ImageVector
 
 /**
@@ -53,4 +54,6 @@ object AppIcons {
     val ArrowRight: ImageVector get() = Icons.AutoMirrored.Filled.KeyboardArrowRight
     val Cast: ImageVector get() = Icons.Filled.Cast
     val MoreVert: ImageVector get() = Icons.Filled.MoreVert
+    /** 盾牌+对勾（H5 .sys-badge 的 lucide shield-check 等效） */
+    val ShieldCheck: ImageVector get() = Icons.Filled.VerifiedUser
 }

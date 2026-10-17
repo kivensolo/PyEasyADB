@@ -189,6 +189,9 @@ fun main() {
         // PullApk 应用列表
         var pullableApps by remember { mutableStateOf<List<PullableApp>>(emptyList()) }
         var isLoadingApps by remember { mutableStateOf(false) }
+        // 应用管理 Tab（SP-7001）：设备应用列表与加载态（与 PullApkDialog 弹窗状态互相独立）
+        var appList by remember { mutableStateOf<List<AppListLoader.AppInfo>>(emptyList()) }
+        var isAppListLoading by remember { mutableStateOf(false) }
         // P8: Scrcpy 独立窗口镜像（状态由 launcher 的 StateFlow 推送，
         // 用户直接关 scrcpy 窗口也会经 onExit 回置 Idle）
         val scrcpyLauncher = remember { ScrcpyLauncher() }
@@ -262,6 +265,24 @@ fun main() {
             DbManager.close()
             AppLogger.closeAll()
             exitApplication()
+        }
+
+        // 应用管理 Tab（SP-7001）：加载当前设备应用列表（pm list packages -f）。
+        // 加载前清旧列表——设备切换/刷新时避免闪现上一台设备的数据
+        val loadApps: () -> Unit = {
+            val deviceIp = selectedDeviceIp
+            if (deviceIp == null) {
+                logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+            } else {
+                appList = emptyList()
+                isAppListLoading = true
+                scope.launch {
+                    val apps = AppListLoader.loadAppList(deviceIp)
+                    appList = apps
+                    isAppListLoading = false
+                    logAppender("[应用列表] 加载 ${apps.size} 个应用", 2)
+                }
+            }
         }
 
         Window(
@@ -662,6 +683,33 @@ fun main() {
                                 isLoadingApps = false
                                 logAppender("[应用列表] 加载 ${apps.size} 个应用", 2)
                             }
+                        }
+                    },
+                    // 应用管理 Tab（SP-7001）：列表状态 + 加载/刷新 + 提取 APK
+                    apps = appList,
+                    isAppsLoading = isAppListLoading,
+                    onLoadApps = loadApps,
+                    onExtractApk = { app ->
+                        val deviceIp = selectedDeviceIp
+                        if (deviceIp != null) {
+                            val saveDialog = java.awt.FileDialog(null as java.awt.Frame?, "保存 APK", java.awt.FileDialog.SAVE)
+                            saveDialog.file = "${app.packageName.replace('.', '_')}.apk"
+                            saveDialog.isVisible = true
+                            if (saveDialog.directory != null && saveDialog.file != null) {
+                                val savePath = java.io.File(saveDialog.directory, saveDialog.file).absolutePath
+                                scope.launch {
+                                    val cmd = "adb -s $deviceIp pull \"${app.apkPath}\" \"$savePath\""
+                                    logAppender("> $cmd", 2)
+                                    val result = adbExecutor.execAdbCmd(cmd)
+                                    if (result.success) {
+                                        logAppender("[提取成功] $savePath", 2)
+                                    } else {
+                                        logAppender("[提取失败] ${result.output.take(200)}", 4)
+                                    }
+                                }
+                            }
+                        } else {
+                            logAppender("[错误] 未选中设备", 4)
                         }
                     },
                     onPushFile = { devicePath ->

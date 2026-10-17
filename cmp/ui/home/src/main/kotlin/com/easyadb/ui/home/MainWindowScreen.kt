@@ -40,6 +40,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.easyadb.core.adb.AppListLoader
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.platform.Win32Interop
 import com.easyadb.core.adb.MirrorState
@@ -61,6 +62,7 @@ import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.hoverBackground
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.devicelist.DeviceListPanel
+import com.easyadb.ui.functions.AppManagerPanel
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CommandsPanel
 import com.easyadb.ui.functions.FunctionPanel
@@ -361,23 +363,24 @@ private fun MenuOverflowItem(action: MenuAction, onClick: () -> Unit) {
 }
 
 // ─────────────────────────────────────────────────────────
-// 内容区五 Tab 行（P12 布局大改）
+// 内容区六 Tab 行（P12 布局大改；SP-7001 增设应用管理）
 // ─────────────────────────────────────────────────────────
 
-/** 内容区 Tab 索引：0=快捷操作 1=常用命令 2=按键模拟 3=文件传输 4=实时预览 */
+/** 内容区 Tab 索引：0=快捷操作 1=常用命令 2=按键模拟 3=文件传输 4=应用管理 5=实时预览 */
 private const val TAB_QUICK = 0
 private const val TAB_CMDS = 1
 private const val TAB_KEYS = 2
 private const val TAB_FILES = 3
-private const val TAB_MIRROR = 4
+private const val TAB_APPS = 4
+private const val TAB_MIRROR = 5
 
-private val CONTENT_TAB_TITLES = listOf("快捷操作", "常用命令", "按键模拟", "文件传输", "实时预览")
+private val CONTENT_TAB_TITLES = listOf("快捷操作", "常用命令", "按键模拟", "文件传输", "应用管理", "实时预览")
 
 /** ink 指示条滑动时长（ms，对齐 HTML 参照稿 .tab-ink 的 transition .28s） */
 private const val TAB_INK_ANIM_MS = 280
 
 /**
- * 五 Tab 下划线行（对齐 HTML 参照稿 tabs）：高 44dp、文字 14sp、选中态主文字色。
+ * 六 Tab 下划线行（对齐 HTML 参照稿 tabs）：高 44dp、文字 14sp、选中态主文字色。
  * 指示条为独立渐变 ink 层（PrimaryLight→Primary，贴行底），切 Tab 时 x/宽度以
  * 280ms 平滑滑动到新位置（对齐 H5 moveInk 的 left/width 过渡），首次落位直接
  * 显示不播动画；行尾为当前设备 chip（只读展示，选中/切换仍在左侧设备列表，
@@ -570,11 +573,12 @@ private fun CurrentDeviceChip(
  * └── SplitPane           (水平拖拽分割，支持左栏折叠)
  *       ├── 左栏: DeviceListPanel (设备卡片列表，可折叠为 0 宽)
  *       └── 右栏 Column
- *             ├── ContentTabRow  (五 Tab 下划线行 + 行尾当前设备 chip：快捷操作|常用命令|按键模拟|文件传输|实时预览)
+ *             ├── ContentTabRow  (六 Tab 下划线行 + 行尾当前设备 chip：快捷操作|常用命令|按键模拟|文件传输|应用管理|实时预览)
  *             ├── Tab 内容 (weight 1f)
  *             │     ├── 快捷操作：参数卡(2×2 网格) + 功能卡(13 项小卡 + 推送/拉取大卡，安装卡虚线拖拽)
  *             │     ├── 按键模拟：RemoteKeyPad 遥控器（10 键）
  *             │     ├── 文件传输：APK提取/推送文件/拉取文件 3 大卡
+ *             │     ├── 应用管理：AppManagerPanel（搜索/类型筛选/行卡列表/提取，SP-7001）
  *             │     └── 实时预览：MirrorPanel（原样迁入）
  *             ├── Divider
  *             └── EmbeddedConsoleHost (内嵌双 Tab 控制台：控制台|实时日志，可拖拽调高)
@@ -596,6 +600,10 @@ private fun CurrentDeviceChip(
  * @param onFunctionItemClick 功能项点击回调（快捷操作/按键模拟共用链路）
  * @param onApkDropped 快捷操作 Tab 安装卡拖入 APK 回调：(APK 绝对路径)，宿主执行 adb install -r
  * @param onPullApk 打开 APK 提取对话框（文件传输 Tab 联动）
+ * @param apps 应用管理 Tab：宿主加载好的设备应用列表（AppListLoader，SP-7001）
+ * @param isAppsLoading 应用管理 Tab：列表是否加载中
+ * @param onLoadApps 应用管理 Tab：加载/刷新应用列表（面板进入与设备切换时自动触发）
+ * @param onExtractApk 应用管理 Tab：提取应用 APK（宿主 FileDialog 选保存路径 + adb pull）
  * @param onPushFile 推送文件到设备：(设备路径)，宿主 FileDialog + adb push
  * @param onPullFile 从设备拉取文件：(设备路径)，宿主 FileDialog + adb pull
  * @param consoleLogFlow 控制台日志流（MutableStateFlow，支持清空操作）
@@ -638,6 +646,11 @@ fun MainWindowScreen(
     onCopyCommand: (String) -> Unit = {},
     onApkDropped: (String) -> Unit = {},
     onPullApk: () -> Unit = {},
+    // SP-7001 应用管理 Tab 参数
+    apps: List<AppListLoader.AppInfo> = emptyList(),
+    isAppsLoading: Boolean = false,
+    onLoadApps: () -> Unit = {},
+    onExtractApk: (AppListLoader.AppInfo) -> Unit = {},
     onPushFile: (String) -> Unit = {},
     onPullFile: (String) -> Unit = {},
     // P6 控制台 + Logcat 参数
@@ -657,7 +670,7 @@ fun MainWindowScreen(
         close = {}
     )
 ) {
-    // 内容区五 Tab 与内嵌控制台 Tab 状态（embeddedTab 提升到本层）
+    // 内容区六 Tab 与内嵌控制台 Tab 状态（embeddedTab 提升到本层）
     var contentTab by remember { mutableStateOf(TAB_QUICK) }
     // 嵌入模式勾选态提升到 Tab 容器层：MirrorPanel 随 Tab 切换销毁重建，
     // 勾选框本身运行中禁用——若状态随面板销毁，切回后嵌入预览将无法恢复
@@ -773,6 +786,16 @@ fun MainWindowScreen(
                                         if (item.action == "m_pull_apk") onPullApk()
                                     },
                                     onFileItemClick = { _, _ -> },
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                                // 应用管理：工具条（搜索/seg 筛选/刷新）+ 行卡列表（SP-7001），
+                                // 进入 Tab 或设备切换由面板自动触发 onLoadApps
+                                TAB_APPS -> AppManagerPanel(
+                                    apps = apps,
+                                    isLoading = isAppsLoading,
+                                    selectedDeviceIp = selectedDeviceIp,
+                                    onLoadApps = onLoadApps,
+                                    onExtractApk = onExtractApk,
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 TAB_MIRROR -> MirrorPanel(

@@ -67,6 +67,12 @@ data class EasyAdbColors(
     /** 选中分组项文字（H5 .seg button.active：暗 #fff / 浅 #1d4ed8） */
     val SegActiveText: Color,
 
+    // ── 次级按钮（H5 .mini-btn / .btn-ghost 共用实底，明暗各有字面覆盖色） ──
+    /** 次级按钮底色（H5 .mini-btn：暗 #16223a / 浅 #eef2f9） */
+    val MiniBtnBg: Color,
+    /** 次级按钮悬停底色（H5 .mini-btn:hover：暗 #1a2b49 / 浅 #dbe7fb） */
+    val MiniBtnBgHover: Color,
+
     // ── 文字 ──
     val TextPrimary: Color,
     val TextSecondary: Color,
@@ -158,6 +164,8 @@ val LightEasyAdbColors = EasyAdbColors(
     SegTrack = Color(0xFFEAEFF8),         // .seg 容器底（浅色覆盖）
     SegActiveBg = Color(0xFFFFFFFF),      // .seg button.active 白底
     SegActiveText = Color(0xFF1D4ED8),    // .seg button.active 蓝字
+    MiniBtnBg = Color(0xFFEEF2F9),        // .mini-btn 底（浅色覆盖）
+    MiniBtnBgHover = Color(0xFFDBE7FB),   // .mini-btn:hover 底（浅色覆盖）
     TextPrimary = Color(0xFF1B2534),      // --tx
     TextSecondary = Color(0xFF5A6B82),    // --tx-2
     TextOnPrimary = Color(0xFFFFFFFF),
@@ -223,6 +231,8 @@ val DarkEasyAdbColors = EasyAdbColors(
     SegTrack = Color(0xFF0D1524),         // .seg 容器底（--field）
     SegActiveBg = Color(0xFF22335A),      // .seg button.active
     SegActiveText = Color(0xFFFFFFFF),    // .seg button.active 白字
+    MiniBtnBg = Color(0xFF16223A),        // .mini-btn / .btn-ghost 底
+    MiniBtnBgHover = Color(0xFF1A2B49),   // .mini-btn:hover 底
     TextPrimary = Color(0xFFE6ECF6),      // --tx
     TextSecondary = Color(0xFF8FA0B8),    // --tx-2
     TextOnPrimary = Color(0xFFFFFFFF),    // .btn-primary 白字
