@@ -2,7 +2,7 @@
 
 > 阶段：P9 Scrcpy 嵌入模式（2026-09-16 完成，真机验证通过）
 > 范围：Windows 桌面端。核心结论：**嵌入 = 跨进程 SetParent + 正确的焦点序列；键盘透传靠「焦点交付 + 真实键盘输入」，不依赖特定 scrcpy 版本**。
-> 配套进度记录见 `doc/迁移进度.md` 的 P9 章节；机制验证工具见 `ui/mirror` 的 EmbedSpike / KeySpike。
+> 配套进度记录见 `doc/迁移进度.md` 的 P9 章节；机制验证工具见 `ui/mirror`（包路径，2026-10 模块整合后位于 `:ui` 模块）的 EmbedSpike / KeySpike。
 
 ---
 
@@ -94,7 +94,7 @@ PyQt 版最有价值的情报是 `mousePressEvent` 的裸 `SetFocus`：它证明
 
 ## 6. 验证工具（ui/mirror 保留的 Spike）
 
-- **EmbedSpike**（`gradlew :ui:mirror:run` 默认入口，无需设备）：9 步自动化断言——找窗一致性、Canvas 独立 HWND、SetParent 父子关系、几何对齐（Compose px == 物理像素）、跨线程焦点、可见性、脱离还原。
+- **EmbedSpike**（IDE 直接运行其 main()；2026-10 模块整合后 `:ui:mirror:run` 已取消，无需设备）：9 步自动化断言——找窗一致性、Canvas 独立 HWND、SetParent 父子关系、几何对齐（Compose px == 物理像素）、跨线程焦点、可见性、脱离还原。
 - **KeySpike**（切 `mainClass` 为 `KeySpikeKt`，需真机 + scrcpy）：设备侧断言键盘是否真送达。原理：scrcpy 收到按键会注入设备，`adb shell dumpsys input` 的 RecentQueue 出现 `keyCode=92`（PAGE_UP）/`MotionEvent` 条目；断言只认 **age<5s 的新鲜条目**（环形队列长度 10，设备侧其他输入会挤压旧条目，基线计数法会被抖掉）；正对照 `adb shell input keyevent 92` / `input tap`。怀疑键盘透传回归时跑它，一分钟出结论。
 - 注意：KeySpike 的 SendInput 鼠标合成在 DPI 不感知的 JVM 里坐标换算有偏差（GetSystemMetrics 与物理像素不一致），只影响点击类断言的命中率，不影响键盘断言。
 
@@ -113,8 +113,8 @@ PyQt 版最有价值的情报是 `mousePressEvent` 的裸 `SetFocus`：它证明
 | 文件 | 职责 |
 |------|------|
 | `cmp/platform/src/desktopMain/kotlin/com/easyadb/platform/Win32Interop.kt` | Win32 封装：找窗/reparent/样式/几何/焦点（`setFocusWindow`、`focusOwnerOf`、`attachThreadInputToWindow`、`postKeyDown/Up`、`sendKeyInput`、`sendMouseClick`） |
-| `cmp/ui/mirror/src/main/kotlin/com/easyadb/ui/mirror/MirrorPanel.kt` | 嵌入区 + 焦点策略 + checkbox 锁定 + 兜底转发 |
-| `cmp/ui/mirror/src/main/kotlin/com/easyadb/ui/mirror/EmbedSpike.kt` | 几何/链路断言（无设备） |
-| `cmp/ui/mirror/src/main/kotlin/com/easyadb/ui/mirror/KeySpike.kt` | 键盘透传设备侧断言 |
-| `cmp/core/adb/src/main/kotlin/com/easyadb/core/adb/ScrcpyLauncher.kt` | 进程生命周期 + 诊断 + 端口清理 |
+| `cmp/ui/src/main/kotlin/com/easyadb/ui/mirror/MirrorPanel.kt` | 嵌入区 + 焦点策略 + checkbox 锁定 + 兜底转发 |
+| `cmp/ui/src/main/kotlin/com/easyadb/ui/mirror/EmbedSpike.kt` | 几何/链路断言（无设备） |
+| `cmp/ui/src/main/kotlin/com/easyadb/ui/mirror/KeySpike.kt` | 键盘透传设备侧断言 |
+| `cmp/core/src/main/kotlin/com/easyadb/core/adb/ScrcpyLauncher.kt` | 进程生命周期 + 诊断 + 端口清理 |
 | `cmp/desktop-app/src/main/kotlin/com/easyadb/desktop/Main.kt` | MirrorEvent → 应用控制台桥接 |

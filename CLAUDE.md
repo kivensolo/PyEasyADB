@@ -17,11 +17,11 @@ Python → CMP 的迁移进度记录在 `doc/迁移进度.md`（P0–P13 已全�
 
 ```bash
 cd cmp
-./gradlew build          # 构建全部 17 个模块
+./gradlew build          # 构建全部 4 个模块
 ./gradlew run            # 启动桌面应用
 ./gradlew :desktop-app:packageMsi   # 打 MSI 安装包（需 WiX；jlink 按需模块）
 ./gradlew test           # 运行全部测试
-./gradlew :core:adb:test # 运行单个模块的测试
+./gradlew :ui:run        # 独立运行弹窗画廊 Playground（调试用）
 ```
 
 - JDK 17 通过 `cmp/gradle.properties` 固定（`org.gradle.java.home=D:\jdks\jdk-17.0.13`）。
@@ -44,15 +44,15 @@ CA 证书注意事项：`--onefile` 打包会丢失 `certifi/cacert.pem`，导�
 
 ### CMP 重写版（`cmp/`）
 
-17 个 Gradle 模块，依赖方向严格单向：
+4 个 Gradle 模块，依赖方向严格单向：
 
 ```
-desktop-app → ui:* → core:* → platform
+desktop-app → ui → core → platform
 ```
 
 - `desktop-app/` — `Main.kt` 入口、依赖注入装配、窗口创建（无边框一体式标题栏，Win11 通过 `Win32Interop.setWindowCornerPreference` 实现 DWM 原生圆角）。
-- `ui/*` — Compose UI：`designsystem`（主题/色板 token/图标）、`home`（主窗口壳：侧栏 + Tab + 底部区）、`devicelist`、`functions`（动态功能区）、`console`、`logcat`、`mirror`（scrcpy 独立/嵌入模式）、`dialogs`。
-- `core/*` — 纯 Kotlin 业务/数据层，**不得依赖 Compose**：`adb`（AdbExecutor、LogcatStream、各类解析器）、`apk`、`config`、`database`（SQLite，与 Python 版共用同一 DB 文件）、`device`、`log`、`util`。
+- `ui/` — Compose UI，单模块、以包路径区分各功能区（2026-10 由 8 个子模块合并而来）：`ui.designsystem`（主题/色板 token/图标）、`ui.home`（主窗口壳：侧栏 + Tab + 底部区）、`ui.devicelist`、`ui.functions`（动态功能区）、`ui.console`、`ui.logcat`、`ui.mirror`（scrcpy 独立/嵌入模式）、`ui.dialogs`。`gradlew :ui:run` 可独立运行弹窗画廊 Playground。
+- `core/` — 纯 Kotlin 业务/数据层，单模块、以包路径区分（**不得依赖 Compose**）：`core.adb`（AdbExecutor、LogcatStream、各类解析器）、`core.apk`、`core.config`、`core.database`（SQLite，与 Python 版共用同一 DB 文件）、`core.device`、`core.log`、`core.util`。
 - `platform/` — KMP expect/actual（如 `AppPaths`）；Windows 专属代码（Win32 重父化嵌入 scrcpy、DWM 调用）位于 `desktopMain`。
 
 UI 不得反向调用 desktop-app；业务层不得引入 Compose。
