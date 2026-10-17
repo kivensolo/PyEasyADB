@@ -488,8 +488,6 @@ svg{flex:none;display:block}
   width:3px;height:36px;border-radius:3px;background:#22314a;transition:background .15s,width .15s;
 }
 .split-v:hover::after,.split-v.dragging::after{background:#3b82f6;width:4px}
-/* PC 侧推送箭头按钮（图标型，悬停提示推送目标） */
-.f-act-push{padding:3px 6.5px;display:inline-flex;align-items:center;justify-content:center}
 /* 文件传输 Tab：卡片铺满整页（pane-inner 定高，files-wrap 吃满剩余空间，队列出现时压缩双栏） */
 #pane-files .pane-inner{height:100%}
 .fpane{display:flex;flex-direction:column;min-height:340px;overflow:hidden}
@@ -500,18 +498,9 @@ svg{flex:none;display:block}
 .os-and{background:rgba(74,222,128,.12);color:#5ee694}
 .fp-path{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--tx-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%}
 .fp-list{flex:1;overflow-y:auto;padding:8px}
-.frow{
-  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
-  padding:9px 12px;border-radius:10px;transition:.13s;font-size:13.5px;
-}
-.frow:hover{background:#182642}
-.frow .f-ico{color:var(--tx-3);display:grid;place-items:center}
-.frow .f-ico.dir{color:#60a5fa}
-.frow .f-name{font-weight:600;color:#dbe4f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.frow .f-size{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--tx-3);white-space:nowrap}
-/* 设备端文件行权限位（drwxrwx--x / -rw-rw----，ls -l 同构）：等宽元数据，与大小一起右对齐 */
-.f-perm{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--tx-3);white-space:nowrap;letter-spacing:.4px}
-.frow .f-perm + .f-size{margin-left:0}
+/* 文件图标（树行内使用，脱离旧 .frow 行作用域） */
+.f-ico{color:var(--tx-3);display:grid;place-items:center}
+.f-ico.dir{color:#60a5fa}
 
 /* ---------- 设备端 Device Explorer 树（对齐 Android Studio：四列表格 + 展开/收起 + 工具栏） ---------- */
 .dx-toolbar{display:flex;align-items:center;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
@@ -528,6 +517,8 @@ svg{flex:none;display:block}
   font-size:10.5px;font-weight:700;letter-spacing:.8px;color:var(--tx-3);user-select:none;
 }
 .dx-cols .dx-col-size{text-align:right}
+/* PC 侧三列变体（Windows 无权限位）：文件 | 时间 | 大小 */
+.dx-cols.pc-cols,.dx-row.pc-cols{grid-template-columns:minmax(0,1fr) 128px 78px}
 .dx-row{
   display:grid;grid-template-columns:minmax(0,1fr) 116px 128px 78px;align-items:center;
   width:100%;text-align:left;padding:6px 12px;border-radius:8px;
@@ -542,13 +533,6 @@ svg{flex:none;display:block}
 .dx-nm{font-weight:600;color:#dbe4f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dx-perm,.dx-time{font-family:var(--mono);font-size:10.5px;color:var(--tx-3);white-space:nowrap}
 .dx-size{font-family:var(--mono);font-size:11px;color:var(--tx-3);text-align:right;white-space:nowrap}
-.dx-row:hover .f-act{opacity:1}
-.frow .f-act{
-  opacity:0;font-size:11.5px;font-weight:600;color:#9ec3fb;background:var(--blue-soft);
-  border:1px solid rgba(96,165,250,.3);padding:4px 10px;border-radius:7px;transition:.15s;white-space:nowrap;
-}
-.frow:hover .f-act{opacity:1}
-.frow .f-act:hover{background:rgba(96,165,250,.25);color:#dbeafe}
 .fp-empty{padding:34px;text-align:center;color:var(--tx-3);font-size:13px}
 .queue{display:flex;flex-direction:column;gap:9px}
 .q-item{
@@ -955,10 +939,6 @@ html[data-theme="light"] .run-btn{box-shadow:0 3px 10px rgba(37,99,235,.25)}
 html[data-theme="light"] .seg{background:#eaeff8;border-color:#cdd9ec}
 html[data-theme="light"] .seg button.active{background:#ffffff;color:#1d4ed8;box-shadow:0 1px 4px rgba(15,23,42,.12)}
 html[data-theme="light"] .q-item{background:linear-gradient(180deg,#ffffff,#f8fafd)}
-html[data-theme="light"] .frow:hover{background:#eaf0f8}
-/* 文件行操作按钮（推送到设备/拉取到电脑）：浅色下加深文字与描边（原深色值在白底上对比度不足） */
-html[data-theme="light"] .frow .f-act{color:#1d4ed8;background:rgba(37,99,235,.08);border-color:rgba(37,99,235,.32)}
-html[data-theme="light"] .frow .f-act:hover{color:#1e40af;background:rgba(37,99,235,.16)}
 html[data-theme="light"] .split-v::after{background:#c5d1e2}
 html[data-theme="light"] .split-v:hover::after,html[data-theme="light"] .split-v.dragging::after{background:#2563eb}
 /* 设备端 Device Explorer 树浅色适配 */
@@ -975,7 +955,6 @@ html[data-theme="light"] .mini-btn.danger{background:rgba(220,38,38,.06);color:#
 html[data-theme="light"] .mini-btn.danger:hover{background:#dc2626;border-color:#dc2626;color:#fff}
 html[data-theme="light"] .sys-badge{color:#0369a1;background:rgba(3,105,161,.08);border-color:rgba(3,105,161,.25)}
 html[data-theme="light"] .sys-badge:hover{background:rgba(3,105,161,.14);border-color:rgba(3,105,161,.45);color:#075985}
-html[data-theme="light"] .frow .f-name{color:#1b2534}
 html[data-theme="light"] .q-item .q-name{color:#1b2534}
 html[data-theme="light"] .console{background:#fbfcfe}
 html[data-theme="light"] .con-head{background:#f3f6fb}
@@ -1393,11 +1372,21 @@ html[data-theme="light"] .mf-ops button.mf-close:hover{background:#dc2626;color:
               <div class="files-wrap" id="filesWrap">
                 <div class="card fpane rise d1">
                   <div class="fp-head">
-                    <button class="icon-sq" id="locBack" title="后退" style="width:26px;height:26px">
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-                    </button>
                     <span class="fp-title"><span class="os os-win">PC</span> 此电脑</span>
                     <span class="fp-path" id="locPath"></span>
+                  </div>
+                  <!-- PC 侧工具栏：投递到右侧当前目录 … 刷新（最右） -->
+                  <div class="dx-toolbar">
+                    <button class="dx-btn" id="pcDeliver" title="投递选中文件到右侧当前目录（adb push）">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14"/><path d="M8 12h10"/><path d="m14.5 8.5 3.5 3.5-3.5 3.5"/><path d="M21 5v14"/></svg>
+                    </button>
+                    <span class="dx-hint">点击行选中 · 目录行展开 / 收起</span>
+                    <button class="dx-btn" id="pcRefresh" title="刷新 PC 目录树">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+                    </button>
+                  </div>
+                  <div class="dx-cols pc-cols">
+                    <span>文件</span><span>时间</span><span class="dx-col-size">大小</span>
                   </div>
                   <div class="fp-list" id="locList"></div>
                 </div>
@@ -1408,15 +1397,18 @@ html[data-theme="light"] .mf-ops button.mf-close:hover{background:#dc2626;color:
                     <span class="fp-title"><span class="os os-and">Android</span> 设备存储</span>
                     <span class="fp-path" id="devPath"></span>
                   </div>
-                  <!-- Device Explorer 工具栏：新建文件夹 / 另存到电脑 / 推送 / 删除 … 刷新（最右） -->
+                  <!-- Device Explorer 工具栏：投递到左侧当前目录 / 新建文件夹 / 另存（弹窗）/ 推送（弹窗）/ 删除 … 刷新（最右） -->
                   <div class="dx-toolbar">
+                    <button class="dx-btn" id="devDeliver" title="投递选中文件到左侧当前目录（adb pull）">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14"/><path d="M16 12H6"/><path d="m9.5 8.5-3.5 3.5 3.5 3.5"/><path d="M21 5v14"/></svg>
+                    </button>
                     <button class="dx-btn" id="dxMkdir" title="新建文件夹（adb shell mkdir）">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6"/><path d="M9 13h6"/></svg>
                     </button>
-                    <button class="dx-btn" id="dxPull" title="另存文件到电脑（adb pull）">
+                    <button class="dx-btn" id="dxPull" title="另存文件到电脑…（弹出保存位置选择，可存到任意本机目录）">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
                     </button>
-                    <button class="dx-btn" id="dxPush" title="推送文件到设备（adb push）">
+                    <button class="dx-btn" id="dxPush" title="推送文件到设备…（弹出文件选择框，可选本机任意文件）">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="m16 7-4-4-4 4"/><path d="M12 3v13"/></svg>
                     </button>
                     <button class="dx-btn dx-danger" id="dxDelete" title="删除选中文件（adb shell rm）">
@@ -1492,6 +1484,8 @@ html[data-theme="light"] .mf-ops button.mf-close:hover{background:#dc2626;color:
 
 <!-- APK 文件选择器 -->
 <input type="file" id="apkInput" accept=".apk" hidden>
+<!-- 推送到设备：本机任意文件选择器 -->
+<input type="file" id="pushFileInput" hidden>
 
 <!-- Toast 容器 -->
 <div class="toasts" id="toasts"></div>
@@ -1652,6 +1646,25 @@ html[data-theme="light"] .mf-ops button.mf-close:hover{background:#dc2626;color:
     <div class="modal-foot">
       <button class="btn btn-plain" data-close>取消</button>
       <button class="btn btn-primary" id="logStartBtn">开始抓取</button>
+    </div>
+  </div>
+
+  <!-- 另存文件到电脑：任意本机目录 + 文件名（脱离左侧面板限制） -->
+  <div class="modal" id="modalSaveAs" hidden>
+    <div class="modal-head">
+      <span class="modal-title">另存文件到电脑</span>
+      <button class="modal-x" data-close>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="mfield"><label>保存目录</label><input id="saveDir" spellcheck="false" placeholder="可填写本机任意目录"></div>
+      <div class="mfield"><label>文件名</label><input id="saveFname" spellcheck="false"></div>
+      <div class="un-warn">文件将通过 <b>adb pull</b> 保存到上述位置——不受左侧 PC 面板当前目录限制。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-plain" data-close>取消</button>
+      <button class="btn btn-primary" id="saveAsBtn">开始拉取</button>
     </div>
   </div>
 </div>
@@ -2331,12 +2344,12 @@ $('#unConfirmBtn').addEventListener('click', function(){
 
 /* ---------------- files tab ---------------- */
 var localRoot = { label:'此电脑', path:'C:\\Users\\ZeKeWong\\Downloads', items:[
-  { t:'d', name:'APK备份', items:[ {t:'f',name:'old-launcher.apk',size:'42 MB'}, {t:'f',name:'recovery-twrp.img',size:'64 MB'} ] },
-  { t:'d', name:'截图', items:[ {t:'f',name:'cap-093015.png',size:'1.8 MB'}, {t:'f',name:'cap-120501.png',size:'2.1 MB'} ] },
-  { t:'f', name:'wechat_8.0.49.apk', size:'264 MB' },
-  { t:'f', name:'bilili_7.21.0.apk', size:'112 MB' },
-  { t:'f', name:'logcat-1009.txt', size:'3.2 MB' },
-  { t:'f', name:'boot-animation.zip', size:'18 MB' }
+  { t:'d', name:'APK备份', time:'2026/07/22 16:40', items:[ {t:'f',name:'old-launcher.apk',size:'42 MB',time:'2026/06/11 10:24'}, {t:'f',name:'recovery-twrp.img',size:'64 MB',time:'2026/07/01 19:02'} ] },
+  { t:'d', name:'截图', time:'2026/09/30 15:27', items:[ {t:'f',name:'cap-093015.png',size:'1.8 MB',time:'2026/09/30 15:27'}, {t:'f',name:'cap-120501.png',size:'2.1 MB',time:'2026/09/30 12:05'} ] },
+  { t:'f', name:'wechat_8.0.49.apk', size:'264 MB', time:'2026/10/12 09:15' },
+  { t:'f', name:'bilili_7.21.0.apk', size:'112 MB', time:'2026/10/08 21:33' },
+  { t:'f', name:'logcat-1009.txt', size:'3.2 MB', time:'2026/10/09 14:19' },
+  { t:'f', name:'boot-animation.zip', size:'18 MB', time:'2026/08/25 11:47' }
 ]};
 var deviceRoot = { label:'客厅电视', path:'/sdcard', items:[
   { t:'d', name:'APK', perm:'drwxrwx--x', time:'2026/08/02 15:11', items:[ {t:'f',name:'office-suite.apk',size:'36 MB',perm:'-rw-rw----',time:'2026/08/02 15:11'} ] },
@@ -2346,122 +2359,108 @@ var deviceRoot = { label:'客厅电视', path:'/sdcard', items:[
   { t:'f', name:'screencap-142301.png', size:'2.4 MB', perm:'-rw-rw-rw-', time:'2026/10/16 14:23' },
   { t:'f', name:'device-info.txt', size:'4 KB', perm:'-rw-rw----', time:'2026/10/09 11:02' }
 ]};
-var locStack = [localRoot];
-/* 设备端 Device Explorer 树状态：展开的目录集合 + 当前选中节点（工具栏动作对象） */
-var devOpen = new Set();
-var devSel = null;
 var SVG_DIR = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
 var SVG_FILE = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>';
 
-function renderPane(stack, listEl, pathEl, side){
-  var node = stack[stack.length - 1];
-  var path = stack.map(function(n){ return n.name; }).join(' / ');
-  pathEl.textContent = node.path;
-  listEl.innerHTML = '';
-  if (!node.items.length){
-    listEl.innerHTML = '<div class="fp-empty">此文件夹为空</div>';
-    return;
+/* ---------------- 通用文件树（PC / 设备双栏共用，AS Device Explorer 同构） ----------------
+   cfg.host / cfg.pathEl：列表与路径栏容器；cfg.pc=true 时三列（无权限列）且路径显示反斜杠。
+   行内不放传输按钮——传输统一走两侧工具栏的「投递」（对侧当前目录）与弹窗（任意位置）。 */
+function createFileTree(root, cfg){
+  var open = new Set();   // 展开的目录集合
+  var sel = null;         // 当前选中节点
+  function parentPath(node){
+    var find = function(items, prefix){
+      for (var i = 0; i < items.length; i++){
+        if (items[i] === node) return prefix;
+        if (items[i].t === 'd'){
+          var r = find(items[i].items || [], prefix + '/' + items[i].name);
+          if (r) return r;
+        }
+      }
+      return null;
+    };
+    return find(root.items, root.path);
   }
-  var sorted = node.items.slice().sort(function(a, b){
-    if (a.t !== b.t) return a.t === 'd' ? -1 : 1;
-    return a.name.localeCompare(b.name);
-  });
-  sorted.forEach(function(it){
-    var row = document.createElement(it.t === 'd' ? 'button' : 'div');
-    row.className = 'frow';
-    var inner = '<span class="f-ico ' + (it.t === 'd' ? 'dir' : '') + '">' + (it.t === 'd' ? SVG_DIR : SVG_FILE) + '</span>' +
-      '<span class="f-name">' + esc(it.name) + '</span>' +
-      (side === 'dev' && it.perm ? '<span class="f-perm" title="Linux 权限位（ls -l）">' + esc(it.perm) + '</span>' : '') +
-      '<span class="f-size">' + (it.t === 'd' ? it.items.length + ' 项' : it.size) + '</span>';
-    if (it.t === 'f'){
-      // PC 侧：箭头图标按钮（推送至右侧树选中的目标目录）；设备侧已改树状面板（此分支仅 PC 使用）
-      var act = side === 'local'
-        ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>'
-        : '← 拉取到电脑';
-      inner += '<button class="f-act' + (side === 'local' ? ' f-act-push' : '') + '" data-tr="' + esc(it.name) + '"' +
-        (side === 'local' ? ' title="推送至右侧选中目标目录"' : '') + '>' + act + '</button>';
+  function fullPath(node){ return parentPath(node) + '/' + node.name; }
+  function dispPath(p){ return cfg.pc ? String(p).replace(/\//g, '\\') : p; }
+  function render(){
+    var host = $(cfg.host);
+    host.innerHTML = '';
+    $(cfg.pathEl).textContent = sel ? dispPath(fullPath(sel)) : dispPath(root.path);
+    if (!(root.items || []).length){
+      host.innerHTML = '<div class="fp-empty">此文件夹为空</div>';
+      return;
     }
-    row.innerHTML = inner;
-    if (it.t === 'd'){
-      row.addEventListener('click', function(){ stack.push(it); renderPane(stack, listEl, pathEl, side); });
-    } else {
-      row.querySelector('[data-tr]').addEventListener('click', function(e){
-        e.stopPropagation();
-        transferFile(it, side, node.path, side === 'local' ? devPushTarget() : undefined);
+    var walk = function(items, depth){
+      items.slice().sort(function(a, b){
+        if (a.t !== b.t) return a.t === 'd' ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      }).forEach(function(it){
+        host.appendChild(row(it, depth));
+        if (it.t === 'd' && open.has(it)) walk(it.items || [], depth + 1);
       });
-    }
-    listEl.appendChild(row);
-  });
+    };
+    walk(root.items, 0);
+  }
+  function row(it, depth){
+    var isDir = it.t === 'd';
+    var el = document.createElement('div');
+    el.className = 'dx-row' + (cfg.pc ? ' pc-cols' : '') + (sel === it ? ' sel' : '');
+    el.style.setProperty('--depth', depth);
+    var caret = isDir
+      ? '<span class="dx-caret' + (open.has(it) ? ' open' : '') + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>'
+      : '<span class="dx-caret-none"></span>';
+    var ico = isDir ? '<span class="f-ico dir">' + SVG_DIR + '</span>' : '<span class="f-ico">' + SVG_FILE + '</span>';
+    el.innerHTML =
+      '<span class="dx-name">' + caret + ico + '<span class="dx-nm">' + esc(it.name) + '</span></span>' +
+      (cfg.pc ? '' : '<span class="dx-perm">' + esc(it.perm || '') + '</span>') +
+      '<span class="dx-time">' + esc(it.time || '') + '</span>' +
+      '<span class="dx-size">' + (isDir ? (it.items || []).length + ' 项' : it.size) + '</span>';
+    // 行点击：选中；目录行同时切换展开/收起
+    el.addEventListener('click', function(){
+      sel = it;
+      if (isDir){ if (open.has(it)) open.delete(it); else open.add(it); }
+      render();
+    });
+    return el;
+  }
+  render();
+  return {
+    render: render,
+    openSet: open,
+    get sel(){ return sel; },
+    set sel(v){ sel = v; },
+    parentPath: parentPath,
+    fullPath: fullPath,
+    root: root
+  };
 }
+var pcTree = createFileTree(localRoot, { host:'#locList', pathEl:'#locPath', pc:true });
+var devTree = createFileTree(deviceRoot, { host:'#devFiles', pathEl:'#devPath', pc:false });
+
 function renderFiles(){
-  renderPane(locStack, $('#locList'), $('#locPath'), 'local');
-  renderDevTree();
+  pcTree.render();
+  devTree.render();
 }
 
-/* ---------------- 设备端 Device Explorer 树（AS 同构：四列 + 展开/收起 + 选中） ---------------- */
-/** 选中节点的父目录路径（从根递归搜，mock 树很小直接扫） */
-function devParentPath(node){
-  var find = function(items, prefix){
-    for (var i = 0; i < items.length; i++){
-      if (items[i] === node) return prefix;
-      if (items[i].t === 'd'){
-        var r = find(items[i].items || [], prefix + '/' + items[i].name);
-        if (r) return r;
-      }
-    }
-    return null;
-  };
-  return find(deviceRoot.items, deviceRoot.path);
+/* ---------------- 传输目标推导与设备面板工具栏 ---------------- */
+/* push / pull 目标：对侧树选中目录（选中文件→其父目录；未选中→该侧根目录） */
+function devPushTarget(){
+  var s = devTree.sel;
+  if (s && s.t === 'd') return devTree.fullPath(s);
+  if (s) return devTree.parentPath(s);
+  return deviceRoot.path;
 }
-function renderDevTree(){
-  var host = $('#devFiles');
-  host.innerHTML = '';
-  $('#devPath').textContent = deviceRoot.path;
-  var walk = function(items, depth){
-    items.slice().sort(function(a, b){
-      if (a.t !== b.t) return a.t === 'd' ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    }).forEach(function(it){
-      host.appendChild(devTreeRow(it, depth));
-      if (it.t === 'd' && devOpen.has(it)) walk(it.items || [], depth + 1);
-    });
-  };
-  walk(deviceRoot.items, 0);
+function pcPullTarget(){
+  var s = pcTree.sel;
+  if (s && s.t === 'd') return pcTree.fullPath(s);
+  if (s) return pcTree.parentPath(s);
+  return localRoot.path;
 }
-function devTreeRow(it, depth){
-  var isDir = it.t === 'd';
-  var row = document.createElement('div');
-  row.className = 'dx-row' + (devSel === it ? ' sel' : '');
-  row.style.setProperty('--depth', depth);
-  var caret = isDir
-    ? '<span class="dx-caret' + (devOpen.has(it) ? ' open' : '') + '"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg></span>'
-    : '<span class="dx-caret-none"></span>';
-  var ico = isDir ? '<span class="f-ico dir">' + SVG_DIR + '</span>' : '<span class="f-ico">' + SVG_FILE + '</span>';
-  var act = isDir ? '' : '<button class="f-act dx-act" title="拉取到电脑（adb pull）">← 拉取</button>';
-  row.innerHTML =
-    '<span class="dx-name">' + caret + ico + '<span class="dx-nm">' + esc(it.name) + '</span>' + act + '</span>' +
-    '<span class="dx-perm">' + esc(it.perm || '') + '</span>' +
-    '<span class="dx-time">' + esc(it.time || '') + '</span>' +
-    '<span class="dx-size">' + (isDir ? (it.items || []).length + ' 项' : it.size) + '</span>';
-  // 行点击：选中；目录行同时切换展开/收起
-  row.addEventListener('click', function(){
-    devSel = it;
-    if (isDir){ if (devOpen.has(it)) devOpen.delete(it); else devOpen.add(it); }
-    renderDevTree();
-  });
-  var quick = row.querySelector('.dx-act');
-  if (quick){
-    quick.addEventListener('click', function(e){
-      e.stopPropagation();
-      transferFile(it, 'dev', devParentPath(it));
-    });
-  }
-  return row;
-}
-/* 工具栏动作 */
+/* 设备面板工具栏动作 */
 $('#dxMkdir').addEventListener('click', function(){
   // 在选中目录下新建（未选中或选中文件时落到 /sdcard 根），重名自动追加序号
-  var parentDir = devSel && devSel.t === 'd' ? devSel : null;
+  var parentDir = devTree.sel && devTree.sel.t === 'd' ? devTree.sel : null;
   var siblings = (parentDir ? parentDir.items : deviceRoot.items) || [];
   var base = '新建文件夹', name = base, n = 2;
   while (siblings.some(function(x){ return x.name === name; })) name = base + ' ' + (n++);
@@ -2469,48 +2468,80 @@ $('#dxMkdir').addEventListener('click', function(){
   var node = { t:'d', name:name, perm:'drwxrwx--x',
     time: d.getFullYear() + '/' + p2(d.getMonth() + 1) + '/' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()),
     items:[] };
-  if (parentDir){ parentDir.items.push(node); devOpen.add(parentDir); }
+  if (parentDir){ parentDir.items.push(node); devTree.openSet.add(parentDir); }
   else deviceRoot.items.push(node);
-  devSel = node;
-  runRemote('adb shell mkdir "/sdcard' + (parentDir ? '/' + parentDir.name : '') + '/' + name + '"', [['Success', 'ok']], 260);
-  renderDevTree();
+  devTree.sel = node;
+  runRemote('adb shell mkdir "' + (parentDir ? devTree.fullPath(parentDir) : '/sdcard') + '/' + name + '"', [['Success', 'ok']], 260);
+  devTree.render();
   toast('已新建文件夹 <b>' + esc(name) + '</b>', 'ok');
 });
 $('#dxRefresh').addEventListener('click', function(){
   runRemote('adb shell ls -laR /sdcard', [['设备文件树已重新读取', 'ok']], 320);
-  renderDevTree();
+  devTree.render();
   toast('设备文件已刷新', 'ok');
 });
+/* 另存文件到电脑：弹窗填写任意本机目录 + 文件名（adb pull，脱离左侧面板限制） */
 $('#dxPull').addEventListener('click', function(){
-  if (!devSel || devSel.t !== 'f'){ toast('请先在文件树中选中一个<b>文件</b>', 'err'); return; }
-  transferFile(devSel, 'dev', devParentPath(devSel));
+  var s = devTree.sel;
+  if (!s || s.t !== 'f'){ toast('请先在文件树中选中一个<b>文件</b>', 'err'); return; }
+  $('#saveDir').value = pcPullTarget().replace(/\//g, '\\');
+  $('#saveFname').value = s.name;
+  openModal('modalSaveAs');
+  setTimeout(function(){ $('#saveFname').focus(); $('#saveFname').select(); }, 240);
 });
-$('#dxPush').addEventListener('click', function(){
-  toast('推送请从左侧 PC 面板悬停文件行，点击 <b>→</b> 箭头（推送至右侧选中目录）', 'info');
+$('#saveAsBtn').addEventListener('click', function(){
+  var s = devTree.sel;
+  var dir = $('#saveDir').value.trim().replace(/[\\/]+$/, '');
+  var fname = $('#saveFname').value.trim();
+  if (!s || s.t !== 'f'){ toast('请先在文件树中选中一个文件', 'err'); return; }
+  if (!dir || !fname){ toast('请填写保存目录和文件名', 'err'); return; }
+  closeModal();
+  transferFile(s, 'dev', devTree.parentPath(s), dir, fname);
+});
+/* 推送文件到设备：弹窗（file input）选择本机任意文件 → 右侧选中目录 */
+$('#dxPush').addEventListener('click', function(){ $('#pushFileInput').click(); });
+$('#pushFileInput').addEventListener('change', function(){
+  var f = this.files && this.files[0];
+  this.value = '';
+  if (!f) return;
+  addLog('已选择本机文件：' + f.name + '（' + (f.size / 1024 / 1024).toFixed(1) + ' MB）', 'dim');
+  transferFile({ t:'f', name:f.name, size:'' }, 'local', '', devPushTarget());
+});
+/* 双侧投递：本侧选中文件 → 对侧当前目录 */
+$('#pcDeliver').addEventListener('click', function(){
+  var s = pcTree.sel;
+  if (!s || s.t !== 'f'){ toast('请先在左侧树中选中一个<b>文件</b>', 'err'); return; }
+  transferFile(s, 'local', pcTree.parentPath(s), devPushTarget());
+});
+$('#devDeliver').addEventListener('click', function(){
+  var s = devTree.sel;
+  if (!s || s.t !== 'f'){ toast('请先在文件树中选中一个<b>文件</b>', 'err'); return; }
+  transferFile(s, 'dev', devTree.parentPath(s), pcPullTarget());
+});
+/* PC 侧刷新 */
+$('#pcRefresh').addEventListener('click', function(){
+  pcTree.render();
+  addLog('已重新读取 PC 目录', 'dim');
+  toast('PC 目录已刷新', 'ok');
 });
 $('#dxDelete').addEventListener('click', function(){
-  if (!devSel){ toast('请先选中要删除的文件', 'err'); return; }
-  if (devSel.t === 'd'){ toast('演示版暂不支持删除目录', 'warn'); return; }
-  var name = devSel.name;
-  var parent = devParentPath(devSel);
+  var s = devTree.sel;
+  if (!s){ toast('请先选中要删除的文件', 'err'); return; }
+  if (s.t === 'd'){ toast('演示版暂不支持删除目录', 'warn'); return; }
+  var name = s.name;
+  var parent = devTree.parentPath(s);
   runRemote('adb shell rm -f "' + parent + '/' + name + '"', [['Success', 'ok']], 300);
   var holder = null;
   (function scan(node){
     if (!node.items) return;
-    if (node.items.indexOf(devSel) >= 0){ holder = node; return; }
+    if (node.items.indexOf(s) >= 0){ holder = node; return; }
     node.items.forEach(function(x){ if (x.t === 'd') scan(x); });
   })(deviceRoot);
-  if (holder) holder.items.splice(holder.items.indexOf(devSel), 1);
-  devSel = null;
-  renderDevTree();
+  if (holder) holder.items.splice(holder.items.indexOf(s), 1);
+  devTree.sel = null;
+  devTree.render();
   toast('<b>' + esc(name) + '</b> 已从设备删除', 'ok');
 });
-/* push 目标目录：右侧树选中目录（选中文件→其父目录；未选中→/sdcard 根） */
-function devPushTarget(){
-  if (devSel && devSel.t === 'd') return devParentPath(devSel) + '/' + devSel.name;
-  if (devSel) return devParentPath(devSel);
-  return deviceRoot.path;
-}
 /* 双栏中间分割条：拖动调整左右宽度（左栏定宽 px，右栏 flex 吃满剩余；两侧各留 220px 下限） */
 (function(){
   var wrap = $('#filesWrap'), sp = $('#filesSplit'), pc = wrap.querySelector('.fpane');
@@ -2536,13 +2567,16 @@ function devPushTarget(){
     document.body.style.cursor = '';
   });
 })();
-function transferFile(f, side, fromPath, toDir){
+function transferFile(f, side, fromPath, toDir, asName){
   var dir = side === 'local' ? 'push' : 'pull';
-  var from = side === 'local' ? fromPath + '\\' + f.name : fromPath + '/' + f.name;
-  // push 目标：右侧设备树选中的目录（未传则 /sdcard 根）
+  var from = side === 'local'
+    ? (fromPath ? fromPath + '\\' : '') + f.name
+    : fromPath + '/' + f.name;
+  var targetName = asName || f.name;
+  // 传输目标：对侧树选中的目录（push→设备选中目录 / pull→PC 选中目录，未传则各侧根）
   var to = side === 'local'
-    ? (toDir || '/sdcard') + '/' + f.name
-    : 'C:\\Users\\ZeKeWong\\Downloads\\' + f.name;
+    ? (toDir || '/sdcard') + '/' + targetName
+    : (toDir || localRoot.path) + '\\' + targetName;
   runRemote('adb ' + dir + ' "' + from.replace(/\\/g,'/') + '" "' + to.replace(/\\/g,'/') + '"', [
     ['[' + (side === 'local' ? '100%' : '100%') + '] ' + f.name, 'ok']
   ], 900);
@@ -2550,7 +2584,7 @@ function transferFile(f, side, fromPath, toDir){
   q.className = 'q-item';
   q.innerHTML =
     '<span class="q-dir">' + (side === 'local' ? 'PC → TV' : 'TV → PC') + '</span>' +
-    '<span class="q-name">' + esc(f.name) + '</span>' +
+    '<span class="q-name">' + esc(targetName) + '</span>' +
     '<span class="q-bar"><i></i></span><span class="q-pct">0%</span>';
   $('#queue').prepend(q);
   var bar = q.querySelector('.q-bar i'), pct = q.querySelector('.q-pct'), p = 0;
@@ -2567,9 +2601,6 @@ function transferFile(f, side, fromPath, toDir){
   }, 110);
   toast((side === 'local' ? '正在推送' : '正在拉取') + ' <b>' + esc(f.name) + '</b>', 'info');
 }
-$('#locBack').addEventListener('click', function(){
-  if (locStack.length > 1){ locStack.pop(); renderFiles(); }
-});
 
 /* ---------------- 实时预览 tab ---------------- */
 var mirror = {
