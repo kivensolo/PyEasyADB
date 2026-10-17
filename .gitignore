@@ -53,6 +53,8 @@ compile_commands.json
 
 *_qmlcache.qrc
 
+/logs
+
 # ---- CMP / Gradle / Kotlin / IntelliJ (追加段) ----
 cmp/.gradle/
 cmp/**/build/
@@ -64,6 +66,7 @@ cmp/.idea/
 *.ipr
 *.iws
 cmp/local.properties
+cmp/gradle.properties
 .DS_Store
 *.log
 *.kotlin_metadata
