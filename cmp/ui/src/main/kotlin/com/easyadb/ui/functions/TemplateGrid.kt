@@ -43,7 +43,7 @@ import com.easyadb.ui.designsystem.apkDropTarget
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 
-/** 文件传输类功能（推送/拉取文件）：大卡底部带设备路径输入行，点击回调携带路径。 */
+/** 文件传输类功能（推送/拉取文件）：点击经 [onFileItemClick] 跳转文件传输 Tab（SP-5001 起传输统一走双栏面板） */
 private val FILE_TRANSFER_ACTIONS = setOf("m_push_file", "m_pull_file")
 
 /**
@@ -51,12 +51,10 @@ private val FILE_TRANSFER_ACTIONS = setOf("m_push_file", "m_pull_file")
  * author：ZekeWong
  * date：2026/10/10
  * description：功能卡网格（P12 布局大改 / 快捷操作 Tab 对齐 HTML 参照稿）。
- *              渲染由 XML `size` 属性驱动：small=小卡（语义色图标块 + 标题 +
- *              副文案）；large=大卡（[FileTransferCard]，推送/拉取文件等传输类
- *              带设备路径输入行）；「安装应用」卡特殊化为虚线拖拽卡（拖入 APK
- *              回调 [onApkDropped]，点击走普通 onItemClick 打开安装对话框）。
- *              小卡/普通大卡点击经 [onItemClick]，传输类大卡点击经
- *              [onFileItemClick]（携带卡内输入的设备路径）。
+ *              「安装应用」卡特殊化为虚线拖拽卡（拖入 APK 回调 [onApkDropped]，
+ *              点击走普通 onItemClick 打开安装对话框）；推送/拉取文件卡点击经
+ *              [onFileItemClick]（跳转文件传输 Tab）；其余小卡经 [onItemClick]。
+ *              原 tab=files 三大卡与 FileTransferCard 已随 SP-5001 双栏面板移除。
  *              对应 Python `src/CenterWindow.py::_setUpUIDynamic`。
  */
 @Composable
@@ -68,8 +66,6 @@ fun TemplateGrid(
     modifier: Modifier = Modifier
 ) {
     val everyRowSize = 4
-    // 推送/拉取文件卡共享的设备路径输入值（跨卡保持）
-    var devicePath by remember { mutableStateOf("/sdcard/") }
 
     Column(
         modifier = modifier
@@ -96,19 +92,13 @@ fun TemplateGrid(
                                 onApkDropped = onApkDropped,
                                 modifier = Modifier.weight(1f)
                             )
-                            // 大卡：推送/拉取文件（带设备路径）与 APK提取
-                            item.size == "large" -> {
-                                val isFileTransfer = item.action in FILE_TRANSFER_ACTIONS
-                                FileTransferCard(
-                                    item = item,
-                                    devicePath = if (isFileTransfer) devicePath else null,
-                                    onDevicePathChange = { devicePath = it },
-                                    onClick = {
-                                        if (isFileTransfer) onFileItemClick(item, devicePath) else onItemClick(item)
-                                    },
-                                    modifier = Modifier.weight(1f)
-                                )
-                            }
+                            // 推送/拉取文件：普通小卡，点击跳转文件传输 Tab（SP-5001）
+                            item.action in FILE_TRANSFER_ACTIONS -> FunctionCard(
+                                item = item,
+                                isDisabled = item.state == "disable",
+                                onClick = { onFileItemClick(item, "") },
+                                modifier = Modifier.weight(1f)
+                            )
                             else -> FunctionCard(
                                 item = item,
                                 isDisabled = item.state == "disable",

@@ -1,0 +1,25 @@
+package com.easyadb.core.file
+
+/**
+ * 文件树节点（SP-5001）——PC 本地与设备侧统一数据模型。
+ *
+ * 双栏共用一套模型：PC 侧 [perm] 恒为 null（Windows 无权限位，UI 渲染三列），
+ * 设备侧来自 `ls -la` 解析（权限/时间/大小齐备，UI 渲染四列）。
+ *
+ * @param path 完整路径（设备侧 `/sdcard/...`，PC 侧 File 绝对路径）
+ * @param name 显示名（保留空格/中文）
+ * @param isDir 是否目录
+ * @param perm Linux 权限位（`drwxrwx--x` / `-rw-rw----`），PC 侧为 null
+ * @param modifiedAt 修改时间（`yyyy/MM/dd HH:mm` 统一格式化，双列同构）
+ * @param sizeText 大小展示文本（人性化 B/KB/MB/GB；目录为「N 项」或未加载 `--`）
+ * @param sizeBytes 字节大小（目录/未知为 -1，供后续演进按大小排序）
+ */
+data class FileEntry(
+    val path: String,
+    val name: String,
+    val isDir: Boolean,
+    val perm: String? = null,
+    val modifiedAt: String? = null,
+    val sizeText: String = "",
+    val sizeBytes: Long = -1
+)

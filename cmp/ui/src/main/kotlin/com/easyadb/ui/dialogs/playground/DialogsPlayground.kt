@@ -59,8 +59,6 @@ import com.easyadb.ui.dialogs.AddPackageDialog
 import com.easyadb.ui.dialogs.ApkHelperDialog
 import com.easyadb.ui.dialogs.InstallApkDialog
 import com.easyadb.ui.dialogs.NewConnectDialog
-import com.easyadb.ui.dialogs.PullApkDialog
-import com.easyadb.ui.dialogs.PullableApp
 import com.easyadb.ui.dialogs.ScreenRecordDialog
 import com.easyadb.ui.dialogs.TextInputDialog
 import kotlinx.coroutines.delay
@@ -76,8 +74,7 @@ import java.time.format.DateTimeFormatter
  *   多个窗口初始叠放，拖开即可）。再次点击入口关闭该弹窗。
  * - 顶部提供明暗主题切换（EasyAdbTheme 整组换色，弹窗随 CompositionLocal 联动）。
  * - 弹窗内的按钮 / 输入回调不接真实 adb，统一打印到底部「事件日志」，
- *   可验证回调时序与参数；PullApkDialog 与 ScreenRecordDialog 附带假数据模拟
- *   （刷新加载、开始录制实时倒计时）。
+ *   可验证回调时序与参数；ScreenRecordDialog 附带假数据模拟（开始录制实时倒计时）。
  *
  * 运行方式：IDE 中点击本文件 `main()` 左侧绿色箭头，或命令行
  * `gradlew :ui:dialogs:run`。
@@ -430,20 +427,6 @@ private val demoApkInfo = ApkInfo(
     lastModified = "2026-09-01 10:23:45"
 )
 
-/** PullApkDialog 刷新后填充的假应用列表（系统 / 第三方混合）。 */
-private val demoApps = listOf(
-    PullableApp("com.example.demoapp", "/data/app/~~dQ==/com.example.demoapp-9Q/base.apk", isSystem = false),
-    PullableApp("com.android.contacts", "/system/app/Contacts/Contacts.apk", isSystem = true),
-    PullableApp("com.android.settings", "/system_ext/priv-app/Settings/Settings.apk", isSystem = true),
-    PullableApp("com.android.systemui", "/system/priv-app/SystemUIGoogle/SystemUIGoogle.apk", isSystem = true),
-    PullableApp("com.example.tvremote", "/data/app/~~aF==/com.example.tvremote-1a/base.apk", isSystem = false),
-    PullableApp("com.example.mediaplayer", "/data/app/~~hT==/com.example.mediaplayer-7z/base.apk", isSystem = false),
-    PullableApp("com.android.provision", "/system/app/Provision/Provision.apk", isSystem = true),
-    PullableApp("com.example.filemanager", "/data/app/~~kW==/com.example.filemanager-3m/base.apk", isSystem = false),
-    PullableApp("com.example.launcher", "/data/app/~~pL==/com.example.launcher-5c/base.apk", isSystem = false),
-    PullableApp("com.android.inputmethod.pinyin", "/system/app/PinyinIME/PinyinIME.apk", isSystem = true)
-)
-
 /** 画廊全部入口。同一个组件的多个状态（如 ApkHelperDialog）各自一条，便于并排对比。 */
 private val entries = listOf(
     DialogEntry(
@@ -563,32 +546,6 @@ private val entries = listOf(
             isParsing = true,
             onDismiss = onDismiss,
             onParse = { path -> log("ApkHelperDialog.onParse(\"$path\") —— 画廊不接真实解析器") }
-        )
-    },
-    DialogEntry(
-        id = "pull-apk",
-        group = "应用操作",
-        component = "PullApkDialog",
-        state = "空列表 → 刷新模拟加载 → 数据（可搜索 / 筛选 / 选中）"
-    ) { _, onDismiss, log ->
-        var apps by remember { mutableStateOf<List<PullableApp>>(emptyList()) }
-        var loading by remember { mutableStateOf(false) }
-        LaunchedEffect(loading) {
-            if (!loading) return@LaunchedEffect
-            delay(900)
-            apps = demoApps
-            loading = false
-            log("PullApkDialog：已加载 ${demoApps.size} 个应用（模拟）")
-        }
-        PullApkDialog(
-            apps = apps,
-            isLoading = loading,
-            onDismiss = onDismiss,
-            onRefresh = {
-                log("PullApkDialog.onRefresh()")
-                loading = true
-            },
-            onPull = { app -> log("PullApkDialog.onPull(${app.packageName})") }
         )
     },
     DialogEntry(

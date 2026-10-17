@@ -50,6 +50,7 @@ import com.easyadb.core.config.MenuAction
 import com.easyadb.core.config.MenuConfig
 import com.easyadb.core.database.DeviceRecord
 import com.easyadb.core.device.DeviceInfo
+import com.easyadb.core.file.TransferCenter
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -62,12 +63,12 @@ import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.hoverBackground
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.devicelist.DeviceListPanel
+import com.easyadb.ui.filetransfer.FileTransferPanel
 import com.easyadb.ui.functions.AppManagerPanel
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CommandsPanel
 import com.easyadb.ui.functions.FunctionPanel
 import com.easyadb.ui.functions.RemoteKeyPad
-import com.easyadb.ui.functions.TemplateGrid
 import com.easyadb.ui.mirror.MirrorPanel
 import com.easyadb.ui.console.LogEntry
 import com.easyadb.ui.home.components.EmbeddedConsoleHost
@@ -575,9 +576,9 @@ private fun CurrentDeviceChip(
  *       └── 右栏 Column
  *             ├── ContentTabRow  (六 Tab 下划线行 + 行尾当前设备 chip：快捷操作|常用命令|按键模拟|文件传输|应用管理|实时预览)
  *             ├── Tab 内容 (weight 1f)
- *             │     ├── 快捷操作：参数卡(2×2 网格) + 功能卡(13 项小卡 + 推送/拉取大卡，安装卡虚线拖拽)
+ *             │     ├── 快捷操作：参数卡(2×2 网格) + 功能卡(小卡 + 安装卡虚线拖拽；推送/拉取卡跳转文件传输)
  *             │     ├── 按键模拟：RemoteKeyPad 遥控器（10 键）
- *             │     ├── 文件传输：APK提取/推送文件/拉取文件 3 大卡
+ *             │     ├── 文件传输：FileTransferPanel（双栏 Device Explorer + 传输队列，SP-5001）
  *             │     ├── 应用管理：AppManagerPanel（搜索/类型筛选/行卡列表/提取，SP-7001）
  *             │     └── 实时预览：MirrorPanel（原样迁入）
  *             ├── Divider
@@ -599,13 +600,12 @@ private fun CurrentDeviceChip(
  * @param onPackageDelete 用户删除包名时的回调
  * @param onFunctionItemClick 功能项点击回调（快捷操作/按键模拟共用链路）
  * @param onApkDropped 快捷操作 Tab 安装卡拖入 APK 回调：(APK 绝对路径)，宿主执行 adb install -r
- * @param onPullApk 打开 APK 提取对话框（文件传输 Tab 联动）
  * @param apps 应用管理 Tab：宿主加载好的设备应用列表（AppListLoader，SP-7001）
  * @param isAppsLoading 应用管理 Tab：列表是否加载中
  * @param onLoadApps 应用管理 Tab：加载/刷新应用列表（面板进入与设备切换时自动触发）
  * @param onExtractApk 应用管理 Tab：提取应用 APK（宿主 FileDialog 选保存路径 + adb pull）
- * @param onPushFile 推送文件到设备：(设备路径)，宿主 FileDialog + adb push
- * @param onPullFile 从设备拉取文件：(设备路径)，宿主 FileDialog + adb pull
+ * @param transferCenter 文件传输 Tab：传输任务中心（宿主持有，切 Tab 传输不中断，SP-5001）
+ * @param onFileTransferLog 文件传输 Tab：控制台回显（message + level）
  * @param consoleLogFlow 控制台日志流（MutableStateFlow，支持清空操作）
  * @param logcatStream 设备 logcat 流管理器（控制启动/停止/过滤）
  * @param mirrorState 镜像状态（Idle / Running，由宿主的 ScrcpyLauncher 推送）
@@ -645,14 +645,14 @@ fun MainWindowScreen(
     /** 常用命令 Tab：命令已复制到剪贴板（宿主记录控制台日志） */
     onCopyCommand: (String) -> Unit = {},
     onApkDropped: (String) -> Unit = {},
-    onPullApk: () -> Unit = {},
     // SP-7001 应用管理 Tab 参数
     apps: List<AppListLoader.AppInfo> = emptyList(),
     isAppsLoading: Boolean = false,
     onLoadApps: () -> Unit = {},
     onExtractApk: (AppListLoader.AppInfo) -> Unit = {},
-    onPushFile: (String) -> Unit = {},
-    onPullFile: (String) -> Unit = {},
+    // SP-5001 文件传输 Tab 参数
+    transferCenter: TransferCenter = TransferCenter { _, _ -> },
+    onFileTransferLog: (String, Int) -> Unit = { _, _ -> },
     // P6 控制台 + Logcat 参数
     consoleLogFlow: MutableStateFlow<List<LogEntry>> = MutableStateFlow(emptyList()),
     logcatStream: LogcatStream = LogcatStream(),
@@ -684,10 +684,9 @@ fun MainWindowScreen(
     // 内嵌控制台区收缩状态（收缩后仅显示展开按钮条）
     var consoleCollapsed by remember { mutableStateOf(false) }
 
-    // 按 tab 归属拆分功能项（XML 无 tab 属性的项默认 quick）
+    // 按 tab 归属拆分功能项（XML 无 tab 属性的项默认 quick；files 项由 SP-5001 双栏面板取代）
     val quickItems = functionTemplates.flatMap { it.items }.filter { it.tab == "quick" }
     val keysItems = functionTemplates.flatMap { it.items }.filter { it.tab == "keys" }
-    val filesItems = functionTemplates.flatMap { it.items }.filter { it.tab == "files" }
 
     // ── 实时预览 Tab 激活期间的窗口级键盘接管（P9 键盘透传补强） ──
     // 嵌入预览的原生直达路径会被「点击嵌入区外的控件」打断（Compose 焦点转移，按键不再
@@ -780,12 +779,12 @@ fun MainWindowScreen(
                                     onCustomKey = onCustomKey,
                                     modifier = Modifier.fillMaxSize()
                                 )
-                                TAB_FILES -> TemplateGrid(
-                                    items = filesItems,
-                                    onItemClick = { item ->
-                                        if (item.action == "m_pull_apk") onPullApk()
-                                    },
-                                    onFileItemClick = { _, _ -> },
+                                // 文件传输：双栏 Device Explorer（SP-5001）——PC 本地树 + 设备树，
+                                // 投递/另存/推送/拖放收口工具栏，传输队列由宿主 TransferCenter 承担
+                                TAB_FILES -> FileTransferPanel(
+                                    deviceIp = selectedDeviceIp,
+                                    transferCenter = transferCenter,
+                                    onLog = onFileTransferLog,
                                     modifier = Modifier.fillMaxSize()
                                 )
                                 // 应用管理：工具条（搜索/seg 筛选/刷新）+ 行卡列表（SP-7001），
@@ -810,7 +809,8 @@ fun MainWindowScreen(
                                     onStop = onMirrorStop,
                                     modifier = Modifier.fillMaxSize()
                                 )
-                                // 快捷操作：参数卡(2×2) + 功能卡(13 项小卡+推送/拉取大卡，安装卡虚线拖拽)
+                                // 快捷操作：参数卡(2×2) + 功能卡（安装卡虚线拖拽）；
+                                // 推送/拉取功能卡对齐 H5 行为：点击跳转文件传输 Tab（SP-5001 起传输统一走双栏面板）
                                 else -> FunctionPanel(
                                     items = quickItems,
                                     appParamState = appParamState,
@@ -819,10 +819,9 @@ fun MainWindowScreen(
                                     onPackageAdd = onPackageAdd,
                                     onPackageDelete = onPackageDelete,
                                     onItemClick = onFunctionItemClick,
-                                    onFileItemClick = { item, devicePath ->
-                                        when (item.action) {
-                                            "m_push_file" -> onPushFile(devicePath)
-                                            "m_pull_file" -> onPullFile(devicePath)
+                                    onFileItemClick = { item, _ ->
+                                        if (item.action == "m_push_file" || item.action == "m_pull_file") {
+                                            contentTab = TAB_FILES
                                         }
                                     },
                                     onApkDropped = onApkDropped,

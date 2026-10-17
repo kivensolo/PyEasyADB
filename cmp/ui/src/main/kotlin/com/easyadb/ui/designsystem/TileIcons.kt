@@ -233,6 +233,60 @@ object EasyAdbTileIcons {
         )
     }
 
+    // ── 文件传输（SP-5001，H5 pane-files 终稿线稿直译） ──
+
+    /** 文件夹（HTML .f-ico.dir，目录行图标） */
+    val Folder: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbFolder",
+            stroke = listOf("M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z")
+        )
+    }
+
+    /** 文件（HTML .f-ico，文件行图标：折角文档） */
+    val FileDoc: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbFileDoc",
+            stroke = listOf("M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6")
+        )
+    }
+
+    /** 新建文件夹：文件夹 + 中央加号（HTML dxMkdir） */
+    val FolderPlus: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbFolderPlus",
+            stroke = listOf(
+                "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
+                "M12 10v6",
+                "M9 13h6"
+            )
+        )
+    }
+
+    /** 另存文件到电脑：下载托盘（HTML dxPull） */
+    val SaveAsFile: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbSaveAsFile",
+            stroke = listOf("M12 3v12", "m8 11 4 4 4-4", "M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2")
+        )
+    }
+
+    /** 投递到右侧：两栏边界竖线 + 右向跨栏箭头（HTML pcDeliver 终稿） */
+    val DeliverRight: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbDeliverRight",
+            stroke = listOf("M3 5v14", "M8 12h10", "m14.5 8.5 3.5 3.5-3.5 3.5", "M21 5v14")
+        )
+    }
+
+    /** 投递到左侧：两栏边界竖线 + 左向跨栏箭头（HTML devDeliver 终稿镜像） */
+    val DeliverLeft: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbDeliverLeft",
+            stroke = listOf("M3 5v14", "M16 12H6", "m9.5 8.5-3.5 3.5 3.5 3.5", "M21 5v14")
+        )
+    }
+
     /** 最小化：中置横线（HTML titlebar winMin） */
     val WinMinimize: ImageVector by lazy {
         iconOf(
