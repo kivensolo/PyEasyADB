@@ -7,7 +7,7 @@ https://developer.android.google.cn/develop/ui/compose/components/menu?hl=zh-cn
 
 ## 一、它解决什么问题
 
-Composable 函数会被 Compose **反复重新执行**（重组）：依赖的状态变化、父级重组等都可能触发。
+Composable 函数会被 Compose **反复重新执行**（重组）： 依赖的状态变化、父级重组等都可能触发。
 函数体里的普通局部变量每次重组都会**重新初始化**，"上一次的值"天然留不住——
 
 1. 普通变量被赋新值不会触发 UI 更新（Compose 感知不到）；
