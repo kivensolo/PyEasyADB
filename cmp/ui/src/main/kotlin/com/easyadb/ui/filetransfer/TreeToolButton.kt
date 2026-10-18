@@ -58,27 +58,27 @@ fun TreeToolButton(
         }
     }
     Box {
-        Box(
-            modifier = Modifier
+        // 禁用态：不加悬停高亮/手势/点击——悬停亮底会误导可点（走查反馈）；
+        // 图标用 TextDisabled 灰并降不透明度，与可点态一眼区分
+        val modifier = if (enabled) {
+            Modifier
                 .size(28.dp)
                 .clip(easyAdbTokens.shapeMd)
                 .hoverBackground(
                     color = if (danger) easyAdbColors.AccentRed.copy(alpha = 0.14f) else null,
                     shape = easyAdbTokens.shapeMd
                 )
-                .onPointerEvent(PointerEventType.Enter) { if (enabled) hovered = true }
+                .onPointerEvent(PointerEventType.Enter) { hovered = true }
                 .onPointerEvent(PointerEventType.Exit) { hovered = false }
-                .then(
-                    if (enabled) {
-                        Modifier.clickable(interactionSource = null, indication = null, onClick = onClick)
-                    } else Modifier
-                ),
-            contentAlignment = Alignment.Center
-        ) {
+                .clickable(interactionSource = null, indication = null, onClick = onClick)
+        } else {
+            Modifier.size(28.dp).clip(easyAdbTokens.shapeMd)
+        }
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Icon(
                 imageVector = icon,
                 contentDescription = tip,
-                tint = if (!enabled) easyAdbColors.TextDisabled else easyAdbColors.TextSecondary,
+                tint = if (enabled) easyAdbColors.TextSecondary else easyAdbColors.TextDisabled.copy(alpha = 0.6f),
                 modifier = Modifier.size(15.dp)
             )
         }

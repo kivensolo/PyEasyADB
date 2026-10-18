@@ -110,6 +110,7 @@ data class EasyAdbColors(
     val AccentGrey: Color,
     val AccentSky: Color,
     val AccentRose: Color,
+    val AccentViolet: Color,
 
     // ── 实时预览画面区（始终深色 = 设备屏幕本体，明暗同值；HTML .scr-* 系列）──
     val PreviewBg: Color,
@@ -186,6 +187,7 @@ val LightEasyAdbColors = EasyAdbColors(
     AccentGrey = Color(0xFF64748B),       // slate-500（a-icon.gray 浅色推导）
     AccentSky = Color(0xFF0369A1),        // --cyan
     AccentRose = Color(0xFFE11D48),       // rose-600（a-icon.rose 浅色推导）
+    AccentViolet = Color(0xFF7C3AED),     // violet-600（目录符号链接标识色，浅色推导）
     PreviewBg = Color(0xFF05080D),        // .scr-outer 底（设备屏幕本体，恒深）
     PreviewTileBg = Color(0xFF101A2E),    // .scr-empty .big 容器底
     PreviewTileBorder = Color(0xFF22314A),// .scr-empty .big 边
@@ -253,6 +255,7 @@ val DarkEasyAdbColors = EasyAdbColors(
     AccentGrey = Color(0xFF9FB0C8),       // .a-icon.gray
     AccentSky = Color(0xFF38BDF8),        // .a-icon.sky（--cyan）
     AccentRose = Color(0xFFFB7185),       // .a-icon.rose
+    AccentViolet = Color(0xFFA78BFA),     // .a-icon.violet（目录符号链接标识色）
     PreviewBg = Color(0xFF05080D),
     PreviewTileBg = Color(0xFF101A2E),
     PreviewTileBorder = Color(0xFF22314A),

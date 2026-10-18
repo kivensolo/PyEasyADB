@@ -27,8 +27,11 @@ import java.time.format.DateTimeFormatter
  */
 object DeviceFileLister {
 
-    /** 设备文件树默认根（对齐 H5 参照稿与现网推送落点习惯） */
-    const val DEVICE_ROOT = "/sdcard"
+    /** 设备文件树根（整机根目录，可逐层进入 /data /system 等；受限目录列举为空由 UI 空态呈现） */
+    const val DEVICE_ROOT = "/"
+
+    /** 传输默认落点（设备树未选中目录时的 push 目标——根目录只读不可写） */
+    const val DEFAULT_TRANSFER_DIR = "/sdcard"
 
     /** 目录列举超时（大目录 shell 响应预留，正常目录 <1s） */
     private const val LIST_TIMEOUT_MS = 15_000L
@@ -36,26 +39,64 @@ object DeviceFileLister {
     private val TIME_24H = Regex("\\d{2}:\\d{2}")
 
     /**
-     * 列举设备目录一层。失败（设备离线/路径不存在/超时）返回空列表并记录日志，
-     * 不抛出——UI 以空态呈现，与 AppListLoader 行为一致。
+     * 列举设备目录一层。失败（设备离线/路径不存在/超时）返回 [DirListResult.error]；
+     * 命令执行成功但无有效行时（典型：`ls: xxx: Permission denied` 走 stderr
+     * 混入输出、解析得 0 行），从输出提取首条非 total 行作为失败原因。
+     *
+     * 路径**强制带尾斜杠**（`ls -la '<dir>/'`）：多数设备 `/sdcard` 是符号链接
+     * （→ /storage/self/primary），无尾斜杠时 ls 只返回链接自身一行，不列内容
+     * （实机 emulator-5554 踩坑归档）。
      */
-    suspend fun list(deviceIp: String, dirPath: String): List<FileEntry> = withContext(Dispatchers.IO) {
-        val cmd = "adb -s $deviceIp shell \"ls -la '${dirPath.replace("'", "")}'\""
+    suspend fun list(deviceIp: String, dirPath: String): DirListResult = withContext(Dispatchers.IO) {
+        val target = dirPath.trimEnd('/') + "/"
+        val cmd = "adb -s $deviceIp shell \"ls -la '${target.replace("'", "")}'\""
         val result = ExecUtils.execCmd(cmd, timeoutMs = LIST_TIMEOUT_MS, shell = true)
         if (!result.success) {
-            println("[DeviceFileLister] list failed: ${result.output.take(200)}")
-            return@withContext emptyList()
+            return@withContext DirListResult(error = result.output.take(200).ifBlank { "命令执行失败（超时或 adb 异常）" })
         }
-        parseLsOutput(result.output, dirPath)
+        val entries = parseLsOutput(result.output, dirPath)
+        val error = if (entries.isEmpty()) firstErrorLine(result.output, dirPath) else null
+        DirListResult(entries, error)
     }
+
+    /**
+     * 首条**无法解析**的行 = 列举失败原因（`ls: xxx: Permission denied` 走 stderr
+     * 混入输出）。仅含 total / `.` / `..` 的真空目录不算失败（走查反馈：空目录曾把
+     * `.` 行误当原因显示成红色错误）。
+     */
+    internal fun firstErrorLine(output: String, dirPath: String): String? =
+        output.lineSequence()
+            .map { it.trimEnd() }
+            .firstOrNull { it.isNotEmpty() && !it.startsWith("total") && parseLine(it, dirPath) == null }
+            ?.take(200)
 
     /** `shell mkdir` 命令构建（目录路径内空格由单引号包裹，文件名撇号防御性剔除） */
     fun mkdirCmd(deviceIp: String, dirPath: String): String =
         "adb -s $deviceIp shell \"mkdir '${dirPath.replace("'", "")}'\""
 
-    /** `shell rm -f` 命令构建（v1 仅文件删除） */
+    /** `shell rm -f` 命令构建（文件删除） */
     fun rmCmd(deviceIp: String, filePath: String): String =
         "adb -s $deviceIp shell \"rm -f '${filePath.replace("'", "")}'\""
+
+    /** `shell rm -rf` 命令构建（目录递归删除，调用方须先经用户确认） */
+    fun rmDirCmd(deviceIp: String, dirPath: String): String =
+        "adb -s $deviceIp shell \"rm -rf '${dirPath.replace("'", "")}'\""
+
+    /**
+     * 受保护目录（删除守卫，SP-5001 走查追加）：整机根、用户存储入口与系统分区——
+     * 递归删除将导致设备不可用/数据全失。UI 在打开删除确认前拦截并提示。
+     */
+    private val PROTECTED_DIRS = setOf(
+        "/", "/sdcard", "/storage", "/storage/emulated", "/storage/self",
+        "/data", "/system", "/vendor", "/product", "/system_ext",
+        "/etc", "/dev", "/proc", "/sys", "/oem", "/bin", "/sbin", "/mnt"
+    )
+
+    /** 是否受保护目录（尾部斜杠归一） */
+    fun isProtectedDir(path: String): Boolean {
+        val norm = if (path.length > 1) path.trimEnd('/') else "/"
+        return norm in PROTECTED_DIRS
+    }
 
     /**
      * 解析 `ls -la` 输出为节点列表（包内可见，供 fixture 校验）。
@@ -69,7 +110,10 @@ object DeviceFileLister {
             // 权限位必须以 d/-/l 开头：借此跳过 total 行与 stderr 附加信息
             val first = line.first()
             if (first != 'd' && first != '-' && first != 'l') return@forEach
-            parseLine(line, dirPath)?.let { entries += it }
+            val entry = parseLine(line, dirPath) ?: return@forEach
+            // "."/".." 目录自引用行在解析层保留（供错误判定识别），此处跳过不入列
+            if (entry.name == "." || entry.name == "..") return@forEach
+            entries += entry
         }
         // 目录优先，同组按名称（对齐 H5/CMP 文件树排序口径）
         return entries.sortedWith(compareByDescending<FileEntry> { it.isDir }.thenBy { it.name.lowercase() })
@@ -106,10 +150,15 @@ object DeviceFileLister {
         } else {
             return null
         }
-        if (name == "." || name == "..") return null
-        // 符号链接显示名去 " -> target" 尾部，按链接本身呈现
-        val displayName = name.substringBefore(" ->")
-        val isDir = perm.startsWith("d")
+        // 符号链接名形如 "sdcard -> /storage/self/primary"：拆出显示名与指向目标
+        val arrowIdx = name.indexOf(" -> ")
+        val displayName = if (arrowIdx >= 0) name.substring(0, arrowIdx) else name
+        val linkTarget = if (arrowIdx >= 0) name.substring(arrowIdx + 4) else null
+        // 目录符号链接按目录展开（isDir=true）：设备根的 sdcard/etc/vendor 等均为
+        // 链接，按文件处理会不可展开（走查反馈：/ 下看不到 sdcard）；展开走尾斜杠
+        // ls 自动跟随目标，文件链接展开则以错误行呈现（优雅降级）
+        val isDir = perm.startsWith("d") || perm.startsWith("l")
+        val isSymlink = perm.startsWith("l")
         return FileEntry(
             path = if (dirPath.endsWith("/")) "$dirPath$displayName" else "$dirPath/$displayName",
             name = displayName,
@@ -117,7 +166,9 @@ object DeviceFileLister {
             perm = perm,
             modifiedAt = time,
             sizeText = if (isDir) "--" else humanizeSize(sizeBytes),
-            sizeBytes = sizeBytes
+            sizeBytes = sizeBytes,
+            isSymlink = isSymlink,
+            linkTarget = linkTarget
         )
     }
 

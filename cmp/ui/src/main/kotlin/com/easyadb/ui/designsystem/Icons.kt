@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.NorthEast
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material.icons.filled.PlayArrow
@@ -56,4 +57,6 @@ object AppIcons {
     val MoreVert: ImageVector get() = Icons.Filled.MoreVert
     /** 盾牌+对勾（H5 .sys-badge 的 lucide shield-check 等效） */
     val ShieldCheck: ImageVector get() = Icons.Filled.VerifiedUser
+    /** 右上小箭头（文件树符号链接角标） */
+    val NorthEast: ImageVector get() = Icons.Filled.NorthEast
 }

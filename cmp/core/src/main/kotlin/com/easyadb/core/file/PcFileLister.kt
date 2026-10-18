@@ -13,6 +13,9 @@ import java.time.format.DateTimeFormatter
 /**
  * PC 侧文件列举（SP-5001）——NIO 懒加载一层，Windows 权限/隐藏项过滤。
  *
+ * 根视图为「此电脑」虚拟根（[THIS_PC_ROOT] 空路径），子级为盘符列表
+ * （`File.listRoots()`）；盘符/目录逐层懒加载展开。
+ *
  * ## Windows 特有处理
  * - **每条目独立 try-catch** 吞 `AccessDeniedException`：受限目录（系统/其他用户）
  *   列举时会对个别条目大量抛异常，不能让单条失败炸掉整层；
@@ -24,48 +27,67 @@ import java.time.format.DateTimeFormatter
  */
 object PcFileLister {
 
-    /** PC 树默认根（用户主目录；盘符导航见 SP-5001 §7 演进） */
-    val PC_ROOT: File = File(System.getProperty("user.home"))
+    /** 「此电脑」虚拟根（空路径，UI 树根），子级为盘符 */
+    const val THIS_PC_ROOT = ""
+
+    /** 传输落点兜底目录（PC 树未选中时的拉取目标） */
+    val DEFAULT_SAVE_DIR: File = File(System.getProperty("user.home"))
 
     private val TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm")
         .withZone(ZoneId.systemDefault())
 
-    /** 列举本地目录一层；目录不可读时返回空列表（UI 空态呈现） */
-    suspend fun list(dir: File): List<FileEntry> = withContext(Dispatchers.IO) {
+    /** 列举一层：[path] 为空串返回盘符列表；目录不可读时以 [DirListResult.error] 呈现原因 */
+    suspend fun list(path: String): DirListResult = withContext(Dispatchers.IO) {
+        if (path.isBlank()) {
+            return@withContext DirListResult(
+                entries = File.listRoots()
+                    .sortedBy { it.absolutePath }
+                    .map { root ->
+                        FileEntry(
+                            path = root.absolutePath,
+                            name = root.absolutePath,
+                            isDir = true,
+                            perm = null,
+                            modifiedAt = null,
+                            sizeText = "--"
+                        )
+                    }
+            )
+        }
         val entries = mutableListOf<FileEntry>()
-        // newDirectoryStream 每条目独立 try-catch（受保护条目抛 AccessDeniedException）
-        runCatching {
-            Files.newDirectoryStream(Paths.get(dir.absolutePath)).use { stream ->
-                for (path in stream) {
-                    val entry = runCatching { toEntry(path.toFile()) }.getOrNull() ?: continue
+        val failure = runCatching {
+            Files.newDirectoryStream(Paths.get(path)).use { stream ->
+                for (file in stream) {
+                    val entry = runCatching { toEntry(file.toFile()) }.getOrNull() ?: continue
                     // Windows 隐藏/系统项过滤（DosFileAttributes 读失败时保守显示）
                     val dos = runCatching {
-                        Files.readAttributes(path, DosFileAttributes::class.java)
+                        Files.readAttributes(file, DosFileAttributes::class.java)
                     }.getOrNull()
                     if (dos != null && (dos.isHidden || dos.isSystem)) continue
                     entries += entry
                 }
             }
-        }.onFailure {
-            println("[PcFileLister] list failed: ${dir.absolutePath} — ${it.message}")
+        }.exceptionOrNull()
+        if (failure != null) {
+            return@withContext DirListResult(error = failure.message?.take(200) ?: "无法读取目录")
         }
-        entries.sortedWith(compareByDescending<FileEntry> { it.isDir }.thenBy { it.name.lowercase() })
+        DirListResult(entries.sortedWith(compareByDescending<FileEntry> { it.isDir }.thenBy { it.name.lowercase() }))
     }
 
     private fun toEntry(file: File): FileEntry {
         val attrs = Files.readAttributes(file.toPath(), BasicFileAttributes::class.java)
-        val isDir = attrs.isDirectory
+        val isSymlink = attrs.isSymbolicLink
+        // PC 符号链接按链接本身呈现（不跟进目标），perm 无 Linux 权限位——仅图标角标区分
+        val isDir = attrs.isDirectory || isSymlink && Files.isDirectory(file.toPath())
         return FileEntry(
             path = file.absolutePath,
             name = file.name,
             isDir = isDir,
             perm = null,
             modifiedAt = TIME_FORMAT.format(attrs.lastModifiedTime().toInstant()),
-            sizeText = when {
-                isDir -> "--"
-                else -> DeviceFileLister.humanizeSize(attrs.size())
-            },
-            sizeBytes = if (isDir) -1L else attrs.size()
+            sizeText = if (isDir) "--" else DeviceFileLister.humanizeSize(attrs.size()),
+            sizeBytes = if (isDir) -1L else attrs.size(),
+            isSymlink = isSymlink
         )
     }
 }

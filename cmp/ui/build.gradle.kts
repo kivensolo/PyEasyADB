@@ -13,11 +13,6 @@ dependencies {
     implementation(project(":core"))
 }
 
-// 弹窗画廊 Playground 入口：gradlew :ui:run，仅供 IDE/命令行独立调试运行，
-// 不参与 desktop-app 打包。原 ui/mirror 的 EmbedSpike / KeySpike 仍可从 IDE
-// 直接运行 main()（EmbedSpike 无需设备；KeySpike 需真机 + scrcpy，见 cmp/doc 方案文档）。
-compose.desktop {
-    application {
-        mainClass = "com.easyadb.ui.dialogs.playground.DialogsPlaygroundKt"
-    }
-}
+// 注：此处不再注册 compose.desktop.application 运行入口——原先把 mainClass 指向
+// 弹窗画廊（:ui:run），与主程序 :desktop-app:run 在 Gradle 面板中并存，极易误点
+// （走查反馈：跑成弹窗画廊）。画廊仍可从 DialogsPlayground.kt 的 main() 箭头启动。

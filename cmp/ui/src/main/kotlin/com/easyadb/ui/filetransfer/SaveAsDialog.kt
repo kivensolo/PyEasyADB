@@ -43,7 +43,8 @@ fun SaveAsDialog(
 ) {
     DialogWindow(
         onCloseRequest = onDismiss,
-        state = rememberDialogState(width = 460.dp, height = 250.dp),
+        // 高度须容纳两个输入组 + 按钮行（与 ConfirmDeleteDialog 同教训：偏小裁切按钮）
+        state = rememberDialogState(width = 460.dp, height = 340.dp),
         title = "另存文件到电脑",
         resizable = false
     ) {

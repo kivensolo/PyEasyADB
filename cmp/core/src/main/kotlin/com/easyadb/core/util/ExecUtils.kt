@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
+import java.io.File
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.util.concurrent.TimeUnit
@@ -22,10 +23,13 @@ object ExecUtils {
     suspend fun execCmd(
         command: String,
         timeoutMs: Long = 4000,
-        shell: Boolean = true
+        shell: Boolean = true,
+        /** 子进程工作目录（null = 继承当前进程）；盘根拉取等场景用于锚定相对路径解析 */
+        workingDir: File? = null
     ): ExecResult = withContext(Dispatchers.IO) {
         try {
             val processBuilder = ProcessBuilder().apply {
+                workingDir?.let { directory(it) }
                 if (shell) {
                     val os = System.getProperty("os.name").lowercase()
                     if (os.contains("win")) {

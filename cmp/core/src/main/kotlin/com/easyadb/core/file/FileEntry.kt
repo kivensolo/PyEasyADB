@@ -12,7 +12,10 @@ package com.easyadb.core.file
  * @param perm Linux 权限位（`drwxrwx--x` / `-rw-rw----`），PC 侧为 null
  * @param modifiedAt 修改时间（`yyyy/MM/dd HH:mm` 统一格式化，双列同构）
  * @param sizeText 大小展示文本（人性化 B/KB/MB/GB；目录为「N 项」或未加载 `--`）
- * @param sizeBytes 字节大小（目录/未知为 -1，供后续演进按大小排序）
+ * @param isSymlink 符号链接（设备 `l` 权限位 / PC NIO isSymbolicLink）——
+ *   目录链接可展开但 UI 需角标区分（青色文件夹 + 右上箭头）
+ * @param linkTarget 符号链接指向的真实路径（`ls -la` 名称列 `name -> target` 的
+ *   target 段；设备侧目录链接在名称右侧展示「→ 指向」）
  */
 data class FileEntry(
     val path: String,
@@ -21,5 +24,18 @@ data class FileEntry(
     val perm: String? = null,
     val modifiedAt: String? = null,
     val sizeText: String = "",
-    val sizeBytes: Long = -1
+    val sizeBytes: Long = -1,
+    val isSymlink: Boolean = false,
+    val linkTarget: String? = null
+)
+
+/**
+ * 目录列举结果（SP-5001）：[entries] 为子级列表；[error] 非空表示列举失败
+ * （权限拒绝 / 命令失败 / 超时 / 离线），此时 entries 为空——UI 需把原因
+ * 展示给用户而非误报「空目录」（走查反馈：/storage/emulated Permission
+ * denied 被静默吞掉）。
+ */
+data class DirListResult(
+    val entries: List<FileEntry> = emptyList(),
+    val error: String? = null
 )

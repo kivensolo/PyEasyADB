@@ -4,17 +4,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.easyadb.core.file.DirListResult
 import com.easyadb.core.file.FileEntry
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
  * 文件树状态（SP-5001）——双栏各持一实例，懒加载一层 + 展开/选中。
  *
- * [lister] 由面板注入（PC 侧 PcFileLister、设备侧 DeviceFileLister 包装），
- * 内部 scope 自持（面板销毁即随 GC 取消未完成加载，无副作用可安全丢弃）；
+ * [scope] 由面板注入（rememberCoroutineScope，Compose UI 调度器）：加载协程随
+ * 面板销毁自动取消，无跨面板泄漏；**不可用 Dispatchers.Main 自建作用域**——
+ * Desktop JVM 无 Main dispatcher 服务（报 "Module with the Main dispatcher is
+ * missing"，那是 Android 平台的提供者）。lister 内部自切 IO，结果写回
+ * Compose 快照状态线程安全。
+ *
  * 加载完成后回填父行目录「N 项」计数（H5 .dx-size 口径）。
  *
  * 状态驱动局部重组：展开集合/选中路径/子级映射均为 Compose 状态，
@@ -22,10 +25,18 @@ import kotlinx.coroutines.launch
  */
 class FileTreeState(
     val rootPath: String,
-    private val lister: suspend (path: String) -> List<FileEntry>
+    private val scope: CoroutineScope,
+    /** 未选中时 [currentDir] 的兜底目录（PC 侧为用户主目录——虚拟根不可作为传输落点） */
+    private val defaultDir: String = rootPath,
+    private val lister: suspend (path: String) -> DirListResult
 ) {
+    /** 树根显示名（头部路径栏未选中时展示；PC 虚拟根显示「此电脑」） */
+    val rootDisplay: String = rootPath.ifBlank { "此电脑" }
     /** 目录路径 → 子级列表（已加载层） */
     private val children = mutableStateMapOf<String, List<FileEntry>>()
+
+    /** 目录路径 → 列举失败原因（权限拒绝/超时等；null = 成功或未加载，不静默吞掉） */
+    private val errors = mutableStateMapOf<String, String?>()
 
     /** 已展开目录路径集合 */
     var expandedPaths by mutableStateOf<Set<String>>(emptySet())
@@ -38,34 +49,104 @@ class FileTreeState(
     var loadingPath by mutableStateOf<String?>(null)
         private set
 
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    /** 就地新建目录编辑态：非 null = [creatingIn] 目录下渲染名称编辑行 */
+    var creatingIn by mutableStateOf<String?>(null)
+        private set
+
+    /** 编辑中的新目录名称 */
+    var creatingName by mutableStateOf("")
+
+    /**
+     * 进入就地新建：在 [parentPath] 下插入名称编辑行（同一时刻仅一个编辑行）。
+     * [siblingNames] 供预填名自动避开同级重名（「新建文件夹 2/3…」，不改名直接
+     * 提交也不会撞名失败）。
+     */
+    fun beginCreate(parentPath: String, siblingNames: List<String> = emptyList()) {
+        var name = "新建文件夹"
+        var n = 2
+        while (name in siblingNames) {
+            name = "新建文件夹 $n"
+            n++
+        }
+        creatingIn = parentPath
+        creatingName = name
+    }
+
+    /** 取消新建（Esc / 校验失败） */
+    fun cancelCreate() {
+        creatingIn = null
+        creatingName = ""
+    }
+
+    /**
+     * 展开从根到 [dirPath] 的每一层（设备路径 `/a/b/c` 按段逐层加载），
+     * 使该目录在树中可见——就地新建的编辑行需要挂在可见父目录下。
+     */
+    fun ensureExpandedChain(dirPath: String) {
+        var prefix = ""
+        dirPath.split('/').filter { it.isNotBlank() }.forEach { seg ->
+            prefix = "$prefix/$seg"
+            if (children[prefix] == null) load(prefix)
+            expandedPaths = expandedPaths + prefix
+        }
+    }
 
     init {
         load(rootPath)
     }
 
-    /** 扁平化可见行（DFS 展开结果，深度供缩进） */
-    data class VisibleRow(val entry: FileEntry, val depth: Int)
+    /** 行种类：普通节点 / 列举失败提示行（展示原因）/ 空目录提示行 / 就地新建名称编辑行 */
+    enum class RowKind { NORMAL, ERROR, EMPTY, CREATING }
+
+    /** 扁平化可见行（DFS 展开结果，深度供缩进；空/失败目录注入提示行，新建挂编辑行） */
+    data class VisibleRow(val entry: FileEntry, val depth: Int, val kind: RowKind = RowKind.NORMAL)
 
     val visibleRows: List<VisibleRow>
         get() {
             val rows = mutableListOf<VisibleRow>()
             fun walk(path: String, depth: Int) {
-                children[path]?.forEach { entry ->
+                val list = children[path]
+                if (list != null && list.isEmpty()) {
+                    // 已加载且无子级：优先展示失败原因，否则明确「空目录」（不静默）；
+                    // 就地新建编辑期间跳过提示行（空目录也要能挂编辑行）
+                    if (creatingIn != path) {
+                        val err = errors[path]
+                        rows += if (err != null) {
+                            VisibleRow(FileEntry(path = "$path/<error>", name = err, isDir = false), depth, RowKind.ERROR)
+                        } else {
+                            VisibleRow(FileEntry(path = "$path/<empty>", name = "（空目录）", isDir = false), depth, RowKind.EMPTY)
+                        }
+                    }
+                    if (creatingIn == path) {
+                        rows += VisibleRow(FileEntry(path = "$path/<creating>", name = creatingName, isDir = true), depth + 1, RowKind.CREATING)
+                    }
+                    return
+                }
+                list?.forEach { entry ->
                     rows += VisibleRow(entry, depth)
                     if (entry.isDir && entry.path in expandedPaths) walk(entry.path, depth + 1)
+                }
+                if (creatingIn == path) {
+                    rows += VisibleRow(FileEntry(path = "$path/<creating>", name = creatingName, isDir = true), depth + 1, RowKind.CREATING)
                 }
             }
             walk(rootPath, 0)
             return rows
         }
 
+    /** 目录列举失败原因（权限拒绝/超时等；null = 正常） */
+    fun errorOf(path: String): String? = errors[path]
+
     /** 某目录已加载的子级（未加载/根外路径返回 null；新建文件夹重名检查用） */
     fun childrenOf(path: String): List<FileEntry>? = children[path]
 
-    /** 行点击：选中；目录行同时切换展开/收起（未加载层在展开时懒加载） */
-    fun toggle(entry: FileEntry) {
+    /** 行单击：仅选中（展开/收起改由双击或折叠箭头承担，SP-5001 走查交互） */
+    fun select(entry: FileEntry) {
         selectedEntry = entry
+    }
+
+    /** 展开/收起目录（未加载层在展开时懒加载）；文件节点无操作 */
+    fun toggleExpand(entry: FileEntry) {
         if (!entry.isDir) return
         if (entry.path in expandedPaths) {
             expandedPaths = expandedPaths - entry.path
@@ -75,9 +156,9 @@ class FileTreeState(
         }
     }
 
-    /** 投递/推送目标目录：选中目录→其路径；选中文件→父目录；未选中→根 */
+    /** 投递/推送目标目录：选中目录→其路径；选中文件→父目录；未选中→[defaultDir] */
     fun currentDir(): String {
-        val sel = selectedEntry ?: return rootPath
+        val sel = selectedEntry ?: return defaultDir
         return if (sel.isDir) sel.path else parentOf(sel.path)
     }
 
@@ -93,6 +174,7 @@ class FileTreeState(
         expandedPaths = emptySet()
         selectedEntry = null
         children.clear()
+        errors.clear()
         load(rootPath)
     }
 
@@ -119,10 +201,11 @@ class FileTreeState(
     private fun load(path: String) {
         loadingPath = path
         scope.launch {
-            val list = lister(path)
-            children[path] = list
+            val result = lister(path)
+            children[path] = result.entries
+            errors[path] = result.error
             if (loadingPath == path) loadingPath = null
-            backfillDirCount(path, list.size)
+            backfillDirCount(path, result.entries.size)
         }
     }
 
@@ -137,10 +220,19 @@ class FileTreeState(
     }
 
     companion object {
-        /** 取父目录路径（设备 `/` 与 PC `\` 两种分隔符兼容） */
+        /**
+         * 取父目录路径（设备 `/` 与 PC `\` 两种分隔符兼容）。
+         * 盘符根（`C:\`）的父 = 此电脑虚拟根（空串）；`C:\Users` 的父补全为 `C:\`。
+         */
         fun parentOf(path: String): String {
+            if (path.length >= 2 && path[1] == ':' &&
+                (path.length == 2 || (path.length == 3 && (path[2] == '\\' || path[2] == '/')))
+            ) return ""
             val i = maxOf(path.lastIndexOf('/'), path.lastIndexOf('\\'))
-            return if (i <= 0) path else path.substring(0, i).ifEmpty { path }
+            if (i <= 0) return path
+            var parent = path.substring(0, i)
+            if (parent.length == 2 && parent[1] == ':') parent += "\\"
+            return parent
         }
     }
 }
