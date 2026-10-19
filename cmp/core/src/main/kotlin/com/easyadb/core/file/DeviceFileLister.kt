@@ -21,9 +21,16 @@ import java.time.format.DateTimeFormatter
  * drwxrwx--x  2 root sdcard  4096 2026-09-28 09:41 Download
  * -rw-rw----  1 root sdcard  4096 2026-10-09 11:02 device-info.txt
  * ```
- * 老版 toolbox（Android <6，防御性兼容）：`... 4096 Sep 28 09:41 name`（近 6 个月，
- * 无年份补当前年）或 `... 4096 Sep 28  2021 name`（更早，无时分补 00:00）。
- * 两种格式**列数不同**（时间列占位差异），解析按「时间列是否 HH:mm」分流。
+ * 老版 toolbox（Android 5.x 真机实测，如 KKHi3751V553 电视）**缺 links 列**，且目录行
+ * 连 size 列也没有：
+ * ```
+ * drwxr-x--- root root  2024-06-19 11:05 .android          （目录 6 列，无 size）
+ * -rw------- root root      2 1970-01-01 08:00 .layout_version（文件 7 列）
+ * lrwxrwxrwx root root  1970-01-01 08:00 sdcard -> /storage/sdcard（链接 6 列）
+ * ```
+ * 另有老版月份名日期变体：`... 4096 Sep 28 09:41 name`（近 6 个月，无年份补当前年）
+ * 或 `... 4096 Sep 28  2021 name`（更早，无时分补 00:00）。
+ * 解析按「列数 + 日期列位置」分流：现代 8 列 / 老版 7 列（文件）/ 老版 6 列（目录、链接）。
  */
 object DeviceFileLister {
 
@@ -119,36 +126,56 @@ object DeviceFileLister {
         return entries.sortedWith(compareByDescending<FileEntry> { it.isDir }.thenBy { it.name.lowercase() })
     }
 
-    /** 单行解析：按时间列格式分流现代/老版布局，返回 null 表示无法识别 */
+    /** ISO 日期（yyyy-MM-dd，老版 toolbox 的日期列口径） */
+    private val DATE_ISO = Regex("\\d{4}-\\d{2}-\\d{2}")
+
+    /** 单行解析：按列数/日期列位置分流现代/老版布局，返回 null 表示无法识别 */
     private fun parseLine(line: String, dirPath: String): FileEntry? {
-        // 现代 toybox：perm links owner group size date time name（limit 8，name=第 8 列后剩余串）
-        val cols = line.split(Regex("\\s+"), limit = 8)
-        if (cols.size < 8) return null
-        val perm = cols[0]
-        val sizeBytes = cols[4].toLongOrNull() ?: return null
+        val perm = line.substringBefore(' ')
+        if (!perm.startsWith("d") && !perm.startsWith("l") && !perm.startsWith("-")) return null
 
         val name: String
         val time: String
-        if (TIME_24H.matches(cols[6]) && cols[5].length == 10 && cols[5][4] == '-') {
-            // 现代：yyyy-MM-dd + HH:mm
-            name = cols[7]
-            time = cols[5].replace('-', '/') + " " + cols[6]
-        } else if (MONTHS.containsKey(cols[5]) && cols[6].toIntOrNull() != null) {
-            // 老版：month day 之后还有一列时间或年份，文件名整体再右移一列
-            val cols9 = line.split(Regex("\\s+"), limit = 9)
-            if (cols9.size < 9) return null
-            name = cols9[8]
-            val month = MONTHS[cols[5]]!!
-            val day = cols[6].toInt()
-            time = when {
-                TIME_24H.matches(cols9[7]) ->  // 近 6 个月：无年份补当前年
-                    "%04d/%02d/%02d %s".format(Year.now().value, month, day, cols9[7])
-                cols9[7].toIntOrNull() != null ->  // 更早：年份无时分
-                    "%s/%02d/%02d 00:00".format(cols9[7], month, day)
-                else -> return null
-            }
+        var sizeBytes = 0L
+
+        // 老版 toolbox（Android 5.x 真机实测，如 KKHi3751V553 电视）：perm owner group
+        // [size] date time name——**缺 links 列**，目录/链接行无 size（6 列），文件行有（7 列）。
+        // 与现代格式（第 2 列是 links 数字）的分流判据：第 2 列非数字 + 倒数第 2/3 列为 ISO 日期 + HH:mm
+        val cols7 = line.split(Regex("\\s+"), limit = 7)
+        val legacy = cols7.size >= 6 &&
+            cols7[1].toLongOrNull() == null &&                    // 无 links 列（现代此位是数字）
+            DATE_ISO.matches(cols7[cols7.size - 3]) &&            // 倒数第 3 列 yyyy-MM-dd
+            TIME_24H.matches(cols7[cols7.size - 2])               // 倒数第 2 列 HH:mm
+        if (legacy) {
+            time = cols7[cols7.size - 3].replace('-', '/') + " " + cols7[cols7.size - 2]
+            name = cols7[cols7.size - 1]
+            if (cols7.size == 7) sizeBytes = cols7[3].toLongOrNull() ?: 0  // 文件行（7 列）才有 size
         } else {
-            return null
+            // 现代 toybox：perm links owner group size date time name（limit 8，name=第 8 列后剩余串）
+            val cols = line.split(Regex("\\s+"), limit = 8)
+            if (cols.size < 8) return null
+            sizeBytes = cols[4].toLongOrNull() ?: return null
+            if (TIME_24H.matches(cols[6]) && cols[5].length == 10 && cols[5][4] == '-') {
+                // 现代：yyyy-MM-dd + HH:mm
+                name = cols[7]
+                time = cols[5].replace('-', '/') + " " + cols[6]
+            } else if (MONTHS.containsKey(cols[5]) && cols[6].toIntOrNull() != null) {
+                // 老版：month day 之后还有一列时间或年份，文件名整体再右移一列
+                val cols9 = line.split(Regex("\\s+"), limit = 9)
+                if (cols9.size < 9) return null
+                name = cols9[8]
+                val month = MONTHS[cols[5]]!!
+                val day = cols[6].toInt()
+                time = when {
+                    TIME_24H.matches(cols9[7]) ->  // 近 6 个月：无年份补当前年
+                        "%04d/%02d/%02d %s".format(Year.now().value, month, day, cols9[7])
+                    cols9[7].toIntOrNull() != null ->  // 更早：年份无时分
+                        "%s/%02d/%02d 00:00".format(cols9[7], month, day)
+                    else -> return null
+                }
+            } else {
+                return null
+            }
         }
         // 符号链接名形如 "sdcard -> /storage/self/primary"：拆出显示名与指向目标
         val arrowIdx = name.indexOf(" -> ")
