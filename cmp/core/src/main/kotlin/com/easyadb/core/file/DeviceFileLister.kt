@@ -30,7 +30,9 @@ import java.time.format.DateTimeFormatter
  * ```
  * 另有老版月份名日期变体：`... 4096 Sep 28 09:41 name`（近 6 个月，无年份补当前年）
  * 或 `... 4096 Sep 28  2021 name`（更早，无时分补 00:00）。
- * 解析按「列数 + 日期列位置」分流：现代 8 列 / 老版 7 列（文件）/ 老版 6 列（目录、链接）。
+ * 解析按**行格式策略列表**分流（[ROW_FORMATS]）：现代 toybox 8 列 / 月份名变体 9 列 /
+ * 老版缺列 6~7 列——每种列布局一个独立解析器（局部变量按语义命名），新增设备格式时
+ * 追加一个策略并注册进列表即可，不在单一函数里堆 if-else 补丁。
  */
 object DeviceFileLister {
 
@@ -126,74 +128,147 @@ object DeviceFileLister {
         return entries.sortedWith(compareByDescending<FileEntry> { it.isDir }.thenBy { it.name.lowercase() })
     }
 
-    /** ISO 日期（yyyy-MM-dd，老版 toolbox 的日期列口径） */
+    /** ISO 日期（yyyy-MM-dd，toybox 与老版 toolbox 共用的日期列口径） */
     private val DATE_ISO = Regex("\\d{4}-\\d{2}-\\d{2}")
 
-    /** 单行解析：按列数/日期列位置分流现代/老版布局，返回 null 表示无法识别 */
-    private fun parseLine(line: String, dirPath: String): FileEntry? {
-        val perm = line.substringBefore(' ')
-        if (!perm.startsWith("d") && !perm.startsWith("l") && !perm.startsWith("-")) return null
+    /** 单行解析结果：[perm]/[name]/[time]/[sizeBytes] 已按语义拆列，调用方不再关心列下标 */
+    private data class ParsedFields(
+        val perm: String,
+        val name: String,
+        val time: String,
+        val sizeBytes: Long
+    )
 
-        val name: String
-        val time: String
-        var sizeBytes = 0L
+    /**
+     * 一种 ls -la 行格式的列解析策略。
+     *
+     * 设备端 ls 实现版本不同（toybox / 老版 toolbox），同一行数据的**列布局**不同；
+     * 每种布局实现一个 [parse]，[parseLine] 按注册顺序逐一尝试，首个命中即生效。
+     * 新增设备格式 = 新增一个实现 + 注册进 [ROW_FORMATS]，不改既有代码。
+     */
+    private fun interface RowFormat {
+        /** 能解析该行返回字段；不匹配返回 null（交下一个策略尝试） */
+        fun parse(line: String): ParsedFields?
+    }
 
-        // 老版 toolbox（Android 5.x 真机实测，如 KKHi3751V553 电视）：perm owner group
-        // [size] date time name——**缺 links 列**，目录/链接行无 size（6 列），文件行有（7 列）。
-        // 与现代格式（第 2 列是 links 数字）的分流判据：第 2 列非数字 + 倒数第 2/3 列为 ISO 日期 + HH:mm
-        val cols7 = line.split(Regex("\\s+"), limit = 7)
-        val legacy = cols7.size >= 6 &&
-            cols7[1].toLongOrNull() == null &&                    // 无 links 列（现代此位是数字）
-            DATE_ISO.matches(cols7[cols7.size - 3]) &&            // 倒数第 3 列 yyyy-MM-dd
-            TIME_24H.matches(cols7[cols7.size - 2])               // 倒数第 2 列 HH:mm
-        if (legacy) {
-            time = cols7[cols7.size - 3].replace('-', '/') + " " + cols7[cols7.size - 2]
-            name = cols7[cols7.size - 1]
-            if (cols7.size == 7) sizeBytes = cols7[3].toLongOrNull() ?: 0  // 文件行（7 列）才有 size
+    /**
+     * 现代 toybox（Android 6+）格式，8 列：
+     * `drwxrwx--x 2 root sdcard 4096 2026-09-28 09:41 Download`
+     * ```
+     * [0]perm [1]links [2]owner [3]group [4]size [5]date(yyyy-MM-dd) [6]time(HH:mm) [7..]name
+     * ```
+     */
+    private val ToyboxModern = RowFormat { line ->
+        val cols = line.split(Regex("\\s+"), limit = 8)
+        if (cols.size < 8) return@RowFormat null
+        val perm = cols[0]
+        val links = cols[1]
+        val size = cols[4]
+        val date = cols[5]
+        val time = cols[6]
+        val name = cols[7]
+        if (links.toLongOrNull() == null) return@RowFormat null          // links 列必须是数字
+        if (!DATE_ISO.matches(date)) return@RowFormat null
+        if (!TIME_24H.matches(time)) return@RowFormat null
+        ParsedFields(perm, name, "${date.replace('-', '/')} $time", size.toLongOrNull() ?: return@RowFormat null)
+            .takeIf { perm.startsWith("d") || perm.startsWith("l") || perm.startsWith("-") }
+    }
+
+    /**
+     * 老版月份名日期变体，9 列（时间或年份占两列）：
+     * ```
+     * -rw-rw---- root sdcard 4096 Sep 28 09:41 name   （近 6 个月，无年份补当前年）
+     * -rw-rw---- root sdcard 4096 Sep 28  2021 name   （更早，无时分补 00:00）
+     * ```
+     * [0]perm [1]links [2]owner [3]group [4]size [5]month [6]day [7]time|year [8..]name
+     */
+    private val ToolboxMonthName = RowFormat { line ->
+        val cols = line.split(Regex("\\s+"), limit = 9)
+        if (cols.size < 9) return@RowFormat null
+        val perm = cols[0]
+        val links = cols[1]
+        val size = cols[4]
+        val month = cols[5]
+        val day = cols[6]
+        val lastTimeCol = cols[7]
+        val name = cols[8]
+        if (links.toLongOrNull() == null) return@RowFormat null
+        val monthNum = MONTHS[month] ?: return@RowFormat null
+        val dayNum = day.toIntOrNull() ?: return@RowFormat null
+        val isRecentHalfYear = TIME_24H.matches(lastTimeCol)     // 近 6 个月：无年份补当前年
+        val year: Int?
+        val timeOfDay: String
+        if (isRecentHalfYear) {
+            year = Year.now().value
+            timeOfDay = lastTimeCol
         } else {
-            // 现代 toybox：perm links owner group size date time name（limit 8，name=第 8 列后剩余串）
-            val cols = line.split(Regex("\\s+"), limit = 8)
-            if (cols.size < 8) return null
-            sizeBytes = cols[4].toLongOrNull() ?: return null
-            if (TIME_24H.matches(cols[6]) && cols[5].length == 10 && cols[5][4] == '-') {
-                // 现代：yyyy-MM-dd + HH:mm
-                name = cols[7]
-                time = cols[5].replace('-', '/') + " " + cols[6]
-            } else if (MONTHS.containsKey(cols[5]) && cols[6].toIntOrNull() != null) {
-                // 老版：month day 之后还有一列时间或年份，文件名整体再右移一列
-                val cols9 = line.split(Regex("\\s+"), limit = 9)
-                if (cols9.size < 9) return null
-                name = cols9[8]
-                val month = MONTHS[cols[5]]!!
-                val day = cols[6].toInt()
-                time = when {
-                    TIME_24H.matches(cols9[7]) ->  // 近 6 个月：无年份补当前年
-                        "%04d/%02d/%02d %s".format(Year.now().value, month, day, cols9[7])
-                    cols9[7].toIntOrNull() != null ->  // 更早：年份无时分
-                        "%s/%02d/%02d 00:00".format(cols9[7], month, day)
-                    else -> return null
-                }
-            } else {
-                return null
-            }
+            year = lastTimeCol.toIntOrNull() ?: return@RowFormat null  // 更早：年份无时分
+            timeOfDay = "00:00"
         }
+        val time = "%04d/%02d/%02d %s".format(year, monthNum, dayNum, timeOfDay)
+        ParsedFields(perm, name, time, size.toLongOrNull() ?: return@RowFormat null)
+            .takeIf { perm.startsWith("d") || perm.startsWith("l") || perm.startsWith("-") }
+    }
+
+    /**
+     * 老版 toolbox（Android 5.x 真机实测，如 KKHi3751V553 电视）格式，**缺 links 列**：
+     * ```
+     * drwxr-x--- root root 2024-06-19 11:05 .android                    （目录 6 列，无 size）
+     * -rw------- root root      2 1970-01-01 08:00 .layout_version      （文件 7 列）
+     * lrwxrwxrwx root root 1970-01-01 08:00 sdcard -> /storage/sdcard   （链接 6 列）
+     * ```
+     * [0]perm [1]owner [2]group [3]?(size) [4]date [5]time [6..]name——size 列仅文件行有（cols[3] 数字判定）。
+     */
+    private val ToolboxLegacy = RowFormat { line ->
+        val cols = line.split(Regex("\\s+"), limit = 7)
+        if (cols.size < 6) return@RowFormat null
+        val perm = cols[0]
+        val owner = cols[1]
+        // cols[2] 是 group，分流不依赖（owner 非 links 数字已排除现代格式）
+        // size 列判定：文件行 cols[3] 是数字 size；目录/链接行 cols[3] 是日期（非数字）。
+        // 不能用「倒数第 N 列」定位——name 可含空格（符号链接行 "name -> target"）
+        val sizeCol = cols[3]
+        val hasSize = sizeCol.toLongOrNull() != null
+        val date = if (hasSize) cols[4] else cols[3]
+        val time = if (hasSize) cols[5] else cols[4]
+        val nameStart = if (hasSize) 6 else 5
+        if (cols.size <= nameStart) return@RowFormat null
+        // limit=7 截断：name 自身含空格（链接行 "name -> target"）时剩余列拼回
+        val name = cols.drop(nameStart).joinToString(" ")
+        // 分流判据：owner 非 links 数字（现代格式此位是数字）+ 日期列为 ISO 格式
+        if (owner.toLongOrNull() != null) return@RowFormat null
+        if (!DATE_ISO.matches(date)) return@RowFormat null
+        if (!TIME_24H.matches(time)) return@RowFormat null
+        val sizeBytes = if (hasSize) sizeCol.toLongOrNull() ?: 0 else 0
+        ParsedFields(perm, name, "${date.replace('-', '/')} $time", sizeBytes)
+            .takeIf { perm.startsWith("d") || perm.startsWith("l") || perm.startsWith("-") }
+    }
+
+    /** 行格式策略注册表（[parseLine] 按序尝试，首个命中生效；新设备格式追加至此） */
+    private val ROW_FORMATS = listOf(ToyboxModern, ToolboxMonthName, ToolboxLegacy)
+
+    /** 单行解析：按注册序尝试各格式策略，首个命中生效 */
+    private fun parseLine(line: String, dirPath: String): FileEntry? {
+        val fields = ROW_FORMATS.firstNotNullOfOrNull { format ->
+            runCatching { format.parse(line) }.getOrNull()
+        } ?: return null
         // 符号链接名形如 "sdcard -> /storage/self/primary"：拆出显示名与指向目标
-        val arrowIdx = name.indexOf(" -> ")
-        val displayName = if (arrowIdx >= 0) name.substring(0, arrowIdx) else name
-        val linkTarget = if (arrowIdx >= 0) name.substring(arrowIdx + 4) else null
+        val arrowIdx = fields.name.indexOf(" -> ")
+        val displayName = if (arrowIdx >= 0) fields.name.substring(0, arrowIdx) else fields.name
+        val linkTarget = if (arrowIdx >= 0) fields.name.substring(arrowIdx + 4) else null
         // 目录符号链接按目录展开（isDir=true）：设备根的 sdcard/etc/vendor 等均为
         // 链接，按文件处理会不可展开（走查反馈：/ 下看不到 sdcard）；展开走尾斜杠
         // ls 自动跟随目标，文件链接展开则以错误行呈现（优雅降级）
-        val isDir = perm.startsWith("d") || perm.startsWith("l")
-        val isSymlink = perm.startsWith("l")
+        val isDir = fields.perm.startsWith("d") || fields.perm.startsWith("l")
+        val isSymlink = fields.perm.startsWith("l")
         return FileEntry(
             path = if (dirPath.endsWith("/")) "$dirPath$displayName" else "$dirPath/$displayName",
             name = displayName,
             isDir = isDir,
-            perm = perm,
-            modifiedAt = time,
-            sizeText = if (isDir) "--" else humanizeSize(sizeBytes),
-            sizeBytes = sizeBytes,
+            perm = fields.perm,
+            modifiedAt = fields.time,
+            sizeText = if (isDir) "--" else humanizeSize(fields.sizeBytes),
+            sizeBytes = fields.sizeBytes,
             isSymlink = isSymlink,
             linkTarget = linkTarget
         )
