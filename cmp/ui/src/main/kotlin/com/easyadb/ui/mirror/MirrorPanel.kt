@@ -5,6 +5,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +18,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
 import androidx.compose.material.Surface
 import androidx.compose.material.Switch
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -30,10 +38,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.awt.SwingPanel
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
@@ -60,10 +73,14 @@ import javax.swing.JPanel
  * 设备实时预览面板（P8 独立窗口 + P9 嵌入模式）。
  *
  * 对齐 Python `win32Wrapper.py::ScrcpyEmbedWidget`，UI 对齐 H5 参照稿 `#pane-mirror`：
- * - 工具栏卡片：状态点 + 标题 + 开关（Switch 替代原开启/关闭双按钮）+ 状态文案 +
- *   「嵌入应用窗口/独立窗口」分段控件（运行中锁定并琥珀提示）
+ * - 工具栏（去卡片化贴顶行）：三态状态点（灰停止 / 琥珀闪烁连接中 / 绿发光运行）+
+ *   标题 + 开关（Switch 替代原开启/关闭双按钮，瘦身 36×20，开启轨恒品牌蓝）+ 三态状态
+ *   文案 +「嵌入应用窗口/独立窗口」分段控件（--field 底 + 品牌蓝渐变选中项，默认嵌入，
+ *   运行中锁定并琥珀提示）+ 运行时长与分辨率双徽标（.mirror-stats）；窄宽度下不换行
+ *   增高——提示行 weight 全占剩余空间并右对齐，溢出端直接裁切（对齐 H5 nowrap 语义）
  * - 镜像区卡片（设备屏幕本体恒深色 .scr-outer）：未开启空态（图标+说明+品牌按钮）/
- *   scrcpy 缺失指引 / 嵌入画面 / 独立窗口运行提示
+ *   连接中过渡态（spinner + 「正在连接设备画面…」）/ scrcpy 缺失指引 / 嵌入画面 /
+ *   独立窗口运行提示
  * - 嵌入后键盘焦点自动处理（收编时自动 SetFocus + 点击画面即原生聚焦），
  *   替代 Python 版“键盘无法控制请点红字”的手工 workaround。
  * - scrcpy 二进制缺失时显示红色下载指引（对齐 Python WARRING 文案）。
@@ -77,7 +94,9 @@ import javax.swing.JPanel
  * 收编流程把隐藏的窗口重新 reparent + SW_SHOW，恢复嵌入预览。
  *
  * @param deviceIp 当前选中设备 IP（null 时「开启」禁用）
- * @param mirrorState 镜像状态（Idle / Running）
+ * @param mirrorState 镜像状态（Idle / Connecting / Running）
+ * @param resolutionText 设备分辨率徽标文本（如 `1920×1080`，null/空 时隐藏徽标；
+ *   宿主在镜像启动成功后经 `adb shell wm size` 查询，Override 优先）
  * @param binaryReady scrcpy.exe 是否就绪
  * @param binaryPath scrcpy.exe 期望路径（缺失时展示在指引中）
  * @param embedEnabled 嵌入模式勾选态（宿主持有，跨 Tab 切换保持）
@@ -87,6 +106,7 @@ import javax.swing.JPanel
 fun MirrorPanel(
     deviceIp: String?,
     mirrorState: MirrorState,
+    resolutionText: String? = null,
     binaryReady: Boolean,
     binaryPath: String,
     embedEnabled: Boolean,
@@ -98,6 +118,8 @@ fun MirrorPanel(
     modifier: Modifier = Modifier
 ) {
     val isRunning = mirrorState is MirrorState.Running
+    val isConnecting = mirrorState is MirrorState.Connecting
+    val isLocked = isRunning || isConnecting
 
     // 运行时长（H5 .mirror-stats .mstat）：基准存文件级变量，Tab 切走再切回时长连续不重置；
     // Idle→Running 时重置基准，每秒刷一次显示（mm:ss，满一小时进位 h:mm:ss）
@@ -126,82 +148,116 @@ fun MirrorPanel(
         modifier = modifier.fillMaxSize().padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // ── 工具栏卡片（HTML .mirror-toolbar） ──
-        Surface(
-            modifier = Modifier.fillMaxWidth(),
-            shape = easyAdbTokens.shapeLg,
-            color = easyAdbColors.Surface,
-            border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Divider),
-            elevation = 0.dp
+        // ── 工具栏（HTML #pane-mirror .mirror-toolbar：去卡片化贴顶行，gap 12 / padding 2×14） ──
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // 标题单元（.mirror-name：点+文字 gap 8，700 字重 + .5px 字距 + 专用蓝灰，12.5sp）。
+            // 全行文本统一 lineHeight=16sp：不同字号的默认行盒高不同，中心对齐后视觉字面会
+            // 高低错落；统一行高 + softWrap=false（窄宽度不换行增高）后各文本字面同一水平线
             Row(
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // 状态点（.mirror-dot：灰=停止 绿=运行）
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(if (isRunning) easyAdbColors.StatusOnline else easyAdbColors.TextHint)
-                )
+                MirrorStateDot(isRunning = isRunning, isConnecting = isConnecting)
                 Text(
                     text = "实时预览",
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = easyAdbColors.TextPrimary
+                    fontSize = 12.5.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 0.5.sp,
+                    color = easyAdbColors.MirrorName,
+                    lineHeight = MirrorToolbarLineHeight,
+                    softWrap = false
                 )
-                // 开关（.switch）：替代原开启/关闭双按钮；未选设备/二进制缺失时禁开
+            }
+            // 开关（.switch 工具栏瘦身 36×20）：Material Switch 52×32 均匀 scale 至视觉约
+            // 34×21，requiredSize 占位 38×22 防间距放大；开启轨恒品牌蓝（H5 明暗同值）；
+            // 未选设备/二进制缺失时禁开；连接中窗口极短，禁用防「点了关却变运行」竞态
+            Box(
+                modifier = Modifier.requiredSize(38.dp, 22.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 Switch(
-                    checked = isRunning,
+                    checked = isRunning || isConnecting,
                     onCheckedChange = { on -> if (on) onStart() else onStop() },
-                    enabled = if (isRunning) true else deviceIp != null && binaryReady
+                    enabled = isRunning || (!isConnecting && deviceIp != null && binaryReady),
+                    colors = SwitchDefaults.colors(
+                        checkedTrackColor = Color(0xFF2563EB)
+                    ),
+                    modifier = Modifier.scale(0.66f)
                 )
-                // 状态文案（.mirror-state：灰=已停止 绿=运行中）
-                Text(
-                    text = if (isRunning) "运行中" else "已停止",
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = if (isRunning) easyAdbColors.StatusOnline else easyAdbColors.TextSecondary,
-                    modifier = Modifier.widthIn(min = 52.dp)
-                )
-                // 嵌入/独立分段控件（.seg#mirrorEmbed；运行中锁定 + 琥珀提示）
-                if (Win32Interop.isWindows) {
+            }
+            // 状态文案（.mirror-state：12sp/600 字重/min-width 58px，三态色）
+            Text(
+                text = when {
+                    isRunning -> "运行中"
+                    isConnecting -> "连接中"
+                    else -> "已停止"
+                },
+                fontSize = 12.sp,
+                fontWeight = FontWeight.SemiBold,
+                lineHeight = MirrorToolbarLineHeight,
+                softWrap = false,
+                color = when {
+                    isRunning -> easyAdbColors.StatusOnline
+                    isConnecting -> easyAdbColors.StatusOffline
+                    else -> easyAdbColors.TextDisabled
+                },
+                modifier = Modifier.widthIn(min = 58.dp)
+            )
+            // 嵌入/独立分段控件（#mirrorEmbed 特化：--field 底 + --line 描边 + 圆角 8，
+            // 选中项品牌蓝渐变+白字；运行/连接中锁定 + 琥珀提示）
+            if (Win32Interop.isWindows) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Row(
+                        modifier = Modifier
+                            .alpha(if (isLocked) 0.55f else 1f)
+                            .border(easyAdbTokens.strokeWidth, easyAdbColors.Divider, easyAdbTokens.shapeLg)
+                            .clip(easyAdbTokens.shapeLg)
+                            .background(easyAdbColors.Field, easyAdbTokens.shapeLg)
+                            .padding(2.dp),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Row(
-                            modifier = Modifier
-                                .alpha(if (isRunning) 0.55f else 1f)
-                                .clip(easyAdbTokens.shapeMd)
-                                .background(easyAdbColors.SegTrack)
-                                .padding(2.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            MirrorModeButton("嵌入应用窗口", embedEnabled, !isRunning) { onEmbedEnabledChange(true) }
-                            MirrorModeButton("独立窗口", !embedEnabled, !isRunning) { onEmbedEnabledChange(false) }
-                        }
-                        if (isRunning) {
-                            Text(
-                                text = "预览运行中已锁定 · 停止后可切换",
-                                fontSize = 11.sp,
-                                color = easyAdbColors.AccentOrange
-                            )
-                        }
+                        MirrorModeButton("嵌入应用窗口", embedEnabled, !isLocked) { onEmbedEnabledChange(true) }
+                        MirrorModeButton("独立窗口", !embedEnabled, !isLocked) { onEmbedEnabledChange(false) }
+                    }
+                    if (isLocked) {
+                        Text(
+                            text = "预览运行中已锁定 · 停止后可切换",
+                            fontSize = 11.sp,
+                            lineHeight = MirrorToolbarLineHeight,
+                            softWrap = false,
+                            color = easyAdbColors.StatusOffline
+                        )
                     }
                 }
-                Spacer(Modifier.weight(1f))
-                Text(
-                    text = "鼠标模式(右键=返回)、键盘模式(方向键、Enter键)",
-                    fontSize = 11.5.sp,
-                    color = easyAdbColors.TextSecondary,
-                    maxLines = 1
-                )
-                // 运行时长徽标（.mstat：mono 蓝字蓝底胶囊）
-                if (isRunning) {
+            }
+            // 操作提示行（.mirror-hint-line：margin-left:auto 即右对齐贴行尾）。宽度过窄时
+            // 不换行增高、不推挤后续控件：weight 全占剩余空间并右对齐，文字溢出端直接裁切
+            // （「优先缩小文字宽度，实在没位置正常遮挡」——H5 white-space:nowrap 同语义）
+            Text(
+                text = "鼠标模式(右键=返回)、键盘模式(方向键、Enter键)",
+                fontSize = 11.5.sp,
+                lineHeight = MirrorToolbarLineHeight,
+                color = easyAdbColors.TextDisabled,
+                textAlign = TextAlign.End,
+                softWrap = false,
+                maxLines = 1,
+                modifier = Modifier.weight(1f)
+            )
+            // 运行统计徽标组（.mirror-stats gap 6：时长 + 分辨率）
+            if (isRunning) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     MirrorStatBadge(text = elapsedText)
+                    if (!resolutionText.isNullOrEmpty()) {
+                        MirrorStatBadge(text = resolutionText)
+                    }
                 }
             }
         }
@@ -220,6 +276,7 @@ fun MirrorPanel(
                         binaryPath = binaryPath,
                         modifier = Modifier.align(Alignment.Center).padding(24.dp)
                     )
+                    isConnecting -> MirrorConnectingState(modifier = Modifier.align(Alignment.Center))
                     isRunning && embedEnabled -> EmbeddedScrcpyRegion(
                         modifier = Modifier.fillMaxSize(),
                         onEmbeddedHwndChange = onEmbeddedHwndChange
@@ -237,28 +294,99 @@ fun MirrorPanel(
     }
 }
 
-/** 工具栏数据徽标（.mstat：mono 蓝字 + 主题主色 10% 底 + 描边胶囊）。 */
+/** 工具栏三态状态点（.mirror-dot：tx-3 灰停止 / amber 1s 闪烁连接中 / 绿色光晕运行）。 */
+@Composable
+private fun MirrorStateDot(isRunning: Boolean, isConnecting: Boolean) {
+    // 连接中闪烁（H5 animation:blink 1s infinite）：alpha 1↔0.3 往返
+    val blink by rememberInfiniteTransition(label = "mirrorDotBlink").animateFloat(
+        initialValue = 1f,
+        targetValue = 0.3f,
+        animationSpec = infiniteRepeatable(tween(500), RepeatMode.Reverse),
+        label = "mirrorDotAlpha"
+    )
+    val color = when {
+        isRunning -> easyAdbColors.StatusOnline
+        isConnecting -> easyAdbColors.StatusOffline
+        else -> easyAdbColors.TextDisabled
+    }
+    // 运行光晕（H5 box-shadow:0 0 10px green）：18dp 径向渐变发散圈叠 7dp 实心点
+    Box(
+        modifier = Modifier
+            .size(18.dp)
+            .then(
+                if (isRunning) Modifier.drawBehind {
+                    drawCircle(
+                        brush = Brush.radialGradient(
+                            colors = listOf(color.copy(alpha = 0.45f), Color.Transparent),
+                            center = center,
+                            radius = size.minDimension / 2f
+                        )
+                    )
+                } else Modifier
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier
+                .size(7.dp)
+                .alpha(if (isConnecting) blink else 1f)
+                .clip(CircleShape)
+                .background(color)
+        )
+    }
+}
+
+/** 镜像区连接过渡态（.scr-connecting：spinner + 「正在连接设备画面…」）。 */
+@Composable
+private fun MirrorConnectingState(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        CircularProgressIndicator(
+            strokeWidth = 2.dp,
+            color = easyAdbColors.PreviewTitle,
+            modifier = Modifier.size(26.dp)
+        )
+        Text(
+            text = "正在连接设备画面…",
+            fontSize = 15.5.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = easyAdbColors.PreviewTitle
+        )
+    }
+}
+
+/** 工具栏数据徽标（.mstat：mono 浅蓝字 + 蓝 10% 底 + 浅蓝 28% 描边胶囊，明暗同值）。 */
 @Composable
 private fun MirrorStatBadge(text: String) {
     Text(
         text = text,
         fontFamily = FontFamily.Monospace,
-        fontSize = 11.5.sp,
+        fontSize = 10.5.sp,
         fontWeight = FontWeight.SemiBold,
-        color = easyAdbColors.Primary,
+        lineHeight = MirrorToolbarLineHeight,
+        softWrap = false,
+        color = easyAdbColors.MirrorStatText,
         modifier = Modifier
-            .clip(easyAdbTokens.shapeSm)
-            .background(easyAdbColors.Primary.copy(alpha = 0.1f))
+            .clip(easyAdbTokens.shapeMd)
+            .background(Color(0xFF3B82F6).copy(alpha = 0.1f))
             .border(
                 easyAdbTokens.strokeWidth,
-                easyAdbColors.PrimaryLight.copy(alpha = 0.28f),
-                easyAdbTokens.shapeSm
+                Color(0xFF60A5FA).copy(alpha = 0.28f),
+                easyAdbTokens.shapeMd
             )
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
     )
 }
 
-/** 分段控件单项（.seg button：选中=SegActiveBg+SegActiveText，未选=透底+TextSecondary）。 */
+/**
+ * 分段控件单项（#mirrorEmbed button.active 特化：品牌蓝渐变 #3f88f8→#2563eb + 白字 +
+ * 蓝色投影，圆角 7 / 内边距 14×6；未选透底 + TextSecondary）。与通用 .seg active
+ * （SegActiveBg/SegActiveText）不同——H5 参照稿中实时预览的嵌入模式分段是独立样式；
+ * 选中切换瞬切（渐变过渡在小面积控件上感知为闪烁，沿常用命令 seg 走查结论 1301750）。
+ */
 @Composable
 private fun MirrorModeButton(
     label: String,
@@ -266,25 +394,47 @@ private fun MirrorModeButton(
     enabled: Boolean,
     onClick: () -> Unit
 ) {
+    val shape = RoundedCornerShape(7.dp)
     Box(
         modifier = Modifier
-            .clip(easyAdbTokens.shapeSm)
-            .background(if (selected) easyAdbColors.SegActiveBg else Color.Transparent)
+            .shadow(
+                elevation = if (selected) 1.dp else 0.dp,
+                shape = shape,
+                ambientColor = MirrorSegShadow,
+                spotColor = MirrorSegShadow
+            )
+            .clip(shape)
+            .background(
+                if (selected) {
+                    Brush.verticalGradient(listOf(Color(0xFF3F88F8), Color(0xFF2563EB)))
+                } else {
+                    SolidColor(Color.Transparent)
+                }
+            )
             .then(
                 if (enabled) Modifier.clickable(
                     interactionSource = null, indication = null, onClick = onClick
                 ) else Modifier
             )
-            .padding(horizontal = 12.dp, vertical = 5.dp)
+            .padding(horizontal = 14.dp, vertical = 6.dp)
     ) {
         Text(
             text = label,
             fontSize = 12.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-            color = if (selected) easyAdbColors.SegActiveText else easyAdbColors.TextSecondary
+            lineHeight = MirrorToolbarLineHeight,
+            softWrap = false,
+            maxLines = 1,
+            color = if (selected) easyAdbColors.TextOnPrimary else easyAdbColors.TextSecondary
         )
     }
 }
+
+/** 分段选中项投影色（H5 box-shadow rgba(37,99,235,.4)）。 */
+private val MirrorSegShadow: Color = Color(0xFF2563EB).copy(alpha = 0.4f)
+
+/** 工具栏全行统一行高：不同字号默认行盒高不同，中心对齐后字面高低错落；统一后同一水平线。 */
+private val MirrorToolbarLineHeight = 16.sp
 
 /** 镜像区空态（.scr-empty：大图标容器 + 标题 + 说明 + 品牌主按钮）。 */
 @Composable

@@ -27,6 +27,9 @@ sealed class MirrorState {
     /** 未在镜像（含从未启动、被手动关闭、scrcpy 窗口被用户直接关闭） */
     data object Idle : MirrorState()
 
+    /** 启动流程进行中（[ScrcpyLauncher.start] 自进入至进程 spawn 完成，对应 H5 .mirror-dot.conn） */
+    data class Connecting(val deviceIp: String) : MirrorState()
+
     /** scrcpy 独立窗口运行中 */
     data class Running(val deviceIp: String) : MirrorState()
 }
@@ -134,8 +137,13 @@ class ScrcpyLauncher {
             currentProcess = null
         }
 
+        // 进入即置 Connecting（对齐 H5 .mirror-dot.conn）：覆盖二进制检查与进程 spawn 全程，
+        // 供工具栏状态点/文案呈现三态；任何失败出口都回 Idle，成功出口置 Running
+        _state.value = MirrorState.Connecting(deviceIp)
+
         val exe = findScrcpyExe()
             ?: return@withContext MirrorStartResult.BinaryMissing(primaryScrcpyExe.absolutePath).also {
+                _state.value = MirrorState.Idle
                 logger.warn { "scrcpy binary not found (searched app tool/tools dirs and run dir)" }
             }
 
@@ -180,6 +188,7 @@ class ScrcpyLauncher {
             logger.info { "scrcpy started: pid=${process.pid()} device=$deviceIp" }
             MirrorStartResult.Success
         } catch (e: Exception) {
+            _state.value = MirrorState.Idle
             currentProcess = null
             logger.error { "scrcpy start failed: ${e.message}" }
             MirrorStartResult.StartFailed(e.message ?: e.javaClass.simpleName)
@@ -191,6 +200,12 @@ class ScrcpyLauncher {
      * `win32api.TerminateProcess`）。状态由 onExit 回调统一回置 Idle。未运行时为空操作。
      */
     fun stop() {
+        // Connecting 中被请求关闭（进程尚未 spawn，无 onExit 回调可回置）：直接回 Idle。
+        // 并发中的 start() 随后仍会 spawn 成功并置 Running——窗口极短（毫秒级 spawn），
+        // 且 UI 侧 Connecting 态开关已禁用，此处仅为状态机兜底不卡 Connecting
+        if (_state.value is MirrorState.Connecting) {
+            _state.value = MirrorState.Idle
+        }
         val process = currentProcess ?: return
         stopRequested = true
         try {

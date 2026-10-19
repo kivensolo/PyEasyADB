@@ -38,6 +38,7 @@ import com.easyadb.core.log.LogConfig
 import com.easyadb.core.adb.AdbExecutor
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.adb.MirrorStartResult
+import com.easyadb.core.adb.MirrorState
 import com.easyadb.core.adb.ScrcpyLauncher
 import com.easyadb.platform.Win32Interop
 import com.easyadb.ui.designsystem.EasyAdbTheme
@@ -199,6 +200,12 @@ fun main() {
         // 用户直接关 scrcpy 窗口也会经 onExit 回置 Idle）
         val scrcpyLauncher = remember { ScrcpyLauncher() }
         val mirrorState by scrcpyLauncher.state.collectAsState()
+        // 镜像运行中的设备分辨率徽标（H5 .mirror-stats .mstRes）：启动成功后查一次
+        // `adb shell wm size`（Override size 优先），镜像停止（任何路径回 Idle）即清空
+        var mirrorResolution by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(mirrorState) {
+            if (mirrorState is MirrorState.Idle) mirrorResolution = null
+        }
         // 镜像事件（异常退出诊断 / 转发清理）转到应用控制台，可见性不依赖文件日志
         LaunchedEffect(Unit) {
             scrcpyLauncher.events.collect { event ->
@@ -683,6 +690,7 @@ fun main() {
                     logcatStream = logcatStream,
                     // P8 实时预览参数
                     mirrorState = mirrorState,
+                    mirrorResolution = mirrorResolution,
                     mirrorBinaryReady = scrcpyLauncher.isBinaryReady(),
                     mirrorBinaryPath = scrcpyLauncher.primaryScrcpyExe.absolutePath,
                     onMirrorStart = {
@@ -692,8 +700,17 @@ fun main() {
                         } else {
                             scope.launch {
                                 when (val result = scrcpyLauncher.start(deviceIp)) {
-                                    is MirrorStartResult.Success ->
+                                    is MirrorStartResult.Success -> {
                                         logAppender("[镜像] scrcpy 已启动：$deviceIp（独立窗口「${ScrcpyLauncher.WINDOW_TITLE}」）", 2)
+                                        // 分辨率徽标（H5 .mstRes）：wm size 输出形如
+                                        // “Physical size: 1920x1080”+可选“Override size: …”，
+                                        // Override 优先（用户改过分辨率时的实际生效值）
+                                        val sizeResult = adbExecutor.execAdbCmd("adb -s $deviceIp shell wm size")
+                                        mirrorResolution = parseWmSize(sizeResult.output)?.let { (w, h) -> "${w}×${h}" }
+                                        if (mirrorResolution == null) {
+                                            logAppender("[镜像] 查询设备分辨率失败，徽标隐藏", 3)
+                                        }
+                                    }
                                     is MirrorStartResult.BinaryMissing -> {
                                         logAppender("[镜像] 系统找不到 scrcpy：${result.expectedPath}", 4)
                                         logAppender(
@@ -1145,6 +1162,20 @@ private fun parseMenuConfigXml(stream: InputStream): List<MenuConfig> {
 private fun handleMenuAction(action: MenuAction, logger: AppLogger, logAppender: (String, Int) -> Unit) {
     logger.info { "Menu action: ${action.name} (action=${action.action})" }
     logAppender("[未实现] 菜单操作: ${action.name}", 3)
+}
+
+/**
+ * 解析 `adb shell wm size` 输出（Override 优先）：
+ * 输出形如 “Physical size: 1920x1080”，改过分辨率时另有 “Override size: …” 行。
+ * 返回 (宽, 高)，解析失败返回 null（镜像分辨率徽标随之隐藏）。
+ */
+private fun parseWmSize(output: String): Pair<Int, Int>? {
+    val match = Regex("Override size:\\s*(\\d+)x(\\d+)").find(output)
+        ?: Regex("Physical size:\\s*(\\d+)x(\\d+)").find(output)
+        ?: return null
+    val w = match.groupValues[1].toIntOrNull() ?: return null
+    val h = match.groupValues[2].toIntOrNull() ?: return null
+    return w to h
 }
 
 

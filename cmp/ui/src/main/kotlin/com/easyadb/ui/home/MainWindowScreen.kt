@@ -608,7 +608,8 @@ private fun CurrentDeviceChip(
  * @param onFileTransferLog 文件传输 Tab：控制台回显（message + level）
  * @param consoleLogFlow 控制台日志流（MutableStateFlow，支持清空操作）
  * @param logcatStream 设备 logcat 流管理器（控制启动/停止/过滤）
- * @param mirrorState 镜像状态（Idle / Running，由宿主的 ScrcpyLauncher 推送）
+ * @param mirrorState 镜像状态（Idle / Connecting / Running，由宿主的 ScrcpyLauncher 推送）
+ * @param mirrorResolution 设备分辨率徽标文本（宿主 `adb shell wm size` 查询，null 时隐藏）
  * @param mirrorBinaryReady scrcpy.exe 是否就绪（缺失时面板显示下载指引）
  * @param mirrorBinaryPath scrcpy.exe 期望路径（指引文案用）
  * @param onMirrorStart 点击「开启实时预览」
@@ -658,6 +659,7 @@ fun MainWindowScreen(
     logcatStream: LogcatStream = LogcatStream(),
     // P8 实时预览参数
     mirrorState: MirrorState = MirrorState.Idle,
+    mirrorResolution: String? = null,
     mirrorBinaryReady: Boolean = false,
     mirrorBinaryPath: String = "",
     onMirrorStart: () -> Unit = {},
@@ -673,8 +675,9 @@ fun MainWindowScreen(
     // 内容区六 Tab 与内嵌控制台 Tab 状态（embeddedTab 提升到本层）
     var contentTab by remember { mutableStateOf(TAB_QUICK) }
     // 嵌入模式勾选态提升到 Tab 容器层：MirrorPanel 随 Tab 切换销毁重建，
-    // 勾选框本身运行中禁用——若状态随面板销毁，切回后嵌入预览将无法恢复
-    var mirrorEmbedEnabled by remember { mutableStateOf(false) }
+    // 勾选框本身运行中禁用——若状态随面板销毁，切回后嵌入预览将无法恢复；
+    // 默认嵌入（对齐 H5 mirror.mode 初始 'embed'）
+    var mirrorEmbedEnabled by remember { mutableStateOf(true) }
     // 已收编的 scrcpy 子窗口句柄（嵌入区收编成功后经 onEmbeddedHwndChange 登记，脱离/停止清零）：
     // 供根级键盘接管转发使用——句柄生命周期与嵌入区一致，宿主只读不管理
     var embeddedScrcpyHwnd by remember { mutableStateOf(0L) }
@@ -800,6 +803,7 @@ fun MainWindowScreen(
                                 TAB_MIRROR -> MirrorPanel(
                                     deviceIp = selectedDeviceIp,
                                     mirrorState = mirrorState,
+                                    resolutionText = mirrorResolution,
                                     binaryReady = mirrorBinaryReady,
                                     binaryPath = mirrorBinaryPath,
                                     embedEnabled = mirrorEmbedEnabled,

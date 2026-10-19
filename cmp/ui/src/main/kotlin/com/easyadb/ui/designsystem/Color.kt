@@ -120,6 +120,12 @@ data class EasyAdbColors(
     val PreviewTitle: Color,
     val PreviewBody: Color,
 
+    // ── 实时预览工具栏（HTML .mirror-* 系列；状态点三态复用 TextDisabled/StatusOffline/StatusOnline）──
+    /** .mirror-name 标题色（暗 #b9c8de；浅主题 H5 未覆盖，取 tx-2 同语义值） */
+    val MirrorName: Color,
+    /** .mstat 徽标字色（#9ec3fb，明暗同值——徽标底为半透明蓝，两主题下均可读） */
+    val MirrorStatText: Color,
+
     // ── 反色浮层（Tooltip：亮主题深气泡、暗主题浅气泡） ──
     val TooltipBackground: Color,
     val TooltipText: Color,
@@ -194,6 +200,8 @@ val LightEasyAdbColors = EasyAdbColors(
     PreviewIcon = Color(0xFF42536E),      // .scr-empty .big 图标
     PreviewTitle = Color(0xFF8FA0B8),     // .scr-empty .t1 标题
     PreviewBody = Color(0xFF5F7089),      // .scr-empty .t2 正文
+    MirrorName = Color(0xFF5A6B82),       // .mirror-name（浅主题 H5 未覆盖，取 tx-2 同语义值）
+    MirrorStatText = Color(0xFF9EC3FB),   // .mstat 字色（明暗同值）
 
     TooltipBackground = Color(0xFFEEF3F9), // 浅色气泡（微蓝灰，比 Surface 深一档保辨识）
     TooltipText = Color(0xFF1B2534),
@@ -262,6 +270,8 @@ val DarkEasyAdbColors = EasyAdbColors(
     PreviewIcon = Color(0xFF42536E),
     PreviewTitle = Color(0xFF8FA0B8),
     PreviewBody = Color(0xFF5F7089),
+    MirrorName = Color(0xFFB9C8DE),        // .mirror-name
+    MirrorStatText = Color(0xFF9EC3FB),    // .mstat 字色（明暗同值）
 
     TooltipBackground = Color(0xFF141E32), // .toast 底（rgba(20,30,50,.92)）
     TooltipText = Color(0xFFDBE6F5),      // .toast 文字
