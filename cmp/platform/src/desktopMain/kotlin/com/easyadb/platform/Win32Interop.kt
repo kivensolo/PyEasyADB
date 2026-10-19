@@ -6,7 +6,9 @@ import com.sun.jna.Pointer
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.User32
 import com.sun.jna.platform.win32.WinDef
+import com.sun.jna.platform.win32.WinNT
 import com.sun.jna.platform.win32.WinUser
+import com.sun.jna.ptr.IntByReference
 import com.sun.jna.win32.StdCallLibrary
 import com.sun.jna.win32.W32APIOptions
 import java.awt.Component
@@ -51,6 +53,54 @@ object Win32Interop {
     fun findWindowByTitle(title: String): Long? {
         if (!isWindows) return null
         return User32.INSTANCE.FindWindow(null, title).peer()
+    }
+
+    /**
+     * 枚举顶层窗口中标题精确匹配 [title] 的（hwnd → 所属进程 pid），含隐藏窗口
+     * （残留 scrcpy 可能被上一轮嵌入流程藏到屏幕外）。
+     */
+    fun findWindowsByTitle(title: String): Map<Long, Long> {
+        if (!isWindows) return emptyMap()
+        val result = HashMap<Long, Long>()
+        val pidOut = IntByReference()
+        User32.INSTANCE.EnumWindows(object : WinUser.WNDENUMPROC {
+            override fun callback(hwnd: WinDef.HWND, data: Pointer): Boolean {
+                val buf = CharArray(256)
+                val len = User32.INSTANCE.GetWindowText(hwnd, buf, buf.size)
+                if (len > 0 && String(buf, 0, len) == title) {
+                    if (User32.INSTANCE.GetWindowThreadProcessId(hwnd, pidOut) != 0) {
+                        hwnd.peer()?.let { result[it] = pidOut.value.toLong() }
+                    }
+                }
+                return true
+            }
+        }, null)
+        return result
+    }
+
+    /**
+     * 按「进程 pid + 精确标题」找顶层窗口：只命中本进程窗口。
+     * 残留 scrcpy 与新启动 scrcpy 同标题时，[findWindowByTitle] 的 FindWindow 顺序
+     * 不保证命中哪个——嵌入收编必须按 pid 匹配，杜绝收编残留窗口后新窗口游离共存。
+     */
+    fun findWindowByPidAndTitle(pid: Long, title: String): Long? =
+        findWindowsByTitle(title).entries.firstOrNull { it.value == pid }?.key
+
+    /**
+     * 终结标题匹配的游离 scrcpy 进程：应用上次被强杀（TaskStop/任务管理器）时，
+     * Compose onDispose 清理不会执行，scrcpy 进程与窗口残留（显示中或被上轮嵌入
+     * 流程隐藏在屏幕外）。窗口标题为本应用指定的专有名，同标题必属本项目 scrcpy，
+     * 启动新一轮镜像前全部清理。返回终结的进程数。
+     */
+    fun terminateStaleScrcpy(title: String): Int {
+        if (!isWindows) return 0
+        var killed = 0
+        for (pid in findWindowsByTitle(title).values) {
+            val h = Kernel32.INSTANCE.OpenProcess(WinNT.PROCESS_TERMINATE, false, pid.toInt()) ?: continue
+            if (Kernel32.INSTANCE.TerminateProcess(h, 1)) killed++
+            Kernel32.INSTANCE.CloseHandle(h)
+        }
+        return killed
     }
 
     /**

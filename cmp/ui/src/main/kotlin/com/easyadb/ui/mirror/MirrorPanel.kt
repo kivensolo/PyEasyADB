@@ -278,6 +278,7 @@ fun MirrorPanel(
                     )
                     isConnecting -> MirrorConnectingState(modifier = Modifier.align(Alignment.Center))
                     isRunning && embedEnabled -> EmbeddedScrcpyRegion(
+                        scrcpyPid = (mirrorState as? MirrorState.Running)?.pid,
                         modifier = Modifier.fillMaxSize(),
                         onEmbeddedHwndChange = onEmbeddedHwndChange
                     )
@@ -542,14 +543,19 @@ private var lastEmbeddedChildHwnd: Long = 0L
 
 /**
  * scrcpy 嵌入区（P9）：宿主为 SwingPanel 内的重型 [Canvas]（有独立 HWND，子窗口
- * 被裁剪在面板内）。进入组合后轮询按标题找到 scrcpy 窗口 → 子窗口化 + reparent +
+ * 被裁剪在面板内）。进入组合后轮询找到 scrcpy 窗口 → 子窗口化 + reparent +
  * 贴合尺寸 + 自动聚焦；面板尺寸变化实时 SetWindowPos 跟随；离开组合（取消勾选 /
  * 停止镜像 / 关闭 scrcpy）时脱离并还原独立窗口样式。
+ *
+ * 窗口查找优先按 [scrcpyPid]（本进程 + 专有标题）精确匹配——按纯标题查找时，
+ * 残留 scrcpy（应用上次被强杀遗留）与新窗口同标题，FindWindow 命中顺序不定，
+ * 会收编残留窗口而让新窗口游离（嵌入画面与独立窗口共存）；pid 缺失时退回按标题。
  *
  * 几何断言与全链路验证见 [main]（EmbedSpike）。
  */
 @Composable
 private fun EmbeddedScrcpyRegion(
+    scrcpyPid: Long?,
     modifier: Modifier = Modifier,
     onEmbeddedHwndChange: (Long) -> Unit = {}
 ) {
@@ -619,7 +625,9 @@ private fun EmbeddedScrcpyRegion(
         var child: Long? = null
         val findDeadline = System.currentTimeMillis() + 5000
         while (child == null && System.currentTimeMillis() < findDeadline) {
-            child = Win32Interop.findWindowByTitle(ScrcpyLauncher.WINDOW_TITLE)
+            child = scrcpyPid?.let {
+                Win32Interop.findWindowByPidAndTitle(it, ScrcpyLauncher.WINDOW_TITLE)
+            } ?: Win32Interop.findWindowByTitle(ScrcpyLauncher.WINDOW_TITLE)
             if (child == null) delay(200)
         }
         if (child == null) return@LaunchedEffect // 找不到（启动失败/非 Windows）→ 保持独立窗口兜底

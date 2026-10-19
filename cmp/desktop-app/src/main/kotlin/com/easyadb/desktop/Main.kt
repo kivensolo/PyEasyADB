@@ -272,6 +272,12 @@ fun main() {
         // undecorated 窗口的统一关闭入口（头栏关闭按钮与系统 onCloseRequest 共用一套清理）
         val closeApp: () -> Unit = {
             watcher.stop()
+            // 终结 scrcpy 镜像：嵌入模式的进程设计为跨 Tab 存活，但应用退出必须带走，
+            // 否则残留（窗口游离桌面或隐藏在屏幕外，下次启动还需 terminateStaleScrcpy 兜底）
+            scrcpyLauncher.stop()
+            // 双保险：stop() 只杀 launcher 登记的当前进程，清掉一切同标题游离 scrcpy
+            // （历史残留 / 上次强杀遗留），保证退出后无孤儿进程
+            Win32Interop.terminateStaleScrcpy(ScrcpyLauncher.WINDOW_TITLE)
             DbManager.close()
             AppLogger.closeAll()
             exitApplication()
@@ -699,6 +705,17 @@ fun main() {
                             logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
                         } else {
                             scope.launch {
+                                // 清残留：应用上次被强杀时 scrcpy 子进程遗留（窗口游离桌面或被上轮
+                                // 嵌入流程隐藏在屏幕外）。不清会让本轮收编误抓残留窗口——嵌入画面
+                                // 与新启动的独立窗口共存（双画面 bug）；同标题窗口必属本项目 scrcpy。
+                                // Running 态（进程活着）不清理，防误杀正在运行的镜像
+                                var staleKilled = 0
+                                if (scrcpyLauncher.state.value !is MirrorState.Running) {
+                                    staleKilled = Win32Interop.terminateStaleScrcpy(ScrcpyLauncher.WINDOW_TITLE)
+                                }
+                                if (staleKilled > 0) {
+                                    logAppender("[镜像] 清理 $staleKilled 个残留 scrcpy 进程", 3)
+                                }
                                 when (val result = scrcpyLauncher.start(deviceIp)) {
                                     is MirrorStartResult.Success -> {
                                         logAppender("[镜像] scrcpy 已启动：$deviceIp（独立窗口「${ScrcpyLauncher.WINDOW_TITLE}」）", 2)

@@ -30,8 +30,8 @@ sealed class MirrorState {
     /** 启动流程进行中（[ScrcpyLauncher.start] 自进入至进程 spawn 完成，对应 H5 .mirror-dot.conn） */
     data class Connecting(val deviceIp: String) : MirrorState()
 
-    /** scrcpy 独立窗口运行中 */
-    data class Running(val deviceIp: String) : MirrorState()
+    /** scrcpy 独立窗口运行中（pid 供嵌入收编按进程精确找窗口，防残留窗口误收编） */
+    data class Running(val deviceIp: String, val pid: Long? = null) : MirrorState()
 }
 
 /**
@@ -125,6 +125,11 @@ class ScrcpyLauncher {
      * 命令对齐 Python：`scrcpy -s {addr} --window-title "{WINDOW_TITLE}"`。
      */
     suspend fun start(deviceIp: String): MirrorStartResult = withContext(Dispatchers.IO) {
+        // 防重入：Connecting 期间重复触发会逃过下方 Running 检查，spawn 出第二个
+        // scrcpy 进程（双窗口共存）——一律按「已在运行」拒绝
+        if (_state.value is MirrorState.Connecting) {
+            return@withContext MirrorStartResult.AlreadyRunning
+        }
         if (_state.value is MirrorState.Running) {
             // 僵尸自愈：状态卡 Running 但进程已死（秒退竞态遗留 / 外部杀进程未触发回调），
             // 直接回收状态允许重新启动，否则「开启」按钮永远灰死
@@ -180,7 +185,7 @@ class ScrcpyLauncher {
                         emit("scrcpy 退出：pid=${process.pid()} 存活=${aliveMs}ms")
                 }
             }
-            _state.value = MirrorState.Running(deviceIp)
+            _state.value = MirrorState.Running(deviceIp, process.pid())
             // 竞态兜底：若设置 Running 前进程已秒退且回调已先跑（Idle 被覆盖），此处再校验一次
             if (!process.isAlive && currentProcess === process) {
                 _state.value = MirrorState.Idle
