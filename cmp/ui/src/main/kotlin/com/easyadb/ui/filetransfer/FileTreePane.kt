@@ -383,7 +383,7 @@ private fun TreeRow(
                     "→ $target",
                     fontSize = 9.5.sp,
                     fontFamily = FontFamily.Monospace,
-                    color = easyAdbColors.TextHint,
+                    color = easyAdbColors.TextMeta,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false)
@@ -400,7 +400,7 @@ private fun TreeRow(
                 entry.perm ?: "",
                 fontSize = 10.sp,
                 fontFamily = FontFamily.Monospace,
-                color = easyAdbColors.TextHint,
+                color = easyAdbColors.TextMeta,
                 maxLines = 1,
                 modifier = Modifier.width(96.dp)
             )
@@ -409,7 +409,7 @@ private fun TreeRow(
             entry.modifiedAt ?: "",
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
-            color = easyAdbColors.TextHint,
+            color = easyAdbColors.TextMeta,
             maxLines = 1,
             modifier = Modifier.width(104.dp)
         )
@@ -417,7 +417,7 @@ private fun TreeRow(
             entry.sizeText,
             fontSize = 10.sp,
             fontFamily = FontFamily.Monospace,
-            color = easyAdbColors.TextHint,
+            color = easyAdbColors.TextMeta,
             maxLines = 1,
             textAlign = TextAlign.End,
             modifier = Modifier.width(64.dp)

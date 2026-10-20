@@ -77,6 +77,8 @@ data class EasyAdbColors(
     val TextPrimary: Color,
     val TextSecondary: Color,
     val TextOnPrimary: Color,
+    /** 元数据小字（弱于 TextSecondary、强于 TextHint：文件树权限/时间/大小列等 10sp 等宽信息） */
+    val TextMeta: Color,
     /** 提示/占位文字（弱于 TextSecondary，如输入框 placeholder、状态栏计数） */
     val TextHint: Color,
     /** 禁用文字/图标（如禁用按钮标签、占位工具按钮） */
@@ -176,6 +178,7 @@ val LightEasyAdbColors = EasyAdbColors(
     TextPrimary = Color(0xFF1B2534),      // --tx
     TextSecondary = Color(0xFF5A6B82),    // --tx-2
     TextOnPrimary = Color(0xFFFFFFFF),
+    TextMeta = Color(0xFF64748B),         // slate-500（元数据小字，浅色推导）
     TextHint = Color(0xFFA3B1C4),         // input::placeholder
     TextDisabled = Color(0xFF93A1B5),     // --tx-3
     SurfaceVariant = Color(0xFFF2F5FA),   // .sidebar
@@ -246,6 +249,7 @@ val DarkEasyAdbColors = EasyAdbColors(
     TextPrimary = Color(0xFFE6ECF6),      // --tx
     TextSecondary = Color(0xFF8FA0B8),    // --tx-2
     TextOnPrimary = Color(0xFFFFFFFF),    // .btn-primary 白字
+    TextMeta = Color(0xFF94A6C0),         // 元数据小字（slate-400 推导，暗色）
     TextHint = Color(0xFF4C5C74),         // input::placeholder
     TextDisabled = Color(0xFF5F7089),     // --tx-3
     SurfaceVariant = Color(0xFF0D1422),   // .sidebar
