@@ -49,26 +49,32 @@ class FileTreeState(
     var loadingPath by mutableStateOf<String?>(null)
         private set
 
-    /** 就地新建目录编辑态：非 null = [creatingIn] 目录下渲染名称编辑行 */
+    /** 就地新建编辑态：非 null = [creatingIn] 目录下渲染名称编辑行（文件/文件夹共用） */
     var creatingIn by mutableStateOf<String?>(null)
         private set
 
-    /** 编辑中的新目录名称 */
+    /** 编辑中的新节点名称 */
     var creatingName by mutableStateOf("")
+
+    /** 编辑中的新节点种类（true = 文件夹 / false = 文件，决定编辑行图标与提交命令） */
+    var creatingIsDir by mutableStateOf(true)
+        private set
 
     /**
      * 进入就地新建：在 [parentPath] 下插入名称编辑行（同一时刻仅一个编辑行）。
+     * [isDir] 区分新建文件夹/新建文件（预填名与提交命令随之不同）；
      * [siblingNames] 供预填名自动避开同级重名（「新建文件夹 2/3…」，不改名直接
      * 提交也不会撞名失败）。
      */
-    fun beginCreate(parentPath: String, siblingNames: List<String> = emptyList()) {
-        var name = "新建文件夹"
+    fun beginCreate(parentPath: String, isDir: Boolean = true, siblingNames: List<String> = emptyList()) {
+        var name = if (isDir) "新建文件夹" else "新建文件"
         var n = 2
         while (name in siblingNames) {
-            name = "新建文件夹 $n"
+            name = "${if (isDir) "新建文件夹" else "新建文件"} $n"
             n++
         }
         creatingIn = parentPath
+        creatingIsDir = isDir
         creatingName = name
     }
 
@@ -118,7 +124,7 @@ class FileTreeState(
                         }
                     }
                     if (creatingIn == path) {
-                        rows += VisibleRow(FileEntry(path = "$path/<creating>", name = creatingName, isDir = true), depth + 1, RowKind.CREATING)
+                        rows += VisibleRow(FileEntry(path = "$path/<creating>", name = creatingName, isDir = creatingIsDir), depth + 1, RowKind.CREATING)
                     }
                     return
                 }
@@ -127,7 +133,7 @@ class FileTreeState(
                     if (entry.isDir && entry.path in expandedPaths) walk(entry.path, depth + 1)
                 }
                 if (creatingIn == path) {
-                    rows += VisibleRow(FileEntry(path = "$path/<creating>", name = creatingName, isDir = true), depth + 1, RowKind.CREATING)
+                    rows += VisibleRow(FileEntry(path = "$path/<creating>", name = creatingName, isDir = creatingIsDir), depth + 1, RowKind.CREATING)
                 }
             }
             walk(rootPath, 0)
@@ -229,7 +235,10 @@ class FileTreeState(
                 (path.length == 2 || (path.length == 3 && (path[2] == '\\' || path[2] == '/')))
             ) return ""
             val i = maxOf(path.lastIndexOf('/'), path.lastIndexOf('\\'))
-            if (i <= 0) return path
+            if (i < 0) return path
+            // Unix 绝对路径的一级（/default.prop）：父目录即根 `/`——返回 path 自身
+            // 会让 currentDir() 把文件路径当目录用（推送落点=覆盖该文件、根目录禁用判据失效）
+            if (i == 0) return "/"
             var parent = path.substring(0, i)
             if (parent.length == 2 && parent[1] == ':') parent += "\\"
             return parent

@@ -117,6 +117,80 @@ fun FileTransferPanel(
         }.onFailure { onLog("[提示] 打开资源管理器失败：${it.message}", 3) }
     }
 
+    /** 复制设备路径到系统剪贴板（AWT Toolkit），控制台回显结果 */
+    fun copyDevicePath(entry: FileEntry) {
+        runCatching {
+            java.awt.Toolkit.getDefaultToolkit().systemClipboard
+                .setContents(java.awt.datatransfer.StringSelection(entry.path), null)
+        }.onSuccess { onLog("[复制路径] ${entry.path}", 2) }
+            .onFailure { onLog("[提示] 复制路径失败：${it.message}", 3) }
+    }
+
+    /**
+     * 设备树右键菜单内容（工具栏功能全集，走查补强）：
+     * 目录项 → 新建(二级：文件夹/文件) ｜ 投递到左侧/另存为/提取(推送)/删除 ｜ 刷新/复制路径；
+     * 文件项无新建组。分组间由 [MenuItemSpec.Separator] 横线区分。
+     * 「提取」对位工具栏推送按钮：选本机文件推入该目录（目录项）或其父目录（文件项）。
+     */
+    fun deviceContextItems(state: FileTreeState, entry: FileEntry): List<MenuItemSpec> {
+        // 提取（推送）落点：目录→其内；文件→父目录。落点为整机根（只读）时禁用
+        val pushTarget = if (entry.isDir) entry.path else FileTreeState.parentOf(entry.path)
+        val pushBlocked = pushTarget == DeviceFileLister.DEVICE_ROOT
+        val items = mutableListOf<MenuItemSpec>()
+        if (entry.isDir) {
+            items += MenuItemSpec.Submenu(
+                MenuAction("新建", EasyAdbTileIcons.FolderPlus) {},
+                listOf(
+                    SubMenuAction("文件", EasyAdbTileIcons.FileDoc) {
+                        state.ensureExpandedChain(entry.path)
+                        state.beginCreate(entry.path, isDir = false,
+                            siblingNames = state.childrenOf(entry.path)?.map { it.name } ?: emptyList())
+                    },
+                    SubMenuAction("文件夹", EasyAdbTileIcons.Folder) {
+                        state.ensureExpandedChain(entry.path)
+                        state.beginCreate(entry.path, isDir = true,
+                            siblingNames = state.childrenOf(entry.path)?.map { it.name } ?: emptyList())
+                    }
+                )
+            )
+            items += MenuItemSpec.Separator
+        }
+        items += MenuItemSpec.Action(MenuAction("投递到左侧", EasyAdbTileIcons.DeliverLeft) {
+            transferCenter.submitPull(deviceIp.orEmpty(), entry.path, pcState.currentDir())
+        })
+        items += MenuItemSpec.Action(MenuAction("另存为…", EasyAdbTileIcons.SaveAsFile) {
+            saveAsFile = entry
+            saveDir = pcState.currentDir().replace('/', '\\')
+            saveName = entry.name
+        })
+        items += MenuItemSpec.Action(
+            MenuAction("提取…", EasyAdbTileIcons.PushFile, enabled = !pushBlocked) {
+                val dialog = FileDialog(null as Frame?, "推送文件到设备", FileDialog.LOAD)
+                dialog.isVisible = true
+                val local = dialog.file?.let { File(dialog.directory, it).absolutePath }
+                if (local != null) {
+                    transferCenter.submitPush(deviceIp.orEmpty(), local, pushTarget)
+                }
+            }
+        )
+        items += MenuItemSpec.Action(MenuAction("删除", EasyAdbTileIcons.UninstallApp, danger = true) {
+            // 受保护目录守卫：整机根/存储入口/系统分区误删导致设备异常
+            if (entry.isDir && DeviceFileLister.isProtectedDir(entry.path)) {
+                onLog("[提示] 受保护目录 ${entry.path} 不允许删除（防设备异常）", 3)
+            } else {
+                deleteTarget = entry
+            }
+        })
+        items += MenuItemSpec.Separator
+        items += MenuItemSpec.Action(MenuAction("刷新", AppIcons.Refresh) {
+            state.reloadPath(if (entry.isDir) entry.path else FileTreeState.parentOf(entry.path))
+        })
+        items += MenuItemSpec.Action(MenuAction("复制路径", EasyAdbTileIcons.CopyPath) {
+            copyDevicePath(entry)
+        })
+        return items
+    }
+
     Column(
         modifier = modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -202,55 +276,51 @@ fun FileTransferPanel(
                             }
                             transferCenter.submitPush(deviceIp, local, state.currentDir())
                         },
-                        // 设备树右键菜单：「刷新当前目录」（目录刷自身、文件刷所在目录，单层不波及全树）
+                        // 设备树右键菜单：工具栏功能全集（新建二级/投递/另存/提取/删除/刷新/复制路径）
                         contextMenu = { entry, close ->
-                            Surface(
-                                shape = easyAdbTokens.shapeLg,
-                                elevation = easyAdbTokens.elevationMid,
-                                color = easyAdbColors.Surface
-                            ) {
-                                Column(modifier = Modifier.width(IntrinsicSize.Min)) {
-                                    ContextMenuItem("刷新当前目录") {
-                                        close()
-                                        state.reloadPath(if (entry.isDir) entry.path else FileTreeState.parentOf(entry.path))
-                                    }
-                                }
-                            }
+                            ContextActionsMenu(
+                                items = deviceContextItems(state, entry),
+                                onDismiss = close
+                            )
                         },
                         toolbar = {
                             TreeToolButton(
                                 icon = EasyAdbTileIcons.DeliverLeft,
-                                tip = "投递选中文件到左侧当前目录（adb pull）",
-                                enabled = state.selectedEntry?.isDir == false
+                                tip = "投递选中项到左侧当前目录（adb pull，目录递归）",
+                                enabled = state.selectedEntry != null
                             ) {
-                                val file = state.selectedEntry ?: return@TreeToolButton
-                                transferCenter.submitPull(deviceIp.orEmpty(), file.path, pcState.currentDir())
+                                val target = state.selectedEntry ?: return@TreeToolButton
+                                transferCenter.submitPull(deviceIp.orEmpty(), target.path, pcState.currentDir())
                             }
+                            // 写操作落点 = 选中目录 / 选中文件父目录（currentDir 口径）；
+                            // 落点为整机根（只读）时禁用新建与推送——**选中根下文件同样命中**
+                            // （currentDir 返回其父目录 `/`，判据必须按落点而非选中项本身）
+                            val targetIsDeviceRoot = state.currentDir() == DeviceFileLister.DEVICE_ROOT
                             TreeToolButton(
                                 icon = EasyAdbTileIcons.FolderPlus,
-                                tip = "新建文件夹（就地编辑名称，回车确认；在选中目录内创建）",
-                                enabled = state.selectedEntry != null
+                                tip = if (targetIsDeviceRoot) "设备根目录不可新建文件夹（请选中具体目录）" else "新建文件夹（就地编辑名称，回车确认；在选中目录内创建）",
+                                enabled = !targetIsDeviceRoot
                             ) {
                                 // 父目录 = 选中目录 / 选中文件父目录 / 默认传输目录；
                                 // 展开祖先链使父目录可见后进入名称编辑态（预填名避开同级重名）
                                 val parentPath = state.currentDir()
                                 state.ensureExpandedChain(parentPath)
-                                state.beginCreate(parentPath, state.childrenOf(parentPath)?.map { it.name } ?: emptyList())
+                                state.beginCreate(parentPath, isDir = true, siblingNames = state.childrenOf(parentPath)?.map { it.name } ?: emptyList())
                             }
                             TreeToolButton(
                                 icon = EasyAdbTileIcons.SaveAsFile,
-                                tip = "另存文件到电脑…（任意本机目录 + 改名）",
-                                enabled = state.selectedEntry?.isDir == false
+                                tip = "另存到电脑…（任意本机目录 + 改名；目录递归拉取）",
+                                enabled = state.selectedEntry != null
                             ) {
-                                val file = state.selectedEntry ?: return@TreeToolButton
-                                saveAsFile = file
+                                val target = state.selectedEntry ?: return@TreeToolButton
+                                saveAsFile = target
                                 saveDir = pcState.currentDir().replace('/', '\\')
-                                saveName = file.name
+                                saveName = target.name
                             }
                             TreeToolButton(
                                 icon = EasyAdbTileIcons.PushFile,
-                                tip = "推送文件到设备…（选择本机任意文件，推到选中目录）",
-                                enabled = state.selectedEntry != null
+                                tip = if (targetIsDeviceRoot) "设备根目录不可写入（请选中具体目录）" else "推送文件到设备…（选择本机任意文件，推到选中目录）",
+                                enabled = !targetIsDeviceRoot
                             ) {
                                 val dialog = FileDialog(null as Frame?, "推送文件到设备", FileDialog.LOAD)
                                 dialog.isVisible = true
@@ -273,19 +343,26 @@ fun FileTransferPanel(
                                     deleteTarget = target
                                 }
                             }
+                            // 刷新紧随删除（走查反馈：刷新原在行尾与删除隔太远）
+                            TreeToolButton(icon = AppIcons.Refresh, tip = "刷新设备文件树（ls -la）") { state.refresh() }
                             Spacer(Modifier.weight(1f))
                             TreeHint()
-                            Spacer(Modifier.width(8.dp))
-                            TreeToolButton(icon = AppIcons.Refresh, tip = "刷新设备文件树（ls -la）") { state.refresh() }
                         },
-                        // 就地新建提交：mkdir 自定义名称（重名由 adb mkdir 失败回显）
+                        // 就地新建提交：文件夹 mkdir / 文件 touch（重名由 adb 失败回显）
                         onCreateCommit = { parentPath, name ->
+                            val isDir = state.creatingIsDir
                             val newPath = "$parentPath/$name"
-                            runAdb(DeviceFileLister.mkdirCmd(deviceIp.orEmpty(), newPath)) { ok, output ->
+                            val cmd = if (isDir) {
+                                DeviceFileLister.mkdirCmd(deviceIp.orEmpty(), newPath)
+                            } else {
+                                DeviceFileLister.touchCmd(deviceIp.orEmpty(), newPath)
+                            }
+                            runAdb(cmd) { ok, output ->
                                 if (ok) {
-                                    val node = FileEntry(path = newPath, name = name, isDir = true)
+                                    val node = FileEntry(path = newPath, name = name, isDir = isDir)
                                     state.insertEntry(parentPath, node)
                                     state.selectedEntry = node
+                                    onLog(if (isDir) "[新建成功] ${newPath}" else "[新建文件成功] ${newPath}", 2)
                                 } else {
                                     onLog("[新建失败] ${output.take(160)}", 4)
                                 }

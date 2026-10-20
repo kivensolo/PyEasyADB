@@ -29,9 +29,11 @@ import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Icon
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +74,7 @@ import com.easyadb.ui.designsystem.EmptyState
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.hoverBackground
+import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import java.awt.Cursor
 
@@ -165,10 +168,10 @@ fun FileTreePane(
             ) {
                 Text("文件", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = easyAdbColors.TextSecondary, modifier = Modifier.weight(1f))
                 if (!pc) {
-                    Text("权限", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = easyAdbColors.TextSecondary, modifier = Modifier.width(96.dp))
+                    Text("权限", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = easyAdbColors.TextSecondary, modifier = Modifier.width(104.dp))
                 }
-                Text("时间", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = easyAdbColors.TextSecondary, modifier = Modifier.width(104.dp))
-                Text("大小", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = easyAdbColors.TextSecondary, textAlign = TextAlign.End, modifier = Modifier.width(64.dp))
+                Text("时间", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = easyAdbColors.TextSecondary, modifier = Modifier.width(112.dp))
+                Text("大小", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = easyAdbColors.TextSecondary, textAlign = TextAlign.End, modifier = Modifier.width(72.dp))
             }
             HorizontalDivider()
             // ── 列表 ──
@@ -223,7 +226,7 @@ fun FileTreePane(
                     }
                     VerticalScrollbar(
                         adapter = rememberScrollbarAdapter(listState),
-                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(10.dp).padding(vertical = 4.dp)
+                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight().width(5.dp)
                     )
                 }
                 ctxEntry?.let { entry ->
@@ -277,14 +280,19 @@ private fun TreeRow(
         }
         return
     }
-    val selected = state.selectedEntry?.path == entry.path
+    // 选中判定用 derivedStateOf 收窄为布尔：selectedEntry 变化时各行派生值重算，
+    // 但仅新旧选中两行的布尔翻转触发重组——避免单击时全部可见行重组重测量
+    // （大目录几十行的重组+嵌套 Row measure 是单击响应变慢的主因）
+    val selected by remember(entry.path) {
+        derivedStateOf { state.selectedEntry?.path == entry.path }
+    }
     val caretAngle by animateFloatAsState(
         targetValue = if (entry.path in state.expandedPaths) 90f else 0f,
         animationSpec = tween(150),
         label = "caret"
     )
     // drawBehind 块非组合环境，颜色须在组合期捕获
-    val selBg = easyAdbColors.Selected
+    val selBg = easyAdbColors.TreeRowSelected
     val selBar = easyAdbColors.Primary
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -304,13 +312,22 @@ private fun TreeRow(
                 }
             }
             .hoverBackground(shape = easyAdbTokens.shapeSm)
-            // 单击仅选中；双击展开/收起（折叠箭头另有独立点击，SP-5001 走查交互）
+            // 单击仅选中；双击展开/收起（折叠箭头另有独立点击，SP-5001 走查交互）。
+            // 不用 detectTapGestures 的 onTap+onDoubleTap 组合——后者为双击消歧把
+            // 单击回调压后 ~300ms（选中高亮跟着延迟，走查反馈「响应变慢」的真凶）；
+            // 自判双击：onTap 即时选中，<260ms 内二击同路径则补 toggleExpand
             .pointerInput(entry.path) {
+                var lastTapAt = 0L
                 detectTapGestures(
-                    onTap = { state.select(entry) },
-                    onDoubleTap = {
+                    onTap = {
                         state.select(entry)
-                        state.toggleExpand(entry)
+                        val now = System.currentTimeMillis()
+                        if (entry.isDir && now - lastTapAt < 260) {
+                            state.toggleExpand(entry)
+                            lastTapAt = 0L
+                        } else {
+                            lastTapAt = now
+                        }
                     }
                 )
             }
@@ -363,64 +380,95 @@ private fun TreeRow(
             )
         }
         Spacer(Modifier.width(7.dp))
-        // 名称区占满剩余宽度（对齐列头「文件」列的 weight(1f)）：名称过长省略、
-        // 链接指向与加载 spinner 跟随其后；权限/时间/大小三列由此钉在右侧固定位，
-        // 不再随名称长短左右漂移（修复：weight(fill=false) 使元数据列贴着名称挤成一团）
-        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                entry.name,
-                fontSize = 12.sp,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-                color = easyAdbColors.TextPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f, fill = false)
-            )
-            // 目录符号链接：名称右侧展示真实指向（→ /storage/self/primary）
-            entry.linkTarget?.let { target ->
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    "→ $target",
-                    fontSize = 9.5.sp,
-                    fontFamily = FontFamily.Monospace,
-                    color = easyAdbColors.TextMeta,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+        // 名称列 weight(1f) 撑满剩余宽（列头「文件」列同口径）：名称过长列内省略，
+        // 元数据三列恒钉右侧固定位——fill=false 会让元数据列贴上短名称（列对齐回归），
+        // 也无需嵌套 Row（对齐关键在元数据列固定宽与列头一致，不在嵌套）。
+        // 目录符号链接：行内不再展示指向路径（挤占名称空间，走查反馈）——悬停名称区
+        // ≥300ms 弹气泡「链接目标：/xxx」（TreeToolButton 同款节流：hovered 即时追踪、
+        // showTip 延迟置位），气泡贴行底展示完整路径
+        var linkHovered by remember { mutableStateOf(false) }
+        var showLinkTip by remember { mutableStateOf(false) }
+        val linkTarget = entry.linkTarget
+        LaunchedEffect(linkHovered) {
+            if (linkHovered) {
+                delay(300)
+                showLinkTip = true
+            } else {
+                showLinkTip = false
+            }
+        }
+        val nameModifier = if (linkTarget != null) {
+            Modifier
+                .weight(1f)
+                .onPointerEvent(PointerEventType.Enter) { linkHovered = true }
+                .onPointerEvent(PointerEventType.Exit) { linkHovered = false }
+        } else {
+            Modifier.weight(1f)
+        }
+        Text(
+            entry.name,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+            color = easyAdbColors.TextPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = nameModifier
+        )
+        if (linkTarget != null && showLinkTip) {
+            // 气泡锚定本行左下：横向偏移过缩进与图标区，纵向贴行底
+            val rowDensity = LocalDensity.current
+            Popup(
+                alignment = Alignment.BottomStart,
+                offset = IntOffset(
+                    with(rowDensity) { (24.dp + 16.dp * row.depth).roundToPx() },
+                    with(rowDensity) { 2.dp.roundToPx() }
                 )
+            ) {
+                Surface(
+                    shape = easyAdbTokens.shapeSm,
+                    elevation = easyAdbTokens.elevationMid,
+                    color = easyAdbColors.TooltipBackground
+                ) {
+                    Text(
+                        "链接目标：$linkTarget",
+                        color = easyAdbColors.TooltipText,
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
-            // 该目录加载中：名称后小 spinner
-            if (entry.isDir && entry.path == state.loadingPath && entry.path in state.expandedPaths) {
-                CircularProgressIndicator(strokeWidth = 1.6.dp, modifier = Modifier.size(11.dp).padding(end = 4.dp))
-                Spacer(Modifier.width(4.dp))
-            }
+        }
+        // 该目录加载中：名称后小 spinner
+        if (entry.isDir && entry.path == state.loadingPath && entry.path in state.expandedPaths) {
+            CircularProgressIndicator(strokeWidth = 1.6.dp, modifier = Modifier.size(11.dp).padding(end = 4.dp))
+            Spacer(Modifier.width(4.dp))
         }
         if (!pc) {
             Text(
                 entry.perm ?: "",
-                fontSize = 10.sp,
+                fontSize = 11.sp,
                 fontFamily = FontFamily.Monospace,
                 color = easyAdbColors.TextMeta,
                 maxLines = 1,
-                modifier = Modifier.width(96.dp)
+                modifier = Modifier.width(104.dp)
             )
         }
         Text(
             entry.modifiedAt ?: "",
-            fontSize = 10.sp,
+            fontSize = 11.sp,
             fontFamily = FontFamily.Monospace,
             color = easyAdbColors.TextMeta,
             maxLines = 1,
-            modifier = Modifier.width(104.dp)
+            modifier = Modifier.width(112.dp)
         )
         Text(
             entry.sizeText,
-            fontSize = 10.sp,
+            fontSize = 11.sp,
             fontFamily = FontFamily.Monospace,
             color = easyAdbColors.TextMeta,
             maxLines = 1,
             textAlign = TextAlign.End,
-            modifier = Modifier.width(64.dp)
+            modifier = Modifier.width(72.dp)
         )
     }
 }
@@ -465,7 +513,7 @@ private fun CreatingRow(
     ) {
         Spacer(Modifier.width(16.dp))
         Icon(
-            imageVector = EasyAdbTileIcons.Folder,
+            imageVector = if (state.creatingIsDir) EasyAdbTileIcons.Folder else EasyAdbTileIcons.FileDoc,
             contentDescription = null,
             tint = easyAdbColors.PrimaryLight,
             modifier = Modifier.size(15.dp)
@@ -482,7 +530,7 @@ private fun CreatingRow(
         ) {
             androidx.compose.foundation.text.BasicTextField(
                 value = state.creatingName,
-                onValueChange = { state.creatingName = it.filterNot { c -> c == '/' } },
+                onValueChange = { state.creatingName = it.filterNot { c -> c == '/' || c == '\\' } },
                 singleLine = true,
                 textStyle = androidx.compose.ui.text.TextStyle(
                     fontSize = 12.sp,

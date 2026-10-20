@@ -122,11 +122,11 @@ object EasyAdbTileIcons {
         )
     }
 
-    /** 推送文件：上传托盘（HTML actPush） */
+    /** 推送文件：上箭头+顶部横线（Lucide upload 形——导出到设备的方向语义） */
     val PushFile: ImageVector by lazy {
         iconOf(
             name = "EasyAdbPushFile",
-            stroke = listOf("M4 14v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5", "m16 7-4-4-4 4", "M12 3v13")
+            stroke = listOf("M12 21V9", "m8 13 4-4 4 4", "M4 3h16")
         )
     }
 
@@ -263,11 +263,37 @@ object EasyAdbTileIcons {
         )
     }
 
-    /** 另存文件到电脑：下载托盘（HTML dxPull） */
+    /** 新建文件：折角文档 + 中央加号（与 FolderPlus 同构，新建→文件二级菜单项） */
+    val FilePlus: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbFilePlus",
+            stroke = listOf(
+                "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
+                "M14 2v6h6",
+                "M12 12v6",
+                "M9 15h6"
+            )
+        )
+    }
+
+    /** 复制路径：折角文档 + 右上复制角（路径文本复制语义） */
+    val CopyPath: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbCopyPath",
+            stroke = listOf(
+                "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
+                "M14 2v6h6",
+                "M9 14h6",
+                "M9 18h6"
+            )
+        )
+    }
+
+    /** 另存文件到电脑：下箭头+底部横线（Lucide download 形——导出到本机的方向语义） */
     val SaveAsFile: ImageVector by lazy {
         iconOf(
             name = "EasyAdbSaveAsFile",
-            stroke = listOf("M12 3v12", "m8 11 4 4 4-4", "M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2")
+            stroke = listOf("M12 3v12", "m8 11 4 4 4-4", "M4 21h16")
         )
     }
 

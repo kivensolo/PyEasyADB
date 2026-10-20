@@ -58,7 +58,8 @@ fun TreeToolButton(
         }
     }
     Box {
-        // 禁用态：不加悬停高亮/手势/点击——悬停亮底会误导可点（走查反馈）；
+        // 禁用态：不加悬停高亮/点击——悬停亮底会误导可点（走查反馈）；
+        // 但保留悬停追踪与气泡：置灰按钮「为什么不可点」恰恰需要提示说明（走查反馈）。
         // 图标用 TextDisabled 灰并降不透明度，与可点态一眼区分
         val modifier = if (enabled) {
             Modifier
@@ -72,7 +73,11 @@ fun TreeToolButton(
                 .onPointerEvent(PointerEventType.Exit) { hovered = false }
                 .clickable(interactionSource = null, indication = null, onClick = onClick)
         } else {
-            Modifier.size(28.dp).clip(easyAdbTokens.shapeMd)
+            Modifier
+                .size(28.dp)
+                .clip(easyAdbTokens.shapeMd)
+                .onPointerEvent(PointerEventType.Enter) { hovered = true }
+                .onPointerEvent(PointerEventType.Exit) { hovered = false }
         }
         Box(modifier = modifier, contentAlignment = Alignment.Center) {
             Icon(
@@ -82,7 +87,7 @@ fun TreeToolButton(
                 modifier = Modifier.size(15.dp)
             )
         }
-        if (showTip && enabled) {
+        if (showTip) {
             // 气泡左缘锚定按钮左缘 + 右偏 32dp（按钮宽 28 + 间隙 4），整体落在按钮右侧
             val offsetX = with(density) { 32.dp.roundToPx() }
             Popup(alignment = Alignment.CenterStart, offset = IntOffset(offsetX, 0)) {

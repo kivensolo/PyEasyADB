@@ -513,20 +513,21 @@ svg{flex:none;display:block}
 .dx-btn.dx-danger:hover{color:#fff;background:#dc2626}
 .dx-hint{margin-left:auto;font-size:11px;color:var(--tx-3)}
 .dx-cols{
-  display:grid;grid-template-columns:minmax(0,1fr) 116px 128px 78px;
+  display:grid;grid-template-columns:minmax(0,1fr) 128px 136px 84px;
   padding:6px 12px 5px;border-bottom:1px solid var(--line);
   font-size:10.5px;font-weight:700;letter-spacing:.8px;color:var(--tx-3);user-select:none;
 }
 .dx-cols .dx-col-size{text-align:right}
 /* PC 侧三列变体（Windows 无权限位）：文件 | 时间 | 大小 */
-.dx-cols.pc-cols,.dx-row.pc-cols{grid-template-columns:minmax(0,1fr) 128px 78px}
+.dx-cols.pc-cols,.dx-row.pc-cols{grid-template-columns:minmax(0,1fr) 136px 84px}
 .dx-row{
-  display:grid;grid-template-columns:minmax(0,1fr) 116px 128px 78px;align-items:center;
+  display:grid;grid-template-columns:minmax(0,1fr) 128px 136px 84px;align-items:center;
   width:100%;text-align:left;padding:6px 12px;border-radius:8px;
   transition:background .12s;font-size:12.5px;cursor:pointer;
 }
 .dx-row:hover{background:#182642}
-.dx-row.sel{background:var(--blue-soft);box-shadow:inset 2px 0 0 var(--blue)}
+/* 选中行底色较常规 --blue-soft 加深一档（走查反馈 14% 蓝太淡），配左侧 2px 蓝条 */
+.dx-row.sel{background:rgba(59,130,246,.30);box-shadow:inset 2px 0 0 var(--blue)}
 .dx-name{display:flex;align-items:center;gap:7px;min-width:0;padding-left:calc(var(--depth, 0) * 16px)}
 .dx-caret{width:14px;height:14px;display:grid;place-items:center;color:var(--tx-3);flex:none;transition:transform .15s}
 .dx-caret.open{transform:rotate(90deg)}
@@ -535,11 +536,43 @@ svg{flex:none;display:block}
 .f-ico.dir.lnk{color:var(--violet)}
 .dx-icowrap{position:relative;display:inline-flex;flex:none}
 .lnk-badge{position:absolute;top:-5px;right:-7px;font-style:normal;font-size:9px;line-height:1;font-weight:800;color:var(--violet);text-shadow:0 1px 2px rgba(0,0,0,.45)}
-.dx-linkto{margin-left:9px;min-width:0;flex:0 1 auto;font-family:var(--mono);font-size:10px;color:var(--tx-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dx-nm{font-weight:600;color:#dbe4f0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}
-.dx-perm,.dx-time{font-family:var(--mono);font-size:10.5px;color:var(--tx-3);white-space:nowrap}
+.dx-perm,.dx-time{font-family:var(--mono);font-size:11px;color:var(--tx-3);white-space:nowrap}
 .dx-size{font-family:var(--mono);font-size:11px;color:var(--tx-3);text-align:right;white-space:nowrap}
 .fp-empty{padding:34px;text-align:center;color:var(--tx-3);font-size:13px}
+
+/* ---------- 设备树右键菜单（功能对齐 CMP ContextActionsMenu：图标项 + 分组横线 + 新建二级） ---------- */
+.ctx-menu{
+  position:fixed;z-index:1000;min-width:176px;padding:5px;
+  background:var(--panel);border:1px solid var(--line-2);border-radius:12px;
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+  font-size:12.5px;user-select:none;animation:ctx-in .12s ease-out;
+}
+@keyframes ctx-in{from{opacity:0;transform:scale(.96) translateY(-3px)}to{opacity:1;transform:none}}
+.ctx-item{
+  display:flex;align-items:center;gap:9px;height:30px;padding:0 11px;
+  border-radius:7px;color:var(--tx);cursor:pointer;white-space:nowrap;position:relative;
+}
+.ctx-item svg{width:14px;height:14px;color:var(--tx-2);flex:none}
+.ctx-item:hover{background:var(--blue-soft);color:#fff}
+.ctx-item:hover svg{color:#fff}
+.ctx-item.danger{color:var(--red)}
+.ctx-item.danger svg{color:var(--red)}
+.ctx-item.danger:hover{background:rgba(220,38,38,.16)}
+.ctx-item.disabled{color:var(--tx-3);opacity:.55;cursor:default}
+.ctx-item.disabled svg{color:var(--tx-3)}
+.ctx-item.disabled:hover{background:none;color:var(--tx-3)}
+.ctx-item .ctx-arrow{margin-left:auto;color:var(--tx-3);width:11px;height:11px}
+.ctx-sep{height:1px;margin:4px 8px;background:var(--line-2)}
+/* 新建二级子菜单：hover 右展，紧贴主菜单右缘无缝隙 */
+.ctx-sub{
+  display:none;position:absolute;left:calc(100% - 4px);top:-6px;z-index:1;
+  min-width:130px;padding:5px;background:var(--panel);
+  border:1px solid var(--line-2);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.5);
+}
+.ctx-item.has-sub:hover > .ctx-sub{display:block}
+/* 菜单近右缘时二级翻转到左侧展开 */
+.ctx-menu.sub-flip .ctx-sub{left:auto;right:calc(100% - 4px)}
 .queue{display:flex;flex-direction:column;gap:9px}
 .q-item{
   display:flex;align-items:center;gap:13px;padding:11px 16px;
@@ -863,6 +896,36 @@ svg{flex:none;display:block}
 .flash.on{animation:flashA .4s ease-out}
 @keyframes flashA{0%{opacity:.9}100%{opacity:0}}
 
+/* ---------- 截图 loading 弹窗 ---------- */
+.modal-shotload{width:min(560px,92vw)}
+.ss-progress{height:8px;border-radius:5px;background:var(--field);border:1px solid var(--line);overflow:hidden;margin-top:12px}
+.ss-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#2563eb,#60a5fa);transition:width .3s ease}
+.ss-loadrow{display:flex;align-items:center;gap:14px}
+.ss-loadrow .txt{flex:1;font-size:13px;color:var(--tx-2)}
+
+/* ---------- 截图预览窗 ---------- */
+.modal-sspreview{width:min(1150px,96vw);height:min(780px,92vh);display:flex;flex-direction:column}
+.ss-tb{flex:none;display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.ss-tb.sub{padding:7px 14px}
+.ss-spacer{margin-left:auto}
+.ss-info{font-family:var(--mono);font-size:11.5px;color:var(--tx-2);white-space:nowrap}
+.ss-zoom{min-width:46px;text-align:center;font-family:var(--mono);font-size:11.5px;color:var(--tx-2)}
+.ss-iconbtn{
+  display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;
+  font-size:12px;font-weight:600;color:#c3cede;background:#16223a;border:1px solid rgba(148,163,184,.2);cursor:pointer;transition:.14s;white-space:nowrap;
+}
+.ss-iconbtn:hover{color:#fff;border-color:#3b82f6;background:#1a2b49}
+.ss-iconbtn.sq{width:28px;padding:0;justify-content:center}
+.ss-iconbtn.primary{color:#fff;background:linear-gradient(180deg,#3f88f8,#2563eb);border-color:transparent}
+.ss-iconbtn.primary:hover{filter:brightness(1.1)}
+.ss-view{flex:1;min-height:0;overflow:hidden;display:grid;place-items:center;background:#0b1019;position:relative}
+.ss-view img{width:100%;height:100%;object-fit:contain;transform-origin:center center}
+.ss-foot{flex:none;display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line)}
+html[data-theme="light"] .ss-view{background:#e8ecf2}
+html[data-theme="light"] .ss-iconbtn{color:#3a4a60;background:#eef2f9;border-color:#ccd9ec}
+html[data-theme="light"] .ss-iconbtn:hover{color:#1d4ed8;background:#dbe7fb;border-color:#9dbdfa}
+html[data-theme="light"] .ss-iconbtn.primary{color:#fff;background:linear-gradient(180deg,#3f88f8,#2563eb);border-color:transparent}
+
 /* ---------- shutdown ---------- */
 .shutdown{
   position:fixed;inset:0;z-index:400;display:grid;place-items:center;
@@ -986,7 +1049,7 @@ html[data-theme="light"] .dx-btn:hover{background:#dbe6f6;border-color:#9dbdfa;c
 html[data-theme="light"] .dx-btn.dx-danger:hover{background:#dc2626;color:#fff}
 html[data-theme="light"] .dx-cols{color:#5a6b82}
 html[data-theme="light"] .dx-row:hover{background:#eaf0f8}
-html[data-theme="light"] .dx-row.sel{background:rgba(37,99,235,.10);box-shadow:inset 2px 0 0 #2563eb}
+html[data-theme="light"] .dx-row.sel{background:rgba(37,99,235,.22);box-shadow:inset 2px 0 0 #2563eb}
 html[data-theme="light"] .dx-nm{color:#1b2534}
 html[data-theme="light"] .mini-btn{background:#eef2f9;color:#3a4a60}
 html[data-theme="light"] .app-ops .mini-btn{border-color:#c9d6ea}
@@ -996,6 +1059,23 @@ html[data-theme="light"] .mini-btn.danger:hover{background:#dc2626;border-color:
 html[data-theme="light"] .sys-badge{color:#0369a1;background:rgba(3,105,161,.08);border-color:rgba(3,105,161,.25)}
 html[data-theme="light"] .sys-badge:hover{background:rgba(3,105,161,.14);border-color:rgba(3,105,161,.45);color:#075985}
 html[data-theme="light"] .q-item .q-name{color:#1b2534}
+/* 设备树右键菜单浅色适配 */
+html[data-theme="light"] .ctx-menu,
+html[data-theme="light"] .ctx-sub{
+  background:#ffffff;border-color:rgba(15,23,42,.14);box-shadow:0 12px 32px rgba(15,23,42,.16);
+}
+html[data-theme="light"] .ctx-item{color:#1b2534}
+html[data-theme="light"] .ctx-item svg{color:#54657d}
+html[data-theme="light"] .ctx-item:hover{background:rgba(37,99,235,.08);color:#1d4ed8}
+html[data-theme="light"] .ctx-item:hover svg{color:#1d4ed8}
+html[data-theme="light"] .ctx-item.danger{color:#dc2626}
+html[data-theme="light"] .ctx-item.danger svg{color:#dc2626}
+html[data-theme="light"] .ctx-item.danger:hover{background:rgba(220,38,38,.08);color:#dc2626}
+html[data-theme="light"] .ctx-item.disabled{color:#a3b1c4}
+html[data-theme="light"] .ctx-item.disabled svg{color:#a3b1c4}
+html[data-theme="light"] .ctx-item.disabled:hover{background:none;color:#a3b1c4}
+html[data-theme="light"] .ctx-item .ctx-arrow{color:#a3b1c4}
+html[data-theme="light"] .ctx-sep{background:#e2e8f2}
 html[data-theme="light"] .console{background:#fbfcfe}
 html[data-theme="light"] .con-head{background:#f3f6fb}
 html[data-theme="light"] .con-title{color:#5a6b82}
@@ -1689,6 +1769,76 @@ html[data-theme="light"] .mf-ops button.mf-close:hover{background:#dc2626;color:
     </div>
   </div>
 
+  <!-- 截图：获取中 -->
+  <div class="modal modal-shotload" id="modalShotLoad" hidden>
+    <div class="modal-head">
+      <span class="modal-title">屏幕截图</span>
+      <button class="modal-x" data-close>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="ss-loadrow">
+        <span class="txt" id="ssLoadTxt">正在从设备获取截图…</span>
+        <button class="btn btn-plain" id="ssLoadCancel" style="padding:6px 16px">取消</button>
+      </div>
+      <div class="ss-progress"><i id="ssProg"></i></div>
+    </div>
+  </div>
+
+  <!-- 截图：预览窗口 -->
+  <div class="modal modal-sspreview" id="modalShotPreview" hidden>
+    <div class="modal-head">
+      <span class="modal-title">屏幕截图</span>
+      <button class="modal-x" data-close>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="ss-tb">
+      <button class="ss-iconbtn" id="ssRecapture" title="重新从设备截取">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        刷新截图
+      </button>
+      <button class="ss-iconbtn" id="ssRotL" title="向左旋转 90°">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8v6h6"/><path d="M3.5 13a9 9 0 1 0 2.1-6.4L3 8"/></svg>
+      </button>
+      <button class="ss-iconbtn" id="ssRotR" title="向右旋转 90°">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v6h-6"/><path d="M20.5 13a9 9 0 1 1-2.1-6.4L21 8"/></svg>
+      </button>
+      <button class="ss-iconbtn" id="ssCopy" title="复制图片到剪贴板">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+        复制到粘贴板
+      </button>
+      <span class="ss-spacer"></span>
+      <select id="ssMode" class="set-input" style="width:auto" title="捕获模式">
+        <option value="full" selected>全屏捕获</option>
+        <option value="rect">矩形区域</option>
+      </select>
+    </div>
+    <div class="ss-tb sub">
+      <button class="ss-iconbtn sq" id="ssFit" title="适应窗口">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+      </button>
+      <button class="ss-iconbtn sq" id="ssZoomIn" title="放大">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6M11 8v6"/></svg>
+      </button>
+      <button class="ss-iconbtn sq" id="ssZoomOut" title="缩小">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6"/></svg>
+      </button>
+      <button class="ss-iconbtn sq" id="ssOne" title="原始尺寸 1:1" style="font-size:10.5px">1:1</button>
+      <span class="ss-zoom" id="ssZoomPct">100%</span>
+      <span class="ss-spacer"></span>
+      <span class="ss-info" id="ssInfo">1,920×1,080 PNG（24 位色）</span>
+    </div>
+    <div class="ss-view" id="ssView"><img id="ssImg" alt="设备截图"></div>
+    <div class="ss-foot">
+      <button class="ss-iconbtn sq" id="ssHelp" title="关于">?</button>
+      <span class="ss-spacer"></span>
+      <button class="btn btn-primary" id="ssSave">保存</button>
+      <button class="btn btn-plain" data-close>取消</button>
+    </div>
+  </div>
+
   <!-- 另存文件到电脑：任意本机目录 + 文件名（脱离左侧面板限制） -->
   <div class="modal" id="modalSaveAs" hidden>
     <div class="modal-head">
@@ -1982,18 +2132,121 @@ $('#actPush').addEventListener('click', function(){
 });
 
 /* screenshot */
-$('#actShot').addEventListener('click', doScreenshot);
-function doScreenshot(){
-  if (!guard()) return;
-  var fl = $('#flash');
-  fl.classList.remove('on'); void fl.offsetWidth; fl.classList.add('on');
-  var fname = 'screencap-' + ts().replace(/[:.]/g,'') + '.png';
-  runRemote('adb shell screencap -p /sdcard/' + fname, [
-    ['adb pull /sdcard/' + fname + ' ./Screenshots/', 'cmd'],
-    ['/sdcard/' + fname + ': 1 file pulled, 2.4 MB/s', 'ok']
-  ], 320);
-  toast('截图已保存 <b>' + fname + '</b>', 'ok');
+/* 截图：获取中弹窗 → 预览窗（缩放/旋转/复制/保存/重摄） */
+var ss = { zoom:1, rot:0, fit:1, fname:'', kb:'', timer:null };
+function ssApply(){
+  var img = $('#ssImg');
+  img.style.transform = 'rotate(' + ss.rot + 'deg) scale(' + (ss.zoom * ss.fit) + ')';
+  $('#ssZoomPct').textContent = Math.round(ss.zoom * 100) + '%';
 }
+function ssFitCalc(){
+  var v = $('#ssView').getBoundingClientRect();
+  ss.fit = Math.max(.05, Math.min((v.width - 48) / 1920, (v.height - 40) / 1080));
+}
+function ssOpenLoad(){
+  if (!guard()) return;
+  ss.fname = 'screencap-' + ssStamp() + '.png';
+  ss.kb = (45 + Math.random() * 40).toFixed(2);
+  $('#ssLoadTxt').textContent = '正在从设备获取截图…（' + devAddr(selDev()) + '）';
+  openModal('modalShotLoad');
+  var bar = $('#ssProg');
+  bar.style.transition = 'none'; bar.style.width = '4%';
+  void bar.offsetWidth;
+  bar.style.transition = 'width 1.7s ease';
+  bar.style.width = '86%';
+  ss.timer = setTimeout(function(){
+    bar.style.transition = 'width .18s ease';
+    bar.style.width = '100%';
+    setTimeout(function(){ closeModal(); setTimeout(ssOpenPreview, 240); }, 200);
+  }, 1800);
+}
+function ssCancelLoad(){
+  clearTimeout(ss.timer);
+  toast('已取消截图', 'info');
+}
+function ssStamp(){
+  var d = new Date();
+  var p = function(n){ n = String(n); return n.length < 2 ? '0' + n : n; };
+  return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+}
+function ssDrawShot(){
+  var c = document.createElement('canvas');
+  c.width = 1920; c.height = 1080;
+  var g = c.getContext('2d');
+  function rr(x, y, w, h, r){
+    g.beginPath(); g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath();
+  }
+  var grd = g.createLinearGradient(0, 0, 1920, 1080);
+  grd.addColorStop(0, '#0c1526'); grd.addColorStop(1, '#0a0f1c');
+  g.fillStyle = grd; g.fillRect(0, 0, 1920, 1080);
+  g.fillStyle = 'rgba(8,13,24,.92)'; g.fillRect(0, 0, 1920, 64);
+  var d = new Date();
+  var p = function(n){ n = String(n); return n.length < 2 ? '0' + n : n; };
+  g.fillStyle = '#e6ecf6'; g.font = '600 26px Consolas,monospace';
+  g.fillText(p(d.getHours()) + ':' + p(d.getMinutes()), 44, 42);
+  g.strokeStyle = '#8fa0b8'; g.lineWidth = 4;
+  g.strokeRect(1796, 20, 56, 26); g.fillStyle = '#8fa0b8'; g.fillRect(1854, 27, 7, 12);
+  g.fillStyle = '#9fb0c8'; g.font = '600 34px "Segoe UI","Microsoft YaHei",sans-serif';
+  g.fillText('我的应用', 60, 190);
+  var names = ['微信', '抖音', '哔哩哔哩', 'YouTube', '淘宝', 'Spotify'];
+  var cols = ['#22c55e', '#0f172a', '#fb7299', '#ef4444', '#f97316', '#10b981'];
+  for (var i = 0; i < 6; i++){
+    var x = 60 + (i % 3) * 610, y = 230 + Math.floor(i / 3) * 310;
+    g.fillStyle = 'rgba(30,44,72,.9)'; rr(x, y, 550, 250, 24); g.fill();
+    g.strokeStyle = 'rgba(148,163,184,.16)'; g.lineWidth = 3; g.stroke();
+    g.fillStyle = cols[i]; rr(x + 34, y + 62, 126, 126, 30); g.fill();
+    g.fillStyle = '#fff'; g.font = '700 62px "Segoe UI","Microsoft YaHei",sans-serif';
+    g.fillText(names[i].charAt(0), x + 66, y + 152);
+    g.fillStyle = '#dbe4f0'; g.font = '600 34px "Segoe UI","Microsoft YaHei",sans-serif';
+    g.fillText(names[i], x + 190, y + 148);
+  }
+  g.fillStyle = 'rgba(148,163,184,.08)';
+  rr(60, 880, 1500, 66, 14); g.fill();
+  rr(60, 964, 1080, 66, 14); g.fill();
+  g.fillStyle = 'rgba(125,243,255,.4)'; g.font = '500 24px "Segoe UI","Microsoft YaHei",sans-serif';
+  g.fillText('EasyADB 演示截图 · ' + ss.fname, 1330, 1052);
+  return c.toDataURL('image/png');
+}
+function ssOpenPreview(){
+  ss.zoom = 1; ss.rot = 0;
+  openModal('modalShotPreview');
+  var img = $('#ssImg');
+  img.src = ssDrawShot();
+  $('#ssInfo').textContent = '1,920×1,080 PNG（24 位色）· ' + ss.kb + ' kB';
+  ssFitCalc();
+  ssApply();
+  addLog('adb shell screencap -p /sdcard/' + ss.fname + ' → 已获取', 'cmd');
+  addLog('[' + ss.fname + '] 1,920×1,080 PNG · ' + ss.kb + ' kB', 'ok');
+}
+$('#actShot').addEventListener('click', ssOpenLoad);
+$('#ssLoadCancel').addEventListener('click', function(){ ssCancelLoad(); closeModal(); });
+$('#ssRecapture').addEventListener('click', function(){
+  closeModal();
+  setTimeout(function(){ ssOpenLoad(); }, 260);
+});
+$('#ssRotL').addEventListener('click', function(){ ss.rot -= 90; ssApply(); });
+$('#ssRotR').addEventListener('click', function(){ ss.rot += 90; ssApply(); });
+$('#ssCopy').addEventListener('click', function(){
+  toast('截图已复制到剪贴板', 'ok');
+  addLog('[' + ss.fname + '] 已复制图片到剪贴板', 'dim');
+});
+$('#ssZoomIn').addEventListener('click', function(){ ss.zoom = Math.min(4, ss.zoom * 1.25); ssApply(); });
+$('#ssZoomOut').addEventListener('click', function(){ ss.zoom = Math.max(.2, ss.zoom / 1.25); ssApply(); });
+$('#ssOne').addEventListener('click', function(){ ss.zoom = 1; ssApply(); });
+$('#ssFit').addEventListener('click', function(){ ssFitCalc(); ss.zoom = 1; ssApply(); });
+$('#ssHelp').addEventListener('click', function(){ toast('截图预览（演示）——缩放/旋转仅影响查看，保存以原始 PNG 为准', 'info'); });
+$('#ssSave').addEventListener('click', function(){
+  closeModal();
+  runRemote('adb pull /sdcard/' + ss.fname + ' ./Screenshots/', [
+    ['./Screenshots/' + ss.fname + ': 1 file pulled, 2.4 MB/s', 'ok']
+  ], 320);
+  toast('截图已保存 <b>./Screenshots/' + ss.fname + '</b>', 'ok');
+});
+$('#ssMode').addEventListener('change', function(){
+  if (this.value !== 'full') toast('演示版暂支持全屏捕获', 'warn');
+});
 
 /* record */
 $('#actRecord').addEventListener('click', function(){
@@ -2483,15 +2736,24 @@ function createFileTree(root, cfg){
       ? '<span class="f-ico dir' + (isLink ? ' lnk' : '') + '">' + SVG_DIR + '</span>'
       : '<span class="f-ico">' + SVG_FILE + '</span>';
     var icoWrap = isLink ? '<span class="dx-icowrap">' + ico + '<i class="lnk-badge">↗</i></span>' : ico;
-    // 链接目录：名称右侧展示真实指向（→ /mnt/shared/Applications）
-    var linkTo = isLink ? '<span class="dx-linkto" title="指向 ' + esc(it.lnk) + '">→ ' + esc(it.lnk) + '</span>' : '';
+    // 链接目录：行内不再展示指向路径（挤占名称空间）——hover 名称气泡提示完整指向
+    var nmTitle = isLink ? ' title="链接目标：' + esc(it.lnk) + '"' : '';
     el.innerHTML =
-      '<span class="dx-name">' + caret + icoWrap + '<span class="dx-nm">' + esc(it.name) + '</span>' + linkTo + '</span>' +
+      '<span class="dx-name"' + nmTitle + '>' + caret + icoWrap + '<span class="dx-nm">' + esc(it.name) + '</span></span>' +
       (cfg.pc ? '' : '<span class="dx-perm">' + esc(it.perm || '') + '</span>') +
       '<span class="dx-time">' + esc(it.time || '') + '</span>' +
       '<span class="dx-size">' + (isDir ? (it.items || []).length + ' 项' : it.size) + '</span>';
     // 单击仅选中；双击展开/收起；折叠箭头独立点击（不触发选中，对齐资源管理器习惯）
     el.addEventListener('click', function(){ sel = it; render(); });
+    // 设备树右键菜单（功能对齐 CMP：新建二级/投递/另存/提取/删除/刷新/复制路径）；
+    // 右键先选中目标行（资源管理器习惯），再弹菜单
+    if (!cfg.pc){
+      el.addEventListener('contextmenu', function(e){
+        e.preventDefault(); e.stopPropagation();
+        sel = it; render();
+        openDevCtxMenu(e.clientX, e.clientY, it);
+      });
+    }
     el.addEventListener('dblclick', function(){
       if (!isDir) return;
       if (open.has(it)) open.delete(it); else open.add(it);
@@ -2541,22 +2803,29 @@ function pcPullTarget(){
   return localRoot.path;
 }
 /* 设备面板工具栏动作 */
-$('#dxMkdir').addEventListener('click', function(){
-  // 在选中目录下新建（未选中或选中文件时落到 /sdcard 根），重名自动追加序号
-  var parentDir = devTree.sel && devTree.sel.t === 'd' ? devTree.sel : null;
+/* 新建节点（文件夹/文件共用）：parentDir 目录对象 / isDir 种类，重名自动追加序号 */
+function devCreateNode(parentDir, isDir){
   var siblings = (parentDir ? parentDir.items : deviceRoot.items) || [];
-  var base = '新建文件夹', name = base, n = 2;
+  var base = isDir ? '新建文件夹' : '新建文件', name = base, n = 2;
   while (siblings.some(function(x){ return x.name === name; })) name = base + ' ' + (n++);
   var d = new Date(), p2 = function(v){ return (v < 10 ? '0' : '') + v; };
-  var node = { t:'d', name:name, perm:'drwxrwx--x',
-    time: d.getFullYear() + '/' + p2(d.getMonth() + 1) + '/' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()),
-    items:[] };
+  var node = isDir
+    ? { t:'d', name:name, perm:'drwxrwx--x',
+        time: d.getFullYear() + '/' + p2(d.getMonth() + 1) + '/' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()),
+        items:[] }
+    : { t:'f', name:name, size:'0 B', perm:'-rw-rw-rw-',
+        time: d.getFullYear() + '/' + p2(d.getMonth() + 1) + '/' + p2(d.getDate()) + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes()) };
   if (parentDir){ parentDir.items.push(node); devTree.openSet.add(parentDir); }
   else deviceRoot.items.push(node);
   devTree.sel = node;
-  runRemote('adb shell mkdir "' + (parentDir ? devTree.fullPath(parentDir) : '/sdcard') + '/' + name + '"', [['Success', 'ok']], 260);
+  var parentPath = parentDir ? devTree.fullPath(parentDir) : deviceRoot.path;
+  runRemote('adb shell ' + (isDir ? 'mkdir' : 'touch') + " '" + parentPath + '/' + name + "'", [['Success', 'ok']], 260);
   devTree.render();
-  toast('已新建文件夹 <b>' + esc(name) + '</b>', 'ok');
+  toast('已新建' + (isDir ? '文件夹' : '文件') + ' <b>' + esc(name) + '</b>', 'ok');
+}
+$('#dxMkdir').addEventListener('click', function(){
+  // 在选中目录下新建（未选中或选中文件时落到设备根），重名自动追加序号
+  devCreateNode(devTree.sel && devTree.sel.t === 'd' ? devTree.sel : null, true);
 });
 $('#dxRefresh').addEventListener('click', function(){
   runRemote('adb shell ls -laR /sdcard', [['设备文件树已重新读取', 'ok']], 320);
@@ -2609,16 +2878,16 @@ $('#pcRefresh').addEventListener('click', function(){
 });
 /* 删除流程：受保护目录拦截 → 确认弹窗（展示目标与后果）→ 执行 + 树同步 + 结果回显 */
 var deleteTarget = null;
-$('#dxDelete').addEventListener('click', function(){
-  var s = devTree.sel;
-  if (!s){ toast('请先选中要删除的文件或目录', 'err'); return; }
-  if (s.t === 'd' && DeviceFileListerGuard(devTree.fullPath(s))){ toast('受保护目录 ' + devTree.fullPath(s) + ' 不允许删除（防设备异常）', 'warn'); return; }
-  $('#delKind').textContent = s.t === 'd' ? '删除目录' : '删除文件';
-  $('#delSub').textContent = s.t === 'd' ? '将递归删除目录及其全部内容（rm -rf），无法撤销' : '文件删除后无法撤销（rm -f）';
-  $('#delPath').textContent = devTree.fullPath(s) + (s.lnk ? '   →  ' + s.lnk : '');
-  deleteTarget = s;
+function doDelete(entry){
+  if (!entry){ toast('请先选中要删除的文件或目录', 'err'); return; }
+  if (entry.t === 'd' && DeviceFileListerGuard(devTree.fullPath(entry))){ toast('受保护目录 ' + devTree.fullPath(entry) + ' 不允许删除（防设备异常）', 'warn'); return; }
+  $('#delKind').textContent = entry.t === 'd' ? '删除目录' : '删除文件';
+  $('#delSub').textContent = entry.t === 'd' ? '将递归删除目录及其全部内容（rm -rf），无法撤销' : '文件删除后无法撤销（rm -f）';
+  $('#delPath').textContent = devTree.fullPath(entry) + (entry.lnk ? '   →  ' + entry.lnk : '');
+  deleteTarget = entry;
   openModal('modalDelete');
-});
+}
+$('#dxDelete').addEventListener('click', function(){ doDelete(devTree.sel); });
 $('#delConfirmBtn').addEventListener('click', function(){
   var s = deleteTarget;
   if (!s) return;
@@ -2642,6 +2911,114 @@ function DeviceFileListerGuard(path){
   return ['/', '/sdcard', '/storage', '/storage/emulated', '/storage/self',
           '/data', '/system', '/vendor', '/product', '/system_ext',
           '/etc', '/dev', '/proc', '/sys', '/oem', '/bin', '/sbin', '/mnt'].indexOf(norm) >= 0;
+}
+
+/* ---------------- 设备树右键菜单（功能对齐 CMP ContextActionsMenu） ----------------
+   目录项：新建(二级：文件夹/文件) ｜ 投递到左侧/另存为/提取/删除 ｜ 刷新/复制路径；
+   文件项无新建组。分组横线区分；提取=推送本机文件到该目录/文件父目录（近设备根禁用）。
+   图标复用工具栏 SVG 线稿（stroke 风格与 .dx-btn 一致）。 */
+var CTX_ICONS = {
+  folder: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>',
+  folderPlus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6"/><path d="M9 13h6"/></svg>',
+  deliverLeft: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14"/><path d="M16 12H6"/><path d="m9.5 8.5-3.5 3.5 3.5 3.5"/><path d="M21 5v14"/></svg>',
+  saveAs: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m8 11 4 4 4-4"/><path d="M4 21h16"/></svg>',
+  push: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="m8 13 4-4 4 4"/><path d="M4 3h16"/></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M10 11v6M14 11v6"/></svg>',
+  refresh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>',
+  copyPath: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 14h6"/><path d="M9 18h6"/></svg>',
+  arrowRight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>'
+};
+var ctxMenuEl = null;
+function closeCtxMenu(){ if (ctxMenuEl){ ctxMenuEl.remove(); ctxMenuEl = null; } }
+document.addEventListener('mousedown', function(e){ if (ctxMenuEl && !ctxMenuEl.contains(e.target)) closeCtxMenu(); });
+window.addEventListener('blur', closeCtxMenu);
+window.addEventListener('resize', closeCtxMenu);
+
+/** 菜单项构建：icon/label/danger/disabled/onClick；hasSub 挂二级子菜单（hover 右展） */
+function ctxItem(opt){
+  var el = document.createElement('div');
+  el.className = 'ctx-item' + (opt.danger ? ' danger' : '') + (opt.disabled ? ' disabled' : '') + (opt.hasSub ? ' has-sub' : '');
+  el.innerHTML = opt.icon + '<span>' + opt.label + '</span>' + (opt.hasSub ? '<span class="ctx-arrow">' + CTX_ICONS.arrowRight + '</span>' : '');
+  if (!opt.disabled && opt.onClick) el.addEventListener('click', function(){ closeCtxMenu(); opt.onClick(); });
+  return el;
+}
+function ctxSep(){ var el = document.createElement('div'); el.className = 'ctx-sep'; return el; }
+
+function openDevCtxMenu(x, y, entry){
+  closeCtxMenu();
+  var menu = document.createElement('div');
+  menu.className = 'ctx-menu';
+  var isDir = entry.t === 'd';
+  /* 提取（推送）落点：目录→其内；文件→父目录。落点为整机根（只读）时禁用 */
+  var pushTarget = isDir ? devTree.fullPath(entry) : devTree.parentPath(entry);
+  var pushBlocked = pushTarget === deviceRoot.path || pushTarget === '/';
+
+  if (isDir){
+    /* 新建组：hover 展开二级（文件夹/文件） */
+    var newBtn = ctxItem({ icon:CTX_ICONS.folderPlus, label:'新建', hasSub:true });
+    var sub = document.createElement('div');
+    sub.className = 'ctx-sub';
+    sub.appendChild(ctxItem({ icon:CTX_ICONS.file, label:'文件', onClick:function(){ devCreateNode(entry, false); } }));
+    sub.appendChild(ctxItem({ icon:CTX_ICONS.folder, label:'文件夹', onClick:function(){ devCreateNode(entry, true); } }));
+    newBtn.appendChild(sub);
+    menu.appendChild(newBtn);
+    menu.appendChild(ctxSep());
+  }
+  menu.appendChild(ctxItem({ icon:CTX_ICONS.deliverLeft, label:'投递到左侧', onClick:function(){
+    if (entry.t === 'f'){ transferFile(entry, 'dev', devTree.parentPath(entry), pcPullTarget()); }
+    else { toast('请先选中<b>文件</b>再投递（目录可另存拉取）', 'err'); }
+  }}));
+  menu.appendChild(ctxItem({ icon:CTX_ICONS.saveAs, label:'另存为…', onClick:function(){
+    if (entry.t === 'f'){
+      $('#saveDir').value = pcPullTarget().replace(/\//g, '\\');
+      $('#saveFname').value = entry.name;
+      openModal('modalSaveAs');
+      setTimeout(function(){ $('#saveFname').focus(); $('#saveFname').select(); }, 240);
+    } else {
+      /* 目录另存：adb pull 递归直接走（mock 用 transferFile 模拟），落名固定目录名 */
+      transferFile(entry, 'dev', devTree.parentPath(entry), pcPullTarget());
+    }
+  }}));
+  menu.appendChild(ctxItem({ icon:CTX_ICONS.push, label:'提取…', disabled:pushBlocked, onClick:function(){
+    $('#pushFileInput').click();
+  }}));
+  /* 提取落点口径：pushFileInput change 走 devPushTarget()（基于树选中项）——
+     右键时已 sel = entry，二者天然一致 */
+  menu.appendChild(ctxItem({ icon:CTX_ICONS.trash, label:'删除', danger:true, onClick:function(){ doDelete(entry); } }));
+  menu.appendChild(ctxSep());
+  menu.appendChild(ctxItem({ icon:CTX_ICONS.refresh, label:'刷新', onClick:function(){
+    devTree.render();
+    runRemote('adb shell ls -laR /sdcard', [['设备文件树已重新读取', 'ok']], 320);
+    toast('设备文件已刷新', 'ok');
+  }}));
+  menu.appendChild(ctxItem({ icon:CTX_ICONS.copyPath, label:'复制路径', onClick:function(){
+    var path = devTree.fullPath(entry);
+    copyTextToClipboard(path);
+    addLog('[复制路径] ' + path, 'dim');
+    toast('路径已复制 <b>' + esc(path) + '</b>', 'ok');
+  }}));
+
+  /* 近视口右/下缘时翻转，避免菜单被裁切；二级子菜单随 sub-flip 翻到左侧 */
+  document.body.appendChild(menu);
+  ctxMenuEl = menu;
+  var r = menu.getBoundingClientRect();
+  menu.style.left = Math.max(8, Math.min(x, window.innerWidth - r.width - 8)) + 'px';
+  menu.style.top = Math.max(8, Math.min(y, window.innerHeight - r.height - 8)) + 'px';
+  if (x + r.width > window.innerWidth - 8) menu.classList.add('sub-flip');
+}
+/** 剪贴板复制（file:// 下 navigator.clipboard 不可用，降级 execCommand） */
+function copyTextToClipboard(text){
+  try {
+    if (navigator.clipboard && window.isSecureContext){
+      navigator.clipboard.writeText(text);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    }
+  } catch(e){}
 }
 /* 双栏中间分割条：拖动调整左右宽度（左栏定宽 px，右栏 flex 吃满剩余；两侧各留 220px 下限） */
 (function(){
@@ -3248,7 +3625,8 @@ function openModal(id){
   $$('.modal').forEach(function(m){ m.hidden = true; });
   $('#' + id).hidden = false;
   backdrop.hidden = false;
-  requestAnimationFrame(function(){ backdrop.classList.add('show'); });
+  void backdrop.offsetWidth;
+  backdrop.classList.add('show');
 }
 function closeModal(){
   backdrop.classList.remove('show');

@@ -58,6 +58,14 @@ data class EasyAdbColors(
     val Hover: Color,
     /** 选中底色 */
     val Selected: Color,
+    /** 文件树行选中底色（走查反馈 Selected 太淡——较 Selected 加深一档，仅双树行使用） */
+    val TreeRowSelected: Color,
+
+    // ── 右键菜单浮层（H5 .ctx-item 系列） ──
+    /** 菜单项 hover 底（H5 .ctx-item:hover：暗 rgba(59,130,246,.14) / 浅 rgba(37,99,235,.08)） */
+    val MenuHoverBg: Color,
+    /** 菜单项 hover 字色（H5 .ctx-item:hover：暗 #FFFFFF / 浅 #1D4ED8，图标随字色） */
+    val MenuHoverText: Color,
 
     // ── seg 分组按钮（常用命令工具条 .seg，H5 明暗各有字面覆盖色） ──
     /** 分组容器底（H5 .seg：暗 = --field #0d1524 / 浅 = #eaeff8 覆盖） */
@@ -170,6 +178,9 @@ val LightEasyAdbColors = EasyAdbColors(
     DevIpText = Color(0xFF1D4ED8),        // .dev-ip（浅）
     Hover = Color(0xFFE6EDF7),            // .wc:hover
     Selected = Color(0xFFE9F1FE),         // .dev-card.sel 渐变底（#eff5ff→#e9f1fe）
+    TreeRowSelected = Color(0xFFC9DDF9),  // .dx-row.sel（浅：10%→22% 蓝加深，走查反馈太淡）
+    MenuHoverBg = Color(0x142563EB),      // .ctx-item:hover（浅 rgba(37,99,235,.08)）
+    MenuHoverText = Color(0xFF1D4ED8),    // .ctx-item:hover 字色（浅）
     SegTrack = Color(0xFFEAEFF8),         // .seg 容器底（浅色覆盖）
     SegActiveBg = Color(0xFFFFFFFF),      // .seg button.active 白底
     SegActiveText = Color(0xFF1D4ED8),    // .seg button.active 蓝字
@@ -241,6 +252,9 @@ val DarkEasyAdbColors = EasyAdbColors(
     DevIpText = Color(0xFF7DB4FA),        // .dev-ip
     Hover = Color(0xFF1A2740),            // .wc:hover / .frow:hover 同级
     Selected = Color(0xFF1B2A47),         // .dev-card.sel 渐变底（#17253e→#132036）
+    TreeRowSelected = Color(0xFF2A4066),  // .dx-row.sel（暗：14%→30% 蓝加深，走查反馈太淡）
+    MenuHoverBg = Color(0x243B82F6),      // .ctx-item:hover（暗 rgba(59,130,246,.14)）
+    MenuHoverText = Color(0xFFFFFFFF),    // .ctx-item:hover 字色（暗 #FFFFFF）
     SegTrack = Color(0xFF0D1524),         // .seg 容器底（--field）
     SegActiveBg = Color(0xFF22335A),      // .seg button.active
     SegActiveText = Color(0xFFFFFFFF),    // .seg button.active 白字

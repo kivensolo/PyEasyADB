@@ -83,6 +83,10 @@ object DeviceFileLister {
     fun mkdirCmd(deviceIp: String, dirPath: String): String =
         "adb -s $deviceIp shell \"mkdir '${dirPath.replace("'", "")}'\""
 
+    /** `shell touch` 命令构建（新建空文件，路径转义口径与 mkdir 一致） */
+    fun touchCmd(deviceIp: String, filePath: String): String =
+        "adb -s $deviceIp shell \"touch '${filePath.replace("'", "")}'\""
+
     /** `shell rm -f` 命令构建（文件删除） */
     fun rmCmd(deviceIp: String, filePath: String): String =
         "adb -s $deviceIp shell \"rm -f '${filePath.replace("'", "")}'\""
