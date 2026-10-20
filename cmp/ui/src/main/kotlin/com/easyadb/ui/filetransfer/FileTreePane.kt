@@ -314,7 +314,9 @@ private fun TreeRow(
                     }
                 )
             }
-            .padding(start = 8.dp + 16.dp * row.depth, end = 10.dp)
+            // 行右内边距 6dp 与列表外边距 6dp 叠加 = 12dp，对齐列头右缘（列表内容起始
+            // 同理对齐列头左缘 12dp）；元数据列宽度（96/104/64dp）与列头逐列一致
+            .padding(start = 8.dp + 16.dp * row.depth, end = 6.dp)
     ) {
         // 折叠箭头 / 占位（独立点击：仅展开/收起，不改变选中）
         Box(modifier = Modifier.width(16.dp), contentAlignment = Alignment.Center) {
@@ -361,32 +363,37 @@ private fun TreeRow(
             )
         }
         Spacer(Modifier.width(7.dp))
-        Text(
-            entry.name,
-            fontSize = 12.sp,
-            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            color = easyAdbColors.TextPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false)
-        )
-        // 目录符号链接：名称右侧展示真实指向（→ /storage/self/primary）
-        entry.linkTarget?.let { target ->
-            Spacer(Modifier.width(8.dp))
+        // 名称区占满剩余宽度（对齐列头「文件」列的 weight(1f)）：名称过长省略、
+        // 链接指向与加载 spinner 跟随其后；权限/时间/大小三列由此钉在右侧固定位，
+        // 不再随名称长短左右漂移（修复：weight(fill=false) 使元数据列贴着名称挤成一团）
+        Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             Text(
-                "→ $target",
-                fontSize = 9.5.sp,
-                fontFamily = FontFamily.Monospace,
-                color = easyAdbColors.TextHint,
+                entry.name,
+                fontSize = 12.sp,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                color = easyAdbColors.TextPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f, fill = false)
             )
-        }
-        // 该目录加载中：名称后小 spinner
-        if (entry.isDir && entry.path == state.loadingPath && entry.path in state.expandedPaths) {
-            CircularProgressIndicator(strokeWidth = 1.6.dp, modifier = Modifier.size(11.dp).padding(end = 4.dp))
-            Spacer(Modifier.width(4.dp))
+            // 目录符号链接：名称右侧展示真实指向（→ /storage/self/primary）
+            entry.linkTarget?.let { target ->
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    "→ $target",
+                    fontSize = 9.5.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = easyAdbColors.TextHint,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false)
+                )
+            }
+            // 该目录加载中：名称后小 spinner
+            if (entry.isDir && entry.path == state.loadingPath && entry.path in state.expandedPaths) {
+                CircularProgressIndicator(strokeWidth = 1.6.dp, modifier = Modifier.size(11.dp).padding(end = 4.dp))
+                Spacer(Modifier.width(4.dp))
+            }
         }
         if (!pc) {
             Text(
