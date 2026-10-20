@@ -64,9 +64,7 @@ object Win32Interop {
         val result = HashMap<Long, Long>()
         val pidOut = IntByReference()
         User32.INSTANCE.EnumWindows(object : WinUser.WNDENUMPROC {
-            // data 为 JNA lParam 透传（本处恒传 null）；窗口关闭路径上 JNA 回调
-            // 亦可能收到 null data——声明可空并忽略，避免关闭时非空检查抛 NPE
-            override fun callback(hwnd: WinDef.HWND, data: Pointer?): Boolean {
+            override fun callback(hwnd: WinDef.HWND, data: Pointer): Boolean {
                 val buf = CharArray(256)
                 val len = User32.INSTANCE.GetWindowText(hwnd, buf, buf.size)
                 if (len > 0 && String(buf, 0, len) == title) {
