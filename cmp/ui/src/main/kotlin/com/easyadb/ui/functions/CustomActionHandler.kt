@@ -5,11 +5,6 @@ import com.easyadb.core.adb.AdbExecutor
 import com.easyadb.core.config.FunctionItem
 import com.easyadb.core.log.AppLogger
 import com.easyadb.core.util.ExecResult
-import java.awt.FileDialog
-import java.awt.Frame
-import java.io.File
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 /**
  * 自定义行为分发处理。
@@ -17,7 +12,7 @@ import java.time.format.DateTimeFormatter
  * 对应 Python `src/CenterWindow.py::doCustomAction`（line 327-384）：
  * 根据 [FunctionItem] 的类型（cmd 或 act）执行对应的 ADB 操作。
  *
- * 对于对话框类行为（安装/录屏/文本输入/APK提取），由宿主在 onFunctionItemClick
+ * 对于对话框类行为（安装/录屏/截图/文本输入/APK提取），由宿主在 onFunctionItemClick
  * 中拦截弹出对应对话框，不进入本 handler。
  */
 object CustomActionHandler {
@@ -117,7 +112,6 @@ object CustomActionHandler {
         onResult: (String) -> Unit
     ) {
         when (item.action) {
-            "m_screenshot" -> doScreenshot(deviceIp, executor, onResult)
             "m_start_app" -> doStartApp(deviceIp, appParams, executor, onResult)
             "m_restart_app" -> doRestartApp(deviceIp, appParams, executor, onResult)
             "m_send_broadcast" -> doSendBroadcast(deviceIp, appParams, executor, onResult)
@@ -130,42 +124,6 @@ object CustomActionHandler {
     }
 
     // ── 具体行为实现 ──
-
-    /**
-     * 屏幕截图：弹出文件保存对话框 → 执行截图命令。
-     * 对应 Python `CenterWindow.action_save_screen_shoot`。
-     */
-    private suspend fun doScreenshot(
-        deviceIp: String,
-        executor: AdbExecutor,
-        onResult: (String) -> Unit
-    ) {
-        val timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"))
-        val defaultName = "screenshot_$timestamp.png"
-
-        // 使用 java.awt.FileDialog 弹出保存对话框
-        val dialog = FileDialog(null as Frame?, "保存截图", FileDialog.SAVE)
-        dialog.file = defaultName
-        dialog.isVisible = true
-
-        val selectedDir = dialog.directory
-        val selectedFile = dialog.file
-        if (selectedDir == null || selectedFile == null) {
-            onResult("[取消] 用户取消了截图保存")
-            return
-        }
-
-        val savePath = File(selectedDir, selectedFile).absolutePath
-        onResult("> 截图保存到: $savePath")
-        logger.infoWithStamp("Screenshot save path: $savePath")
-
-        val result = executor.getScreenShoot(deviceIp, savePath)
-        if (result.success) {
-            onResult("[成功] 截图已保存: $savePath")
-        } else {
-            onResult("[错误] 截图失败: ${result.output.take(200)}")
-        }
-    }
 
     /**
      * 启动应用：构建 `am start` 命令并执行。

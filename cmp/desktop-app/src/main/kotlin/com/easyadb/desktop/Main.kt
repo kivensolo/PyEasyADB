@@ -56,6 +56,7 @@ import com.easyadb.ui.dialogs.TextInputDialog
 import com.easyadb.ui.dialogs.InstallApkDialog
 import com.easyadb.ui.dialogs.InstallOptions
 import com.easyadb.ui.dialogs.ScreenRecordDialog
+import com.easyadb.ui.dialogs.ScreenshotDialog
 import com.easyadb.ui.dialogs.ScreenRecordOptions
 import com.easyadb.core.adb.AppListLoader
 import com.easyadb.core.file.TransferCenter
@@ -188,6 +189,8 @@ fun main() {
         var showTextInputDialog by remember { mutableStateOf(false) }
         var showInstallApkDialog by remember { mutableStateOf(false) }
         var showScreenRecordDialog by remember { mutableStateOf(false) }
+        // 屏幕截图预览对话框（m_screenshot 触发；SP-2001 Loading → 预览 → 保存链路）
+        var showScreenshotDialog by remember { mutableStateOf(false) }
         // 屏幕录制状态
         var isRecording by remember { mutableStateOf(false) }
         var remainingSeconds by remember { mutableStateOf(0) }
@@ -572,6 +575,11 @@ fun main() {
                             "m_input_text" -> showTextInputDialog = true
                             "m_show_install_app_dialog" -> showInstallApkDialog = true
                             "m_screen_record" -> showScreenRecordDialog = true
+                            // 截图走 Loading → 预览 → 保存对话框链路（SP-2001），需设备在线
+                            "m_screenshot" -> {
+                                if (selectedDeviceIp != null) showScreenshotDialog = true
+                                else logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+                            }
                             else -> scope.launch {
                                 CustomActionHandler.handle(
                                     item = item,
@@ -940,6 +948,17 @@ fun main() {
                                 logAppender("[错误] 未选中设备", 4)
                             }
                         }
+                    )
+                }
+
+                // 屏幕截图预览对话框（m_screenshot 触发，SP-2001）：
+                // Loading 捕获 → 预览（刷新/旋转/复制/缩放）→ FileDialog 保存原始 PNG
+                if (showScreenshotDialog && selectedDeviceIp != null) {
+                    ScreenshotDialog(
+                        deviceIp = selectedDeviceIp!!,
+                        executor = adbExecutor,
+                        onDismiss = { showScreenshotDialog = false },
+                        onResult = { msg: String, level: Int -> logAppender(msg, level) }
                     )
                 }
             }

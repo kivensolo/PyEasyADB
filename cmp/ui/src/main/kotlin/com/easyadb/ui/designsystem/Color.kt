@@ -151,7 +151,13 @@ data class EasyAdbColors(
     val LogInfo: Color,
     val LogWarn: Color,
     val LogError: Color,
-    val LogStamp: Color
+    val LogStamp: Color,
+
+    // ── 截图预览窗（H5 .ss-view / .ss-reload）──
+    /** 预览视图区底色（H5 .ss-view：暗 #0b1019 / 浅 #e8ecf2） */
+    val ScreenshotViewBg: Color,
+    /** 刷新遮罩底色（H5 .ss-reload：rgba(11,16,25,.74)，明暗同值恒深色） */
+    val ScreenshotReloadOverlay: Color
 )
 
 /**
@@ -225,7 +231,9 @@ val LightEasyAdbColors = EasyAdbColors(
     LogInfo = Color(0xFF334155),          // .lv-info
     LogWarn = Color(0xFFB45309),          // .lv-warn
     LogError = Color(0xFFDC2626),         // .lv-err
-    LogStamp = Color(0xFF1D4ED8)          // 浅色强调蓝（命令回显标记）
+    LogStamp = Color(0xFF1D4ED8),         // 浅色强调蓝（命令回显标记）
+    ScreenshotViewBg = Color(0xFFE8ECF2), // .ss-view（浅色覆盖）
+    ScreenshotReloadOverlay = Color(0xBD0B1019) // .ss-reload（rgba(11,16,25,.74) 明暗同值）
 )
 
 /**
@@ -299,7 +307,9 @@ val DarkEasyAdbColors = EasyAdbColors(
     LogInfo = Color(0xFFC2CEDE),          // .lv-info
     LogWarn = Color(0xFFFBBF24),          // .lv-warn
     LogError = Color(0xFFF87171),         // .lv-err
-    LogStamp = Color(0xFF7DB4FA)          // 蓝系强调字（.q-pct/.f-act 同源）
+    LogStamp = Color(0xFF7DB4FA),         // 蓝系强调字（.q-pct/.f-act 同源）
+    ScreenshotViewBg = Color(0xFF0B1019), // .ss-view
+    ScreenshotReloadOverlay = Color(0xBD0B1019) // .ss-reload（rgba(11,16,25,.74) 明暗同值）
 )
 
 /** 当前组合中的扩展调色板，由 [EasyAdbTheme] 按明暗提供 */

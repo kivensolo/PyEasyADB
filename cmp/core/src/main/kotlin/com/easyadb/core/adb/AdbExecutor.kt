@@ -3,7 +3,12 @@ package com.easyadb.core.adb
 import com.easyadb.core.log.AppLogger
 import com.easyadb.core.util.ExecResult
 import com.easyadb.core.util.ExecUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 
 /**
  * 核心 ADB 操作封装。
@@ -72,11 +77,44 @@ class AdbExecutor {
     }
 
     /**
-     * 截取屏幕截图。
+     * 截取屏幕截图，返回 PNG 原始字节。
+     *
+     * 不经 shell 重定向（`> file` 拿不到字节），也不走 [ExecUtils.execCmd]
+     * （UTF-8 文本解码会损坏二进制流）：直接 ProcessBuilder 启动 adb
+     * `exec-out screencap -p`，在 IO 线程读满 stdout 字节后返回。
+     *
+     * @return PNG 字节；失败/超时/设备离线返回 null（stderr 摘要进日志）
      */
-    suspend fun getScreenShoot(deviceIp: String, savePath: String): ExecResult {
-        val cmd = "adb -s $deviceIp exec-out screencap -p > $savePath"
-        return execAdbCmd(cmd, useShell = true, useReturnCode = true)
+    suspend fun captureScreenBytes(deviceIp: String): ByteArray? = withContext(Dispatchers.IO) {
+        val cmd = "adb -s $deviceIp exec-out screencap -p"
+        currentCmd = cmd
+        logger.infoWithStamp(cmd)
+        try {
+            val process = ProcessBuilder("adb", "-s", deviceIp, "exec-out", "screencap", "-p").start()
+            val stderrDeferred = async(Dispatchers.IO) {
+                process.errorStream.bufferedReader().use { it.readText() }
+            }
+            try {
+                withTimeout(20_000) {
+                    val bytes = process.inputStream.use { it.readBytes() }
+                    process.waitFor()
+                    val stderrText = stderrDeferred.await()
+                    if (process.exitValue() == 0 && bytes.isNotEmpty()) {
+                        bytes
+                    } else {
+                        logger.error { "captureScreenBytes failed (exit=${process.exitValue()}): ${stderrText.take(200)}" }
+                        null
+                    }
+                }
+            } catch (e: TimeoutCancellationException) {
+                process.destroyForcibly()
+                logger.error { "captureScreenBytes timeout (20s): $deviceIp" }
+                null
+            }
+        } catch (e: Exception) {
+            logger.error { "captureScreenBytes error: ${e.message}" }
+            null
+        }
     }
 
     /**
