@@ -20,26 +20,11 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
 -->
 <templates>
     <template name="通用应用操作" layout="grid">
-        <item>
-            <attr name="icon">./res/img/app_install_256x256.png</attr>
-            <attr name="text">推送文件</attr>
-            <attr name="act">m_push_file</attr>
-            <attr name="isNeedDeviceOnline">true</attr>
-            <attr name="tab">quick</attr>
-            <attr name="size">large</attr>
-            <attr name="desc">选择本机文件推送到设备 /sdcard/ 目录</attr>
-            <attr name="accent">orange</attr>
-        </item>
-        <item>
-            <attr name="icon">./res/img/app_start_256x256.png</attr>
-            <attr name="text">拉取文件</attr>
-            <attr name="act">m_pull_file</attr>
-            <attr name="isNeedDeviceOnline">true</attr>
-            <attr name="tab">quick</attr>
-            <attr name="size">large</attr>
-            <attr name="desc">输入设备文件路径，保存到本机</attr>
-            <attr name="accent">blue</attr>
-        </item>
+        <!-- 快捷操作卡片顺序（2026-10-21 走查定稿，TemplateGrid 固定 4 列按序填充）：
+             第 1 排：启动/停止/重启/发送广播（应用生命周期操作）
+             第 2 排：安装/卸载/清除数据/查询ContentProvider（应用管理操作）
+             第 3 排：屏幕截图/视频录制/推送文件/拉取文件（设备内容采集与传输）
+             第 4 排：文本输入 -->
         <item>
             <attr name="icon">./res/img/app_start_256x256.png</attr>
             <attr name="text">启动应用</attr>
@@ -68,6 +53,15 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="accent">blue</attr>
         </item>
         <item>
+            <attr name="icon">./res/img/broadcast_256x256.png</attr>
+            <attr name="text">发送广播</attr>
+            <attr name="act">m_send_broadcast</attr>
+            <attr name="isNeedPkgName">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">向指定应用发送自定义广播 Action</attr>
+            <attr name="accent">orange</attr>
+        </item>
+        <item>
             <attr name="icon">./res/img/app_install_256x256.png</attr>
             <attr name="text">安装应用</attr>
             <attr name="act">m_show_install_app_dialog</attr>
@@ -86,12 +80,12 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="accent">red</attr>
         </item>
         <item>
-            <attr name="icon">./res/img/broadcast_256x256.png</attr>
-            <attr name="text">发送广播</attr>
-            <attr name="act">m_send_broadcast</attr>
+            <attr name="icon">./res/img/app_clear_data_256x256.png</attr>
+            <attr name="text">清除数据</attr>
+            <attr name="cmd">pm clear {0}</attr>
             <attr name="isNeedPkgName">true</attr>
             <attr name="tab">quick</attr>
-            <attr name="desc">向指定应用发送自定义广播 Action</attr>
+            <attr name="desc">清除指定应用的所有用户数据</attr>
             <attr name="accent">orange</attr>
         </item>
         <item>
@@ -101,14 +95,6 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="tab">quick</attr>
             <attr name="desc">查询指定应用的 ContentProvider 数据</attr>
             <attr name="accent">blue</attr>
-        </item>
-        <item>
-            <attr name="icon">./res/img/text_input_256x256.png</attr>
-            <attr name="text">文本输入</attr>
-            <attr name="act">m_input_text</attr>
-            <attr name="tab">quick</attr>
-            <attr name="desc">向设备输入框写入自定义文本</attr>
-            <attr name="accent">grey</attr>
         </item>
         <item>
             <attr name="icon">./res/img/screen_capture_256x256.png</attr>
@@ -129,13 +115,32 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="accent">sky</attr>
         </item>
         <item>
-            <attr name="icon">./res/img/app_clear_data_256x256.png</attr>
-            <attr name="text">清除数据</attr>
-            <attr name="cmd">pm clear {0}</attr>
-            <attr name="isNeedPkgName">true</attr>
+            <attr name="icon">./res/img/app_install_256x256.png</attr>
+            <attr name="text">推送文件</attr>
+            <attr name="act">m_push_file</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
             <attr name="tab">quick</attr>
-            <attr name="desc">清除指定应用的所有用户数据</attr>
+            <attr name="size">large</attr>
+            <attr name="desc">选择本机文件推送到设备 /sdcard/ 目录</attr>
             <attr name="accent">orange</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/app_start_256x256.png</attr>
+            <attr name="text">拉取文件</attr>
+            <attr name="act">m_pull_file</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="size">large</attr>
+            <attr name="desc">输入设备文件路径，保存到本机</attr>
+            <attr name="accent">blue</attr>
+        </item>
+        <item>
+            <attr name="icon">./res/img/text_input_256x256.png</attr>
+            <attr name="text">文本输入</attr>
+            <attr name="act">m_input_text</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">向设备输入框写入自定义文本</attr>
+            <attr name="accent">grey</attr>
         </item>
     </template>
     <template name="数据获取" layout="grid">
