@@ -1,6 +1,7 @@
 package com.easyadb.desktop
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -535,6 +536,8 @@ fun main() {
                     )
                 }
 
+                // 满窗 Box：主内容 + 新建连接浮层（浮层须盖在全部内容之上，对齐 H5 #modalDevice）
+                Box(modifier = Modifier.fillMaxSize()) {
                 MainWindowScreen(
                     modifier = Modifier.fillMaxSize(),
                     menuConfigs = menuConfigsForDisplay,
@@ -780,11 +783,12 @@ fun main() {
                     )
                 }
 
-                // 新建连接对话框（对齐 Python NewConnectDialog）
+                // 新建连接浮层（H5 #modalDevice：scrim 遮罩 + 居中卡片，主窗口内浮层非独立
+                // OS 窗口；三字段——名称可选，留空连接时保留库中旧别名）
                 if (showNewConnectDialog) {
                     NewConnectDialog(
                         onDismiss = { showNewConnectDialog = false },
-                        onConnect = { deviceIp ->
+                        onConnect = { name, deviceIp ->
                             showNewConnectDialog = false
                             scope.launch {
                                 logAppender("> adb connect $deviceIp", 2)
@@ -792,13 +796,14 @@ fun main() {
                                 if (connectResult.success) {
                                     appLogger.info { "Connected to $deviceIp" }
                                     logAppender("[连接成功] $deviceIp", 2)
-                                    // 写入数据库（已存在的设备合并旧记录：别名/信息/使用率保留，连接次数 +1）
+                                    // 写入数据库（已存在的设备合并旧记录：信息/使用率保留，连接次数 +1；
+                                    // 别名 = 本次填写的名称（非空覆盖），留空沿用旧别名）
                                     val (ip, port) = com.easyadb.core.util.NetworkUtils.parseIpPort(deviceIp)
                                     val existing = DbManager.getDevice(ip).data
                                     val deviceRecord = com.easyadb.core.database.DeviceRecord(
                                         ip = ip,
                                         port = port,
-                                        alias = existing?.alias.orEmpty(),
+                                        alias = name.ifBlank { existing?.alias.orEmpty() },
                                         deviceInfo = existing?.deviceInfo.orEmpty(),
                                         active = 1,
                                         connectCount = (existing?.connectCount ?: 0) + 1
@@ -817,6 +822,7 @@ fun main() {
                         }
                     )
                 }
+                } // 满窗 Box（MainWindowScreen + 新建连接浮层）
 
                 // 文本输入对话框（m_input_text 触发）
                 if (showTextInputDialog) {

@@ -121,6 +121,8 @@ private fun PlaygroundScreen(
     onLog: (String) -> Unit,
     onClearLog: () -> Unit
 ) {
+    // 满窗 Box：画廊内容 + 弹窗层（NewConnectDialog 已改主窗口内浮层，需盖全窗）
+    Box(modifier = Modifier.fillMaxSize()) {
     Row(modifier = Modifier.fillMaxSize().background(MaterialTheme.colors.background)) {
         // ── 左侧：入口边栏 ──
         Column(
@@ -209,6 +211,7 @@ private fun PlaygroundScreen(
             entry.content(darkTheme, { onToggleEntry(id) }, onLog)
         }
     }
+    } // 满窗 Box（画廊内容 + 弹窗浮层）
 }
 
 /** 事件日志面板：弹窗回调按时间顺序打印，自动滚动到底部。 */
@@ -469,12 +472,12 @@ private val entries = listOf(
         id = "new-connect",
         group = "基础输入",
         component = "NewConnectDialog",
-        state = "IP 格式校验 + 自动补 :5555"
+        state = "名称(可选)/IP/端口 三字段 + 端口校验"
     ) { _, onDismiss, log ->
         NewConnectDialog(
             onDismiss = onDismiss,
-            onConnect = { ip ->
-                log("NewConnectDialog.onConnect(\"$ip\") → adb connect $ip")
+            onConnect = { name, ip ->
+                log("NewConnectDialog.onConnect(\"$name\", \"$ip\") → adb connect $ip")
                 onDismiss()
             }
         )

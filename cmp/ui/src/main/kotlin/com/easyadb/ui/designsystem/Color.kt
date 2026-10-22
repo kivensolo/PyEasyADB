@@ -157,7 +157,17 @@ data class EasyAdbColors(
     /** 预览视图区底色（H5 .ss-view：暗 #0b1019 / 浅 #e8ecf2） */
     val ScreenshotViewBg: Color,
     /** 刷新遮罩底色（H5 .ss-reload：rgba(11,16,25,.74)，明暗同值恒深色） */
-    val ScreenshotReloadOverlay: Color
+    val ScreenshotReloadOverlay: Color,
+
+    // ── 自绘头部弹窗（H5 .modal / .modal-x，undecorated 窗口用） ──
+    /** 弹窗卡片渐变顶（H5 .modal：暗 #151f34 / 浅 #ffffff） */
+    val ModalBgTop: Color,
+    /** 弹窗卡片渐变底（H5 .modal：暗 #111a2c / 浅 #f8fafd） */
+    val ModalBgBottom: Color,
+    /** 弹窗关闭钮 hover 底（H5 .modal-x:hover：暗 #22304d / 浅 #e6edf7） */
+    val ModalXHoverBg: Color,
+    /** 弹窗遮罩底（H5 .modal-backdrop：rgba(4,7,13,.62)，明暗同值恒深色） */
+    val ModalScrim: Color
 )
 
 /**
@@ -233,7 +243,11 @@ val LightEasyAdbColors = EasyAdbColors(
     LogError = Color(0xFFDC2626),         // .lv-err
     LogStamp = Color(0xFF1D4ED8),         // 浅色强调蓝（命令回显标记）
     ScreenshotViewBg = Color(0xFFE8ECF2), // .ss-view（浅色覆盖）
-    ScreenshotReloadOverlay = Color(0xBD0B1019) // .ss-reload（rgba(11,16,25,.74) 明暗同值）
+    ScreenshotReloadOverlay = Color(0xBD0B1019), // .ss-reload（rgba(11,16,25,.74) 明暗同值）
+    ModalBgTop = Color(0xFFFFFFFF),       // .modal 渐变顶（html[data-theme=light]）
+    ModalBgBottom = Color(0xFFF8FAFD),    // .modal 渐变底
+    ModalXHoverBg = Color(0xFFE6EDF7),    // .modal-x:hover（浅色覆盖）
+    ModalScrim = Color(0x9E04070D)        // .modal-backdrop（rgba(4,7,13,.62) 明暗同值）
 )
 
 /**
@@ -309,7 +323,11 @@ val DarkEasyAdbColors = EasyAdbColors(
     LogError = Color(0xFFF87171),         // .lv-err
     LogStamp = Color(0xFF7DB4FA),         // 蓝系强调字（.q-pct/.f-act 同源）
     ScreenshotViewBg = Color(0xFF0B1019), // .ss-view
-    ScreenshotReloadOverlay = Color(0xBD0B1019) // .ss-reload（rgba(11,16,25,.74) 明暗同值）
+    ScreenshotReloadOverlay = Color(0xBD0B1019), // .ss-reload（rgba(11,16,25,.74) 明暗同值）
+    ModalBgTop = Color(0xFF151F34),       // .modal 渐变顶
+    ModalBgBottom = Color(0xFF111A2C),    // .modal 渐变底
+    ModalXHoverBg = Color(0xFF22304D),    // .modal-x:hover
+    ModalScrim = Color(0x9E04070D)        // .modal-backdrop（rgba(4,7,13,.62) 明暗同值）
 )
 
 /** 当前组合中的扩展调色板，由 [EasyAdbTheme] 按明暗提供 */
