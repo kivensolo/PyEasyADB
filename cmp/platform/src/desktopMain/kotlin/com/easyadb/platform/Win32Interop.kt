@@ -29,6 +29,36 @@ data class Win32Rect(val left: Int, val top: Int, val right: Int, val bottom: In
 }
 
 /**
+ * EnumWindows 具名回调：收集标题精确匹配 [title] 的顶层窗口句柄 → 所属 pid。
+ *
+ * 用具名类而非匿名 object——匿名回调在增量编译下出现过 JNA 代理类不匹配
+ * （d7bcee7 回退事故）；具名类签名稳定。data 声明可空并做防御：EnumWindows
+ * 实际实现中 lParam 可能为 null（关闭窗口过程中 JNA 收到 null data），声明非空
+ * 会触发 Kotlin 固有空检查直接抛 NPE（本回调无参可用的场景，忽略该枚举项即可）。
+ */
+private class TitleEnumProc(
+    private val title: String,
+    private val result: MutableMap<Long, Long>
+) : WinUser.WNDENUMPROC {
+    private val pidOut = IntByReference()
+
+    override fun callback(hwnd: WinDef.HWND, data: Pointer?): Boolean {
+        if (data == null) return true
+        val buf = CharArray(256)
+        val len = User32.INSTANCE.GetWindowText(hwnd, buf, buf.size)
+        if (len > 0 && String(buf, 0, len) == title) {
+            if (User32.INSTANCE.GetWindowThreadProcessId(hwnd, pidOut) != 0) {
+                hwnd.pointer?.let {
+                    val peer = Pointer.nativeValue(it)
+                    if (peer != 0L) result[peer] = pidOut.value.toLong()
+                }
+            }
+        }
+        return true
+    }
+}
+
+/**
  * Win32 窗口互操作封装（P9 Scrcpy 嵌入模式，Windows 专用）。
  *
  * 仅封装嵌入链路所需调用：按标题找窗口、AWT 组件取 HWND、reparent（SetParent）、
@@ -62,19 +92,7 @@ object Win32Interop {
     fun findWindowsByTitle(title: String): Map<Long, Long> {
         if (!isWindows) return emptyMap()
         val result = HashMap<Long, Long>()
-        val pidOut = IntByReference()
-        User32.INSTANCE.EnumWindows(object : WinUser.WNDENUMPROC {
-            override fun callback(hwnd: WinDef.HWND, data: Pointer): Boolean {
-                val buf = CharArray(256)
-                val len = User32.INSTANCE.GetWindowText(hwnd, buf, buf.size)
-                if (len > 0 && String(buf, 0, len) == title) {
-                    if (User32.INSTANCE.GetWindowThreadProcessId(hwnd, pidOut) != 0) {
-                        hwnd.peer()?.let { result[it] = pidOut.value.toLong() }
-                    }
-                }
-                return true
-            }
-        }, null)
+        User32.INSTANCE.EnumWindows(TitleEnumProc(title, result), null)
         return result
     }
 
