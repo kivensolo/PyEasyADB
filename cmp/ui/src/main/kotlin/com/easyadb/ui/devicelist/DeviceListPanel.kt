@@ -3,7 +3,6 @@
 package com.easyadb.ui.devicelist
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,9 +28,7 @@ import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.material.DropdownMenu
 import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -44,7 +42,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
@@ -52,30 +49,28 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.isSecondaryPressed
 import androidx.compose.ui.input.pointer.onPointerEvent
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.window.Popup
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.database.DeviceRecord
 import com.easyadb.core.device.DeviceInfo
 import com.easyadb.core.device.DeviceState
 import com.easyadb.ui.designsystem.AppIcons
-import com.easyadb.ui.designsystem.AppImages
 import com.easyadb.ui.designsystem.EasyAdbTileIcons
 import com.easyadb.ui.designsystem.EmptyState
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.hoverBackground
+import kotlin.math.roundToInt
 
 /**
  * 一次完整的「设备列表」面板交互回调集合。
@@ -284,35 +279,37 @@ private fun DeviceCard(
     val density = LocalDensity.current
 
     // 右键菜单（对齐 Python MainWindow.on_ip_menu_show：
-    // 在线 → 断开可用、删除禁用；离线 → 删除可用、断开禁用）
-    var showContextMenu by remember { mutableStateOf(false) }
-    var menuOffset by remember { mutableStateOf(DpOffset.Zero) }
+    // 在线 → 断开可用、删除禁用；离线 → 删除可用、断开禁用）。
+    // null = 不显示；非空 = 触发点（卡片局部像素坐标），裸 Popup 按 TopStart+offset 定位——
+    // 不用 material DropdownMenu：其 offset 是相对锚点的追加偏移且内部有项高钳制，
+    // 传点击坐标会定位漂移（与文件树 ContextActionsMenu 同款 Popup 方案）
+    var contextMenuPos by remember { mutableStateOf<Offset?>(null) }
 
     // 双击检测：clickable 零延迟单击 + 300ms 内二次点击触发双击连接
     var lastClickTimeMs by remember(card.id) { mutableStateOf(0L) }
 
-    // 右键菜单图标在 Composable 上下文取（painterResource 不可在 remember lambda 内调用）；
-    // painterResource 内部有缓存，直接构建列表即可，无需 remember
+    // 右键菜单（对齐 H5 .ctx-menu：线稿图标 + 文案，随主题染色）
     val contextMenuItems = listOf(
         ContextMenuItem(
             id = "alias_edit",
-            name = "| 备注设置",
+            name = "备注设置",
             enabled = true,
-            icon = AppImages.edit(),
+            iconVector = EasyAdbTileIcons.AliasEdit,
             onClick = onAliasEdit
         ),
         ContextMenuItem(
             id = "disconnect",
-            name = "| 断开连接",
+            name = "断开连接",
             enabled = card.isOnline,
-            icon = AppImages.deviceDisconnected(),
+            iconVector = EasyAdbTileIcons.Disconnect,
             onClick = onDisconnect
         ),
         ContextMenuItem(
             id = "remove_device",
-            name = "| 删除设备",
+            name = "删除设备",
             enabled = !card.isOnline,
-            icon = AppImages.warning(),
+            iconVector = EasyAdbTileIcons.RemoveDevice,
+            danger = true,
             onClick = onRemove
         )
     )
@@ -370,11 +367,7 @@ private fun DeviceCard(
                 }
                 .onPointerEvent(PointerEventType.Press) { event ->
                     if (event.buttons.isSecondaryPressed) {
-                        val pos = event.changes.first().position
-                        menuOffset = with(density) {
-                            DpOffset(pos.x.toDp(), pos.y.toDp())
-                        }
-                        showContextMenu = true
+                        contextMenuPos = event.changes.first().position
                     }
                 }
                 .padding(16.dp),
@@ -447,68 +440,109 @@ private fun DeviceCard(
             }
         }
 
-        // 右键菜单（对齐 Python QMenu：图标 + 文案，禁用态灰化）
-        DropdownMenu(
-            expanded = showContextMenu,
-            onDismissRequest = { showContextMenu = false },
-            offset = menuOffset
-        ) {
-            contextMenuItems.forEach { item ->
-                Box(
-                    modifier = Modifier
-                        .widthIn(min = 140.dp)
-                        .padding(horizontal = 6.dp, vertical = 1.dp)
-                        .height(28.dp)
-                        .clip(easyAdbTokens.shapeMd)
-                        .background(
-                            if (item.enabled) Color.Transparent
-                            else MaterialTheme.colors.onSurface.copy(alpha = 0.04f)
-                        )
-                        .then(if (item.enabled) Modifier.hoverBackground() else Modifier)
-                        .clickable(
-                            interactionSource = null,
-                            indication = null,
-                            enabled = item.enabled
-                        ) {
-                            showContextMenu = false
-                            item.onClick()
-                        }
-                        .padding(horizontal = 10.dp),
-                    contentAlignment = Alignment.CenterStart
+        // 右键菜单（对齐 H5 .ctx-menu：Surface 描边+投影浮层、5dp 内衬、
+        // 30dp 行高 7dp 圆角、hover 蓝底字色翻转、danger 红系、禁用置灰；
+        // 与文件树 ContextActionsMenu 同一浮层语言）
+        contextMenuPos?.let { pos ->
+            Popup(
+                alignment = Alignment.TopStart,
+                offset = IntOffset(pos.x.roundToInt(), pos.y.roundToInt()),
+                onDismissRequest = { contextMenuPos = null },
+                focusable = true
+            ) {
+                Surface(
+                    shape = easyAdbTokens.shapeXl,
+                    color = easyAdbColors.Surface,
+                    border = BorderStroke(easyAdbTokens.strokeWidth, easyAdbColors.Border),
+                    elevation = easyAdbTokens.elevationHigh,
+                    // 钳到内容固有宽度：Popup 内容最大约束为整窗宽度，
+                    // 行 fillMaxWidth 会把 Surface 撑满全窗（与文件树 ContextActionsMenu 同款钳制）
+                    modifier = Modifier.width(IntrinsicSize.Min)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (item.icon != null) {
-                            Image(
-                                painter = item.icon,
-                                contentDescription = null,
-                                contentScale = ContentScale.Fit,
-                                modifier = Modifier
-                                    .size(21.dp)
-                                    .then(if (item.enabled) Modifier else Modifier.alpha(0.4f)),
-                                // 禁用时把彩色图标转为灰度（对齐 Qt QIcon 的 Disabled mode）
-                                colorFilter = if (item.enabled) null
-                                else ColorFilter.colorMatrix(
-                                    ColorMatrix(
-                                        floatArrayOf(
-                                            0.299f, 0.587f, 0.114f, 0f, 0f,
-                                            0.299f, 0.587f, 0.114f, 0f, 0f,
-                                            0.299f, 0.587f, 0.114f, 0f, 0f,
-                                            0f, 0f, 0f, 1f, 0f
-                                        )
-                                    )
-                                )
-                            )
-                            Spacer(Modifier.width(6.dp))
+                    Column(
+                        modifier = Modifier
+                            .widthIn(min = 176.dp)   // H5 .ctx-menu min-width:176px
+                            .padding(5.dp)
+                    ) {
+                        contextMenuItems.forEach { item ->
+                            DeviceContextMenuRow(item) {
+                                contextMenuPos = null
+                                item.onClick()
+                            }
                         }
-                        Text(
-                            text = item.name,
-                            fontSize = 12.sp,
-                            color = if (item.enabled) easyAdbColors.TextPrimary
-                            else easyAdbColors.TextSecondary
-                        )
                     }
                 }
             }
+        }
+    }
+}
+
+/** 右键菜单行圆角（H5 .ctx-item border-radius:7px，与文件树 MenuRowShape 同规格） */
+private val MenuRowShape = RoundedCornerShape(7.dp)
+
+/**
+ * 设备右键菜单单行（H5 .ctx-item）：30dp 行高、hover 蓝底 + 字色/图标翻转、
+ * danger 项红系（hover 红底）、禁用项置灰不可点。
+ */
+@Composable
+private fun DeviceContextMenuRow(
+    item: ContextMenuItem,
+    onClick: () -> Unit
+) {
+    var hovered by remember { mutableStateOf(false) }
+    val active = hovered && item.enabled
+    val c = easyAdbColors
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(30.dp)
+            .clip(MenuRowShape)
+            .background(
+                when {
+                    active && item.danger -> c.AccentRed.copy(alpha = 0.16f)
+                    active -> c.MenuHoverBg
+                    else -> Color.Transparent
+                }
+            )
+            .then(
+                if (item.enabled) {
+                    Modifier.clickable(
+                        interactionSource = null,
+                        indication = null,
+                        onClick = onClick
+                    )
+                } else Modifier
+            )
+            .onPointerEvent(PointerEventType.Enter) { hovered = true }
+            .onPointerEvent(PointerEventType.Exit) { hovered = false }
+            .padding(horizontal = 11.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (item.iconVector != null) {
+                Icon(
+                    imageVector = item.iconVector,
+                    contentDescription = null,
+                    tint = when {
+                        !item.enabled -> c.TextDisabled.copy(alpha = 0.6f)
+                        active -> c.MenuHoverText
+                        item.danger -> c.AccentRed
+                        else -> c.TextSecondary
+                    },
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(Modifier.width(9.dp))
+            }
+            Text(
+                text = item.name,
+                fontSize = 12.5.sp,
+                color = when {
+                    !item.enabled -> c.TextDisabled.copy(alpha = 0.7f)
+                    active -> c.MenuHoverText
+                    item.danger -> c.AccentRed
+                    else -> c.TextPrimary
+                }
+            )
         }
     }
 }
@@ -576,15 +610,16 @@ private fun buildDeviceCards(
 }
 
 /**
- * 通用右键菜单项。对应 Python QMenu 的一个 QAction。
+ * 设备卡右键菜单项。对应 Python QMenu 的一个 QAction。
  *
- * @param icon 图标 painter（对齐 Python addAction(icon, text) 的第一个参数），
- *             null 时不显示图标。
+ * @param iconVector 线稿图标（EasyAdbTileIcons，随主题染色），null 不显示图标。
+ * @param danger 危险操作（如删除设备）：红系文案/图标，hover 红底（H5 .ctx-item.danger）。
  */
 data class ContextMenuItem(
     val id: String,
     val name: String,
     val enabled: Boolean = true,
-    val icon: Painter? = null,
+    val iconVector: ImageVector? = null,
+    val danger: Boolean = false,
     val onClick: () -> Unit
 )

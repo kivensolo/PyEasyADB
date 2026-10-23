@@ -337,6 +337,46 @@ object EasyAdbTileIcons {
         )
     }
 
+    /** 备注设置：书写笔（Lucide pen-line——编辑备注的语义） */
+    val AliasEdit: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbAliasEdit",
+            stroke = listOf(
+                "M12 20h9",
+                "M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"
+            )
+        )
+    }
+
+    /** 断开连接：分离的双链环 + 四角短线（Lucide unlink——连接解除语义） */
+    val Disconnect: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbDisconnect",
+            stroke = listOf(
+                "m18.84 12.25 1.72-1.71h-.02a5.004 5.004 0 0 0-7.09-7.08l-1.71 1.71",
+                "m5.17 11.75-1.71 1.71a5.004 5.004 0 0 0 7.09 7.08l1.71-1.71",
+                "M8 2v3",
+                "M2 8h3",
+                "M16 19v3",
+                "M19 16h3"
+            )
+        )
+    }
+
+    /** 删除设备：垃圾桶 + 两道竖线（Lucide trash-2——移除记录语义） */
+    val RemoveDevice: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbRemoveDevice",
+            stroke = listOf(
+                "M3 6h18",
+                "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6",
+                "M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+                "M10 11v6",
+                "M14 11v6"
+            )
+        )
+    }
+
     /**
      * 按线稿规范构建图标：描边路径 2 单位圆头/圆角、不填充；实心路径仅填充。
      * 颜色占位为黑色，实际显示色由 Icon(tint) 染色决定。
