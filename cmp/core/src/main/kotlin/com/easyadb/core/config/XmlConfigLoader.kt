@@ -3,11 +3,18 @@ package com.easyadb.core.config
 import com.easyadb.core.log.AppLogger
 import org.w3c.dom.Element
 import java.io.File
+import java.io.InputStream
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * 使用 javax.xml.parsers.DocumentBuilder 的 XML 配置文件加载器。
  * 对应 Python 中从 res/config/ 加载 XML 的逻辑。
+ *
+ * 入口形态：[InputStream] 为主入口（classpath 加载用，解析完成后由本类关闭流），
+ * [File] 为便捷重载（存在性检查后委托 InputStream 版）。
+ * 全部 XML 配置（cmdConfig/function_templates/menus_ui）的解析逻辑只存在于此处——
+ * 调用方不得自建解析副本（SP-2002 走查曾因双解析器漏字段导致 requireParam 静默失效，
+ * 见 SP-6001）。
  */
 object XmlConfigLoader {
 
@@ -19,14 +26,20 @@ object XmlConfigLoader {
     }
 
     /**
-     * 加载 cmdConfig.xml 到 CmdGroup 列表。
+     * 加载 cmdConfig.xml 到 CmdGroup 列表（当前 CMP 端无调用方——消费 UI 命令树已被
+     * CommandsPanel 取代，解析与模型按 Python 对照文档保守保留，见 SP-6001）。
      */
     fun loadCmdConfig(file: File): List<CmdGroup> {
         if (!file.exists()) {
             logger.warn { "cmdConfig.xml not found at ${file.absolutePath}" }
             return emptyList()
         }
-        val db = factory.newDocumentBuilder().parse(file)
+        return loadCmdConfig(file.inputStream())
+    }
+
+    /** [loadCmdConfig] 的流入口：解析完成后关闭传入流；解析失败抛异常。 */
+    fun loadCmdConfig(stream: InputStream): List<CmdGroup> {
+        val db = stream.use { factory.newDocumentBuilder().parse(it) }
         val groups = db.documentElement.getElementsByTagName("group")
         val result = mutableListOf<CmdGroup>()
 
@@ -64,7 +77,12 @@ object XmlConfigLoader {
             logger.warn { "function_templates.xml not found at ${file.absolutePath}" }
             return emptyList()
         }
-        val db = factory.newDocumentBuilder().parse(file)
+        return loadFunctionTemplates(file.inputStream())
+    }
+
+    /** [loadFunctionTemplates] 的流入口：解析完成后关闭传入流；解析失败抛异常。 */
+    fun loadFunctionTemplates(stream: InputStream): List<FunctionTemplate> {
+        val db = stream.use { factory.newDocumentBuilder().parse(it) }
         val templateNodes = db.documentElement.getElementsByTagName("template")
         val result = mutableListOf<FunctionTemplate>()
 
@@ -87,7 +105,12 @@ object XmlConfigLoader {
                         action = attrs["act"] ?: "",
                         shell = attrs["shell"]?.toBoolean() ?: true,
                         needPkgName = attrs["isNeedPkgName"]?.toBoolean() ?: false,
+                        requireParam = parseRequireParam(attrs["requireParam"]),
                         needDeviceOnline = attrs["isNeedDeviceOnline"]?.toBoolean() ?: false,
+                        tab = attrs["tab"] ?: "quick",
+                        size = attrs["size"] ?: "small",
+                        desc = attrs["desc"] ?: "",
+                        accent = attrs["accent"] ?: "",
                         state = state
                     )
                 )
@@ -105,7 +128,12 @@ object XmlConfigLoader {
             logger.warn { "menus_ui.xml not found at ${file.absolutePath}" }
             return emptyList()
         }
-        val db = factory.newDocumentBuilder().parse(file)
+        return loadMenuConfig(file.inputStream())
+    }
+
+    /** [loadMenuConfig] 的流入口：解析完成后关闭传入流；解析失败抛异常。 */
+    fun loadMenuConfig(stream: InputStream): List<MenuConfig> {
+        val db = stream.use { factory.newDocumentBuilder().parse(it) }
         val menuNodes = db.documentElement.getElementsByTagName("menu")
         val result = mutableListOf<MenuConfig>()
 
@@ -171,4 +199,8 @@ object XmlConfigLoader {
         }
         return attrs
     }
+
+    /** requireParam 逗号分隔多值解析（"pkg,action" → [pkg, action]；空值过滤）。 */
+    private fun parseRequireParam(raw: String?): List<String> =
+        raw?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() } ?: emptyList()
 }

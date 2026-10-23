@@ -6,4 +6,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.logging) // core.log
     implementation(libs.sqlite.jdbc) // core.database
+
+    testImplementation(libs.kotlin.test)
 }
