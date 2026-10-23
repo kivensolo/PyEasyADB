@@ -44,7 +44,7 @@ object CustomActionHandler {
             return
         }
 
-        // 验证包名
+        // 验证包名（发送广播 XML 已配 isNeedPkgName=false——广播由 Action 驱动，不强制包名）
         if (item.needPkgName && appParams.selectedPackage.isEmpty()) {
             onResult("[错误] 操作需要包名，但未输入包名")
             logger.warn { "P5 action skipped: needPkgName but no package selected (item=${item.text})" }
@@ -192,7 +192,7 @@ object CustomActionHandler {
     }
 
     /**
-     * 发送广播：构建 `am broadcast` 命令并执行。
+     * 发送广播：构建 `am broadcast` 命令并执行（Action 必填，对齐 H5 actBroadcast 校验）。
      */
     private suspend fun doSendBroadcast(
         deviceIp: String,
@@ -200,6 +200,12 @@ object CustomActionHandler {
         executor: AdbExecutor,
         onResult: (String) -> Unit
     ) {
+        // 兜底：Action 为空则广播无从构建（UI 层缺参抖动拦截之外的第二道防线）
+        if (appParams.action.isBlank()) {
+            onResult("[错误] 请先填写 Action 再广播")
+            logger.warn { "P5 broadcast skipped: action is blank" }
+            return
+        }
         val amCmd = AmCommandBuilder.buildAmCmd(
             name = "broadcast",
             packageName = appParams.selectedPackage,

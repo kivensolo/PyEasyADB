@@ -26,22 +26,30 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.easyadb.ui.designsystem.FieldShakeState
 import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
+import com.easyadb.ui.designsystem.observeFrame
 import java.util.prefs.Preferences
 
 /**
@@ -55,6 +63,45 @@ data class AppParamState(
 )
 
 /**
+ * 参数区字段抖动控制器（对齐 H5 参照稿 pkgShake()/shakeField('#fAction')）：
+ * 宿主在功能卡点击缺参校验失败时触发对应字段抖动（红边 + 左右晃动 + 红底闪烁），
+ * 由 [AppParamPanel] 内对应输入框消费绘制。
+ * [isMissing]/[shake]/[paramLabel] 按 XML requireParam 配置值（逗号分隔多字段）
+ * 分发——新增必填字段时在此三个方法各补一支 + [AppParamState] 加字段 +
+ * AppParamPanel 对应输入框接 shakeState，宿主点击链路无需改动。
+ */
+@Stable
+class ParamShakeState {
+    /** 包名输入框（H5 #fPkg）：启动/停止/重启/卸载/清除数据等缺包名时触发。 */
+    val pkg: FieldShakeState = FieldShakeState()
+
+    /** Action 输入框（H5 #fAction）：发送广播缺 Action 时触发。 */
+    val action: FieldShakeState = FieldShakeState()
+
+    /** requireParam 对应字段是否缺失（空白视为缺失；未知字段值恒为不缺失）。 */
+    fun isMissing(param: String, state: AppParamState): Boolean = when (param) {
+        "pkg" -> state.selectedPackage.isBlank()
+        "action" -> state.action.isBlank()
+        else -> false
+    }
+
+    /** 按 requireParam 配置值触发对应字段抖动（未知值忽略；多字段缺失可逐个调用）。 */
+    fun shake(param: String) {
+        when (param) {
+            "pkg" -> pkg.shake()
+            "action" -> action.shake()
+        }
+    }
+
+    /** requireParam 对应字段的中文短名（缺参提示文案拼接用，如「包名、Action」）。 */
+    fun paramLabel(param: String): String = when (param) {
+        "pkg" -> "包名"
+        "action" -> "Action"
+        else -> param
+    }
+}
+
+/**
  * Copyright (c) 2026, 北京视达科科技有限责任公司 All rights reserved.
  * author：ZekeWong
  * date：2026/10/10
@@ -65,6 +112,8 @@ data class AppParamState(
  *              仅负责参数收集与持久化（Preferences），不包含执行按钮——
  *              启动应用 / 发送广播等执行入口为功能卡本身（点击走
  *              onItemClick(item, appParamState) 既有链路）。
+ *              [shakeState] 为宿主缺参校验的抖动入口：包名/Action 缺失时
+ *              对应输入框红边晃动（对齐 H5 .pfield.shake）。
  */
 @Composable
 fun AppParamPanel(
@@ -72,6 +121,7 @@ fun AppParamPanel(
     onPackageAdd: (String) -> Unit,
     onPackageDelete: (String) -> Unit,
     onStateChanged: (AppParamState) -> Unit,
+    shakeState: ParamShakeState,
     modifier: Modifier = Modifier
 ) {
     val prefs = remember { Preferences.userNodeForPackage(AppParamState::class.java) }
@@ -118,6 +168,7 @@ fun AppParamPanel(
                             value = selectedPackage,
                             onValueChange = { selectedPackage = it },
                             placeholder = "输入或选择包名，回车添加",
+                            shakeState = shakeState.pkg,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                             keyboardActions = KeyboardActions(
@@ -207,6 +258,7 @@ fun AppParamPanel(
                         value = action,
                         onValueChange = { action = it },
                         placeholder = "android.intent.action.VIEW",
+                        shakeState = shakeState.action,
                         singleLine = true
                     )
                 }
@@ -245,6 +297,8 @@ private fun ParamField(
 /**
  * 紧凑型输入框，使用 BasicTextField + 自定义边框（Field 底 = H5 --field，
  * focus 时描边变主色），内边距比 Material 默认的 OutlinedTextField 小得多。
+ * [shakeState] 非空时支持缺参抖动（H5 .pfield.shake input）：水平位移 ±5dp +
+ * 红底闪烁 500ms、红边保持 560ms 覆盖 focus 蓝，触发时聚焦本框。
  */
 @Composable
 private fun CompactTextField(
@@ -257,19 +311,35 @@ private fun CompactTextField(
     maxLines: Int = 1,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
     keyboardActions: KeyboardActions = KeyboardActions.Default,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    shakeState: FieldShakeState? = null
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    // 缺参抖动：触发时聚焦输入框（对齐 H5 shakeField 的 inp.focus()）
+    val focusRequester = remember { FocusRequester() }
+    val shakeFrame = if (shakeState != null) shakeState.observeFrame(focusRequester) else null
+    val shakeRed = easyAdbColors.AccentRed
 
     Box(
         modifier = modifier
             .height(34.dp)
+            .graphicsLayer { translationX = shakeFrame?.translationXPx ?: 0f }
             .border(
                 width = easyAdbTokens.strokeWidth,
-                color = if (isFocused) easyAdbColors.Primary else easyAdbColors.Border,
+                color = when {
+                    shakeFrame?.redEdge == true -> shakeRed
+                    isFocused -> easyAdbColors.Primary
+                    else -> easyAdbColors.Border
+                },
                 shape = easyAdbTokens.shapeSm
             )
             .background(easyAdbColors.Field, easyAdbTokens.shapeSm)
+            .clip(easyAdbTokens.shapeSm)
+            .drawBehind {
+                // H5 @keyframes shake 的红色背景闪烁（rgba(248,113,113,.16/.07) 叠加在 Field 底上）
+                val overlay = shakeFrame?.redOverlayAlpha ?: 0f
+                if (overlay > 0f) drawRect(color = shakeRed.copy(alpha = overlay))
+            }
             .padding(horizontal = 8.dp)
             .onFocusChanged { isFocused = it.hasFocus; TextInputFocusTracker.onFocusChanged(it.hasFocus) },
         contentAlignment = Alignment.CenterStart
@@ -292,7 +362,7 @@ private fun CompactTextField(
                     cursorBrush = SolidColor(easyAdbColors.Primary),
                     keyboardOptions = keyboardOptions,
                     keyboardActions = keyboardActions,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().focusRequester(focusRequester)
                 )
                 // 占位文字（无值时显示）
                 if (value.isEmpty()) {

@@ -167,7 +167,19 @@ data class EasyAdbColors(
     /** 弹窗关闭钮 hover 底（H5 .modal-x:hover：暗 #22304d / 浅 #e6edf7） */
     val ModalXHoverBg: Color,
     /** 弹窗遮罩底（H5 .modal-backdrop：rgba(4,7,13,.62)，明暗同值恒深色） */
-    val ModalScrim: Color
+    val ModalScrim: Color,
+
+    // ── 卸载弹窗包名 chips（H5 .pick-chips button；暗色为 H5 硬编码值，浅色推导）──
+    /** chip 静止底色（暗 #15213a / 浅 #eef2f9） */
+    val ChipBg: Color,
+    /** chip 静止描边（暗 #26375a / 浅 #d9e3f2） */
+    val ChipBorder: Color,
+    /** chip 静止字色（暗 #9fb4d4 / 浅 #5a6b82） */
+    val ChipText: Color,
+    /** chip hover 底色（暗 #1a2b49 / 浅 #dbe7fb） */
+    val ChipHoverBg: Color,
+    /** chip hover 字色（暗 #dbeafe / 浅 #1d4ed8） */
+    val ChipHoverText: Color
 )
 
 /**
@@ -247,7 +259,14 @@ val LightEasyAdbColors = EasyAdbColors(
     ModalBgTop = Color(0xFFFFFFFF),       // .modal 渐变顶（html[data-theme=light]）
     ModalBgBottom = Color(0xFFF8FAFD),    // .modal 渐变底
     ModalXHoverBg = Color(0xFFE6EDF7),    // .modal-x:hover（浅色覆盖）
-    ModalScrim = Color(0x9E04070D)        // .modal-backdrop（rgba(4,7,13,.62) 明暗同值）
+    ModalScrim = Color(0x9E04070D),       // .modal-backdrop（rgba(4,7,13,.62) 明暗同值）
+
+    // ── 卸载弹窗包名 chips（H5 .pick-chips button；浅色推导）──
+    ChipBg = Color(0xFFEEF2F9),           // chip 静止底（浅色推导，同 .mini-btn 底）
+    ChipBorder = Color(0xFFD9E3F2),       // chip 静止描边（浅色推导）
+    ChipText = Color(0xFF5A6B82),         // chip 静止字（浅色推导，tx-2 同语义）
+    ChipHoverBg = Color(0xFFDBE7FB),      // chip hover 底（浅色推导，蓝晕）
+    ChipHoverText = Color(0xFF1D4ED8)     // chip hover 字（浅色推导，强调蓝）
 )
 
 /**
@@ -327,7 +346,14 @@ val DarkEasyAdbColors = EasyAdbColors(
     ModalBgTop = Color(0xFF151F34),       // .modal 渐变顶
     ModalBgBottom = Color(0xFF111A2C),    // .modal 渐变底
     ModalXHoverBg = Color(0xFF22304D),    // .modal-x:hover
-    ModalScrim = Color(0x9E04070D)        // .modal-backdrop（rgba(4,7,13,.62) 明暗同值）
+    ModalScrim = Color(0x9E04070D),       // .modal-backdrop（rgba(4,7,13,.62) 明暗同值）
+
+    // ── 卸载弹窗包名 chips（H5 .pick-chips button 硬编码值）──
+    ChipBg = Color(0xFF15213A),           // chip 静止底
+    ChipBorder = Color(0xFF26375A),       // chip 静止描边
+    ChipText = Color(0xFF9FB4D4),         // chip 静止字
+    ChipHoverBg = Color(0xFF1A2B49),      // chip hover 底
+    ChipHoverText = Color(0xFFDBEAFE)     // chip hover 字
 )
 
 /** 当前组合中的扩展调色板，由 [EasyAdbTheme] 按明暗提供 */

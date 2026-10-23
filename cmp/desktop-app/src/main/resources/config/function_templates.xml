@@ -13,6 +13,9 @@ act : 自定义的命令行为，为自定义的行为, 自定义的行为需代
 sehll: 命令执行是否需要在shell模式中, 可选值: true或false
 
 isNeedPkgName: 操作是否需要依赖应用包名, 默认为false
+requireParam: 功能卡点击时的缺参前置校验字段（空值触发参数区对应输入框抖动, 对齐H5 pkgShake/#fAction）,
+             可选值: pkg(包名)/action(Action), 多字段必填用英文逗号分隔(如 pkg,action, 缺失字段全部抖动),
+             缺省为空不做前置校验; 执行层校验仍由isNeedPkgName承担
 tab: 内容区Tab归属(P12布局大改), 可选值: quick(快捷操作)/keys(按键模拟)/files(文件传输), 缺省quick
 size: 卡片尺寸(P12布局大改), 可选值: large(大卡,含副文案,文件传输类含设备路径输入行)/small(小卡), 缺省small
 desc: 卡片副文案(large 卡显示在标题下方)
@@ -30,6 +33,7 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="text">启动应用</attr>
             <attr name="act">m_start_app</attr>
             <attr name="isNeedPkgName">true</attr>
+            <attr name="requireParam">pkg</attr>
             <attr name="tab">quick</attr>
             <attr name="desc">拉起指定包名应用的入口 Activity</attr>
             <attr name="accent">sky</attr>
@@ -39,6 +43,7 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="text">停止应用</attr>
             <attr name="cmd">am force-stop {0}</attr>
             <attr name="isNeedPkgName">true</attr>
+            <attr name="requireParam">pkg</attr>
             <attr name="tab">quick</attr>
             <attr name="desc">强制停止指定包名的应用进程</attr>
             <attr name="accent">rose</attr>
@@ -48,6 +53,7 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="text">重启应用</attr>
             <attr name="act">m_restart_app</attr>
             <attr name="isNeedPkgName">true</attr>
+            <attr name="requireParam">pkg</attr>
             <attr name="tab">quick</attr>
             <attr name="desc">先停止再拉起指定包名应用</attr>
             <attr name="accent">blue</attr>
@@ -56,7 +62,8 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="icon">./res/img/broadcast_256x256.png</attr>
             <attr name="text">发送广播</attr>
             <attr name="act">m_send_broadcast</attr>
-            <attr name="isNeedPkgName">true</attr>
+            <!-- 广播由 Action 驱动、不强制包名（对齐 H5 actBroadcast 口径），缺参校验走 requireParam -->
+            <attr name="requireParam">action</attr>
             <attr name="tab">quick</attr>
             <attr name="desc">向指定应用发送自定义广播 Action</attr>
             <attr name="accent">orange</attr>
@@ -75,6 +82,7 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="text">卸载应用</attr>
             <attr name="cmd" shell="false">uninstall {0}</attr>
             <attr name="isNeedPkgName">true</attr>
+            <attr name="requireParam">pkg</attr>
             <attr name="tab">quick</attr>
             <attr name="desc">输入或选择包名，从设备卸载应用</attr>
             <attr name="accent">red</attr>
@@ -84,6 +92,7 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="text">清除数据</attr>
             <attr name="cmd">pm clear {0}</attr>
             <attr name="isNeedPkgName">true</attr>
+            <attr name="requireParam">pkg</attr>
             <attr name="tab">quick</attr>
             <attr name="desc">清除指定应用的所有用户数据</attr>
             <attr name="accent">orange</attr>

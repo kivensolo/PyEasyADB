@@ -68,6 +68,7 @@ import com.easyadb.ui.functions.AppManagerPanel
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CommandsPanel
 import com.easyadb.ui.functions.FunctionPanel
+import com.easyadb.ui.functions.ParamShakeState
 import com.easyadb.ui.functions.RemoteKeyPad
 import com.easyadb.ui.mirror.MirrorPanel
 import com.easyadb.ui.console.LogEntry
@@ -599,6 +600,7 @@ private fun CurrentDeviceChip(
  * @param onPackageAdd 用户新增包名时的回调（写入 package 表）
  * @param onPackageDelete 用户删除包名时的回调
  * @param onFunctionItemClick 功能项点击回调（快捷操作/按键模拟共用链路）
+ * @param paramShakeState 参数区字段抖动状态：宿主缺参校验失败时触发对应输入框抖动（对齐 H5 pkgShake）
  * @param onApkDropped 快捷操作 Tab 安装卡拖入 APK 回调：(APK 绝对路径)，宿主执行 adb install -r
  * @param apps 应用管理 Tab：宿主加载好的设备应用列表（AppListLoader，SP-7001）
  * @param isAppsLoading 应用管理 Tab：列表是否加载中
@@ -639,6 +641,8 @@ fun MainWindowScreen(
     onPackageAdd: (String) -> Unit = {},
     onPackageDelete: (String) -> Unit = {},
     onFunctionItemClick: (FunctionItem, AppParamState) -> Unit = { _, _ -> },
+    /** 参数区字段抖动状态（宿主 remember 后传入；缺包名/Action 时触发对应输入框抖动） */
+    paramShakeState: ParamShakeState = ParamShakeState(),
     /** 按键模拟 Tab：自定义 KEYCODE 键值列表（"+" 拼接拆分后），由宿主逐条发送 */
     onCustomKey: (List<Int>) -> Unit = {},
     /** 常用命令 Tab：执行模板命令（已填充 {pkg}，宿主按当前设备组装 adb 命令并回显控制台） */
@@ -822,6 +826,7 @@ fun MainWindowScreen(
                                     dbPackages = dbPackages,
                                     onPackageAdd = onPackageAdd,
                                     onPackageDelete = onPackageDelete,
+                                    paramShakeState = paramShakeState,
                                     onItemClick = onFunctionItemClick,
                                     onFileItemClick = { item, _ ->
                                         if (item.action == "m_push_file" || item.action == "m_pull_file") {

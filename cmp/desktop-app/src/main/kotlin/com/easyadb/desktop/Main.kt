@@ -46,6 +46,7 @@ import com.easyadb.ui.designsystem.EasyAdbTheme
 import com.easyadb.ui.designsystem.ThemeMode
 import com.easyadb.ui.functions.AppParamState
 import com.easyadb.ui.functions.CustomActionHandler
+import com.easyadb.ui.functions.ParamShakeState
 import com.easyadb.ui.home.MainWindowScreen
 import com.easyadb.ui.home.components.WindowControls
 import com.easyadb.core.device.DevicePropFetcher
@@ -53,6 +54,7 @@ import com.easyadb.ui.devicelist.DeviceAliasEditDialog
 import com.easyadb.ui.devicelist.DeviceListCallbacks
 import com.easyadb.ui.console.createLogFlow
 import com.easyadb.ui.dialogs.NewConnectDialog
+import com.easyadb.ui.dialogs.UninstallConfirmDialog
 import com.easyadb.ui.dialogs.TextInputDialog
 import com.easyadb.ui.dialogs.InstallApkDialog
 import com.easyadb.ui.dialogs.InstallOptions
@@ -72,10 +74,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.skia.Image
 import java.awt.Frame
 import java.io.File
-import java.io.InputStream
-import javax.xml.parsers.DocumentBuilderFactory
 
-/** CMP 侧移除的菜单 action（种子 XML 保留给 Python 版；明细见 doc/待重构功能.md）。 */
+/** CMP 侧移除的菜单 action（默认内置 XML 保留给 Python 版；明细见 doc/待重构功能.md）。 */
 private val REMOVED_MENU_ACTIONS = setOf(
     "m_connect_new_device",
     "m_close_app",
@@ -103,9 +103,9 @@ fun main() {
 
     // ── Step 2: Config ──
     // 用户配置落可写位置（%LOCALAPPDATA%/EasyADB/data/AppConfig.ini），承载运行时设置
-    // （[General] Theme 等）；权限表等静态内容做种子：开发态取运行目录 res/config/，
-    // 打包态取 classpath（desktop-app 资源内 config/AppConfig.ini）。首次 save 起种子
-    // 内容一并并入用户文件，此后不再依赖种子。
+    // （[General] Theme 等）；权限表等静态内容做默认内置数据：开发态取运行目录 res/config/，
+    // 打包态取 classpath（desktop-app 资源内 config/AppConfig.ini）。首次 save 起默认内置
+    // 内容一并并入用户文件，此后不再依赖默认内置数据。
     val userConfigFile = File(AppPathsConfig.dataPath, "AppConfig.ini")
     val seedFile = File(AppPathsConfig.appConfigIniFile)
     val seedStream = Thread.currentThread().contextClassLoader
@@ -146,7 +146,7 @@ fun main() {
     appLogger.info { "DevicesWatcher started" }
 
     // ── Step 5: Load menu & function configs (优先从 classpath 加载) ──
-    // CMP 菜单精简（menus_ui.xml 种子保留供 Python 版使用，加载后剔除）：
+    // CMP 菜单精简（menus_ui.xml 默认内置文件保留供 Python 版使用，加载后剔除）：
     // 连接新设备（设备列表区头部按钮入口保留）/ 退出（窗口关闭钮）/
     // APK Helper、查看日志、关于（已列入 doc/待重构功能.md，后续对接）/
     // 打开 Shell、Root、Unroot（未实现占位）
@@ -154,7 +154,10 @@ fun main() {
         .map { config -> config.copy(actions = config.actions.filter { it.action !in REMOVED_MENU_ACTIONS }) }
         .filter { it.actions.isNotEmpty() }
     // SP-5001 旧入口清理：过滤 m_pull_apk（APK 提取弹窗入口，提取统一走应用管理 Tab）
-    // 与 tab=files 三大卡（推送/拉取已被双栏面板取代）；XML 种子原样保留（Python 版共用）
+    // 与 tab=files 三大卡（推送/拉取已被双栏面板取代）。
+    // 注：CMP classpath 默认内置文件（desktop-app/resources/config/）已与仓库根 res/config/
+    // （Python 旧版使用）分叉——CMP 版含 requireParam/tab/size 等新字段与 P12 卡片重排，
+    // 两份默认内置文件各自维护，勿按「共用」假设只改一处（SP-6001）
     val functionTemplates = loadFunctionTemplatesFromClasspath(appLogger)
         .map { t ->
             t.copy(items = t.items.filterNot { it.action == "m_pull_apk" || it.tab == "files" })
@@ -192,6 +195,12 @@ fun main() {
         var showScreenRecordDialog by remember { mutableStateOf(false) }
         // 屏幕截图预览对话框（m_screenshot 触发；SP-2001 Loading → 预览 → 保存链路）
         var showScreenshotDialog by remember { mutableStateOf(false) }
+        // 快捷操作缺参抖动状态（对齐 H5 pkgShake/#fAction shake）：
+        // 功能卡点击缺参校验失败时触发参数区对应输入框红边抖动
+        val paramShakeState = remember { ParamShakeState() }
+        // 卸载确认弹窗（H5 #modalUninstall）：true 时弹出；预填包名在打开瞬间快照参数区包名
+        var showUninstallDialog by remember { mutableStateOf(false) }
+        var uninstallPrefill by remember { mutableStateOf("") }
         // 屏幕录制状态
         var isRecording by remember { mutableStateOf(false) }
         var remainingSeconds by remember { mutableStateOf(0) }
@@ -557,6 +566,7 @@ fun main() {
                     sidebarCollapsed = sidebarCollapsed,
                     // P5 功能区参数
                     functionTemplates = functionTemplates,
+                    paramShakeState = paramShakeState,
                     dbPackages = dbPackages,
                     onPackageAdd = { pkg ->
                         scope.launch {
@@ -573,31 +583,58 @@ fun main() {
                         }
                     },
                     onFunctionItemClick = { item: FunctionItem, state: AppParamState ->
-                        // P7 对话框类 action 拦截：不走 CustomActionHandler，直接弹对话框
-                        when (item.action) {
-                            "m_input_text" -> showTextInputDialog = true
-                            "m_show_install_app_dialog" -> showInstallApkDialog = true
-                            "m_screen_record" -> showScreenRecordDialog = true
-                            // 截图走 Loading → 预览 → 保存对话框链路（SP-2001），需设备在线
-                            "m_screenshot" -> {
-                                if (selectedDeviceIp != null) showScreenshotDialog = true
-                                else logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
-                            }
-                            else -> scope.launch {
-                                CustomActionHandler.handle(
-                                    item = item,
-                                    deviceIp = selectedDeviceIp ?: "",
-                                    appParams = state,
-                                    executor = adbExecutor,
-                                    onUninstallConfirm = { pkg: String ->
-                                        appLogger.info { "Uninstall confirmation for: $pkg" }
-                                        true
-                                    },
-                                    onResult = { msg: String ->
-                                        appLogger.info { "[P5] $msg" }
-                                        logAppender("[P5] $msg", 2)
-                                    }
+                        // 缺参拦截（requireParam 配置驱动，逗号分隔多字段，对齐 H5 requirePkg）：
+                        // 设备已选（H5 guard() 在前）前提下逐项校验，缺失字段对应输入框
+                        // 全部抖动 + 控制台拼接提示，不进入执行/弹窗链路
+                        val missingParams = if (selectedDeviceIp != null) {
+                            item.requireParam.filter { paramShakeState.isMissing(it, state) }
+                        } else {
+                            emptyList()
+                        }
+                        // 卸载走确认弹窗（H5 openUninstall：预填参数区包名，弹窗内可改可 chips 选择）
+                        val uninstallItem = item.cmd.contains("uninstall")
+                        when {
+                            // 设备未选（H5 guard() 首关）：所有卡片统一拦截提示，
+                            // 不落进执行链路（否则缺包名卡会报「操作需要包名」误导用户）
+                            selectedDeviceIp == null ->
+                                logAppender("[错误] 未选中设备，请先在左侧设备列表选择设备", 4)
+                            missingParams.isNotEmpty() -> {
+                                missingParams.forEach { paramShakeState.shake(it) }
+                                logAppender(
+                                    "[提示] 请先填写${missingParams.joinToString("、") { paramShakeState.paramLabel(it) }}",
+                                    3
                                 )
+                            }
+                            uninstallItem -> {
+                                uninstallPrefill = state.selectedPackage
+                                showUninstallDialog = true
+                                // chips 数据源：应用列表为空时顺带拉一次（弹窗内 StateFlow 更新自动补齐）
+                                if (appList.isEmpty()) loadApps()
+                            }
+                            else -> when (item.action) {
+                                // P7 对话框类 action 拦截：不走 CustomActionHandler，直接弹对话框
+                                "m_input_text" -> showTextInputDialog = true
+                                "m_show_install_app_dialog" -> showInstallApkDialog = true
+                                "m_screen_record" -> showScreenRecordDialog = true
+                                // 截图走 Loading → 预览 → 保存对话框链路（SP-2001）；
+                                // 设备已由 when 首分支保证已选
+                                "m_screenshot" -> showScreenshotDialog = true
+                                else -> scope.launch {
+                                    CustomActionHandler.handle(
+                                        item = item,
+                                        deviceIp = selectedDeviceIp ?: "",
+                                        appParams = state,
+                                        executor = adbExecutor,
+                                        onUninstallConfirm = { pkg: String ->
+                                            appLogger.info { "Uninstall confirmation for: $pkg" }
+                                            true
+                                        },
+                                        onResult = { msg: String ->
+                                            appLogger.info { "[P5] $msg" }
+                                            logAppender("[P5] $msg", 2)
+                                        }
+                                    )
+                                }
                             }
                         }
                     },
@@ -849,6 +886,39 @@ fun main() {
                     )
                 }
 
+                // 卸载确认对话框（卸载应用卡触发，H5 #modalUninstall：预填参数区包名 +
+                // 第三方应用 chips 快速选择，确认后 adb uninstall，命令不经 shell）
+                if (showUninstallDialog) {
+                    UninstallConfirmDialog(
+                        initialPackage = uninstallPrefill,
+                        deviceApps = appList,
+                        isLoadingApps = isAppListLoading,
+                        onDismiss = { showUninstallDialog = false },
+                        onConfirm = { pkg ->
+                            showUninstallDialog = false
+                            val deviceIp = selectedDeviceIp
+                            if (deviceIp != null) {
+                                scope.launch {
+                                    val cmd = "adb -s $deviceIp uninstall $pkg"
+                                    logAppender("> $cmd", 2)
+                                    val result = adbExecutor.execAdbCmd(cmd)
+                                    val output = result.output.take(500)
+                                    if (output.isNotEmpty()) {
+                                        logAppender(output, 2)
+                                    }
+                                    if (result.success) {
+                                        logAppender("[卸载成功] $pkg", 2)
+                                    } else {
+                                        logAppender("[卸载失败] $pkg (exitCode=${result.exitCode})", 4)
+                                    }
+                                }
+                            } else {
+                                logAppender("[错误] 未选中设备", 4)
+                            }
+                        }
+                    )
+                }
+
                 // 安装应用对话框（m_show_install_app_dialog 触发）
                 if (showInstallApkDialog) {
                     InstallApkDialog(
@@ -998,7 +1068,8 @@ private fun loadMenuConfigFromClasspath(logger: AppLogger): List<MenuConfig> {
     val stream = classLoader.getResourceAsStream("config/menus_ui.xml")
     if (stream != null) {
         return try {
-            val menus = parseMenuConfigXml(stream)
+            // 解析统一走 XmlConfigLoader（SP-6001）：解析逻辑单一事实来源，禁止自建副本
+            val menus = XmlConfigLoader.loadMenuConfig(stream)
             logger.info { "menus_ui.xml loaded from classpath: ${menus.size} menus" }
             menus
         } catch (e: Exception) {
@@ -1027,7 +1098,8 @@ private fun loadFunctionTemplatesFromClasspath(logger: AppLogger): List<Function
     val stream = classLoader.getResourceAsStream("config/function_templates.xml")
     if (stream != null) {
         return try {
-            val templates = parseFunctionTemplateXml(stream)
+            // 解析统一走 XmlConfigLoader（SP-6001）：解析逻辑单一事实来源，禁止自建副本
+            val templates = XmlConfigLoader.loadFunctionTemplates(stream)
             logger.info { "function_templates.xml loaded from classpath: ${templates.size} templates" }
             templates
         } catch (e: Exception) {
@@ -1045,67 +1117,6 @@ private fun loadFunctionTemplatesFromClasspath(logger: AppLogger): List<Function
 
     logger.warn { "function_templates.xml not found (classpath nor " + funcFile.absolutePath + ")" }
     return emptyList()
-}
-
-/**
- * 解析 function_templates.xml 的 InputStream 为 FunctionTemplate 列表。
- */
-private fun parseFunctionTemplateXml(stream: InputStream): List<FunctionTemplate> {
-    val factory = DocumentBuilderFactory.newInstance().apply {
-        isIgnoringComments = true
-        isIgnoringElementContentWhitespace = true
-    }
-    val db = factory.newDocumentBuilder()
-    val doc = db.parse(stream)
-    val templateNodes = doc.documentElement.getElementsByTagName("template")
-    val result = mutableListOf<FunctionTemplate>()
-
-    for (i in 0 until templateNodes.length) {
-        val templateElement = templateNodes.item(i) as org.w3c.dom.Element
-        val name = templateElement.getAttribute("name")
-        val layout = templateElement.getAttribute("layout").ifEmpty { "grid" }
-        val items = mutableListOf<com.easyadb.core.config.FunctionItem>()
-
-        val itemNodes = templateElement.getElementsByTagName("item")
-        for (j in 0 until itemNodes.length) {
-            val itemElement = itemNodes.item(j) as org.w3c.dom.Element
-            val state = itemElement.getAttribute("state")
-            val attrs = parseFunctionTemplateAttrs(itemElement)
-            items.add(
-                com.easyadb.core.config.FunctionItem(
-                    icon = attrs["icon"] ?: "",
-                    text = attrs["text"] ?: "",
-                    cmd = attrs["cmd"] ?: "",
-                    action = attrs["act"] ?: "",
-                    shell = attrs["shell"]?.toBoolean() ?: true,
-                    needPkgName = attrs["isNeedPkgName"]?.toBoolean() ?: false,
-                    needDeviceOnline = attrs["isNeedDeviceOnline"]?.toBoolean() ?: false,
-                    tab = attrs["tab"] ?: "quick",
-                    size = attrs["size"] ?: "small",
-                    desc = attrs["desc"] ?: "",
-                    accent = attrs["accent"] ?: "",
-                    state = state
-                )
-            )
-        }
-        result.add(FunctionTemplate(name = name, layout = layout, items = items))
-    }
-    stream.close()
-    return result
-}
-
-private fun parseFunctionTemplateAttrs(element: org.w3c.dom.Element): Map<String, String> {
-    val attrs = mutableMapOf<String, String>()
-    val attrNodes = element.getElementsByTagName("attr")
-    for (i in 0 until attrNodes.length) {
-        val attrElement = attrNodes.item(i) as org.w3c.dom.Element
-        val attrName = attrElement.getAttribute("name")
-        val attrValue = attrElement.textContent?.trim() ?: ""
-        if (attrName.isNotBlank()) {
-            attrs[attrName] = attrValue
-        }
-    }
-    return attrs
 }
 
 /** 快捷键组合描述（由 menus_ui.xml 的 shortcut 属性解析而来，如 "Ctrl+N"、"Alt+H"） */
@@ -1150,52 +1161,6 @@ private fun matchesShortcut(event: KeyEvent, spec: ShortcutSpec): Boolean =
         event.isAltPressed == spec.alt &&
         event.isShiftPressed == spec.shift &&
         event.key == spec.key
-
-/**
- * 直接解析 menus_ui.xml 的 InputStream 为 MenuConfig 列表。
- */
-private fun parseMenuConfigXml(stream: InputStream): List<MenuConfig> {
-    val factory = DocumentBuilderFactory.newInstance().apply {
-        isIgnoringComments = true
-        isIgnoringElementContentWhitespace = true
-    }
-    val db = factory.newDocumentBuilder()
-    val doc = db.parse(stream)
-    val menuNodes = doc.documentElement.getElementsByTagName("menu")
-    val result = mutableListOf<MenuConfig>()
-
-    for (i in 0 until menuNodes.length) {
-        val menuElement = menuNodes.item(i) as org.w3c.dom.Element
-
-        val menuName = menuElement.getAttribute("name")
-        val actions = mutableListOf<MenuAction>()
-        val actionNodes = menuElement.childNodes
-
-        for (j in 0 until actionNodes.length) {
-            val actionElement = actionNodes.item(j)
-            if (actionElement !is org.w3c.dom.Element || actionElement.tagName != "action") continue
-            val actionName = actionElement.getAttribute("name")
-            var shortcut = ""
-            var icon = ""
-            var actionAttr = ""
-            for (k in 0 until actionElement.childNodes.length) {
-                val attrEl = actionElement.childNodes.item(k)
-                if (attrEl !is org.w3c.dom.Element || attrEl.tagName != "attr") continue
-                val attrName = attrEl.getAttribute("name")
-                val attrValue = attrEl.textContent?.trim() ?: ""
-                when (attrName) {
-                    "shortcut" -> shortcut = attrValue
-                    "icon" -> icon = attrValue
-                    "action" -> actionAttr = attrValue
-                }
-            }
-            actions.add(MenuAction(name = actionName, shortcut = shortcut, icon = icon, action = actionAttr))
-        }
-        result.add(MenuConfig(name = menuName, actions = actions))
-    }
-    stream.close()
-    return result
-}
 
 /**
  * 处理菜单栏操作。

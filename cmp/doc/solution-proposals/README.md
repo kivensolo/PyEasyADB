@@ -20,11 +20,11 @@
 | 领域码 | 功能领域 | 已有方案 |
 |--------|----------|----------|
 | 10 | 设备管理（发现、连接、入库、选中） | SP-1001 |
-| 20 | ADB 命令执行（功能区、命令集、参数宏） | SP-2001 |
+| 20 | ADB 命令执行（功能区、命令集、参数宏） | SP-2001、SP-2002 |
 | 30 | 实时日志（logcat 流、过滤、查找） | — |
 | 40 | 镜像预览（scrcpy 独立窗口 / 嵌入、键盘透传） | SP-4001 |
 | 50 | 文件传输（APK 安装、提取、推送拉取） | SP-5001 |
-| 60 | 配置与持久化（INI/XML 配置、SQLite） | — |
+| 60 | 配置与持久化（INI/XML 配置、SQLite） | SP-6001 |
 | 70 | 应用管理（设备应用列表、搜索筛选、APK 提取） | SP-7001 |
 | 90 | 其他/通用（不属于以上领域的新功能） | — |
 
@@ -42,7 +42,9 @@
 |------|----------|----------|------|------|------------|
 | SP-1001 | [SP-1001-连接新设备对话框H5重写.md](SP-1001-连接新设备对话框H5重写.md) | 设备管理 | 已实施 | 2026-10-22 | 新建连接对话框按 H5 #modalDevice 重写为主窗口内浮层（scrim 遮罩 + 居中 440dp 卡片、无原生标题栏），名称/IP/端口三字段（MField 自绘输入框 + 内联校验），名称可选写入 DeviceRecord.alias（留空保留旧别名），TextInputFocusTracker 防预览键盘接管 |
 | SP-2001 | [SP-2001-屏幕截图预览与保存.md](SP-2001-屏幕截图预览与保存.md) | ADB 命令执行 | 已实施 | 2026-10-21 | 快捷操作截屏重构为 Loading→预览→保存：单 DialogWindow 状态机，captureScreenBytes 二进制捕获（ProcessBuilder 直读 stdout，弃 shell 重定向），预览支持刷新遮罩/旋转/剪贴板/缩放（1:1=1/Fit 比例），保存 FileDialog 直写内存 PNG 不再二次 adb |
+| SP-2002 | [SP-2002-功能卡缺参抖动与卸载确认弹窗.md](SP-2002-功能卡缺参抖动与卸载确认弹窗.md) | ADB 命令执行 | 已实施 | 2026-10-23 | 功能卡缺参抖动（H5 @keyframes shake 复刻：±5dp 位移+红底闪烁+红边 560ms+自动聚焦，FieldShakeState 通用化）改为 XML requireParam 配置驱动（pkg/action，新增必填字段四处各一行即可扩展）；卸载应用改走 H5 #modalUninstall 确认弹窗（预填包名+第三方应用 chips+危险按钮，空包名弹窗内抖动），广播 isNeedPkgName 归位 false |
 | SP-4001 | [SP-4001-实时预览嵌入键盘透传与Tab激活期窗口级接管.md](SP-4001-实时预览嵌入键盘透传与Tab激活期窗口级接管.md) | 镜像预览 | 已实施 | 2026-10-16 | 键盘归属跟随内容 Tab：预览运行中+嵌入+实时预览 Tab 可见时窗口级按键转投 scrcpy（SetFocus 归还+PostMessage），TextInputFocusTracker 文本框聚焦守卫（6 处接入清单）本地优先；修复点击嵌入区外控件后键盘失效 |
 | SP-5001 | [SP-5001-文件传输双栏设备文件管理.md](SP-5001-文件传输双栏设备文件管理.md) | 文件传输 | 已实施 | 2026-10-17 | 文件传输 Tab 重构为双栏 Device Explorer（PC 本地树 + 设备树懒加载/权限列，SplitPane 分割）；传输收口工具栏投递/另存弹窗/FileDialog 推送/拖放，队列动画+终态（真实百分比留演进）；兑现 SP-7001 §6.1 移除旧三大卡与 PullApkDialog |
+| SP-6001 | [SP-6001-XML配置解析统一化.md](SP-6001-XML配置解析统一化.md) | 配置与持久化 | 已实施 | 2026-10-23 | XML 解析收敛单一事实来源：XmlConfigLoader 增 InputStream 主入口（use 关流）+ File 重载，Main.kt 4 个手写解析函数全删（SP-2002 requireParam 静默失效事故根因）；菜单深搜统一（当前默认内置数据下行为零变化）；cmdConfig 死链路保守保留；新增 XmlConfigLoaderTest 8 用例锁全部 XML 字段防漏配再犯 |
 | SP-7001 | [SP-7001-应用管理页面.md](SP-7001-应用管理页面.md) | 应用管理 | 已实施 | 2026-10-16 | 内容区第 6 个 Tab「应用管理」：H5 pane-apps 还原（搜索+seg 筛选+行卡列表+rise 入场），数据沿用 AppListLoader（pm list packages -f），仅「提取」操作（FileDialog+adb pull），文件传输 Tab 的 APK提取弹窗暂保留待文件传输立项时移除 |
 | SP-9002 | [SP-9002-主窗口圆角与阴影DWM原生方案.md](SP-9002-主窗口圆角与阴影DWM原生方案.md) | 其他/通用 | 已实施 | 2026-10-16 | Win11 DWMWA_WINDOW_CORNER_PREFERENCE=ROUND 原生圆角+系统阴影，窗口即卡片；半径系统固定约 8px 不可自定义（四轮方案演进与否决原因归档于 §2），Win10 静默降级直角 |

@@ -17,6 +17,10 @@ data class FunctionItem(
     val action: String = "",
     val shell: Boolean = true,
     val needPkgName: Boolean = false,
+    /** 缺参前置校验字段列表（UI 点击时逐项校验，空值字段触发参数区对应输入框抖动）：
+     *  XML 属性逗号分隔多值（如 requireParam="pkg,action"）；pkg=包名、action=Action，
+     *  空列表=不做前置校验；执行层校验仍由 [needPkgName] 承担 */
+    val requireParam: List<String> = emptyList(),
     val needDeviceOnline: Boolean = false,
     val state: String = "",
     /** 内容区 Tab 归属（P12 布局大改）：quick=快捷操作 / keys=按键模拟 / files=文件传输，缺省 quick */

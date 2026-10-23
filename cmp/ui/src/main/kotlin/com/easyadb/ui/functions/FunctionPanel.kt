@@ -29,6 +29,8 @@ import com.easyadb.ui.designsystem.easyAdbColors
  *
  * 参数状态 [appParamState] 由宿主（MainWindowScreen）持有并传入——快捷操作
  * 功能卡执行与常用命令 Tab 的 {pkg} 模板共享同一份包名。
+ * [paramShakeState] 为缺参抖动入口：宿主校验包名/Action 缺失时触发参数卡
+ * 对应输入框抖动（对齐 H5 pkgShake/#fAction shake）。
  *
  * 整个面板支持垂直滚动（功能项较多时）。
  */
@@ -40,6 +42,7 @@ fun FunctionPanel(
     dbPackages: List<String>,
     onPackageAdd: (String) -> Unit,
     onPackageDelete: (String) -> Unit,
+    paramShakeState: ParamShakeState,
     onItemClick: (FunctionItem, AppParamState) -> Unit,
     onFileItemClick: (FunctionItem, devicePath: String) -> Unit,
     onApkDropped: (String) -> Unit,
@@ -58,7 +61,8 @@ fun FunctionPanel(
                 dbPackages = dbPackages,
                 onPackageAdd = onPackageAdd,
                 onPackageDelete = onPackageDelete,
-                onStateChanged = onParamStateChanged
+                onStateChanged = onParamStateChanged,
+                shakeState = paramShakeState
             )
         }
 
