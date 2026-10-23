@@ -82,6 +82,15 @@ scrcpy **嵌入预览**通过 Win32 `SetParent` 将 scrcpy 原生窗口重父化
 
 CMP 端 UI 以 HTML 参照稿为准：`cmp/doc/ui-reference/index.html`。视觉工作（颜色、布局、动效、token）都对照它量取——例如主题 token 对应 CSS 变量、Tab 切换动效曲线对齐 CSS 缓动。做 UI 对齐时参照它，不要凭感觉猜。
 
+**H5 预览 HTTP 服务（用户要求，常开）**：一旦开始修改 `cmp/doc/ui-reference/` 下的 H5 文件，立即启动本地 HTTP 服务并**保持常开**，供用户在默认浏览器实时查看效果：
+
+```bash
+cd cmp/doc/ui-reference
+python -m http.server 8642 --bind 127.0.0.1
+```
+
+预览地址：`http://127.0.0.1:8642/index.html`（同目录其他 html 同理）。规则：验证完成后**不要主动停止服务**；会话结束或用户明确要求时才停。
+
 ### 语言
 
 面向用户的文案、文档、提交信息均为中文。CMP 新功能的 UI 文案同样写中文，与现有 UI 保持一致。

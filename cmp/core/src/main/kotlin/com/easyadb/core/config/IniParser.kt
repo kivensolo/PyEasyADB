@@ -12,7 +12,7 @@ import java.io.Reader
  * P11 增加写回能力（[set] + [save]），供运行时设置（如主题）持久化：
  * - 段与键保持首次出现的顺序（LinkedHashMap），save 按该顺序整体重写；
  * - 重写不保留注释与空行（当前 AppConfig.ini 无注释，可接受）；
- * - [loadMerging] 支持在已有内容上叠加另一个文件的键值（用户配置覆盖种子，不清洗已有段）。
+ * - [loadMerging] 支持在已有内容上叠加另一个文件的键值（用户配置覆盖默认内置值，不清洗已有段）。
  */
 class IniParser {
 
@@ -31,7 +31,7 @@ class IniParser {
         }
     }
 
-    /** 叠加加载（流式）：用于 classpath 种子配置 */
+    /** 叠加加载（流式）：用于 classpath 默认内置配置 */
     fun parse(reader: Reader) {
         var currentSection = ""
         reader.forEachLine { line ->

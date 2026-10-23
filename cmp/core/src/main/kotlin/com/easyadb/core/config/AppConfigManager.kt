@@ -9,11 +9,11 @@ import java.io.InputStream
  * 对应 Python 中的 AppConfigManager（位于 AppConfigManager.py）
  *
  * P11 起「静态内容 + 用户配置」分置：
- * - [initialize] 先载入种子（开发态：运行目录 res/config/AppConfig.ini；打包态：
- *   classpath 内 /config/AppConfig.ini），再叠加用户文件（不存在的段/键保留种子值）；
+ * - [initialize] 先载入默认内置数据（开发态：运行目录 res/config/AppConfig.ini；打包态：
+ *   classpath 内 /config/AppConfig.ini），再叠加用户文件（不存在的段/键保留默认内置值）；
  * - 用户文件落在可写位置（`%LOCALAPPDATA%/EasyADB/data/AppConfig.ini`），承载
  *   运行时设置（`[General] Theme=system|light|dark`）；首次 [save] 时把内存中
- *   的全量内容（种子+用户）写进去，此后不再依赖种子文件；
+ *   的全量内容（默认内置+用户）写进去，此后不再依赖默认内置文件；
  * - [set] 只改内存，[save] 落盘——调用方成对使用。
  */
 object AppConfigManager {
@@ -30,17 +30,17 @@ object AppConfigManager {
 
     /**
      * 初始化：[seedFile]（若存在）与 [seedStream]（若非 null）提供静态默认值，
-     * [userConfigFile] 存在时其键值叠加覆盖。任何种子缺失都不算错误。
+     * [userConfigFile] 存在时其键值叠加覆盖。任何默认内置数据缺失都不算错误。
      */
     fun initialize(userConfigFile: File, seedFile: File? = null, seedStream: InputStream? = null) {
         this.userConfigFile = userConfigFile
         seedFile?.takeIf { it.exists() }?.let {
             parser.load(it)
-            logger.info { "AppConfig.ini seed loaded from ${it.absolutePath}" }
+            logger.info { "AppConfig.ini built-in defaults loaded from ${it.absolutePath}" }
         }
         seedStream?.let {
             it.bufferedReader(Charsets.UTF_8).use { reader -> parser.parse(reader) }
-            logger.info { "AppConfig.ini seed loaded from classpath" }
+            logger.info { "AppConfig.ini built-in defaults loaded from classpath" }
         }
         if (userConfigFile.exists()) {
             parser.loadMerging(userConfigFile)
