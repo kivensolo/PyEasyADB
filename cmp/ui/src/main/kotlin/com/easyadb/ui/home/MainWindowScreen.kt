@@ -440,9 +440,12 @@ private fun ContentTabRow(
         ) {
             CONTENT_TAB_TITLES.forEachIndexed { index, title ->
                 val isSelected = selected == index
-                Column(
+                Box(
                     modifier = Modifier
-                        // IntrinsicSize.Min：宽度收窄到文字宽度，ink 条与文字等宽
+                        // IntrinsicSize.Min：宽度收窄到文字宽度，ink 条与文字等宽；
+                        // fillMaxHeight 让点击热区覆盖整行 44dp（此前高度只包裹文字，
+                        // 文字上下空白点不中）
+                        .fillMaxHeight()
                         .width(IntrinsicSize.Min)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
@@ -454,7 +457,7 @@ private fun ContentTabRow(
                             }
                         }
                         .padding(horizontal = 2.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = title,
