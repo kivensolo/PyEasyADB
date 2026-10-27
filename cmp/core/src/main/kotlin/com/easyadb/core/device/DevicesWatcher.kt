@@ -4,8 +4,10 @@ import com.easyadb.core.log.AppLogger
 import com.easyadb.core.util.ExecUtils
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 
 /**
  * 通过 `adb devices` 监控设备连接状态。
@@ -17,6 +19,8 @@ class DevicesWatcher {
     private val logger = AppLogger.getLogger(DevicesWatcher::class.java)
     private var job: Job? = null
     private val _devices = MutableStateFlow<List<DeviceInfo>>(emptyList())
+    /** 立即刷新信号：连接/断开等操作完成后触发，跳过剩余 delay 立刻轮询一次 */
+    private val refreshSignal = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     /**
      * 设备列表 Flow。
@@ -44,7 +48,15 @@ class DevicesWatcher {
                 } catch (e: Exception) {
                     logger.error { "[DeviceWatcher] error: ${e.message}" }
                 }
-                delay(intervalSeconds * 1000)
+                // 正常按间隔轮询；等待期间收到刷新信号则立即进行下一轮，
+                // 让连接/断开后的 UI 即时更新（不必等满一个周期）
+                val waitStart = System.currentTimeMillis()
+                var remainingMs = intervalSeconds * 1000
+                while (isActive && remainingMs > 0) {
+                    val signaled = withTimeoutOrNull(remainingMs) { refreshSignal.first() }
+                    if (signaled != null) break
+                    remainingMs = intervalSeconds * 1000 - (System.currentTimeMillis() - waitStart)
+                }
             }
         }
     }
@@ -64,6 +76,16 @@ class DevicesWatcher {
     fun onDeviceDeleted() {
         // 先发送空列表以强制重新触发
         _devices.value = emptyList()
+        requestRefresh()
+    }
+
+    /**
+     * 请求立即刷新设备列表：跳过剩余轮询等待马上执行一次 `adb devices`。
+     * 连接/断开等会改变设备状态的操作完成后由宿主调用，消除最长一个轮询
+     * 周期的 UI 延迟（控制台已打印成功但设备卡状态慢半拍）。
+     */
+    fun requestRefresh() {
+        refreshSignal.tryEmit(Unit)
     }
 
     private fun parseDevicesOutput(output: String): List<DeviceInfo> {

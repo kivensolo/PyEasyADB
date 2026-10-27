@@ -468,6 +468,8 @@ fun main() {
                                     if (result.success) {
                                         appLogger.info { "Connected to ${record.ip}" }
                                         logAppender("[连接成功] ${record.ip}", 2)
+                                        // 立即刷新设备列表，不等下个轮询周期（消除 UI 慢半拍）
+                                        watcher.requestRefresh()
                                         // 使用率 +1（设备列表按连接次数排序，下次启动生效）
                                         DbManager.incrementDeviceConnectCount(record.ip)
                                     } else {
@@ -489,6 +491,8 @@ fun main() {
                                 val result = adbExecutor.disconnectDevice(record.ip)
                                 if (result.success) {
                                     logAppender("[断开成功] ${record.ip}", 2)
+                                    // 立即刷新设备列表，不等下个轮询周期（消除 UI 慢半拍）
+                                    watcher.requestRefresh()
                                 } else {
                                     logAppender("[断开失败] ${record.ip}: ${result.output.take(200)}", 4)
                                 }
@@ -833,6 +837,8 @@ fun main() {
                                 if (connectResult.success) {
                                     appLogger.info { "Connected to $deviceIp" }
                                     logAppender("[连接成功] $deviceIp", 2)
+                                    // 立即刷新设备列表，不等下个轮询周期（消除 UI 慢半拍）
+                                    watcher.requestRefresh()
                                     // 写入数据库（已存在的设备合并旧记录：信息/使用率保留，连接次数 +1；
                                     // 别名 = 本次填写的名称（非空覆盖），留空沿用旧别名）
                                     val (ip, port) = com.easyadb.core.util.NetworkUtils.parseIpPort(deviceIp)
