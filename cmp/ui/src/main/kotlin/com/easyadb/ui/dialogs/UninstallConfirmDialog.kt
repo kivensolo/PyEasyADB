@@ -226,10 +226,9 @@ private fun PkgField(
                     if (overlay > 0f) drawRect(color = shakeRed.copy(alpha = overlay))
                 }
                 .padding(horizontal = 13.dp)
-                .onFocusChanged {
-                    isFocused = it.hasFocus
-                    TextInputFocusTracker.onFocusChanged(it.hasFocus)
-                },
+                .onFocusChanged { isFocused = it.hasFocus },
+                // 聚焦计数不在此上报：弹窗级 DisposableEffect 已兜底 +1/-1，
+                // 字段级再报是双重计数（弹窗持焦关闭时字段可能收不到失焦事件，计数卡死）
             contentAlignment = Alignment.CenterStart
         ) {
             BasicTextField(

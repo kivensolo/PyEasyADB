@@ -685,6 +685,8 @@ fun MainWindowScreen(
     // 已收编的 scrcpy 子窗口句柄（嵌入区收编成功后经 onEmbeddedHwndChange 登记，脱离/停止清零）：
     // 供根级键盘接管转发使用——句柄生命周期与嵌入区一致，宿主只读不管理
     var embeddedScrcpyHwnd by remember { mutableStateOf(0L) }
+    // 聚焦计数诊断：上次输出到控制台的计数值（变化才打印，避免重组刷屏）
+    var lastReportedFocusCount by remember { mutableStateOf(-1) }
     var embeddedTab by remember { mutableStateOf(0) }
     // 快捷操作参数卡状态提升到本层：功能卡执行与常用命令 Tab 的 {pkg} 模板共享包名
     var appParamState by remember { mutableStateOf(AppParamState()) }
@@ -701,9 +703,18 @@ fun MainWindowScreen(
     // 实时预览 Tab 可见时，按键直接转投 scrcpy 子窗口（SetFocus 归还 + PostMessage 转发，
     // 复用 MirrorPanel 嵌入区的同款机制），首个按键后焦点回归子窗口、恢复原生直达。
     // 守卫：文本输入框聚焦时本地优先（过滤框打字不能进设备）；非实时预览 Tab 不接管。
+    // 诊断：键盘失联时先看 focusedCountForDebug——预览运行中该值 >0 即守卫卡死（计数泄漏）。
     val mirrorTakeOverActive = mirrorState is MirrorState.Running &&
         mirrorEmbedEnabled && Win32Interop.isWindows &&
         contentTab == TAB_MIRROR && !TextInputFocusTracker.hasFocusedTextInput
+    if (mirrorState is MirrorState.Running) {
+        // 只在控制台输出不进文件日志（AppLogger 不在 UI 层）；键值变化时才打印避免刷屏
+        val count = TextInputFocusTracker.focusedCountForDebug
+        if (count != lastReportedFocusCount) {
+            lastReportedFocusCount = count
+            println("[FocusTracker] count=$count takeOver=$mirrorTakeOverActive")
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxSize()

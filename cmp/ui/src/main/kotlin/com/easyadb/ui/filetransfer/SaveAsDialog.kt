@@ -20,10 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
-import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
 import com.easyadb.ui.designsystem.easyAdbTokens
-import androidx.compose.ui.focus.onFocusChanged
 
 /**
  * 另存文件到电脑弹窗（SP-5001，对齐 H5 #modalSaveAs）。
@@ -66,7 +64,8 @@ fun SaveAsDialog(
                         singleLine = true,
                         placeholder = { Text("可填写本机任意目录", fontSize = 12.sp) },
                         modifier = Modifier.fillMaxWidth()
-                            .onFocusChanged { TextInputFocusTracker.onFocusChanged(it.hasFocus) }
+                        // 独立 DialogWindow 有独立键盘管线，不接入聚焦计数（TextInputFocusTracker
+                        // 只服务主窗口内键盘接管守卫；跨窗口接入是纯泄漏风险）
                     )
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(easyAdbTokens.spaceSm)) {
@@ -76,7 +75,6 @@ fun SaveAsDialog(
                         onValueChange = onNameChange,
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth()
-                            .onFocusChanged { TextInputFocusTracker.onFocusChanged(it.hasFocus) }
                     )
                 }
                 Spacer(Modifier.height(2.dp))
