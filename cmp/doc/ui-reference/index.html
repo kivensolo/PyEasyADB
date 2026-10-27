@@ -260,19 +260,29 @@ svg{flex:none;display:block}
   box-shadow:inset 0 0 36px rgba(59,130,246,.14);
 }
 .tile.dz.pulse{animation:dzPulse 1.2s ease 2}
-/* 文本输入卡（可输入，非动作卡） */
-.tile.ti-card{cursor:default}
-.tile.ti-card:hover{transform:none}
-.ti-row{display:flex;gap:6px;margin-top:9px}
-.ti-row input{
-  flex:1;min-width:0;background:var(--field);border:1px solid #263450;border-radius:7px;
-  color:#dbe4f0;font-size:12px;padding:5px 9px;transition:.15s;
+/* 文本输入弹窗：多行 textarea */
+.ti-textarea{
+  width:100%;background:var(--field);border:1px solid #263450;border-radius:10px;
+  color:var(--tx);font-family:var(--mono);font-size:13px;line-height:1.55;
+  padding:10px 13px;resize:vertical;min-height:120px;max-height:280px;transition:.15s;
 }
-.ti-row input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);outline:none}
-.ti-row input::placeholder{color:#4c5c74}
-.ti-row .run-btn{padding:5px 12px;font-size:11.5px}
-html[data-theme="light"] .ti-row input{border-color:#c9d6ea;background:#fff;color:#1b2534}
-html[data-theme="light"] .ti-row input::placeholder{color:#a3b1c4}
+.ti-textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-soft);outline:none}
+.ti-textarea::placeholder{color:#4c5c74}
+html[data-theme="light"] .ti-textarea{border-color:#c9d6ea;background:#fff;color:#1b2534}
+html[data-theme="light"] .ti-textarea:focus{border-color:var(--blue)}
+html[data-theme="light"] .ti-textarea::placeholder{color:#a3b1c4}
+
+/* 文本输入弹窗：独立窗口风格（对齐桌面端 DialogWindow）——
+   无全局变暗遮罩，仅自身重投影浮窗 + 原生窗口感标题栏 */
+.modal.standalone{box-shadow:0 30px 90px rgba(0,0,0,.75),0 0 0 1px rgba(255,255,255,.04)}
+.modal.standalone .modal-head{
+  padding:0;height:42px;align-items:center;
+  border-bottom:1px solid var(--line);background:rgba(148,163,184,.04);
+}
+.modal.standalone .modal-title{font-size:13.5px;padding-left:14px}
+.modal.standalone .modal-x{margin-right:8px}
+html[data-theme="light"] .modal.standalone .modal-head{background:rgba(148,163,184,.08)}
+html[data-theme="light"] .modal.standalone .modal-x:hover{background:#dbe4f2}
 @keyframes dzPulse{50%{border-color:#60a5fa;background:rgba(59,130,246,.12)}}
 .tile-prog{display:flex;align-items:center;gap:8px;margin-top:7px}
 .tile-prog .dz-bar{flex:1}
@@ -821,6 +831,8 @@ html[data-theme="light"] .ti-row input::placeholder{color:#a3b1c4}
   display:grid;place-items:center;opacity:0;transition:.22s;
 }
 .modal-backdrop.show{opacity:1}
+/* 独立窗口风格弹窗：无变暗/无模糊，backdrop 透明仅做定位与点击关闭热区 */
+.modal-backdrop.no-dim{background:transparent;backdrop-filter:none}
 .modal{
   width:min(440px,92vw);background:linear-gradient(180deg,#151f34,#111a2c);
   border:1px solid var(--line-2);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.6);
@@ -1329,14 +1341,12 @@ html[data-theme="light"] .mf-ops button.mf-close:hover{background:#dc2626;color:
                   <span class="a-text"><b>拉取文件</b><small>从设备下载文件到电脑</small></span>
                 </button>
 
-                <div class="card tile ti-card rise d4" id="actTextInput">
+                <button class="card tile rise d4" id="actTextInput">
                   <span class="a-icon rose">
                     <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"/></svg>
                   </span>
-                  <span class="a-text"><b>文本输入</b><small>input text 发送到设备</small>
-                    <span class="ti-row"><input id="tiText" placeholder="输入要发送的文本" spellcheck="false"><button class="run-btn" id="tiSend">发送</button></span>
-                  </span>
-                </div>
+                  <span class="a-text"><b>文本输入</b><small>input text 发送到设备</small></span>
+                </button>
               </div>
 
             </div>
@@ -1863,6 +1873,28 @@ html[data-theme="light"] .mf-ops button.mf-close:hover{background:#dc2626;color:
     </div>
   </div>
 
+  <!-- 文本输入：独立窗口风格弹窗（无变暗遮罩，原生标题栏样式），
+       多行 textarea，清空 + 输入（input text 发送到设备） -->
+  <div class="modal standalone" id="modalTextInput" hidden>
+    <div class="modal-head">
+      <span class="modal-title">文本输入</span>
+      <button class="modal-x" data-close>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="mfield">
+        <label>输入要发送到设备的文本（支持多行）</label>
+        <textarea class="ti-textarea" id="tiText" placeholder="输入要发送的文本" spellcheck="false"></textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-plain" id="tiClear" style="margin-right:auto">清空</button>
+      <button class="btn btn-plain" data-close>取消</button>
+      <button class="btn btn-primary" id="tiSend">输入</button>
+    </div>
+  </div>
+
   <!-- 删除确认（设备树）：危险动作认知设计——图标徽章 + 类型标题 + 目标路径 chip + 警示 -->
   <div class="modal" id="modalDelete" hidden>
     <div class="modal-head">
@@ -2363,18 +2395,27 @@ $('#actQueryCP').addEventListener('click', function(){
   toast('已查询 <b>' + esc(pkg) + '</b> 的 ContentProvider', 'ok');
 });
 
-/* 文本输入：input text 发送到设备 */
-function sendTextInput(){
+/* 文本输入：弹窗多行编辑，输入按钮 → input text 发送到设备 */
+function openTextInputModal(){
   if (!guard()) return;
+  $('#tiText').value = '';
+  openModal('modalTextInput');
+  setTimeout(function(){ $('#tiText').focus(); }, 240);
+}
+$('#actTextInput').addEventListener('click', openTextInputModal);
+$('#tiClear').addEventListener('click', function(){
+  $('#tiText').value = '';
+  $('#tiText').focus();
+});
+$('#tiSend').addEventListener('click', function(){
   var txt = $('#tiText').value.trim();
   if (!txt){ toast('请输入要发送的文本', 'err'); return; }
+  closeModal();
   runRemote('adb shell input text "' + txt + '"', [
     ['已发送文本：' + txt, 'dim']
   ], 260);
   toast('文本已发送到设备', 'ok');
-}
-$('#tiSend').addEventListener('click', sendTextInput);
-$('#tiText').addEventListener('keydown', function(e){ if (e.key === 'Enter') sendTextInput(); });
+});
 
 /* params row */
 /* 包名：可输入 + 下拉历史列表，回车保存 */
@@ -3619,7 +3660,15 @@ applyConFont();
 var backdrop = $('#modalBackdrop');
 function openModal(id){
   $$('.modal').forEach(function(m){ m.hidden = true; });
-  $('#' + id).hidden = false;
+  var modal = $('#' + id);
+  modal.hidden = false;
+  /* 独立窗口风格弹窗（.standalone，如文本输入）：背景不变暗不模糊，
+     backdrop 仅承载居中定位；常规弹窗维持变暗遮罩 */
+  if (modal.classList.contains('standalone')){
+    backdrop.classList.add('no-dim');
+  } else {
+    backdrop.classList.remove('no-dim');
+  }
   backdrop.hidden = false;
   void backdrop.offsetWidth;
   backdrop.classList.add('show');

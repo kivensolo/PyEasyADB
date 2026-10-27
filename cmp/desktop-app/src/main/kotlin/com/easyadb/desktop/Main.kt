@@ -861,7 +861,8 @@ fun main() {
                 }
                 } // 满窗 Box（MainWindowScreen + 新建连接浮层）
 
-                // 文本输入对话框（m_input_text 触发）
+                // 文本输入对话框（m_input_text 触发；独立 DialogWindow 原生标题栏窗口，
+                // 多行 textarea + 清空/取消/输入，确认后 adb shell input text）
                 if (showTextInputDialog) {
                     TextInputDialog(
                         onDismiss = { showTextInputDialog = false },

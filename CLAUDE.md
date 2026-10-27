@@ -91,6 +91,19 @@ python -m http.server 8642 --bind 127.0.0.1
 
 预览地址：`http://127.0.0.1:8642/index.html`（同目录其他 html 同理）。规则：验证完成后**不要主动停止服务**；会话结束或用户明确要求时才停。
 
+### 弹窗 UI 样式规范
+
+CMP 端弹窗分两种形态，H5 参照稿有对应类名，新弹窗先选形态再对样式：
+
+1. **独立窗口形态（默认首选）**——`DialogWindow` 原生标题栏窗口，主窗口**不变暗、无遮罩层**。参照：视频录制（`ScreenRecordDialog`）、屏幕截图（`ScreenshotDialog`）、文本输入（`TextInputDialog`）。H5 对应 `.modal.standalone` + `.modal-backdrop.no-dim`（背景透明不模糊，仅承载居中定位与点击关闭热区）。
+   - 内容区：`Surface(color = Surface)` + 自上而下 padding（左右 22dp、上 16dp、下 20dp）。
+   - 内部结构沿用 H5 modal 语义：`.modal-body`（label 12.5sp/600 次级色 + 输入控件 gap 13dp）、`.modal-foot`（次级按钮靠左可选 + 右对齐取消/确认，gap 10dp）。
+   - 按钮规格：主操作 `.btn-primary`——14sp/600 白字、padding 20×9dp、10dp 圆角、#3F88F8→#2563EB 垂直渐变 + 蓝色投影（明暗同值硬编码）；次级 `.btn-plain`——MiniBtnBg 底 + Border 1dp 描边、hover 字色转亮。
+   - 表单控件：`.ti-textarea` / `.mfield input` 风格——Field 底 + Border 1dp、10dp 圆角、focus 蓝描边（`--blue-soft` 外圈）；多行文本等宽字体 13sp、行高 1.55。
+2. **遮罩浮层形态（特殊场景）**——主窗口内满窗 `ModalScrim` 半透明遮罩（点击关闭）+ 居中渐变卡片（ModalBg 渐变 + 1px 边框 + 18dp 圆角 + `.modal-head` 内嵌标题行 16sp/700 + 30×30 关闭钮）。参照：卸载确认（`UninstallConfirmDialog`）、新建连接（`NewConnectDialog`）。仅用于需要阻断主窗口交互的确认类弹窗，勿当默认形态使用。
+
+空文本/缺参校验失败统一用 `FieldShakeState` 抖动反馈（红边晃动 + 聚焦），不用 toast。
+
 ### 语言
 
 面向用户的文案、文档、提交信息均为中文。CMP 新功能的 UI 文案同样写中文，与现有 UI 保持一致。
