@@ -37,6 +37,12 @@ class CmdExecutor {
     /**
      * 执行命令并通过 Flow 发送输出行。
      * 对应 Python 中的 AsyncAdbThread 行为。
+     *
+     * producer 结束后必须 [close] channel（2026-10-31 录屏 bug1 实测定因）：
+     * callbackFlow 的 producer 块跑完不等于 flow 结束——channel 不关，
+     * collect 永久挂起等下一条数据 → 录屏 recordJob 永不结束 →
+     * isRecording 恒 true，「开始/拉取」按钮永久禁用。
+     * 进程/读流本身没问题（EOF、waitFor 均正常），纯粹是漏关 channel。
      */
     fun executeFlow(cmd: String, useShell: Boolean = true): Flow<String> = callbackFlow {
         try {
@@ -73,6 +79,9 @@ class CmdExecutor {
             process.waitFor()
         } catch (e: Exception) {
             logger.error { "Execute flow error: ${e.message}" }
+        } finally {
+            // stdout/stderr 读尽、进程退出后关闭 channel——collect 才能正常返回
+            close()
         }
     }
 }
