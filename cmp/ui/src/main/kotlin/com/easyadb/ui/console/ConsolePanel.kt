@@ -233,27 +233,34 @@ private fun ConsoleToolButton(
 }
 
 /**
- * 创建日志桥接的辅助函数 —— 在 Main.kt 中使用。
+ * 创建控制台打印的日志信息桥接的辅助函数，此函数的目的是用 “不可变快照 + StateFlow + 最小权限写端” 换来一个
+ * 跨层、跨线程、零 UI 耦合的控制台管道；代价是全量拷贝现有的打印信息，因此它刻意只服务于低频的应用级日志，高频的 logcat 需使用其他方案。
  *
- * ## 设计要点
- * 返回 `Pair(flow, appender)`：
+ * @return `Pair(flow, appender)`
  * - `flow`：`MutableStateFlow<List<LogEntry>>`，直接传给 `ConsolePanel.logFlow`，
- *   通过 `collectAsState` 驱动 UI 重组。ConsolePanel 可直接修改此 flow 实现清空。
- * - `appender`：`(message: String, level: Int) -> Unit`，任何地方调用此函数即可
- *   将日志追加到 flow 中。例如在 CustomActionHandler 的 onResult 回调中调用
- *   `logAppender("[P5] 操作完成", 2)` 即可在控制台看到日志。
- *
- * 内部缓存上限 2000 条，超出后保留最近 1500 条，防止内存溢出。
+ *   通过 `collectAsState` 驱动UI重组(LazyColumn)。 ConsolePanel 可直接修改此 flow 实现清空。
+ * - `appender`：`(message: String, level: Int) -> Unit`
+ *     控制台日志追加函数，任何地方调用此函数即可将日志追加到 flow 中。即可在控制台看到对应日志。
  */
 fun createLogFlow(): Pair<MutableStateFlow<List<LogEntry>>, (String, Int) -> Unit> {
+    /*
+     * 选择StateFlow作为日志打印数据的发送流，是因为需要其“状态”，不能Tab 切回来、窗口重建（即新订阅者出现），导致Tab日志就清空了。
+     * SharedFlow 默认不 replay，所以得用StateFlow
+     */
     val flow = MutableStateFlow<List<LogEntry>>(emptyList())
+    //线程安全的DateTimeFormatter，用于格式化每条日志的时间
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
     val appender: (String, Int) -> Unit = { message, level ->
         val timestamp = LocalTime.now().format(timeFormatter)
         val entry = LogEntry(timestamp = timestamp, message = message, level = level)
+        /*
+         * 通过flow.value + entry 返回新列表（拷贝旧的全部元素 + 新元素），然后原子地替换原有的值
+         * FIXME 是 O(n) 全量拷贝,此处算是一个性能代价,所以不能用来做高频流（如logcat实时日志）
+         * FIXME  因此LogcatStream没有复用这个方案，而是用了环形缓冲。
+         */
         flow.value = flow.value + entry
-        // 限制条数防止内存溢出
+        // 内部缓存上限 2000 条，超出后保留最近 1500 条，防止内存溢出。
         if (flow.value.size > 2000) {
             flow.value = flow.value.takeLast(1500)
         }
