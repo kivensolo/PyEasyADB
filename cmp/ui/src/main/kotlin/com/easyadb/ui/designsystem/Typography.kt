@@ -18,9 +18,40 @@ import androidx.compose.ui.unit.sp
 
 private val osName: String = System.getProperty("os.name").lowercase()
 
+/**
+ * 默认 UI 字体：Windows 显式加载微软雅黑字体文件（走查反馈：中文按钮/标签发虚）。
+ *
+ * 坑（PlatformFont.skiko.kt GenericFontFamiliesMapping）：`FontFamily.SansSerif`
+ * 在 Windows 映射 `["Segoe UI", "Arial"]`——两者均**不含中文字形**，中文经 Skia
+ * 回退链落到宋体（SimSun），小字号笔画细、无次像素渲染，视觉发虚；注释里
+ * 「SansSerif → 微软雅黑」的旧假设不成立。
+ *
+ * 注意必须走**字体文件**（`Font(File)`）而非族名 `FontFamily("Microsoft YaHei
+ * UI")`：实测族名路径在 Skia 的 FontMgr 里未解析到雅黑，中文仍落宋体发虚；
+ * 文件加载与 Consolas token 同机制（已验证有效），makeFromFile 对 .ttc 集合
+ * 取 face 0（msyh.ttc=YaHei UI 常规 / msyhbd.ttc=YaHei UI 粗体）。文件缺失
+ * （非 Windows/精简系统）回退 SansSerif。
+ */
+private fun windowsUiFontFamily(): FontFamily {
+    val fontsDir = java.io.File(System.getenv("WINDIR") ?: "C:\\Windows", "Fonts")
+    val yahei = java.io.File(fontsDir, "msyh.ttc")
+    val yaheiBold = java.io.File(fontsDir, "msyhbd.ttc")
+    if (yahei.isFile) {
+        return FontFamily(
+            androidx.compose.ui.text.platform.Font(yahei, FontWeight.Normal),
+            if (yaheiBold.isFile) {
+                androidx.compose.ui.text.platform.Font(yaheiBold, FontWeight.Bold)
+            } else {
+                androidx.compose.ui.text.platform.Font(yahei, FontWeight.Bold)
+            }
+        )
+    }
+    return FontFamily.SansSerif
+}
+
 /** 默认 UI 字体：按平台选择合适无衬线字体 */
 val defaultUiFontFamily: FontFamily = when {
-    osName.contains("win") -> FontFamily.SansSerif  // Windows → 微软雅黑
+    osName.contains("win") -> windowsUiFontFamily()  // Windows → 微软雅黑（显式加载）
     osName.contains("mac") -> FontFamily.SansSerif  // macOS → 苹方
     else -> FontFamily.SansSerif                     // Linux → Noto Sans CJK SC
 }

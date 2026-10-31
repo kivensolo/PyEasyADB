@@ -224,7 +224,7 @@ private fun DialogPlainButton(text: String, onClick: () -> Unit) {
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.5.sp,
-            color = if (hovered) easyAdbColors.TextPrimary else easyAdbColors.TextSecondary
+            color = if (hovered) easyAdbColors.Primary else easyAdbColors.TextPrimary
         )
     }
 }
