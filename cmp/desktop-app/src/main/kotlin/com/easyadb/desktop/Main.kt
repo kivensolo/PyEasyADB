@@ -73,6 +73,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.concurrent.thread
 import org.jetbrains.skia.Image
 import java.awt.Frame
 import java.io.File
@@ -291,17 +292,33 @@ fun main() {
             }
         }
 
-        // undecorated 窗口的统一关闭入口（头栏关闭按钮与系统 onCloseRequest 共用一套清理）
+        // undecorated 窗口的统一关闭入口（头栏关闭按钮与系统 onCloseRequest 共用一套清理）。
+        // 四个清理步骤各自 runCatching 隔离（2026-10-31 僵尸进程实测定因：scrcpyLauncher.stop()
+        // 抛 NoClassDefFoundError 直接把 exitApplication() 顶掉，main 卡 application runBlocking，
+        // 关闭钮永久失效）——单步失败只记日志并继续后续清理，不阻断退出链路
         val closeApp: () -> Unit = {
-            watcher.stop()
+            runCatching { watcher.stop() }
+                .onFailure { appLogger.error { "closeApp: watcher.stop failed: ${it.message}" } }
             // 终结 scrcpy 镜像：嵌入模式的进程设计为跨 Tab 存活，但应用退出必须带走，
             // 否则残留（窗口游离桌面或隐藏在屏幕外，下次启动还需 terminateStaleScrcpy 兜底）
-            scrcpyLauncher.stop()
+            runCatching { scrcpyLauncher.stop() }
+                .onFailure { appLogger.error { "closeApp: scrcpy stop failed: ${it.message}" } }
             // 双保险：stop() 只杀 launcher 登记的当前进程，清掉一切同标题游离 scrcpy
             // （历史残留 / 上次强杀遗留），保证退出后无孤儿进程
-            Win32Interop.terminateStaleScrcpy(ScrcpyLauncher.WINDOW_TITLE)
-            DbManager.close()
+            runCatching { Win32Interop.terminateStaleScrcpy(ScrcpyLauncher.WINDOW_TITLE) }
+                .onFailure { appLogger.error { "closeApp: terminateStaleScrcpy failed: ${it.message}" } }
+            runCatching { DbManager.close() }
+                .onFailure { appLogger.error { "closeApp: db close failed: ${it.message}" } }
             AppLogger.closeAll()
+
+            /*
+             * 为防止 exitApplication 失败，则此处延迟强杀，保证进程必死。
+             * 正常退出时 daemon 线程随 JVM 无感消失，不参与任何清理
+             */
+            thread(isDaemon = true, name = "exit-watchdog") {
+                Thread.sleep(3000)
+                Runtime.getRuntime().halt(1)
+            }
             exitApplication()
         }
 
