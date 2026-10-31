@@ -55,6 +55,7 @@ import com.easyadb.ui.designsystem.GradientButton
 import androidx.compose.ui.focus.onFocusChanged
 import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 
 /**
@@ -293,7 +294,7 @@ fun RemoteKeyPad(
                     Text(
                         text = "键值通过 \"+\" 拼接可逐条发送，间隔 200ms",
                         fontSize = 11.5.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = easyAdbMonospace,
                         color = easyAdbColors.TextHint
                     )
                     if (customError != null) {
@@ -557,7 +558,7 @@ private fun CustomKeycodeInput(
             singleLine = true,
             textStyle = TextStyle(
                 fontSize = 13.sp,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = easyAdbMonospace,
                 color = easyAdbColors.TextPrimary
             ),
             cursorBrush = SolidColor(easyAdbColors.Primary),

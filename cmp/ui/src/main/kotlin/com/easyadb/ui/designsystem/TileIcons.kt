@@ -251,6 +251,18 @@ object EasyAdbTileIcons {
         )
     }
 
+    /** 日志抓取：文档 + 两行内容线（HTML actLogCap） */
+    val LogCapture: ImageVector by lazy {
+        iconOf(
+            name = "EasyAdbLogCapture",
+            stroke = listOf(
+                "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z",
+                "M14 2v6h6",
+                "M8 13h8M8 17h5"
+            )
+        )
+    }
+
     /** 新建文件夹：文件夹 + 中央加号（HTML dxMkdir） */
     val FolderPlus: ImageVector by lazy {
         iconOf(

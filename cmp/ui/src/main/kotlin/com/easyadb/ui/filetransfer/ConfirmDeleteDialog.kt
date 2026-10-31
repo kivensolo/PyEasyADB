@@ -24,6 +24,7 @@ import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.core.file.FileEntry
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 
 /** 删除确认按钮底色（H5 .btn-danger #dc2626，明暗同值） */
@@ -64,7 +65,7 @@ fun ConfirmDeleteDialog(
                     singleLine = true,
                     textStyle = androidx.compose.ui.text.TextStyle(
                         fontSize = 11.sp,
-                        fontFamily = FontFamily.Monospace
+                        fontFamily = easyAdbMonospace
                     ),
                     modifier = Modifier.fillMaxWidth()
                 )

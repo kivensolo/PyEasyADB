@@ -47,6 +47,7 @@ import com.easyadb.core.apk.ApkParseResult
 import com.easyadb.ui.designsystem.AppImages
 import com.easyadb.ui.designsystem.apkDropTarget
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 import org.jetbrains.skia.Image as SkiaImage
 import java.awt.Toolkit
@@ -362,7 +363,7 @@ private fun ReadOnlyField(
             Text(
                 text = value,
                 fontSize = 13.sp,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = easyAdbMonospace,
                 color = easyAdbColors.TextPrimary,
                 maxLines = if (scrollable) Int.MAX_VALUE else 1,
                 overflow = TextOverflow.Ellipsis,

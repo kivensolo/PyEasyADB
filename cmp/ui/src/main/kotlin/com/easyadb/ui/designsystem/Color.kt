@@ -179,7 +179,11 @@ data class EasyAdbColors(
     /** chip hover 底色（暗 #1a2b49 / 浅 #dbe7fb） */
     val ChipHoverBg: Color,
     /** chip hover 字色（暗 #dbeafe / 浅 #1d4ed8） */
-    val ChipHoverText: Color
+    val ChipHoverText: Color,
+
+    // ── 命令预览行（H5 .cmd-preview .cmd；SP-2003 日志抓取）──
+    /** 命令文字色（暗 #bcd7fb / 浅 #1d4ed8） */
+    val CmdPreviewText: Color
 )
 
 /**
@@ -266,7 +270,10 @@ val LightEasyAdbColors = EasyAdbColors(
     ChipBorder = Color(0xFFD9E3F2),       // chip 静止描边（浅色推导）
     ChipText = Color(0xFF5A6B82),         // chip 静止字（浅色推导，tx-2 同语义）
     ChipHoverBg = Color(0xFFDBE7FB),      // chip hover 底（浅色推导，蓝晕）
-    ChipHoverText = Color(0xFF1D4ED8)     // chip hover 字（浅色推导，强调蓝）
+    ChipHoverText = Color(0xFF1D4ED8),    // chip hover 字（浅色推导，强调蓝）
+
+    // ── 命令预览行（H5 html[data-theme=light] .cmd-preview .cmd）──
+    CmdPreviewText = Color(0xFF1D4ED8)     // 浅色命令蓝
 )
 
 /**
@@ -353,7 +360,10 @@ val DarkEasyAdbColors = EasyAdbColors(
     ChipBorder = Color(0xFF26375A),       // chip 静止描边
     ChipText = Color(0xFF9FB4D4),         // chip 静止字
     ChipHoverBg = Color(0xFF1A2B49),      // chip hover 底
-    ChipHoverText = Color(0xFFDBEAFE)     // chip hover 字
+    ChipHoverText = Color(0xFFDBEAFE),    // chip hover 字
+
+    // ── 命令预览行（H5 .cmd-preview .cmd 默认值）──
+    CmdPreviewText = Color(0xFFBCD7FB)     // 命令蓝（暗）
 )
 
 /** 当前组合中的扩展调色板，由 [EasyAdbTheme] 按明暗提供 */

@@ -73,6 +73,7 @@ import com.easyadb.ui.designsystem.AppIcons
 import com.easyadb.ui.designsystem.EmptyState
 import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 import kotlinx.coroutines.delay
 import kotlin.math.min
@@ -247,7 +248,7 @@ fun AppManagerPanel(
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = "共 ${filteredApps.size} 个应用",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 12.sp,
                     color = easyAdbColors.TextSecondary
                 )
@@ -474,7 +475,7 @@ private fun AppRow(
         ) {
             Text(
                 text = "${index + 1}",
-                fontFamily = FontFamily.Monospace,
+                fontFamily = easyAdbMonospace,
                 fontSize = 10.5.sp,
                 color = easyAdbColors.TextHint,
                 textAlign = TextAlign.End,
@@ -509,7 +510,7 @@ private fun AppRow(
             val pkgHovered by pkgInteraction.collectIsHoveredAsState()
             Text(
                 text = app.packageName,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = easyAdbMonospace,
                 fontSize = 11.sp,
                 color = if (pkgHovered) easyAdbColors.TextSecondary else pkgPathResting,
                 maxLines = 1,
@@ -528,7 +529,7 @@ private fun AppRow(
             val pathHovered by pathInteraction.collectIsHoveredAsState()
             Text(
                 text = app.apkPath,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = easyAdbMonospace,
                 fontSize = 11.sp,
                 color = if (pathHovered) easyAdbColors.TextSecondary else pkgPathResting,
                 maxLines = 1,

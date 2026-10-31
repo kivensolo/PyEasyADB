@@ -72,6 +72,7 @@ import com.easyadb.ui.designsystem.AppIcons
 import com.easyadb.ui.designsystem.EasyAdbTileIcons
 import com.easyadb.ui.designsystem.EmptyState
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.hoverBackground
 import kotlinx.coroutines.delay
@@ -145,7 +146,7 @@ fun FileTreePane(
                 Text(
                     dispPath,
                     fontSize = 10.5.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     color = easyAdbColors.TextHint,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -272,7 +273,7 @@ private fun TreeRow(
             Text(
                 row.entry.name,
                 fontSize = 10.sp,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = easyAdbMonospace,
                 color = if (row.kind == FileTreeState.RowKind.ERROR) easyAdbColors.LogError else easyAdbColors.TextHint,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -447,7 +448,7 @@ private fun TreeRow(
             Text(
                 entry.perm ?: "",
                 fontSize = 11.sp,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = easyAdbMonospace,
                 color = easyAdbColors.TextMeta,
                 maxLines = 1,
                 modifier = Modifier.width(104.dp)
@@ -456,7 +457,7 @@ private fun TreeRow(
         Text(
             entry.modifiedAt ?: "",
             fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = easyAdbMonospace,
             color = easyAdbColors.TextMeta,
             maxLines = 1,
             modifier = Modifier.width(112.dp)
@@ -464,7 +465,7 @@ private fun TreeRow(
         Text(
             entry.sizeText,
             fontSize = 11.sp,
-            fontFamily = FontFamily.Monospace,
+            fontFamily = easyAdbMonospace,
             color = easyAdbColors.TextMeta,
             maxLines = 1,
             textAlign = TextAlign.End,

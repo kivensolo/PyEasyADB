@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.sp
 import com.easyadb.ui.designsystem.EasyAdbTileIcons
 import com.easyadb.ui.designsystem.GradientButton
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 
 /**
@@ -295,7 +296,7 @@ private fun CmdRow(
             Text(
                 text = cmd,
                 fontSize = 12.sp,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = easyAdbMonospace,
                 color = easyAdbColors.PrimaryLight,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

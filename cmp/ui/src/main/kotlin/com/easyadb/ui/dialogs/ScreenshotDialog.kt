@@ -83,6 +83,7 @@ import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.core.adb.AdbExecutor
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -413,7 +414,7 @@ private fun PreviewContent(
             BasicText(
                 text = "${(zoom * 100).roundToInt()}%",
                 style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 11.5.sp,
                     color = easyAdbColors.TextSecondary
                 ),
@@ -429,7 +430,7 @@ private fun PreviewContent(
                     state.width, state.height, colorPart, state.kb
                 ),
                 style = TextStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 11.5.sp,
                     color = easyAdbColors.TextSecondary
                 )
@@ -694,7 +695,7 @@ private fun SsBareToolButton(
                     text = text,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
-                    fontFamily = if (text == "1:1") FontFamily.Monospace else null,
+                    fontFamily = if (text == "1:1") easyAdbMonospace else null,
                     color = if (hovered) easyAdbColors.TextPrimary else easyAdbColors.TextSecondary
                 )
             }

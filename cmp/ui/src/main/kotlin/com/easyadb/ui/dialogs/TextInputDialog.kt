@@ -49,6 +49,7 @@ import androidx.compose.ui.window.DialogWindow
 import androidx.compose.ui.window.rememberDialogState
 import com.easyadb.ui.designsystem.FieldShakeState
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.observeFrame
 
 /**
@@ -178,7 +179,7 @@ private fun TextInputField(
                 value = value,
                 onValueChange = onValueChange,
                 textStyle = TextStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 13.sp,
                     lineHeight = 20.sp,
                     color = easyAdbColors.TextPrimary
@@ -193,7 +194,7 @@ private fun TextInputField(
             if (value.isEmpty()) {
                 Text(
                     text = "输入要发送的文本",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 13.sp,
                     color = easyAdbColors.TextHint
                 )

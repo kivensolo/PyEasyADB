@@ -49,6 +49,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.hoverBackground
 import com.easyadb.ui.designsystem.logColor
@@ -187,7 +188,7 @@ fun ConsolePanel(
                         Text(
                             text = "[${entry.timestamp}] ${entry.message}",
                             fontSize = 10.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = easyAdbMonospace,
                             color = logColor(entry.level),
                             maxLines = if ('\n' in entry.message) 16 else 3,
                             overflow = if ('\n' in entry.message) TextOverflow.Visible else TextOverflow.Ellipsis,

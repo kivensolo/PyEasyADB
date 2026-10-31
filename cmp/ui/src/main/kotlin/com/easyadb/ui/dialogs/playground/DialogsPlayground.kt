@@ -49,15 +49,19 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import com.easyadb.core.adb.AdbExecutor
+import com.easyadb.core.adb.LogcatCapture
 import com.easyadb.core.apk.ApkInfo
 import com.easyadb.core.apk.ApkParseResult
 import com.easyadb.ui.designsystem.EasyAdbTheme
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.hoverBackground
 import com.easyadb.ui.dialogs.AboutDialog
 import com.easyadb.ui.dialogs.AddPackageDialog
 import com.easyadb.ui.dialogs.ApkHelperDialog
 import com.easyadb.ui.dialogs.InstallApkDialog
+import com.easyadb.ui.dialogs.LogCaptureDialog
 import com.easyadb.ui.dialogs.NewConnectDialog
 import com.easyadb.ui.dialogs.ScreenRecordDialog
 import com.easyadb.ui.dialogs.TextInputDialog
@@ -254,7 +258,7 @@ private fun LogPanel(
                         Text(
                             text = line,
                             fontSize = 12.sp,
-                            fontFamily = FontFamily.Monospace,
+                            fontFamily = easyAdbMonospace,
                             color = easyAdbColors.TextPrimary
                         )
                     }
@@ -586,6 +590,25 @@ private val entries = listOf(
                 recording = false
             },
             onPull = { log("ScreenRecordDialog.onPull()") }
+        )
+    },
+    DialogEntry(
+        id = "log-capture",
+        group = "其他",
+        component = "LogCaptureDialog",
+        state = "配置 → 抓取中 → 完成（画廊不接真实 adb，开始抓取会启动真进程）"
+    ) { _, onDismiss, log ->
+        // 画廊持有独立 LogcatCapture 实例；deviceIp 填占位值——真机走查请在主应用进行
+        val capture = remember { LogcatCapture() }
+        LogCaptureDialog(
+            deviceIp = "emulator-5554",
+            executor = AdbExecutor(),
+            capture = capture,
+            onDismiss = onDismiss,
+            onResult = { msg, _ -> log("LogCaptureDialog: $msg") },
+            lastDir = System.getProperty("user.home"),
+            lastPrefix = "",
+            onSettingsPersist = { dir, prefix -> log("LogCaptureDialog.persist(dir=$dir, prefix=$prefix)") }
         )
     },
     DialogEntry(

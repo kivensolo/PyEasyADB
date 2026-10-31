@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.sp
 import com.easyadb.core.util.NetworkUtils
 import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 
 /**
  * Copyright (c) 2026, 北京视达科科技有限责任公司 All rights reserved.
@@ -264,7 +265,7 @@ private fun MField(
                 onValueChange = onValueChange,
                 singleLine = true,
                 textStyle = TextStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 13.sp,
                     color = easyAdbColors.TextPrimary
                 ),
@@ -274,7 +275,7 @@ private fun MField(
             if (value.isEmpty()) {
                 Text(
                     text = placeholder,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 13.sp,
                     color = easyAdbColors.TextHint
                 )

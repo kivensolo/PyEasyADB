@@ -100,6 +100,7 @@ import com.easyadb.core.log.LogLevel
 import androidx.compose.ui.focus.onFocusChanged
 import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.EmptyState
 import com.easyadb.ui.designsystem.logColor
@@ -459,7 +460,7 @@ fun LogcatPanel(
                             .onFocusChanged { TextInputFocusTracker.onFocusChanged(it.hasFocus) },
                         textStyle = androidx.compose.ui.text.TextStyle(
                             fontSize = 10.sp,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = easyAdbMonospace
                         ),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                         trailingIcon = {
@@ -537,7 +538,7 @@ fun LogcatPanel(
                             },
                         textStyle = androidx.compose.ui.text.TextStyle(
                             fontSize = 11.sp,
-                            fontFamily = FontFamily.Monospace
+                            fontFamily = easyAdbMonospace
                         )
                     )
                     Spacer(modifier = Modifier.width(easyAdbTokens.spaceXs))
@@ -549,7 +550,7 @@ fun LogcatPanel(
                             if (isRunning) append("+")
                         },
                         fontSize = 10.sp,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = easyAdbMonospace,
                         color = easyAdbColors.TextSecondary,
                         modifier = Modifier.padding(horizontal = 2.dp)
                     )
@@ -726,7 +727,7 @@ fun LogcatPanel(
                                         Text(
                                             text = annotated ?: AnnotatedString(entry.raw),
                                             fontSize = logFontSize,
-                                            fontFamily = FontFamily.Monospace,
+                                            fontFamily = easyAdbMonospace,
                                             color = logColor(entry.level.value),
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,

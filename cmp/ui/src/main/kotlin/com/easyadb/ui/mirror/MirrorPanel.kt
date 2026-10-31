@@ -63,6 +63,7 @@ import com.easyadb.platform.Win32Interop
 import com.easyadb.ui.designsystem.EasyAdbTileIcons
 import com.easyadb.ui.designsystem.GradientButton
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 import kotlinx.coroutines.delay
 import java.awt.BorderLayout
@@ -364,7 +365,7 @@ private fun MirrorConnectingState(modifier: Modifier = Modifier) {
 private fun MirrorStatBadge(text: String) {
     Text(
         text = text,
-        fontFamily = FontFamily.Monospace,
+        fontFamily = easyAdbMonospace,
         fontSize = 10.5.sp,
         fontWeight = FontWeight.SemiBold,
         lineHeight = MirrorToolbarLineHeight,
@@ -507,7 +508,7 @@ private fun MirrorMissingGuide(binaryPath: String, modifier: Modifier = Modifier
             appendLine("后续升级 scrcpy 版本只需替换 scrcpy-win64 目录下的文件，无缝升级。")
         },
         fontSize = 11.sp,
-        fontFamily = FontFamily.Monospace,
+        fontFamily = easyAdbMonospace,
         color = easyAdbColors.LogError,
         modifier = modifier
     )

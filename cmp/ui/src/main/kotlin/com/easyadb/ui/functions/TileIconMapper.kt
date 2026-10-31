@@ -29,6 +29,7 @@ internal fun tileIconForItem(item: FunctionItem): ImageVector = when {
     item.action == "m_input_text" || item.text.contains("文本") -> EasyAdbTileIcons.TextInput
     item.action == "m_screenshot" || item.text.contains("截图") -> EasyAdbTileIcons.Screenshot
     item.action == "m_screen_record" || item.text.contains("录制") -> EasyAdbTileIcons.ScreenRecord
+    item.action == "m_log_capture" || item.text.contains("日志抓取") -> EasyAdbTileIcons.LogCapture
     item.text.contains("清除") || item.cmd.contains("clear") -> EasyAdbTileIcons.ClearData
     item.text.contains("卸载") || item.cmd.contains("uninstall") -> EasyAdbTileIcons.UninstallApp
     else -> EasyAdbTileIcons.UninstallApp

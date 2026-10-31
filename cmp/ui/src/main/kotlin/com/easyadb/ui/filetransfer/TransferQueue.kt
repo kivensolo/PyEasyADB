@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.easyadb.core.file.TransferCenter
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 
 /**
@@ -78,7 +79,7 @@ private fun QueueCard(job: TransferCenter.TransferJob) {
                 Text(
                     job.fileName,
                     fontSize = 12.sp,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     color = easyAdbColors.TextPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

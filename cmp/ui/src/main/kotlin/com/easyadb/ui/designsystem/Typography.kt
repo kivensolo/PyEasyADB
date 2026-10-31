@@ -25,8 +25,26 @@ val defaultUiFontFamily: FontFamily = when {
     else -> FontFamily.SansSerif                     // Linux → Noto Sans CJK SC
 }
 
-/** 等宽字体，用于控制台/logcat */
-val monospaceFontFamily: FontFamily = FontFamily.Monospace
+/**
+ * 等宽字体：Consolas（SP-2003 调整5 决策）。
+ *
+ * FontFamily.Monospace 在 Windows 落到 Courier New——笔画极细 + 灰度抗锯齿，
+ * 小字号（10.5–12.5sp）下发虚；Consolas 专为屏显设计，清晰度与微软雅黑同级且
+ * 仍是等宽。从系统字体文件加载（consola.ttf 常规体 / consolab.ttf 粗体），
+ * 文件缺失（非 Windows/精简系统）回退 FontFamily.Monospace。
+ */
+val easyAdbMonospace: FontFamily = run {
+    val consolas = java.io.File(System.getenv("WINDIR") ?: "C:\\Windows", "Fonts/consola.ttf")
+    val consolasBold = java.io.File(System.getenv("WINDIR") ?: "C:\\Windows", "Fonts/consolab.ttf")
+    if (consolas.isFile && consolasBold.isFile) {
+        FontFamily(
+            androidx.compose.ui.text.platform.Font(consolas, FontWeight.Normal),
+            androidx.compose.ui.text.platform.Font(consolasBold, FontWeight.Bold)
+        )
+    } else {
+        FontFamily.Monospace
+    }
+}
 
 /**
  * EasyADB 排版系统。

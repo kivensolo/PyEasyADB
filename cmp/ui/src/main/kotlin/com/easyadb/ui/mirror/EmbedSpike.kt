@@ -21,6 +21,7 @@ import androidx.compose.ui.window.application
 import com.easyadb.platform.Win32Interop
 import com.easyadb.ui.designsystem.EasyAdbTheme
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import kotlinx.coroutines.delay
 import java.awt.BorderLayout
 import java.awt.Canvas
@@ -60,7 +61,7 @@ fun main() {
                         fontSize = 13.sp, color = easyAdbColors.TextPrimary
                     )
                     report.takeLast(14).forEach {
-                        Text(it, fontSize = 11.sp, fontFamily = FontFamily.Monospace, color = easyAdbColors.TextSecondary)
+                        Text(it, fontSize = 11.sp, fontFamily = easyAdbMonospace, color = easyAdbColors.TextSecondary)
                     }
                     SwingPanel(
                         background = Color.White,

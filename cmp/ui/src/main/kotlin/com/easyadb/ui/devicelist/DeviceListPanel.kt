@@ -68,6 +68,7 @@ import com.easyadb.ui.designsystem.AppIcons
 import com.easyadb.ui.designsystem.EasyAdbTileIcons
 import com.easyadb.ui.designsystem.EmptyState
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.easyAdbTokens
 import com.easyadb.ui.designsystem.hoverBackground
 import kotlin.math.roundToInt
@@ -395,7 +396,7 @@ private fun DeviceCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = card.fullAddress,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Bold,
                     color = easyAdbColors.DevIpText,
@@ -413,7 +414,7 @@ private fun DeviceCard(
                     Spacer(Modifier.height(3.dp))
                     Text(
                         text = subLine,
-                        fontFamily = FontFamily.Monospace,
+                        fontFamily = easyAdbMonospace,
                         fontSize = 12.sp,
                         color = easyAdbColors.TextSecondary,
                         maxLines = 1,

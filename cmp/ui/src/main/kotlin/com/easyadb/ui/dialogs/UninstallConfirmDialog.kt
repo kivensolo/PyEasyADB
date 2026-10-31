@@ -57,6 +57,7 @@ import com.easyadb.core.adb.AppListLoader
 import com.easyadb.ui.designsystem.FieldShakeState
 import com.easyadb.ui.designsystem.TextInputFocusTracker
 import com.easyadb.ui.designsystem.easyAdbColors
+import com.easyadb.ui.designsystem.easyAdbMonospace
 import com.easyadb.ui.designsystem.observeFrame
 
 /**
@@ -236,7 +237,7 @@ private fun PkgField(
                 onValueChange = onValueChange,
                 singleLine = true,
                 textStyle = TextStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 13.sp,
                     color = easyAdbColors.TextPrimary
                 ),
@@ -246,7 +247,7 @@ private fun PkgField(
             if (value.isEmpty()) {
                 Text(
                     text = "com.example.app",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = easyAdbMonospace,
                     fontSize = 13.sp,
                     color = easyAdbColors.TextHint
                 )
@@ -307,7 +308,7 @@ private fun PkgChip(pkg: String, onClick: () -> Unit) {
     val hovered by interaction.collectIsHoveredAsState()
     Text(
         text = pkg,
-        fontFamily = FontFamily.Monospace,
+        fontFamily = easyAdbMonospace,
         fontSize = 11.5.sp,
         color = if (hovered) easyAdbColors.ChipHoverText else easyAdbColors.ChipText,
         maxLines = 1,

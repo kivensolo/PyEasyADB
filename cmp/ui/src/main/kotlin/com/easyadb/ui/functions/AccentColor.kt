@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 
 /**
  * 功能卡语义色解析（原 FileTransferCard.kt 内私有实现，SP-5001 清理旧文件时迁出）。
- * XML accent 属性（green/red/blue/orange/grey|gray/sky/rose）→ 调色板 Accent 族；
+ * XML accent 属性（green/red/blue/orange/grey|gray/sky/rose/violet）→ 调色板 Accent 族；
  * 未匹配返回 null（调用方回退 AccentGrey 素灰，对齐 HTML a-icon.gray）。
  */
 internal fun accentColor(name: String?, colors: EasyAdbColors): Color? = when (name?.lowercase()) {
@@ -16,5 +16,6 @@ internal fun accentColor(name: String?, colors: EasyAdbColors): Color? = when (n
     "grey", "gray" -> colors.AccentGrey
     "sky" -> colors.AccentSky
     "rose" -> colors.AccentRose
+    "violet" -> colors.AccentViolet
     else -> null
 }

@@ -151,6 +151,15 @@ accent: 卡片图标语义色(快捷操作Tab), 可选值: green/red/blue/orange
             <attr name="desc">向设备输入框写入自定义文本</attr>
             <attr name="accent">grey</attr>
         </item>
+        <item>
+            <attr name="icon">./res/img/logcat_capture_256x256.png</attr>
+            <attr name="text">日志抓取</attr>
+            <attr name="act">m_log_capture</attr>
+            <attr name="isNeedDeviceOnline">true</attr>
+            <attr name="tab">quick</attr>
+            <attr name="desc">logcat 导出保存到电脑</attr>
+            <attr name="accent">violet</attr>
+        </item>
     </template>
     <template name="数据获取" layout="grid">
         <item>

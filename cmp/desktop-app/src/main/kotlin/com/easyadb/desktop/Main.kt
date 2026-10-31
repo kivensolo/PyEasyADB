@@ -37,6 +37,7 @@ import com.easyadb.core.device.DevicesWatcher
 import com.easyadb.core.log.AppLogger
 import com.easyadb.core.log.LogConfig
 import com.easyadb.core.adb.AdbExecutor
+import com.easyadb.core.adb.LogcatCapture
 import com.easyadb.core.adb.LogcatStream
 import com.easyadb.core.adb.MirrorStartResult
 import com.easyadb.core.adb.MirrorState
@@ -60,6 +61,7 @@ import com.easyadb.ui.dialogs.InstallApkDialog
 import com.easyadb.ui.dialogs.InstallOptions
 import com.easyadb.ui.dialogs.ScreenRecordDialog
 import com.easyadb.ui.dialogs.ScreenshotDialog
+import com.easyadb.ui.dialogs.LogCaptureDialog
 import com.easyadb.ui.dialogs.ScreenRecordOptions
 import com.easyadb.core.adb.AppListLoader
 import com.easyadb.core.file.TransferCenter
@@ -195,6 +197,13 @@ fun main() {
         var showScreenRecordDialog by remember { mutableStateOf(false) }
         // 屏幕截图预览对话框（m_screenshot 触发；SP-2001 Loading → 预览 → 保存链路）
         var showScreenshotDialog by remember { mutableStateOf(false) }
+        // 日志抓取对话框（m_log_capture 触发；SP-2003 配置 → 抓取中 → 完成链路）。
+        // LogcatCapture 宿主持有：弹窗开关不中断抓取进程生命周期，状态由 StateFlow 推送
+        val logcatCapture = remember { LogcatCapture() }
+        var showLogCaptureDialog by remember { mutableStateOf(false) }
+        // 上次日志抓取的目录/前缀（AppConfig.ini [LogCapture] 段持久化，对齐 Theme 写回模式）
+        val lastCaptureDir = AppConfigManager.getOrDefault(LOGCAPTURE_SECTION, "Dir", defaultCaptureDir())
+        val lastCapturePrefix = AppConfigManager.getOrDefault(LOGCAPTURE_SECTION, "Prefix", "")
         // 快捷操作缺参抖动状态（对齐 H5 pkgShake/#fAction shake）：
         // 功能卡点击缺参校验失败时触发参数区对应输入框红边抖动
         val paramShakeState = remember { ParamShakeState() }
@@ -623,6 +632,8 @@ fun main() {
                                 // 截图走 Loading → 预览 → 保存对话框链路（SP-2001）；
                                 // 设备已由 when 首分支保证已选
                                 "m_screenshot" -> showScreenshotDialog = true
+                                // 日志抓取走 配置 → 抓取中 → 完成 对话框链路（SP-2003）
+                                "m_log_capture" -> showLogCaptureDialog = true
                                 else -> scope.launch {
                                     CustomActionHandler.handle(
                                         item = item,
@@ -1044,6 +1055,26 @@ fun main() {
                         onResult = { msg: String, level: Int -> logAppender(msg, level) }
                     )
                 }
+
+                // 日志抓取对话框（m_log_capture 触发，SP-2003）：
+                // 配置 → 抓取中（File.length 轮询）→ 完成；抓取中关窗一律路由到停止保存。
+                // 目录/前缀经 AppConfigManager [LogCapture] 段持久化（开始抓取时写回）
+                if (showLogCaptureDialog && selectedDeviceIp != null) {
+                    LogCaptureDialog(
+                        deviceIp = selectedDeviceIp!!,
+                        executor = adbExecutor,
+                        capture = logcatCapture,
+                        onDismiss = { showLogCaptureDialog = false },
+                        onResult = { msg: String, level: Int -> logAppender(msg, level) },
+                        lastDir = lastCaptureDir,
+                        lastPrefix = lastCapturePrefix,
+                        onSettingsPersist = { dir, prefix ->
+                            AppConfigManager.set(LOGCAPTURE_SECTION, "Dir", dir)
+                            AppConfigManager.set(LOGCAPTURE_SECTION, "Prefix", prefix)
+                            AppConfigManager.save()
+                        }
+                    )
+                }
             }
         }
     }
@@ -1192,4 +1223,14 @@ private fun parseWmSize(output: String): Pair<Int, Int>? {
     return w to h
 }
 
+/** 日志抓取（SP-2003）配置持久化段名（AppConfig.ini [LogCapture]） */
+private const val LOGCAPTURE_SECTION = "LogCapture"
 
+/**
+ * 日志抓取默认保存目录：用户文档目录（fallback user.home），目录不存在时仍可手输/浏览改选。
+ */
+private fun defaultCaptureDir(): String {
+    val home = System.getProperty("user.home")
+    val documents = java.io.File(home, "Documents")
+    return (if (documents.isDirectory) documents else java.io.File(home)).absolutePath
+}
