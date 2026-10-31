@@ -65,9 +65,50 @@ object ExecUtils {
                 stdout.trim()
             }
 
-            ExecResult(true, output, process.exitValue())
+            // 2026-10-31 录屏 bug2 实测定因：success 只看「未超时」不看退出码，
+            // adb pull 失败（exit 1）仍报 success=true → UI 误提示「拉取成功」。
+            // 退出码非 0 即失败，stderr/adb 错误信息在 output 里供 UI 展示。
+            ExecResult(process.exitValue() == 0, output, process.exitValue())
         } catch (e: Exception) {
             ExecResult(false, "CMD [$command] error: ${e.message}", -1)
+        }
+    }
+
+    /**
+     * 以参数数组直启命令（不经 shell），避免引号/反斜杠转义损坏参数
+     * （见 AdbExecutor.execAdbArgs 注释——cmd.exe /c 引号内反斜杠被吃）。
+     */
+    suspend fun execArgs(
+        args: List<String>,
+        timeoutMs: Long = 4000
+    ): ExecResult = withContext(Dispatchers.IO) {
+        try {
+            val process = ProcessBuilder(args).start()
+
+            // 并发读取 stdout / stderr，避免缓冲区写满导致死锁
+            val stdoutDeferred = async(Dispatchers.IO) { readStream(process.inputStream) }
+            val stderrDeferred = async(Dispatchers.IO) { readStream(process.errorStream) }
+
+            val finished = process.waitFor(timeoutMs, TimeUnit.MILLISECONDS)
+            if (!finished) {
+                process.destroyForcibly()
+                stdoutDeferred.cancel()
+                stderrDeferred.cancel()
+                return@withContext ExecResult(false, "CMD [${args.joinToString(" ")}] timeout", -1)
+            }
+
+            val stdout = stdoutDeferred.await()
+            val stderr = stderrDeferred.await()
+
+            val output = if (stderr.isNotBlank()) {
+                stdout.trim() + "\n" + stderr.trim()
+            } else {
+                stdout.trim()
+            }
+
+            ExecResult(process.exitValue() == 0, output, process.exitValue())
+        } catch (e: Exception) {
+            ExecResult(false, "CMD [${args.joinToString(" ")}] error: ${e.message}", -1)
         }
     }
 

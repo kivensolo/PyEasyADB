@@ -34,6 +34,22 @@ class AdbExecutor {
     }
 
     /**
+     * 以参数数组直启 adb 执行单条命令，不经 shell 中转。
+     *
+     * 2026-10-31 录屏 bug2 实测定因：`cmd.exe /c "adb pull … \"F:\dir\file.mp4\""`
+     * 中引号内的 `\d`、`\f` 等序列被 cmd 吃掉反斜杠 → adb 收到损坏路径
+     * （`F:dir\file.mp4`）→ 盘符根/子目录一律报 No such file or directory。
+     * 参数数组直启无引号转义问题，路径原样传达 adb（Git Bash 手测同款
+     * 命令带引号失败、参数直传成功）。含空格/中文的路径同样安全。
+     */
+    suspend fun execAdbArgs(vararg args: String): ExecResult {
+        val cmd = args.joinToString(" ")
+        logger.infoWithStamp(cmd)
+        currentCmd = cmd
+        return ExecUtils.execArgs(args.toList(), timeoutMs = 20000)
+    }
+
+    /**
      * 通过 Flow 异步执行 ADB 命令。
      */
     fun asyncExecAdbCmd(cmds: List<String>): Flow<String> = executor.executeFlow(cmds.joinToString(" && "))

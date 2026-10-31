@@ -1028,9 +1028,11 @@ fun main() {
                                     val savePath = java.io.File(saveDialog.directory, saveDialog.file).absolutePath
                                     scope.launch {
                                         val tmpPath = "/sdcard/easy_screenrecord.mp4"
-                                        val cmd = "adb -s $deviceIp pull $tmpPath \"$savePath\""
-                                        logAppender("> $cmd", 2)
-                                        val result = adbExecutor.execAdbCmd(cmd)
+                                        // 参数数组直启 adb（bug2：经 cmd.exe /c 引号内反斜杠被吃，路径损坏）
+                                        logAppender("> adb -s $deviceIp pull $tmpPath $savePath", 2)
+                                        val result = adbExecutor.execAdbArgs(
+                                            "adb", "-s", deviceIp, "pull", tmpPath, savePath
+                                        )
                                         if (result.success) {
                                             logAppender("[拉取成功] $savePath", 2)
                                         } else {
