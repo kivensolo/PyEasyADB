@@ -9,6 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import java.io.File
 
 /**
  * 核心 ADB 操作封装。
@@ -34,19 +35,39 @@ class AdbExecutor {
     }
 
     /**
-     * 以参数数组直启 adb 执行单条命令，不经 shell 中转。
+     * 拉取设备文件到本机（参数直启 adb + 盘符根规避，集中封装供录屏拉取等复用）。
+     * 解决通过 execAdbCmd执行"adb -s $deviceIp pull $tmpPath \"$savePath\" 这种命令时，储存路径是盘符根目录的问题。
      *
-     * 2026-10-31 录屏 bug2 实测定因：`cmd.exe /c "adb pull … \"F:\dir\file.mp4\""`
-     * 中引号内的 `\d`、`\f` 等序列被 cmd 吃掉反斜杠 → adb 收到损坏路径
-     * （`F:dir\file.mp4`）→ 盘符根/子目录一律报 No such file or directory。
-     * 参数数组直启无引号转义问题，路径原样传达 adb（Git Bash 手测同款
-     * 命令带引号失败、参数直传成功）。含空格/中文的路径同样安全。
+     * 方案详见 cmp/doc/技术经验/技术经验-adb-pull到Windows本地的路径陷阱.md，
+     * SP-5001 文件传输已踩过并归档：因此与 TransferCenter.submitPull 盘根分支同方案。
+     *
+     * @param deviceIp 目标设备ip
+     * @param deviceFilePath 在设备上的文件路径
+     * @param savePath 为本机绝对目标路径（目录或含文件名皆可）。
      */
-    suspend fun execAdbArgs(vararg args: String): ExecResult {
-        val cmd = args.joinToString(" ")
-        logger.infoWithStamp(cmd)
-        currentCmd = cmd
-        return ExecUtils.execArgs(args.toList(), timeoutMs = 20000)
+    suspend fun pullFile(deviceIp: String, deviceFilePath: String, savePath: String): ExecResult {
+        val dir = File(savePath).parent ?: return ExecResult(
+            false, "CMD [pull] invalid save path: $savePath", -1
+        )
+        val name = File(savePath).name
+        val dirTrimmed = dir.trimEnd('\\', '/')
+        // 回显统一用规范形式（用户看到的是最终落点）
+        val echo = "adb -s $deviceIp pull $deviceFilePath $dirTrimmed\\$name"
+        logger.infoWithStamp(echo)
+        currentCmd = echo
+        return if (dirTrimmed.length == 2 && dirTrimmed[1] == ':') {
+            // 若为盘符根：则 CWD 锚定盘根 + 纯文件名
+            ExecUtils.execArgs(
+                listOf("adb", "-s", deviceIp, "pull", deviceFilePath, name),
+                timeoutMs = 20000,
+                workingDir = File("$dirTrimmed\\")
+            )
+        } else {
+            ExecUtils.execArgs(
+                listOf("adb", "-s", deviceIp, "pull", deviceFilePath, savePath),
+                timeoutMs = 20000
+            )
+        }
     }
 
     /**

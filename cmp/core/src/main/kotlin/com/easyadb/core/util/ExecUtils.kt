@@ -77,13 +77,19 @@ object ExecUtils {
     /**
      * 以参数数组直启命令（不经 shell），避免引号/反斜杠转义损坏参数
      * （见 AdbExecutor.execAdbArgs 注释——cmd.exe /c 引号内反斜杠被吃）。
+     *
+     * @param workingDir 指定即将 start 出来的子进程的工作目录（null = 继承当前进程）
+     *                  目前用于盘符根拉取锚定场景（见 AdbExecutor.pullFile）
      */
     suspend fun execArgs(
         args: List<String>,
-        timeoutMs: Long = 4000
+        timeoutMs: Long = 4000,
+        workingDir: File? = null
     ): ExecResult = withContext(Dispatchers.IO) {
         try {
-            val process = ProcessBuilder(args).start()
+            val process = ProcessBuilder(args).apply {
+                workingDir?.let { directory(it) } // 设置启动时的当前工作目录(CWD)
+            }.start()
 
             // 并发读取 stdout / stderr，避免缓冲区写满导致死锁
             val stdoutDeferred = async(Dispatchers.IO) { readStream(process.inputStream) }
