@@ -251,7 +251,7 @@ fun createLogFlow(): Pair<MutableStateFlow<List<LogEntry>>, (String, Int) -> Uni
     //线程安全的DateTimeFormatter，用于格式化每条日志的时间
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
-    val appender: (String, Int) -> Unit = { message, level ->
+    val logAppender: (String, Int) -> Unit = { message, level ->
         val timestamp = LocalTime.now().format(timeFormatter)
         val entry = LogEntry(timestamp = timestamp, message = message, level = level)
         /*
@@ -266,5 +266,5 @@ fun createLogFlow(): Pair<MutableStateFlow<List<LogEntry>>, (String, Int) -> Uni
         }
     }
 
-    return Pair(flow, appender)
+    return Pair(flow, logAppender)
 }
